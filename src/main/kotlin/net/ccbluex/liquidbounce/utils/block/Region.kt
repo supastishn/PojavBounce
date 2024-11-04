@@ -21,6 +21,8 @@ package net.ccbluex.liquidbounce.utils.block
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.kotlin.contains
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Box
+import net.minecraft.world.chunk.Chunk
 import kotlin.math.max
 import kotlin.math.min
 
@@ -33,21 +35,39 @@ class Region(from: BlockPos, to: BlockPos) : ClosedRange<BlockPos>, Iterable<Blo
         get() = this.from
 
     companion object {
+        // the Region is a closed range so this is not empty actually
         val EMPTY: Region = Region(BlockPos.ORIGIN, BlockPos.ORIGIN)
 
         fun quadAround(pos: BlockPos, xz: Int, y: Int): Region {
             return Region(pos.add(-xz, -y, -xz), pos.add(xz, y, xz))
         }
 
-        fun fromChunkPosition(x: Int, z: Int): Region {
+        fun from(blockPos: BlockPos): Region {
+            return Region(blockPos, blockPos)
+        }
+
+        fun from(chunk: Chunk): Region {
+            val pos = chunk.pos
+            return Region(
+                BlockPos(pos.x shl 4, chunk.bottomY, pos.z shl 4),
+                BlockPos(pos.x shl 4 or 15, chunk.topY, pos.z shl 4 or 15)
+            )
+        }
+
+        fun fromChunkPos(x: Int, z: Int): Region {
             return Region(
                 BlockPos(x shl 4, mc.world!!.bottomY, z shl 4),
                 BlockPos(x shl 4 or 15, mc.world!!.height, z shl 4 or 15)
             )
         }
 
-        fun fromBlockPos(blockPos: BlockPos): Region {
-            return Region(blockPos, blockPos)
+        fun Region.getBox(): Box {
+            return Box(
+                0.0, 0.0, 0.0,
+                to.x - from.x + 1.0,
+                to.y - from.y + 1.0,
+                to.z - from.z + 1.0,
+            )
         }
     }
 
@@ -85,7 +105,7 @@ class Region(from: BlockPos, to: BlockPos) : ClosedRange<BlockPos>, Iterable<Blo
     override fun isEmpty(): Boolean = this.volume == 0
 
     operator fun contains(pos: Region): Boolean {
-        return pos.from.x..pos.to.x in xRange && pos.from.y..pos.to.y in yRange && pos.from.z..pos.to.z in zRange
+        return pos.xRange in xRange && pos.yRange in yRange && pos.zRange in zRange
     }
 
     override operator fun contains(value: BlockPos): Boolean {

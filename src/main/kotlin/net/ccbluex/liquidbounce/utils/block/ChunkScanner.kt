@@ -20,6 +20,7 @@ package net.ccbluex.liquidbounce.utils.block
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import net.ccbluex.liquidbounce.event.Listenable
@@ -115,6 +116,8 @@ object ChunkScanner : Listenable {
         private val channelRestartMutex = Mutex()
 
         init {
+            // cyclic job, used to process tasks from channel
+            @Suppress("detekt:SwallowedException")
             scope.launch {
                 var retrying = 0
                 while (true) {
@@ -122,7 +125,7 @@ object ChunkScanner : Listenable {
                         val chunkUpdate = chunkUpdateChannel.receive()
 
                         if (mc.world == null) {
-                            // reset Channel
+                            // reset Channel (prevent sending)
                             channelRestartMutex.withLock {
                                 chunkUpdateChannel.cancel()
                                 chunkUpdateChannel = Channel(capacity = CHANNEL_CAPACITY)
@@ -134,6 +137,8 @@ object ChunkScanner : Listenable {
 
                         retrying = 0
 
+                        // process the update request
+                        // TODO: may need to start a new job
                         when (chunkUpdate) {
                             is UpdateRequest.ChunkUpdateRequest -> scanChunk(chunkUpdate)
 
@@ -147,6 +152,8 @@ object ChunkScanner : Listenable {
                         }
                     } catch (e: CancellationException) {
                         break // end loop if job has been canceled
+                    } catch (e: ClosedReceiveChannelException) {
+                        break // the channel is closed from outside (stopThread)
                     } catch (e: Throwable) {
                         retrying++
                         logger.warn("Chunk update error", e)
@@ -211,6 +218,7 @@ object ChunkScanner : Listenable {
         fun stopThread() {
             scope.cancel()
             chunkUpdateChannel.close()
+            logger.info("Stopped Chunk Scanner Thread!")
         }
 
         sealed interface UpdateRequest {

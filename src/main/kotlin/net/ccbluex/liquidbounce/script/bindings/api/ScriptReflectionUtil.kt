@@ -20,7 +20,8 @@ package net.ccbluex.liquidbounce.script.bindings.api
 
 import net.ccbluex.liquidbounce.utils.mappings.EnvironmentRemapper
 
-object JsReflectionUtil {
+@Suppress("SpreadOperator", "unused")
+object ScriptReflectionUtil {
 
     @JvmName("classByName")
     fun classByName(name: String): Class<*> = Class.forName(

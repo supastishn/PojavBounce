@@ -26,7 +26,8 @@ import org.graalvm.polyglot.Value as PolyglotValue;
 /**
  * Object used by the script API to provide an idiomatic way of creating module values.
  */
-object JsSetting {
+@Suppress("unused")
+object ScriptSetting {
 
     @JvmName("boolean")
     fun boolean(value: PolyglotValue): Value<Boolean> {

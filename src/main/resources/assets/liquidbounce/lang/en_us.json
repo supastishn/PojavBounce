@@ -459,6 +459,7 @@
   "liquidbounce.module.flagCheck.messages.lagback": "LagBack",
   "liquidbounce.module.flagCheck.messages.invalid": "Invalid",
   "liquidbounce.module.freeCam.description": "Allows you to move the camera out of your body.",
+  "liquidbounce.module.freeLook.description": "Allows you to move the camera freely around your character.",
   "liquidbounce.module.freeze.description": "Allows you to freeze yourself in your current position without the server knowing.",
   "liquidbounce.module.friendClicker.messages.addedFriend": "%s was successfully added to the friends list.",
   "liquidbounce.module.friendClicker.description": "Allows you to add players to your friends list by clicking them.",

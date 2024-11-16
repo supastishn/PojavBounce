@@ -58,6 +58,25 @@ fun BlockPos.getCenterDistanceSquared() = player.squaredDistanceTo(this.x + 0.5,
 fun BlockPos.getCenterDistanceSquaredEyes() = player.eyes.squaredDistanceTo(this.x + 0.5, this.y + 0.5, this.z + 0.5)
 
 /**
+ * Returns the block box outline of the block at the position. If the block is air, it will return an empty box.
+ * Outline Box should be used for rendering purposes only.
+ */
+val BlockPos.outlineBox: Box
+    get() {
+        val blockState = getState() ?: return EMPTY_BOX
+        if (blockState.isAir) {
+            return EMPTY_BOX
+        }
+
+        val outlineShape = blockState.getOutlineShape(world, this)
+        return if (outlineShape.isEmpty) {
+            FULL_BOX
+        } else {
+            outlineShape.boundingBox
+        }
+    }
+
+/**
  * Some blocks like slabs or stairs must be placed on upper side in order to be placed correctly.
  */
 val Block.mustBePlacedOnUpperSide: Boolean

@@ -19,7 +19,9 @@
 package net.ccbluex.liquidbounce.features.module.modules.render
 
 import com.mojang.blaze3d.systems.RenderSystem
+import net.ccbluex.liquidbounce.config.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.EventManager
+import net.ccbluex.liquidbounce.event.events.ClickGuiValueChangeEvent
 import net.ccbluex.liquidbounce.event.events.ClickGuiScaleChangeEvent
 import net.ccbluex.liquidbounce.event.events.GameRenderEvent
 import net.ccbluex.liquidbounce.event.events.WorldChangeEvent
@@ -49,8 +51,10 @@ object ModuleClickGui :
     @Suppress("UnusedPrivateProperty")
     private val scale by float("Scale", 1f, 0.5f..2f).onChanged {
         EventManager.callEvent(ClickGuiScaleChangeEvent(it))
+        EventManager.callEvent(ClickGuiValueChangeEvent(this))
     }
 
+    @Suppress("UnusedPrivateProperty")
     private val cache by boolean("Cache", true).onChanged { cache ->
         RenderSystem.recordRenderCall {
             if (cache) {
@@ -68,7 +72,25 @@ object ModuleClickGui :
     @Suppress("UnusedPrivateProperty")
     private val searchBarAutoFocus by boolean("SearchBarAutoFocus", true)
 
+    object Snapping : ToggleableConfigurable(this, "Snapping", true) {
+
+        @Suppress("UnusedPrivateProperty")
+        private val gridSize by int("GridSize", 10, 1..100, "px").onChanged {
+            EventManager.callEvent(ClickGuiValueChangeEvent(ModuleClickGui))
+        }
+
+        init {
+            inner.find { it.name == "Enabled" }?.onChanged {
+                EventManager.callEvent(ClickGuiValueChangeEvent(ModuleClickGui))
+            }
+        }
+    }
+
     private var clickGuiTab: ITab? = null
+
+    init {
+        tree(Snapping)
+    }
 
     override fun enable() {
         // Pretty sure we are not in a game, so we can't open the clickgui
@@ -76,11 +98,13 @@ object ModuleClickGui :
             return
         }
 
-        mc.setScreen(if (clickGuiTab == null) {
-            VrScreen(VirtualScreenType.CLICK_GUI)
-        } else {
-            ClickScreen()
-        })
+        mc.setScreen(
+            if (clickGuiTab == null) {
+                VrScreen(VirtualScreenType.CLICK_GUI)
+            } else {
+                ClickScreen()
+            }
+        )
         super.enable()
     }
 

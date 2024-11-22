@@ -6,7 +6,7 @@
     import type {ToggleModuleEvent} from "../../integration/events";
     import {fly} from "svelte/transition";
     import {quintOut} from "svelte/easing";
-    import {highlightModuleName, maxPanelZIndex} from "./clickgui_store";
+    import {gridSize, highlightModuleName, maxPanelZIndex, showGrid, snappingEnabled} from "./clickgui_store";
     import {setItem} from "../../integration/persistent_storage";
     import {scaleFactor} from "./clickgui_store";
 
@@ -20,9 +20,12 @@
     let renderedModules: TModule[] = [];
 
     let moving = false;
-    let prevX = 0;
-    let prevY = 0;
+    let offsetX = 0;
+    let offsetY = 0;
+
     const panelConfig = loadPanelConfig();
+
+    let ignoreGrid = false;
 
     interface PanelConfig {
         top: number;
@@ -81,27 +84,30 @@
         panelConfig.top = clamp(panelConfig.top, 0, document.documentElement.clientHeight * (2 / $scaleFactor) - panelElement.offsetHeight);
     }
 
-    function onMouseDown() {
+    function onMouseDown(e: MouseEvent) {
         moving = true;
-
+        offsetX = e.clientX - panelConfig.left;
+        offsetY = e.clientY - panelConfig.top;
         panelConfig.zIndex = ++$maxPanelZIndex;
+        $showGrid = $snappingEnabled;
     }
 
     function onMouseMove(e: MouseEvent) {
         if (moving) {
-            panelConfig.left += (e.screenX - prevX) * (2 / $scaleFactor);
-            panelConfig.top += (e.screenY - prevY) * (2 / $scaleFactor);
+            const newLeft = (e.clientX - offsetX) * (2 / $scaleFactor);
+            const newTop = (e.clientY - offsetY) * (2 / $scaleFactor);
+
+            panelConfig.left = snapToGrid(newLeft);
+            panelConfig.top = snapToGrid(newTop);
+
+            fixPosition();
+            savePanelConfig();
         }
-
-        prevX = e.screenX;
-        prevY = e.screenY;
-
-        fixPosition();
-        savePanelConfig();
     }
 
     function onMouseUp() {
         moving = false;
+        $showGrid = false;
     }
 
     function toggleExpanded() {
@@ -162,9 +168,27 @@
             })
         }, 500);
     });
+
+    function handleKeydown(e: KeyboardEvent) {
+        if (e.key === "Shift") {
+            ignoreGrid = true;
+        }
+    }
+
+    function handleKeyup(e: KeyboardEvent) {
+        if (e.key === "Shift") {
+            ignoreGrid = false;
+        }
+    }
+
+    function snapToGrid(value: number): number {
+        if (ignoreGrid || !$snappingEnabled) return value;
+
+        return Math.round(value / $gridSize) * $gridSize;
+    }
 </script>
 
-<svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove}/>
+<svelte:window on:mouseup={onMouseUp} on:mousemove={onMouseMove} on:keydown={handleKeydown} on:keyup={handleKeyup}/>
 
 <div
         class="panel"
@@ -208,6 +232,8 @@
     overflow: hidden;
     box-shadow: 0 0 10px rgba($clickgui-base-color, 0.5);
     will-change: transform;
+    transition: none;
+    user-select: none;
   }
 
   .title {

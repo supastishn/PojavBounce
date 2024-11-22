@@ -61,6 +61,7 @@ mutable field net/minecraft/network/packet/c2s/play/PlayerMoveC2SPacket changeLo
 
 accessible field net/minecraft/client/network/ClientPlayerInteractionManager currentBreakingProgress F
 accessible field net/minecraft/client/network/ClientPlayerInteractionManager blockBreakingCooldown I
+accessible field net/minecraft/client/network/ClientPlayerInteractionManager gameMode Lnet/minecraft/world/GameMode;
 
 accessible field net/minecraft/network/packet/c2s/common/ResourcePackStatusC2SPacket status Lnet/minecraft/network/packet/c2s/common/ResourcePackStatusC2SPacket$Status;
 

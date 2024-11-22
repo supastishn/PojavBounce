@@ -73,7 +73,6 @@ fun createSplashPotion(name: String, vararg effects: StatusEffectInstance): Item
     return itemStack
 }
 
-
 fun findHotbarSlot(item: Item): Int? = findHotbarSlot { it.item == item }
 
 inline fun findHotbarSlot(predicate: (ItemStack) -> Boolean): Int? {

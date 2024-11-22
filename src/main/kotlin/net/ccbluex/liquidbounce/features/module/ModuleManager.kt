@@ -226,6 +226,7 @@ object ModuleManager : Listenable, Iterable<Module> by modules {
             ModuleAvoidHazards,
             ModuleBlockBounce,
             ModuleBlockWalk,
+            ModuleElytraRecast,
             ModuleElytraFly,
             ModuleFly,
             ModuleFreeze,

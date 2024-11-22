@@ -274,14 +274,42 @@ fun BlockPos.getSortedSphere(radius: Float): Array<BlockPos> {
 /**
  * Basically [BlockView.raycast] but this method allows us to exclude blocks using [exclude].
  */
-@Suppress("SpellCheckingInspection")
-fun BlockView.raycast(context: RaycastContext, exclude: Array<BlockPos>): BlockHitResult {
+@Suppress("SpellCheckingInspection", "CognitiveComplexMethod")
+fun BlockView.raycast(
+    context: RaycastContext,
+    exclude: Array<BlockPos>?,
+    include: BlockPos?,
+    maxBlastResistance: Float?
+): BlockHitResult {
     return BlockView.raycast(context.start, context.end, context,
         { raycastContext, pos ->
-            val excluded = pos in exclude
+            val excluded = exclude?.let { pos in it } ?: false
 
-            val blockState = if (excluded) Blocks.VOID_AIR.defaultState else getBlockState(pos)
-            val fluidState = if (excluded) Fluids.EMPTY.defaultState else getFluidState(pos)
+            val blockState = if (excluded) {
+                Blocks.VOID_AIR.defaultState
+            } else if (include != null && pos == include) {
+                Blocks.OBSIDIAN.defaultState
+            } else {
+                var state = getBlockState(pos)
+                maxBlastResistance?.let {
+                    if (state.block.blastResistance < it) {
+                        state = Blocks.VOID_AIR.defaultState
+                    }
+                }
+                state
+            }
+
+            val fluidState = if (excluded) {
+                Fluids.EMPTY.defaultState
+            } else {
+                var state = getFluidState(pos)
+                maxBlastResistance?.let {
+                    if (state.blastResistance < it) {
+                        state = Fluids.EMPTY.defaultState
+                    }
+                }
+                state
+            }
 
             val vec = raycastContext.start
             val vec2 = raycastContext.end
@@ -488,13 +516,17 @@ private inline fun handlePass(
 /**
  * Breaks the block
  */
-fun doBreak(rayTraceResult: BlockHitResult, immediate: Boolean = false) {
+fun doBreak(
+    rayTraceResult: BlockHitResult,
+    immediate: Boolean = false,
+    swingMode: SwingMode = SwingMode.DO_NOT_HIDE
+) {
     val direction = rayTraceResult.side
     val blockPos = rayTraceResult.blockPos
 
     if (player.isCreative) {
         if (interaction.attackBlock(blockPos, rayTraceResult.side)) {
-            player.swingHand(Hand.MAIN_HAND)
+            swingMode.swing(Hand.MAIN_HAND)
             return
         }
     }
@@ -507,7 +539,7 @@ fun doBreak(rayTraceResult: BlockHitResult, immediate: Boolean = false) {
                 PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockPos, direction
             )
         )
-        player.swingHand(Hand.MAIN_HAND)
+        swingMode.swing(Hand.MAIN_HAND)
         network.sendPacket(
             PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockPos, direction
@@ -517,7 +549,7 @@ fun doBreak(rayTraceResult: BlockHitResult, immediate: Boolean = false) {
     }
 
     if (interaction.updateBlockBreakingProgress(blockPos, direction)) {
-        player.swingHand(Hand.MAIN_HAND)
+        swingMode.swing(Hand.MAIN_HAND)
         mc.particleManager.addBlockBreakingParticles(blockPos, direction)
     }
 }
@@ -592,14 +624,16 @@ fun Block?.isInteractable(blockState: BlockState?): Boolean {
 }
 
 fun BlockPos.isBlockedByEntities(): Boolean {
+    val posBox = FULL_BOX.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble())
     return world.entities.any {
-        it.boundingBox.intersects(FULL_BOX.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble()))
+        it.boundingBox.intersects(posBox)
     }
 }
 
 inline fun BlockPos.getBlockingEntities(include: (Entity) -> Boolean = { true }): List<Entity> {
+    val posBox = FULL_BOX.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble())
     return world.entities.filter {
-        it.boundingBox.intersects(FULL_BOX.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble())) &&
+        it.boundingBox.intersects(posBox) &&
             include.invoke(it)
     }
 }
@@ -607,11 +641,12 @@ inline fun BlockPos.getBlockingEntities(include: (Entity) -> Boolean = { true })
 /**
  * Like [isBlockedByEntities] but it returns a blocking end crystal if present.
  */
-fun BlockPos.isBlockedByEntitiesReturnCrystal(): BooleanObjectPair<EndCrystalEntity?> {
+fun BlockPos.isBlockedByEntitiesReturnCrystal(box: Box = FULL_BOX): BooleanObjectPair<EndCrystalEntity?> {
     var blocked = false
 
+    val posBox = box.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble())
     world.entities.forEach {
-        if (it.boundingBox.intersects(FULL_BOX.offset(this.x.toDouble(), this.y.toDouble(), this.z.toDouble()))) {
+        if (it.boundingBox.intersects(posBox)) {
             if (it is EndCrystalEntity) {
                 return BooleanObjectPair.of(true, it)
             }

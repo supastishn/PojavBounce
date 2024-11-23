@@ -353,7 +353,11 @@ object ModuleManager : Listenable, Iterable<Module> by modules {
             builtin += ModuleDebugRecorder
         }
 
-        builtin.forEach(::addModule)
+        builtin.forEach {
+            addModule(it)
+            it.walkKeyPath()
+            it.verifyFallbackDescription()
+        }
     }
 
     private fun addModule(module: Module) {

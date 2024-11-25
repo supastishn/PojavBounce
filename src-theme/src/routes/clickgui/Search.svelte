@@ -113,7 +113,7 @@
         }
     });
 
-    listen("toggleModule", (e: ToggleModuleEvent) => {
+    listen("moduleToggle", (e: ToggleModuleEvent) => {
         const mod = filteredModules.find((m) => m.name === e.moduleName);
         if (!mod) {
             return;

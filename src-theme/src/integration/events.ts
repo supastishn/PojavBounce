@@ -4,7 +4,7 @@ export interface ClickGuiValueChangeEvent {
     configurable: ConfigurableSetting;
 }
 
-export interface ToggleModuleEvent {
+export interface ModuleToggleEvent {
     moduleName: string;
     hidden: boolean;
     enabled: boolean;

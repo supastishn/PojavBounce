@@ -28,7 +28,7 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.event.tickHandler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleCriticals
+import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura.KillAuraClickScheduler.considerMissCooldown
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura.RaycastMode.*
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.AutoBlock
@@ -464,8 +464,8 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
     private fun checkIfReadyToAttack(choosenEntity: Entity): Boolean {
         val critical = when (criticalsMode) {
             CriticalsMode.IGNORE -> true
-            CriticalsMode.SMART -> !ModuleCriticals.shouldWaitForCrit(choosenEntity, ignoreState=true)
-            CriticalsMode.ALWAYS -> ModuleCriticals.wouldCrit()
+            CriticalsMode.SMART -> !ModuleCriticals.shouldWaitForCrit(choosenEntity, ignoreState = true)
+            CriticalsMode.ALWAYS -> ModuleCriticals.wouldDoCriticalHit()
         }
         val shielding = attackShielding || choosenEntity !is PlayerEntity || player.mainHandStack.item is AxeItem ||
             !choosenEntity.wouldBlockHit(player)

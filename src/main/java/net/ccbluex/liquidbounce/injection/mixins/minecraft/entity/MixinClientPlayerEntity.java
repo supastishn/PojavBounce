@@ -320,6 +320,11 @@ public abstract class MixinClientPlayerEntity extends MixinPlayerEntity {
         return liquid_bounce$isOmniWalking();
     }
 
+    @ModifyExpressionValue(method = "tickMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/client/network/ClientPlayerEntity;horizontalCollision:Z"))
+    private boolean hookSprintIgnoreCollision(boolean original) {
+        return !ModuleSprint.INSTANCE.shouldIgnoreCollision() && original;
+    }
+
     @Unique
     private boolean liquid_bounce$isOmniWalking() {
         boolean hasMovement = Math.abs(input.movementForward) > 1.0E-5F || Math.abs(input.movementSideways) > 1.0E-5F;

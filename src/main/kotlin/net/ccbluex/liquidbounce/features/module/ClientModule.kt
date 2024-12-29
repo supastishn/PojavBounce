@@ -144,7 +144,7 @@ open class ClientModule(
         .doNotIncludeWhen { !AutoConfig.includeConfiguration.includeHidden }
         .independentDescription()
         .onChange {
-            EventManager.callEvent(RefreshArrayListEvent())
+            EventManager.callEvent(RefreshArrayListEvent)
             it
         }.apply {
             if (disableActivation) {
@@ -204,7 +204,7 @@ open class ClientModule(
 
         // Refresh arraylist on tag change
         setting.onChanged {
-            EventManager.callEvent(RefreshArrayListEvent())
+            EventManager.callEvent(RefreshArrayListEvent)
         }
     }
 

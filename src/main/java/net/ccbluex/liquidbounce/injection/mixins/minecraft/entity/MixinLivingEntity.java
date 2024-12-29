@@ -190,7 +190,7 @@ public abstract class MixinLivingEntity extends MixinEntity {
 
     @Inject(method = "pushAwayFrom", at = @At("HEAD"), cancellable = true)
     private void hookNoPush(CallbackInfo callbackInfo) {
-        if (ModuleNoPush.INSTANCE.getRunning()) {
+        if (ModuleNoPush.INSTANCE.isEntities()) {
             callbackInfo.cancel();
         }
     }

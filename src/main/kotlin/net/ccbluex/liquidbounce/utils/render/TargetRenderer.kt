@@ -20,6 +20,7 @@ package net.ccbluex.liquidbounce.utils.render
 
 import com.mojang.blaze3d.platform.GlStateManager
 import com.mojang.blaze3d.systems.RenderSystem
+import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.types.Choice
 import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
@@ -35,6 +36,8 @@ import net.ccbluex.liquidbounce.utils.render.WorldToScreen.calculateScreenPos
 import net.minecraft.client.gl.ShaderProgramKeys
 import net.minecraft.client.render.VertexFormat
 import net.minecraft.client.render.VertexFormats
+import net.minecraft.client.texture.NativeImage
+import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
@@ -80,7 +83,15 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
 
     inner class Ghost : WorldTargetRenderAppearance("Ghost") {
 
-        private val glow = Identifier.of("liquidbounce", "glow.png")
+        private val glow by lazy {
+            Identifier.of("liquiudbounce", "glow").also { identifier ->
+                val texture = with(LiquidBounce.javaClass.getResourceAsStream("/resources/liquidbounce/glow.png")) {
+                    NativeImageBackedTexture(NativeImage.read(this))
+                }
+
+                mc.textureManager.registerTexture(identifier, texture)
+            }
+        }
 
         private var lastTime = System.currentTimeMillis()
 
@@ -92,7 +103,9 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
         private var length by int("Length", 25, 15..40)
 
         override fun render(env: WorldRenderEnvironment, entity: Entity, partialTicks: Float) {
+            env.matrixStack.push()
             RenderSystem.depthMask(false)
+            RenderSystem.disableCull()
             mc.gameRenderer.lightmapTextureManager.disable()
             RenderSystem.blendFuncSeparate(
                 GlStateManager.SrcFactor.SRC_ALPHA,
@@ -100,7 +113,6 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
                 GlStateManager.SrcFactor.ZERO,
                 GlStateManager.DstFactor.ONE
             )
-            env.matrixStack.push()
 
 
             with(mc.gameRenderer.camera.pos) {
@@ -122,30 +134,31 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
 
             with(env) {
                 drawParticle(
-                    { sin, cos -> translate(sin, cos, -cos) },
-                    { sin, cos -> translate(-sin, -cos, cos) }
+                    { sin, cos -> Triple(sin, cos, -cos) },
+                    { sin, cos -> Triple(-sin, -cos, cos) }
                 )
 
                 drawParticle(
-                    { sin, cos -> translate(-sin, sin, -cos) },
-                    { sin, cos -> translate(sin, -sin, cos) }
+                    { sin, cos -> Triple(-sin, sin, -cos) },
+                    { sin, cos -> Triple(sin, -sin, cos) }
                 )
 
                 drawParticle(
-                    { sin, cos -> translate(-sin, -sin, cos) },
-                    { sin, cos -> translate(sin, sin, -cos) }
+                    { sin, cos -> Triple(-sin, -sin, cos) },
+                    { sin, cos -> Triple(sin, sin, -cos) }
                 )
             }
 
             RenderSystem.depthMask(false)
             RenderSystem.defaultBlendFunc()
             mc.gameRenderer.lightmapTextureManager.enable()
+            RenderSystem.enableCull()
             env.matrixStack.pop()
         }
 
         private inline fun WorldRenderEnvironment.drawParticle(
-            translateBefore: MatrixStack.(Double, Double)->Unit,
-            translateAfter: MatrixStack.(Double, Double)->Unit
+            translationsBefore: MatrixStack.(Double, Double)->Triple<Double, Double, Double>,
+            translateAfter: MatrixStack.(Double, Double)->Triple<Double, Double, Double>
         ) {
             val radius = 0.67
             val distance = 10.0 + (length * 0.2)
@@ -157,7 +170,10 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
                 val cos = cos(angle) * radius
 
                 with(matrixStack) {
-                    translateBefore(sin, cos)
+                    with(translationsBefore(sin, cos)) {
+                        translate(first, second, third)
+                    }
+
                     translate(-size / 2.0, -size / 2.0, 0.0)
                     multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-mc.gameRenderer.camera.yaw))
                     multiply(RotationAxis.POSITIVE_X.rotationDegrees(mc.gameRenderer.camera.pitch))
@@ -194,7 +210,10 @@ class WorldTargetRenderer(module: ClientModule) : TargetRenderer<WorldRenderEnvi
                     multiply(RotationAxis.POSITIVE_X.rotationDegrees(-mc.gameRenderer.camera.pitch))
                     multiply(RotationAxis.POSITIVE_Y.rotationDegrees(mc.gameRenderer.camera.yaw))
                     translate(size / 2.0, size / 2.0, 0.0)
-                    translateAfter(sin, cos)
+
+                    with(translateAfter(sin, cos)) {
+                        translate(first, second, third)
+                    }
                 }
             }
         }

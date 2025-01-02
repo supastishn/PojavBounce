@@ -22,6 +22,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleObjectImmutablePair
 import it.unimi.dsi.fastutil.doubles.DoubleObjectPair
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.features.module.modules.player.invcleaner.HotbarItemSlot
+import net.ccbluex.liquidbounce.features.module.modules.world.ModuleExtinguish
 import net.ccbluex.liquidbounce.features.module.modules.world.traps.BlockChangeInfo
 import net.ccbluex.liquidbounce.features.module.modules.world.traps.BlockChangeIntent
 import net.ccbluex.liquidbounce.features.module.modules.world.traps.IntentTiming
@@ -46,6 +47,7 @@ import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
+import net.minecraft.util.math.Vec3i
 
 class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlanner.IgnitionIntentData>(
     parent,
@@ -115,11 +117,15 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
         )
 
         val options = BlockPlacementTargetFindingOptions(
-            offsetsForTargets,
-            slot.itemStack,
-            NearestRotationTargetPositionFactory(PositionFactoryConfiguration(player.eyePos, 0.5)),
-            BlockPlacementTargetFindingOptions.PRIORITIZE_LEAST_BLOCK_DISTANCE,
-            player.pos
+            BlockOffsetOptions(
+                offsetsForTargets,
+                BlockPlacementTargetFindingOptions.PRIORITIZE_LEAST_BLOCK_DISTANCE,
+            ),
+            FaceHandlingOptions(
+                NearestRotationTargetPositionFactory(PositionFactoryConfiguration(player.eyePos, 0.5))
+            ),
+            stackToPlaceWith = slot.itemStack,
+            PlayerLocationOnPlacement(position = player.pos),
         )
 
         return findBestBlockPlacementTarget(blockPos, options)

@@ -63,7 +63,7 @@ object ModuleCrystalAura : ClientModule(
 
     private val targetRenderer = tree(WorldTargetRenderer(this))
 
-    val rotationMode = choices("RotationMode", 0) {
+    val rotationMode = choices(this, "RotationMode") {
         arrayOf(NormalRotationMode(it, this, Priority.NORMAL), NoRotationMode(it, this))
     }
 

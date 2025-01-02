@@ -92,6 +92,9 @@ object ModuleCriticals : ClientModule("Criticals", Category.COMBAT) {
             }
         }
 
+        fun shouldAttemptCritWhileSprinting(): Boolean {
+            return this.running && this.stopSprinting == StopSprintingMode.NONE
+        }
     }
 
     /**

@@ -53,7 +53,7 @@ abstract class PredictFeature(name: String) : ToggleableConfigurable(ModuleCryst
     /**
      * How the predicted data will be used. For damage prediction only.
      */
-    val calculationMode = choices(this, "CalculationMode", 0) {
+    val calculationMode = choices(this, "CalculationMode") {
         arrayOf(Both(it), PredictOnly(it))
     }
 

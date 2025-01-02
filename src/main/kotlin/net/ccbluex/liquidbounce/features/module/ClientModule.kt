@@ -110,12 +110,13 @@ open class ClientModule(
             }
 
             if (!loadingNow) {
-                notification(
-                    if (new) translation("liquidbounce.generic.enabled")
-                    else translation("liquidbounce.generic.disabled"),
-                    this.name,
-                    if (new) NotificationEvent.Severity.ENABLED else NotificationEvent.Severity.DISABLED
-                )
+                val (title, severity) = if (new) {
+                    translation("liquidbounce.generic.enabled") to NotificationEvent.Severity.ENABLED
+                } else {
+                    translation("liquidbounce.generic.disabled") to NotificationEvent.Severity.DISABLED
+                }
+
+                notification(title, this.name, severity)
             }
 
             // Notify everyone about module state
@@ -226,12 +227,12 @@ open class ClientModule(
         }
     }
 
-    protected fun <T: Choice> choices(name: String, active: T, choices: Array<T>) =
+    protected fun <T : Choice> choices(name: String, active: T, choices: Array<T>) =
         choices(this, name, active, choices)
 
     protected fun <T : Choice> choices(
         name: String,
-        activeIndex: Int,
+        activeIndex: Int = 0,
         choicesCallback: (ChoiceConfigurable<T>) -> Array<T>
     ) = choices(this, name, activeIndex, choicesCallback)
 

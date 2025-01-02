@@ -37,6 +37,7 @@ import net.ccbluex.liquidbounce.utils.client.regular
  */
 object CommandValue : CommandFactory {
 
+    @Suppress("SwallowedException")
     override fun createCommand(): Command {
         return CommandBuilder
             .begin("value")
@@ -44,7 +45,7 @@ object CommandValue : CommandFactory {
                 ParameterBuilder
                     .begin<ClientModule>("moduleName")
                     .verifiedBy(ParameterBuilder.MODULE_VALIDATOR)
-                    .autocompletedWith(ModuleManager::autoComplete)
+                    .autocompletedWith { begin, _ -> ModuleManager.autoComplete(begin) }
                     .required()
                     .build()
             )

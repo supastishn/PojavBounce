@@ -20,10 +20,12 @@ package net.ccbluex.liquidbounce.config
 
 import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.LiquidBounce
-import net.ccbluex.liquidbounce.api.AutoSettings
-import net.ccbluex.liquidbounce.api.AutoSettingsStatusType
-import net.ccbluex.liquidbounce.api.AutoSettingsType
-import net.ccbluex.liquidbounce.api.ClientApi
+import net.ccbluex.liquidbounce.api.core.AsyncLazy
+import net.ccbluex.liquidbounce.api.core.withScope
+import net.ccbluex.liquidbounce.api.models.client.AutoSettings
+import net.ccbluex.liquidbounce.api.services.client.ClientApi
+import net.ccbluex.liquidbounce.api.types.enums.AutoSettingsStatusType
+import net.ccbluex.liquidbounce.api.types.enums.AutoSettingsType
 import net.ccbluex.liquidbounce.authlib.utils.array
 import net.ccbluex.liquidbounce.authlib.utils.int
 import net.ccbluex.liquidbounce.authlib.utils.string
@@ -33,7 +35,6 @@ import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.utils.client.*
 import net.minecraft.util.Formatting
-import net.minecraft.util.Util
 import java.io.Writer
 import java.text.SimpleDateFormat
 import java.util.*
@@ -63,13 +64,13 @@ object AutoConfig {
 
     var includeConfiguration = IncludeConfiguration.DEFAULT
 
-    var configsCache: Array<AutoSettings>? = null
-    val configs
-        get() = configsCache ?: ClientApi.requestSettingsList().apply {
-            configsCache = this
-        }
-
-    fun startLoaderTask(task: Runnable) = Util.getDownloadWorkerExecutor().execute(task)
+    val configs by AsyncLazy {
+        runCatching {
+            ClientApi.requestSettingsList()
+        }.onFailure { exception ->
+            logger.error("Failed to load auto configs", exception)
+        }.getOrNull()
+    }
 
     inline fun withLoading(block: () -> Unit) {
         loadingNow = true
@@ -80,7 +81,7 @@ object AutoConfig {
         }
     }
 
-    fun loadAutoConfig(autoConfig: AutoSettings) = startLoaderTask {
+    fun loadAutoConfig(autoConfig: AutoSettings) = withScope {
         withLoading {
             runCatching {
                 ClientApi.requestSettingsScript(autoConfig.settingId).apply {

@@ -18,10 +18,13 @@
  */
 package net.ccbluex.liquidbounce.features.command.commands.client
 
-import net.ccbluex.liquidbounce.api.ClientApi
+import net.ccbluex.liquidbounce.api.core.HttpClient
+import net.ccbluex.liquidbounce.api.core.HttpMethod
+import net.ccbluex.liquidbounce.api.core.parse
+import net.ccbluex.liquidbounce.api.core.withScope
+import net.ccbluex.liquidbounce.api.services.client.ClientApi
 import net.ccbluex.liquidbounce.config.AutoConfig
 import net.ccbluex.liquidbounce.config.AutoConfig.configs
-import net.ccbluex.liquidbounce.config.AutoConfig.configsCache
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.gson.publicGson
 import net.ccbluex.liquidbounce.features.command.Command
@@ -31,7 +34,6 @@ import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.builder.moduleParameter
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.*
-import net.ccbluex.liquidbounce.utils.io.HttpClient.get
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.HoverEvent
 import net.minecraft.text.Text
@@ -70,6 +72,10 @@ object CommandConfig : CommandFactory {
             runCatching {
                 chat(regular(command.result("loading")))
                 val widthOfSpace = mc.textRenderer.getWidth(" ")
+                val configs = configs ?: run {
+                    chat(regular("§cFailed to load settings list from API"))
+                    return@handler
+                }
                 val width = configs.maxOf { mc.textRenderer.getWidth(it.settingId) }
 
                 // In the case of the chat, we want to show the newest config at the bottom for visibility
@@ -145,11 +151,11 @@ object CommandConfig : CommandFactory {
             val modules = ModuleManager.parseModulesFromParameter(moduleNames)
 
             // Load the config in a separate thread to prevent the client from freezing
-            AutoConfig.startLoaderTask {
+            withScope {
                 runCatching {
                     if (name.startsWith("http")) {
                         // Load the config from the specified URL
-                        get(name).reader()
+                        HttpClient.request(name, HttpMethod.GET).parse<String>().reader()
                     } else {
                         // Get online config from API
                         ClientApi.requestSettingsScript(name).reader()
@@ -176,7 +182,7 @@ object CommandConfig : CommandFactory {
                             chat(regular(command.result("loaded", variable(name))))
                         }
                     }
-                }.onFailure {
+                }.onFailure { exception ->
                     chat(markAsError(command.result("failedToLoad", variable(name))))
                 }
             }
@@ -184,7 +190,7 @@ object CommandConfig : CommandFactory {
         .build()
 
     private fun autocompleteConfigs(begin: String): List<String> {
-        return configsCache?.map { it.settingId }?.filter { it.startsWith(begin, true) } ?: emptyList()
+        return configs?.map { it.settingId }?.filter { it.startsWith(begin, true) } ?: emptyList()
     }
 
 

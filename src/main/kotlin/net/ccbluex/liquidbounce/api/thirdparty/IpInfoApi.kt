@@ -16,21 +16,18 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.api
+package net.ccbluex.liquidbounce.api.thirdparty
 
-import net.ccbluex.liquidbounce.config.gson.util.decode
+import net.ccbluex.liquidbounce.api.core.AsyncLazy
+import net.ccbluex.liquidbounce.api.core.BaseApi
 import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager
 import net.ccbluex.liquidbounce.utils.client.logger
-import net.ccbluex.liquidbounce.utils.io.HttpClient
 
 /**
  * An implementation for the ipinfo.io API including
  * keeping track of the current IP address.
  */
-object IpInfoApi {
-
-    private const val API_URL = "https://ipinfo.io/json"
-    private const val API_URL_OTHER_IP = "https://ipinfo.io/%s/json"
+object IpInfoApi : BaseApi("https://ipinfo.io") {
 
     /**
      * Information about the current IP address of the user. This can change depending on if the
@@ -46,12 +43,14 @@ object IpInfoApi {
      * which is unlikely to change, even when changing the IP address. This could happen when using a VPN,
      * but it's not that important to keep this updated all the time.
      */
-    private val original: IpData? = runCatching(this::own).onFailure {
-        logger.error("Failed to get own IP address", it)
-    }.getOrNull()
+    val original: IpData? by AsyncLazy {
+        runCatching { own() }.onFailure {
+            logger.error("Failed to get own IP address", it)
+        }.getOrNull()
+    }
 
-    fun own() = decode<IpData>(HttpClient.get(API_URL))
-    fun someoneElse(ip: String) = decode<IpData>(HttpClient.get(API_URL_OTHER_IP.format(ip)))
+    suspend fun own() = get<IpData>("/json")
+    suspend fun someoneElse(ip: String) = get<IpData>("/$ip/json")
 
     /**
      * Represents information about an IP address
@@ -69,4 +68,3 @@ object IpInfoApi {
     )
 
 }
-

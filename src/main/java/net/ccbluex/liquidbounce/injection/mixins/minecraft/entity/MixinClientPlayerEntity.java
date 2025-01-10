@@ -24,10 +24,6 @@ import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.EventState;
 import net.ccbluex.liquidbounce.event.events.*;
-import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSuperKnockback;
-import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals;
-import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura;
-import net.ccbluex.liquidbounce.features.module.modules.exploit.ModuleAntiHunger;
 import net.ccbluex.liquidbounce.features.module.modules.exploit.ModulePortalMenu;
 import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleEntityControl;
 import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleNoPush;
@@ -42,6 +38,7 @@ import net.ccbluex.liquidbounce.integration.VrScreen;
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.PlayerData;
 import net.ccbluex.liquidbounce.utils.aiming.Rotation;
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager;
+import net.ccbluex.liquidbounce.utils.movement.DirectionalInput;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.input.Input;
@@ -303,53 +300,54 @@ public abstract class MixinClientPlayerEntity extends MixinPlayerEntity {
 
     @ModifyConstant(method = "canSprint", constant = @Constant(floatValue = 6.0F), slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/HungerManager;getFoodLevel()I", ordinal = 0)))
     private float hookSprintIgnoreHunger(float constant) {
-        return ModuleSprint.INSTANCE.shouldIgnoreHunger() ? -1F : constant;
+        return ModuleSprint.INSTANCE.getShouldIgnoreHunger() ? -1F : constant;
     }
 
     @ModifyExpressionValue(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/option/KeyBinding;isPressed()Z"))
-    private boolean hookAutoSprint(boolean original) {
-        return !ModuleSuperKnockback.INSTANCE.shouldBlockSprinting() && !ModuleKillAura.INSTANCE.shouldBlockSprinting()
-                && (ModuleSprint.INSTANCE.getRunning() || original);
+    private boolean hookSprintStart(boolean original) {
+        var event = new SprintEvent(new DirectionalInput(input), original, SprintEvent.Source.MOVEMENT_TICK);
+        EventManager.INSTANCE.callEvent(event);
+        return event.getSprint();
     }
 
-    @ModifyExpressionValue(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isWalking()Z"))
-    private boolean hookOmnidirectionalSprintB(boolean original) {
-        return liquid_bounce$isOmniWalking();
+    @ModifyExpressionValue(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;canSprint()Z"))
+    private boolean hookSprintStop(boolean original) {
+        var event = new SprintEvent(new DirectionalInput(input), original, SprintEvent.Source.MOVEMENT_TICK);
+        EventManager.INSTANCE.callEvent(event);
+        return event.getSprint();
     }
 
     @ModifyExpressionValue(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isBlind()Z"))
     private boolean hookSprintIgnoreBlindness(boolean original) {
-        return !ModuleSprint.INSTANCE.shouldIgnoreBlindness() && original;
-    }
-
-    @ModifyExpressionValue(method = "canStartSprinting", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isWalking()Z"))
-    private boolean hookOmnidirectionalSprintC(boolean original) {
-        return liquid_bounce$isOmniWalking();
+        return !ModuleSprint.INSTANCE.getShouldIgnoreBlindness() && original;
     }
 
     @ModifyExpressionValue(method = "tickMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/client/network/ClientPlayerEntity;horizontalCollision:Z"))
     private boolean hookSprintIgnoreCollision(boolean original) {
-        return !ModuleSprint.INSTANCE.shouldIgnoreCollision() && original;
+        return !ModuleSprint.INSTANCE.getShouldIgnoreCollision() && original;
     }
 
-    @Unique
-    private boolean liquid_bounce$isOmniWalking() {
-        boolean hasMovement = Math.abs(input.movementForward) > 1.0E-5F || Math.abs(input.movementSideways) > 1.0E-5F;
-        boolean isWalking = (double) Math.abs(input.movementForward) >= 0.8 || (double) Math.abs(input.movementSideways) >= 0.8;
-        boolean modifiedIsWalking = this.isSubmergedInWater() ? hasMovement : isWalking;
-        return ModuleSprint.INSTANCE.shouldSprintOmnidirectionally() ? modifiedIsWalking : this.isWalking();
+    @ModifyReturnValue(method = "isWalking", at = @At("RETURN"))
+    private boolean hookIsWalking(boolean original) {
+        if (!ModuleSprint.INSTANCE.getShouldSprintOmnidirectional()) {
+            return original;
+        }
+
+        var hasMovement = Math.abs(input.movementForward) > 1.0E-5F ||
+                Math.abs(input.movementSideways) > 1.0E-5F;
+        var isWalking = (double) Math.abs(input.movementForward) >= 0.8 ||
+                (double) Math.abs(input.movementSideways) >= 0.8;
+        return this.isSubmergedInWater() ? hasMovement : isWalking;
     }
 
     @ModifyExpressionValue(method = "sendSprintingPacket", at = @At(
             value = "INVOKE",
             target = "Lnet/minecraft/client/network/ClientPlayerEntity;isSprinting()Z")
     )
-    private boolean hookNoHungerSprint(boolean original) {
-        if (ModuleCriticals.WhenSprinting.INSTANCE.getRunning() && ModuleCriticals.WhenSprinting.INSTANCE.getStopSprinting() == ModuleCriticals.WhenSprinting.StopSprintingMode.ON_NETWORK) {
-            return false;
-        }
-
-        return !(ModuleAntiHunger.INSTANCE.getRunning() && ModuleAntiHunger.INSTANCE.getNoSprint()) && original;
+    private boolean hookNetworkSprint(boolean original) {
+        var event = new SprintEvent(new DirectionalInput(input), original, SprintEvent.Source.NETWORK);
+        EventManager.INSTANCE.callEvent(event);
+        return event.getSprint();
     }
 
     @WrapWithCondition(method = "closeScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V"))

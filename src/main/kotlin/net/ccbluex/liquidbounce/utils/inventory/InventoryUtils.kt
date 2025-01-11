@@ -28,6 +28,7 @@ import com.viaversion.viaversion.api.Via
 import com.viaversion.viaversion.api.protocol.packet.PacketWrapper
 import com.viaversion.viaversion.api.type.Types
 import com.viaversion.viaversion.protocols.v1_9_1to1_9_3.packet.ServerboundPackets1_9_3
+import it.unimi.dsi.fastutil.ints.IntObjectImmutablePair
 import net.ccbluex.liquidbounce.config.types.Configurable
 import net.ccbluex.liquidbounce.features.module.modules.player.invcleaner.*
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold
@@ -36,15 +37,16 @@ import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.input.shouldSwingHand
 import net.ccbluex.liquidbounce.utils.item.isNothing
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.block.BlockState
 import net.minecraft.block.Blocks
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
 import net.minecraft.component.type.DyedColorComponent
+import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket
 import net.minecraft.registry.Registries
 import net.minecraft.registry.tag.ItemTags
-import net.minecraft.util.ActionResult
 import net.minecraft.util.Hand
 import kotlin.math.abs
 
@@ -245,6 +247,29 @@ fun ItemStack.getArmorColor(): Int? {
     } else {
         null
     }
+}
+
+fun PlayerInventory.findBestToolToMineBlock(
+    blockState: BlockState?,
+    ignoreDurability: Boolean = true
+): IntObjectImmutablePair<ItemStack>? {
+    val (hotbarSlot, stack) =
+        (0..8).map {
+            it to getStack(it)
+        }.filter { (_, stack) ->
+            val durabilityCheck = (stack.damage < (stack.maxDamage - 2) || ignoreDurability)
+            (stack.isNothing() || (!player.isCreative && durabilityCheck))
+        }.maxByOrNull { (_, stack) ->
+            stack.getMiningSpeedMultiplier(blockState)
+        } ?: return null
+
+    val miningSpeedMultiplier = stack.getMiningSpeedMultiplier(blockState)
+
+    // The current slot already matches the best
+    if (miningSpeedMultiplier == player.inventory.mainHandStack.getMiningSpeedMultiplier(blockState)) {
+        return null
+    }
+    return IntObjectImmutablePair(hotbarSlot, stack)
 }
 
 /**

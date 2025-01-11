@@ -486,7 +486,7 @@ object ModulePacketMine : ClientModule("PacketMine", Category.WORLD) {
                 return null
             }
 
-            return ModuleAutoTool.getTool(player.inventory, state)
+            return ModuleAutoTool.toolSelector.activeChoice.getTool(player.inventory, state)
         }
 
     }

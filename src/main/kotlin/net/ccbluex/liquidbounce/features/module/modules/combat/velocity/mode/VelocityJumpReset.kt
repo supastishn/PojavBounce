@@ -32,11 +32,11 @@ import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 internal object VelocityJumpReset : VelocityMode("JumpReset") {
 
     private object JumpByReceivedHits : ToggleableConfigurable(ModuleVelocity, "JumpByReceivedHits", false) {
-        val hitsUntilJump by int("HitsUntilJump", 2, 0..10)
+        val hitsUntilJump by intRange("HitsUntilJump", 2..2, 0..10)
     }
 
     private object JumpByDelay : ToggleableConfigurable(ModuleVelocity, "JumpByDelay", true) {
-        val ticksUntilJump by int("UntilJump", 2, 0..20, "ticks")
+        val ticksUntilJump by intRange("UntilJump", 2..2, 0..20, "ticks")
     }
 
     init {
@@ -46,6 +46,9 @@ internal object VelocityJumpReset : VelocityMode("JumpReset") {
 
     private var limitUntilJump = 0
     private var isFallDamage = false
+
+    private var hitsUntilJump = JumpByReceivedHits.hitsUntilJump.random()
+    private var ticksUntilJump = JumpByDelay.ticksUntilJump.random()
 
     @Suppress("unused")
     private val movementInputHandler = handler<MovementInputEvent> { event ->
@@ -57,6 +60,9 @@ internal object VelocityJumpReset : VelocityMode("JumpReset") {
 
         event.jump = true
         limitUntilJump = 0
+
+        hitsUntilJump = JumpByReceivedHits.hitsUntilJump.random()
+        ticksUntilJump = JumpByDelay.ticksUntilJump.random()
     }
 
     @Suppress("unused")
@@ -77,9 +83,12 @@ internal object VelocityJumpReset : VelocityMode("JumpReset") {
     }
 
     private fun isCooldownOver(): Boolean {
+        ModuleDebug.debugParameter(this, "HitsUntilJump", hitsUntilJump)
+        ModuleDebug.debugParameter(this, "UntilJump", ticksUntilJump)
+
         return when {
-            JumpByReceivedHits.enabled -> limitUntilJump >= JumpByReceivedHits.hitsUntilJump
-            JumpByDelay.enabled -> limitUntilJump >= JumpByDelay.ticksUntilJump
+            JumpByReceivedHits.enabled -> limitUntilJump >= hitsUntilJump
+            JumpByDelay.enabled -> limitUntilJump >= ticksUntilJump
             else -> true // If none of the options are enabled, it will go automatic
         }
     }

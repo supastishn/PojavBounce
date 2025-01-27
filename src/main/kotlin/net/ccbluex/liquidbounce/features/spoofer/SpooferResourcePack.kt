@@ -16,24 +16,24 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.exploit
+package net.ccbluex.liquidbounce.features.spoofer
 
+import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket
 import net.minecraft.network.packet.c2s.common.ResourcePackStatusC2SPacket.Status.*
 import net.minecraft.network.packet.s2c.common.ResourcePackSendS2CPacket
 
 /**
- * ResourceSpoof
+ * ResourcePack Spoof
  *
  * Prevents servers from forcing you to download their resource pack.
  */
-object ModuleResourceSpoof : ClientModule("ResourceSpoof", Category.EXPLOIT) {
+object SpooferResourcePack : ToggleableConfigurable(name = "ResourceSpoofer", enabled = false) {
 
-    val packetHandler = handler<PacketEvent> { event ->
+    @Suppress("unused")
+    private val packetHandler = handler<PacketEvent> { event ->
         val packet = event.packet
 
         if (packet is ResourcePackSendS2CPacket) {

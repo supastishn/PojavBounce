@@ -21,15 +21,20 @@ package net.ccbluex.liquidbounce.features.module.modules.combat.velocity.mode
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.event.tickHandler
+import net.ccbluex.liquidbounce.features.module.modules.movement.fly.ModuleFly
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket
 
-internal object VelocityWatchdog : VelocityMode("Watchdog") {
+internal object VelocityHypixel : VelocityMode("Hypixel") {
 
     private var absorbedVelocity = false
 
     @Suppress("unused")
     private val packetHandler = handler<PacketEvent> { event ->
         val packet = event.packet
+        
+        if (ModuleFly.enabled) {
+            return@handler
+        }
 
         // Check if this is a regular velocity update
         if (packet is EntityVelocityUpdateS2CPacket && packet.entityId == player.id) {

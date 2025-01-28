@@ -177,15 +177,25 @@ object KillAuraAutoBlock : ToggleableConfigurable(ModuleKillAura, "AutoBlocking"
             return@handler
         }
 
-        val packet = event.packet
-        if (!blockVisual || flushTicks >= blink || packet is PlayerInteractItemC2SPacket
-            || packet is UpdateSelectedSlotC2SPacket) {
+        fun flush(reason: String) {
             ModuleDebug.debugParameter(this, "Flush", flushTicks)
+            ModuleDebug.debugParameter(this, "Flush Reason", reason)
             flushTicks = 0
-            return@handler
         }
 
-        event.action = PacketQueueManager.Action.QUEUE
+        when {
+            // Not blocking
+            !blockVisual -> flush("N")
+
+            // Start blocking
+            blockingStateEnforced || event.packet is PlayerInteractItemC2SPacket -> flush("B")
+
+            // Timeout reached
+            flushTicks >= blink -> flush("T")
+
+            // Start to queue
+            else -> event.action = PacketQueueManager.Action.QUEUE
+        }
     }
 
     fun stopBlocking(pauses: Boolean = false): Boolean {

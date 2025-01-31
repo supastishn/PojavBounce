@@ -46,17 +46,17 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
 
-class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlanner.IgnitionIntentData>(
+class WebTrapPlanner(parent: EventListener) : TrapPlanner<WebTrapPlanner.WebIntentData>(
     parent,
-    "Ignite",
+    "AutoWeb",
     true
 ) {
 
-    private val trapItems = arrayOf(Items.LAVA_BUCKET, Items.FLINT_AND_STEEL)
-    private val trapWorthyBlocks = arrayOf(Blocks.LAVA, Blocks.FIRE)
+    private val trapItems = arrayOf(Items.COBWEB)
+    private val trapWorthyBlocks = arrayOf(Blocks.COBWEB)
 
-    override fun plan(enemies: List<LivingEntity>): BlockChangeIntent<IgnitionIntentData>? {
-        val slot = findItemToIgnite() ?: return null
+    override fun plan(enemies: List<LivingEntity>): BlockChangeIntent<WebIntentData>? {
+        val slot = findItemToWeb() ?: return null
 
         for (target in enemies) {
             if (!shouldTarget(target)) {
@@ -75,7 +75,7 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
                 BlockChangeInfo.PlaceBlock(placementTarget ),
                 slot,
                 IntentTiming.NEXT_PROPITIOUS_MOMENT,
-                IgnitionIntentData(target, target.getDimensions(EntityPose.STANDING).getBoxAt(targetPos)),
+                WebIntentData(target, target.getDimensions(EntityPose.STANDING).getBoxAt(targetPos)),
                 this
             )
         }
@@ -84,7 +84,7 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
     }
 
     private fun shouldTarget(target: LivingEntity): Boolean {
-        return !target.isOnFire && target.boxedDistanceTo(player) in ModuleAutoTrap.range
+        return target.boxedDistanceTo(player) in ModuleAutoTrap.range
     }
 
     private fun generatePlacementInfo(
@@ -102,7 +102,7 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
             targetPos,
             target.getDimensions(EntityPose.STANDING),
             target.pos.subtract(target.prevPos),
-            slot.itemStack.item == Items.FLINT_AND_STEEL
+            slot.itemStack.item == Items.COBWEB
         )
 
         val options = BlockPlacementTargetFindingOptions(
@@ -168,7 +168,6 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
                 return@forEach
             }
 
-            // !(x == true)? I need it for null checking purposes
             if (mustBeOnGround && (bp.down().getState()?.isAir != false)) {
                 return@forEach
             }
@@ -183,7 +182,7 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
         return offsets.map { it.value() }
     }
 
-    override fun validate(plan: BlockChangeIntent<IgnitionIntentData>, raycast: BlockHitResult): Boolean {
+    override fun validate(plan: BlockChangeIntent<WebIntentData>, raycast: BlockHitResult): Boolean {
         if (raycast.type != HitResult.Type.BLOCK) {
             return false
         }
@@ -197,15 +196,15 @@ class IgnitionTrapPlanner(parent: EventListener) : TrapPlanner<IgnitionTrapPlann
         return plan.slot.itemStack.item in trapItems
     }
 
-    override fun onIntentFullfilled(intent: BlockChangeIntent<IgnitionIntentData>) {
+    override fun onIntentFullfilled(intent: BlockChangeIntent<WebIntentData>) {
         targetTracker.lock(intent.planningInfo.target, reportToUI = false)
     }
 
-    private fun findItemToIgnite(): HotbarItemSlot? {
+    private fun findItemToWeb(): HotbarItemSlot? {
         return Slots.Hotbar.findClosestItem(items = trapItems)
     }
 
-    class IgnitionIntentData(
+    class WebIntentData(
         val target: LivingEntity,
         val targetBB: Box
     )

@@ -104,7 +104,7 @@ object LiquidBounce : EventListener {
      *
      * TODO: Replace this approach with full semantic versioning.
      */
-    const val IN_DEVELOPMENT = false
+    const val IN_DEVELOPMENT = true
 
     val isIntegrationTesting = !System.getenv("TENACC_TEST_PROVIDER").isNullOrBlank()
 

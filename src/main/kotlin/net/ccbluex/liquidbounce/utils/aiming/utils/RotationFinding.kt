@@ -305,8 +305,8 @@ fun raytraceBox(
     val rangeSquared = range * range
     val wallsRangeSquared = wallsRange * wallsRange
 
-    val preferredSpot = rotationPreference.getPreferredSpot(eyes, range)
-    var preferredSpotOnBox = if (box.contains(eyes) && box.contains(preferredSpot)) {
+    val preferredSpot = rotationPreference.getPreferredSpotOnBox(box, eyes, range) ?: return null
+    val preferredSpotOnBox = if (box.contains(eyes) && box.contains(preferredSpot)) {
         preferredSpot
     } else {
         box.raycast(eyes, preferredSpot).getOrNull()

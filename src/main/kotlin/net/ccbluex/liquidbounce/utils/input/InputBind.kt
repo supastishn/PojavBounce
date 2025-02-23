@@ -50,7 +50,7 @@ data class InputBind(
      *
      * @param name The name of the key, which will be translated to an InputUtil.Key.
      */
-    constructor(name: String) : this(inputByName(name), BindAction.TOGGLE)
+    constructor(name: String) : this(inputByNameOrThrow(name), BindAction.TOGGLE)
 
     /**
      * Retrieves the name of the key in uppercase format, excluding the category prefixes.
@@ -79,7 +79,7 @@ data class InputBind(
      * Binds to the given input name.
      */
     fun bind(name: String) {
-        this.boundKey = inputByName(name)
+        this.boundKey = inputByNameOrThrow(name)
     }
 
     /**

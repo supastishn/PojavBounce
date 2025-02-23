@@ -91,19 +91,6 @@ class Command(
     }
 
     /**
-     * Returns the name of the command with the name of its parent classes
-     */
-    private fun getFullName(): String {
-        val parent = this.parentCommand
-
-        return if (parent == null) {
-            this.name
-        } else {
-            parent.getFullName() + " " + this.name
-        }
-    }
-
-    /**
      * Returns the formatted usage information of this command
      *
      * e.g. <code>command_name subcommand_name <required_arg> [[<optional_vararg>]...</code>

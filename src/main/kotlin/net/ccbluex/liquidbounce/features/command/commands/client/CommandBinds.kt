@@ -29,9 +29,7 @@ import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.input.availableInputKeys
-import net.ccbluex.liquidbounce.utils.input.inputByName
-import net.ccbluex.liquidbounce.utils.input.availableMouseKeys
-import net.ccbluex.liquidbounce.utils.input.availableKeyboardKeys
+import net.ccbluex.liquidbounce.utils.input.inputByNameOrNull
 import net.minecraft.client.util.InputUtil
 import net.minecraft.util.Formatting
 import kotlin.math.ceil
@@ -164,10 +162,7 @@ object CommandBinds : CommandFactory {
             val module = ModuleManager.find { it.name.equals(name, true) }
                 ?: throw CommandException(command.result("moduleNotFound", name))
 
-            val bindKey = inputByName(keyName)
-            if (bindKey == InputUtil.UNKNOWN_KEY) {
-                throw CommandException(command.result("unknownKey"))
-            }
+            val bindKey = inputByNameOrNull(keyName) ?: throw CommandException(command.result("unknownKey"))
 
             module.bind.bind(bindKey)
             ModuleClickGui.reloadView()

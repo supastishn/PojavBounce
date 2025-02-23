@@ -34,7 +34,7 @@ import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.toLowerCamelCase
 import net.ccbluex.liquidbounce.utils.input.HumanInputDeserializer
 import net.ccbluex.liquidbounce.utils.input.InputBind
-import net.ccbluex.liquidbounce.utils.input.inputByName
+import net.ccbluex.liquidbounce.utils.input.inputByNameOrNull
 import net.ccbluex.liquidbounce.utils.kotlin.mapArray
 import net.minecraft.client.util.InputUtil
 import java.util.*
@@ -168,7 +168,9 @@ open class Value<T : Any>(
                 }
 
                 is InputUtil.Key -> {
-                    inputByName(t.asString()) as T
+                    val stringVal = t.asString()
+
+                    (inputByNameOrNull(stringVal, acceptNoneKey = true) ?: error("Unknown input key ${stringVal}")) as T
                 }
 
                 is IntRange -> {

@@ -31,10 +31,11 @@ import net.minecraft.util.ActionResult
  * - Abbreviated: "a" -> "key.keyboard.a", "lshift" -> "key.keyboard.left_shift"
  *
  * @param name The key name as a string.
- * @return The corresponding InputUtil.Key object.
+ * @param acceptNoneKey if the name is `none` (or similar), this method returns [InputUtil.UNKNOWN_KEY].
+ * @return The corresponding InputUtil.Key object or null if none was found.
  */
-fun inputByName(name: String): InputUtil.Key {
-    if (name.equals("NONE", true)) {
+fun inputByNameOrNull(name: String, acceptNoneKey: Boolean = false): InputUtil.Key? {
+    if (acceptNoneKey && name.equals("NONE", true)) {
         return InputUtil.UNKNOWN_KEY
     }
 
@@ -49,7 +50,18 @@ fun inputByName(name: String): InputUtil.Key {
 
             else -> "key.keyboard.${formattedName.lowercase()}"
         }
-    return InputUtil.fromTranslationKey(translationKey)
+
+    return runCatching {
+        InputUtil.fromTranslationKey(translationKey)
+    }.getOrNull()
+}
+
+/**
+ * Calls [inputByNameOrNull] and throws if the input key is unknown.
+ */
+fun inputByNameOrThrow(name: String, acceptNoneKey: Boolean = false): InputUtil.Key {
+    return inputByNameOrNull(name, acceptNoneKey = acceptNoneKey)
+        ?: throw IllegalArgumentException("Unknown input key $name")
 }
 
 /**

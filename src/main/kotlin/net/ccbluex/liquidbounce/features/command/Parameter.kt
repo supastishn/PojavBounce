@@ -21,18 +21,31 @@ package net.ccbluex.liquidbounce.features.command
 import net.ccbluex.liquidbounce.lang.translation
 import net.minecraft.text.MutableText
 
-sealed class ParameterValidationResult<T: Any> {
-
+sealed class ParameterValidationResult<out T> {
     companion object {
-        fun <T: Any> ok(value: T): ParameterValidationResult<T> = Ok(value)
-        fun <T: Any> error(errorMessage: String): ParameterValidationResult<T> = Error(errorMessage)
+        fun <T> ok(value: T): ParameterValidationResult<T> = Ok(value)
+        fun <T> error(errorMessage: String): ParameterValidationResult<T> = Error(errorMessage)
     }
 
-    class Ok<T: Any>(val mappedResult: T) : ParameterValidationResult<T>()
-    class Error<T: Any>(val errorMessage: String) : ParameterValidationResult<T>()
+    class Ok<out T>(val mappedResult: T) : ParameterValidationResult<T>() {
+        override fun withContext(context: String): ParameterValidationResult<T> {
+            return this
+        }
+    }
+    class Error<out T>(val errorMessage: String) : ParameterValidationResult<T>() {
+        fun <O> into(): ParameterValidationResult<O> {
+            return Error(this.errorMessage)
+        }
+
+        override fun withContext(context: String): ParameterValidationResult<T> {
+            return Error("$context: ${this.errorMessage}")
+        }
+    }
+
+    abstract fun withContext(context: String): ParameterValidationResult<T>
 }
 
-fun interface ParameterVerificator<T: Any> {
+fun interface ParameterVerifier<out T> {
     /**
      * Verifies and parses parameter.
      *
@@ -68,7 +81,7 @@ class Parameter<T: Any>(
     val name: String,
     val required: Boolean,
     val vararg: Boolean,
-    val verifier: ParameterVerificator<T>?,
+    val verifier: ParameterVerifier<T>?,
     val autocompletionHandler: AutoCompletionProvider?,
     var command: Command? = null
 ) {

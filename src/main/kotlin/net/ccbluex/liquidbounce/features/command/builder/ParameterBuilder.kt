@@ -26,16 +26,16 @@ import net.ccbluex.liquidbounce.utils.client.mc
 
 class ParameterBuilder<T: Any> private constructor(val name: String) {
 
-    private var verifier: ParameterVerificator<T>? = null
+    private var verifier: ParameterVerifier<T>? = null
     private var required: Boolean? = null
     private var vararg: Boolean = false
     private var autocompletionHandler: AutoCompletionProvider? = null
 
     companion object {
-        val STRING_VALIDATOR: ParameterVerificator<String> = ParameterVerificator { sourceText ->
+        val STRING_VALIDATOR: ParameterVerifier<String> = ParameterVerifier { sourceText ->
             ParameterValidationResult.Ok(sourceText)
         }
-        val MODULE_VALIDATOR: ParameterVerificator<ClientModule> = ParameterVerificator { sourceText ->
+        val MODULE_VALIDATOR: ParameterVerifier<ClientModule> = ParameterVerifier { sourceText ->
             val mod = ModuleManager.find { it.name.equals(sourceText, true) }
 
             if (mod == null) {
@@ -44,14 +44,14 @@ class ParameterBuilder<T: Any> private constructor(val name: String) {
                 ParameterValidationResult.ok(mod)
             }
         }
-        val INTEGER_VALIDATOR: ParameterVerificator<Int> = ParameterVerificator { sourceText ->
+        val INTEGER_VALIDATOR: ParameterVerifier<Int> = ParameterVerifier { sourceText ->
             try {
                 ParameterValidationResult.ok(sourceText.toInt())
             } catch (e: NumberFormatException) {
                 ParameterValidationResult.error("'$sourceText' is not a valid integer")
             }
         }
-        val POSITIVE_INTEGER_VALIDATOR: ParameterVerificator<Int> = ParameterVerificator { sourceText ->
+        val POSITIVE_INTEGER_VALIDATOR: ParameterVerifier<Int> = ParameterVerifier { sourceText ->
             try {
                 val integer = sourceText.toInt()
 
@@ -64,7 +64,7 @@ class ParameterBuilder<T: Any> private constructor(val name: String) {
                 ParameterValidationResult.error("'$sourceText' is not a valid integer")
             }
         }
-        val BOOLEAN_VALIDATOR: ParameterVerificator<Boolean> = ParameterVerificator { sourceText ->
+        val BOOLEAN_VALIDATOR: ParameterVerifier<Boolean> = ParameterVerifier { sourceText ->
             when (sourceText.lowercase()) {
                 "yes" -> ParameterValidationResult.ok(true)
                 "no" -> ParameterValidationResult.ok(false)
@@ -79,7 +79,7 @@ class ParameterBuilder<T: Any> private constructor(val name: String) {
         fun <T: Any> begin(name: String): ParameterBuilder<T> = ParameterBuilder(name)
     }
 
-    fun verifiedBy(verifier: ParameterVerificator<T>): ParameterBuilder<T> {
+    fun verifiedBy(verifier: ParameterVerifier<T>): ParameterBuilder<T> {
         this.verifier = verifier
 
         return this

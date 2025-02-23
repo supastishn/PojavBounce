@@ -19,7 +19,8 @@
 package net.ccbluex.liquidbounce.script.bindings.features
 
 import net.ccbluex.liquidbounce.config.types.*
-import net.ccbluex.liquidbounce.utils.input.inputByName
+import net.ccbluex.liquidbounce.utils.input.inputByNameOrNull
+import net.ccbluex.liquidbounce.utils.input.inputByNameOrThrow
 import net.minecraft.client.util.InputUtil
 import org.graalvm.polyglot.Value as PolyglotValue
 
@@ -104,7 +105,9 @@ object ScriptSetting {
     @JvmName("key")
     fun key(value: PolyglotValue): Value<InputUtil.Key> {
         val name = value.getMember("name").asString()
-        val default = inputByName(value.getMember("default").asString())
+        val defaultKey = value.getMember("default").asString()
+
+        val default = inputByNameOrThrow(defaultKey)
 
         return value(name, default, ValueType.KEY)
     }

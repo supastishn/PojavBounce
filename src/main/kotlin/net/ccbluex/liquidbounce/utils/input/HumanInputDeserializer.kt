@@ -77,7 +77,7 @@ object HumanInputDeserializer {
         requireNotNull(block) { "Unknown item '$it'" }
     }
 
-    val keyDeserializer: StringDeserializer<InputUtil.Key> = StringDeserializer(::inputByName)
+    val keyDeserializer: StringDeserializer<InputUtil.Key> = StringDeserializer(::inputByNameOrThrow)
 
     private fun <T> parseArray(str: String, componentDeserializer: StringDeserializer<T>): MutableList<T> {
         return str.split(",").mapTo(ArrayList(), componentDeserializer::deserializeThrowing)

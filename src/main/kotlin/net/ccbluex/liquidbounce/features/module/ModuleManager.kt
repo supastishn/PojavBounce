@@ -442,10 +442,10 @@ object ModuleManager : EventListener, Iterable<ClientModule> by modules {
         modules.clear()
     }
 
-    fun autoComplete(begin: String, validator: (ClientModule) -> Boolean = { true }): List<String> {
+    inline fun autoComplete(begin: String, validator: (ClientModule) -> Boolean = { true }): List<String> {
         val parts = begin.split(",")
         val matchingPrefix = parts.last()
-        val resultPrefix = parts.dropLast(1).joinToString(",") + ","
+        val resultPrefix = parts.subList(0, parts.size - 1).joinToString(",") + ","
         return filter { it.name.startsWith(matchingPrefix, true) && validator(it) }
             .map {
                 if (parts.size == 1) {
@@ -469,6 +469,7 @@ object ModuleManager : EventListener, Iterable<ClientModule> by modules {
     fun getCategories() = Category.entries.mapArray { it.readableName }
 
     @JvmName("getModules")
+    @ScriptApiRequired
     fun getModules(): Iterable<ClientModule> = modules
 
     @JvmName("getModuleByName")

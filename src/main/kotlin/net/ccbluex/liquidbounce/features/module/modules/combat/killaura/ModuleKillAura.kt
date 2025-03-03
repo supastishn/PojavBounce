@@ -31,7 +31,6 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAutoWeapon
 import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals.CriticalsSelectionMode
 import net.ccbluex.liquidbounce.features.module.modules.combat.elytratarget.ModuleElytraTarget
-import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraClicker.passesMissCooldown
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraRotationsConfigurable.KillAuraRotationTiming.ON_TICK
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraRotationsConfigurable.KillAuraRotationTiming.SNAP
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura.RaycastMode.*
@@ -60,6 +59,8 @@ import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager
+import net.ccbluex.liquidbounce.utils.inventory.InventoryManager.isInventoryOpen
+import net.ccbluex.liquidbounce.utils.inventory.isInContainerScreen
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.ccbluex.liquidbounce.utils.render.WorldTargetRenderer
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
@@ -183,8 +184,6 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
             return@tickHandler
         }
 
-        ModuleDebug.debugParameter(ModuleKillAura, "Attack Cooldown", mc.attackCooldown)
-
         if (target == null) {
             val hasUnblocked = KillAuraAutoBlock.stopBlocking()
 
@@ -246,10 +245,6 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
         // Make it seem like we are blocking
         KillAuraAutoBlock.makeSeemBlock()
 
-        if (!passesMissCooldown) {
-            return
-        }
-
         // Are we actually facing the [chosenEntity]
         val isFacingEnemy = facingEnemy(toEntity = target, rotation = rotation,
             range = range.toDouble(),
@@ -283,7 +278,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
         ModuleDebug.debugParameter(ModuleKillAura, "Valid Rotation", rotation)
 
         // Attack enemy, according to the attack scheduler
-        if (clickScheduler.isGoingToClick && validateAttack(target)) {
+        if (clickScheduler.isClickTick && validateAttack(target)) {
             clickScheduler.attack(sequence, rotation) {
                 // On each click, we check if we are still ready to attack
                 if (!validateAttack(target)) {
@@ -301,7 +296,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
                 true
             }
-        } else if (KillAuraAutoBlock.tickOff > 0 && clickScheduler.isClickOnNextTick(KillAuraAutoBlock.tickOff)
+        } else if (KillAuraAutoBlock.tickOff > 0 && clickScheduler.willClickAt(KillAuraAutoBlock.tickOff)
             && KillAuraAutoBlock.shouldUnblockToHit) {
             KillAuraAutoBlock.stopBlocking(pauses = true)
         } else {
@@ -312,7 +307,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
     private fun updateTarget() {
         // Determine aim situation based on click scheduler
         val situation = when {
-            clickScheduler.isGoingToClick || clickScheduler.isClickOnNextTick(1)
+            clickScheduler.isClickTick || clickScheduler.willClickAt(1)
                 -> PointTracker.AimSituation.FOR_NEXT_TICK
             else -> PointTracker.AimSituation.FOR_THE_FUTURE
         }
@@ -368,7 +363,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
             // If our click scheduler is not going to click the moment we reach the target,
             // we should not start aiming towards the target just yet.
-            SNAP -> if (!clickScheduler.isClickOnNextTick(ticks.coerceAtLeast(1))) {
+            SNAP -> if (!clickScheduler.willClickAt(ticks.coerceAtLeast(1))) {
                 return true
             }
 
@@ -466,12 +461,10 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
      * Check if we can attack the target at the current moment
      */
     internal fun validateAttack(target: Entity? = null): Boolean {
-        val criticalHit = target == null || criticalsSelectionMode.isCriticalHit(target)
-        val isInInventoryScreen =
-            InventoryManager.isInventoryOpen || mc.currentScreen is GenericContainerScreen
+        val criticalHit = target == null || player.isGliding || criticalsSelectionMode.isCriticalHit(target)
+        val isInInventoryScreen = isInventoryOpen || isInContainerScreen
 
-        return (criticalHit || ModuleElytraTarget.running) &&
-            !(isInInventoryScreen && !ignoreOpenInventory && !simulateInventoryClosing) && passesMissCooldown
+        return criticalHit && !(isInInventoryScreen && !ignoreOpenInventory && !simulateInventoryClosing)
     }
 
     enum class RaycastMode(override val choiceName: String) : NamedChoice {

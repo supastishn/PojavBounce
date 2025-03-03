@@ -16,15 +16,15 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.features.module.modules.combat
+package net.ccbluex.liquidbounce.features.module.modules.combat.backtrack
 
+import com.google.common.collect.Queues
 import net.ccbluex.liquidbounce.config.types.Choice
 import net.ccbluex.liquidbounce.config.types.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
+import net.ccbluex.liquidbounce.event.*
 import net.ccbluex.liquidbounce.event.events.*
-import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.event.tickHandler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.render.drawSolidBox
@@ -34,7 +34,6 @@ import net.ccbluex.liquidbounce.render.withColor
 import net.ccbluex.liquidbounce.render.withPositionRelativeToCamera
 import net.ccbluex.liquidbounce.utils.client.Chronometer
 import net.ccbluex.liquidbounce.utils.client.PacketSnapshot
-import net.ccbluex.liquidbounce.utils.client.handlePacket
 import net.ccbluex.liquidbounce.utils.combat.findEnemy
 import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.boxedDistanceTo
@@ -44,6 +43,7 @@ import net.ccbluex.liquidbounce.utils.render.WireframePlayer
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.TrackedPosition
+import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket
 import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket
@@ -56,7 +56,7 @@ import net.minecraft.util.math.Vec3d
 object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
 
     private val range by floatRange("Range", 1f..3f, 0f..10f)
-    private val delay by intRange("Delay", 100..150, 0..1000, "ms")
+    val delay by intRange("Delay", 100..150, 0..1000, "ms")
     private val nextBacktrackDelay by intRange("NextBacktrackDelay", 0..10, 0..2000, "ms")
     private val trackingBuffer by int("TrackingBuffer", 500, 0..2000, "ms")
     private val chance by float("Chance", 50f, 0f..100f, "%")
@@ -83,87 +83,89 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
         doNotIncludeAlways()
     }
 
-    private val packetQueue = LinkedHashSet<PacketSnapshot>()
+    val delayedPacketQueue = Queues.newConcurrentLinkedQueue<PacketSnapshot>()
+    val packetProcessQueue = Queues.newConcurrentLinkedQueue<Packet<*>>()
+
     private val chronometer = Chronometer()
     private val trackingBufferChronometer = Chronometer()
     private val attackChronometer = Chronometer()
 
     private var shouldPause = false
 
-    private var target: Entity? = null
+    var target: Entity? = null
     private var position: TrackedPosition? = null
+
+    var currentDelay = delay.random()
+
+    val arePacketQueuesEmpty
+        get() = delayedPacketQueue.isEmpty() && packetProcessQueue.isEmpty()
 
     @Suppress("unused")
     private val packetHandler = handler<PacketEvent> { event ->
-        if (packetQueue.isNotEmpty()) {
-            chronometer.waitForAtLeast(nextBacktrackDelay.random().toLong())
+        if (event.origin != TransferOrigin.RECEIVE || event.isCancelled) {
+            return@handler
         }
 
-        synchronized(packetQueue) {
-            if (event.origin != TransferOrigin.RECEIVE || event.isCancelled) {
+        if (arePacketQueuesEmpty && !shouldCancelPackets()) {
+            return@handler
+        }
+
+        val packet = event.packet
+
+        when (packet) {
+            // Ignore message-related packets
+            is ChatMessageC2SPacket, is GameMessageS2CPacket, is CommandExecutionC2SPacket -> {
                 return@handler
             }
 
-            if (packetQueue.isEmpty() && !shouldCancelPackets()) {
+            // Flush on teleport or disconnect
+            is PlayerPositionLookS2CPacket, is DisconnectS2CPacket -> {
+                clear(true)
                 return@handler
             }
 
-            val packet = event.packet
-
-            when (packet) {
-                // Ignore message-related packets
-                is ChatMessageC2SPacket, is GameMessageS2CPacket, is CommandExecutionC2SPacket -> {
+            // Ignore own hurt sounds
+            is PlaySoundS2CPacket -> {
+                if (packet.sound.value() == SoundEvents.ENTITY_PLAYER_HURT) {
                     return@handler
                 }
+            }
 
-                // Flush on teleport or disconnect
-                is PlayerPositionLookS2CPacket, is DisconnectS2CPacket -> {
+            // Flush on own death
+            is HealthUpdateS2CPacket -> {
+                if (packet.health <= 0) {
                     clear(true)
                     return@handler
                 }
-
-                // Ignore own hurt sounds
-                is PlaySoundS2CPacket -> {
-                    if (packet.sound.value() == SoundEvents.ENTITY_PLAYER_HURT) {
-                        return@handler
-                    }
-                }
-
-                // Flush on own death
-                is HealthUpdateS2CPacket -> {
-                    if (packet.health <= 0) {
-                        clear(true)
-                        return@handler
-                    }
-                }
             }
-
-            // Update box position with these packets
-            val entityPacket = packet is EntityS2CPacket && packet.getEntity(world) == target
-            val positionPacket = packet is EntityPositionS2CPacket && packet.entityId == target?.id
-            if (entityPacket || positionPacket) {
-                val pos = if (packet is EntityS2CPacket) {
-                    position?.withDelta(packet.deltaX.toLong(), packet.deltaY.toLong(), packet.deltaZ.toLong())
-                } else {
-                    (packet as EntityPositionS2CPacket).let { p ->
-                        Vec3d(p.change.position.x, p.change.position.y, p.change.position.z)
-                    }
-                }
-
-                position?.setPos(pos)
-
-                // Is the target's actual position closer than its tracked position?
-                if (target!!.squareBoxedDistanceTo(player, pos!!) < target!!.squaredBoxedDistanceTo(player)) {
-                    // Process all packets. We want to be able to hit the enemy, not the opposite.
-                    processPackets(true)
-                    // And stop right here. No need to cancel further packets.
-                    return@handler
-                }
-            }
-
-            event.cancelEvent()
-            packetQueue.add(PacketSnapshot(packet, event.origin, System.currentTimeMillis()))
         }
+
+        // Update box position with these packets
+        val entityPacket = packet is EntityS2CPacket && packet.getEntity(world) == target
+        val positionPacket = packet is EntityPositionS2CPacket && packet.entityId == target?.id
+        val syncPacket = packet is EntityPositionSyncS2CPacket && packet.id == target?.id
+        if (entityPacket || positionPacket || syncPacket) {
+            val pos = if (packet is EntityS2CPacket) {
+                position?.withDelta(packet.deltaX.toLong(), packet.deltaY.toLong(), packet.deltaZ.toLong())
+            } else if (packet is EntityPositionS2CPacket) {
+                Vec3d(packet.change.position.x, packet.change.position.y, packet.change.position.z)
+            } else {
+                (packet as EntityPositionSyncS2CPacket).values.position()
+            }
+
+            position?.setPos(pos)
+
+            // Is the target's actual position closer than its tracked position?
+            if (target!!.squareBoxedDistanceTo(player, pos!!) < target!!.squaredBoxedDistanceTo(player)) {
+                // Process all packets. We want to be able to hit the enemy, not the opposite.
+                processPackets(true)
+                // And stop right here. No need to cancel further packets.
+                return@handler
+            }
+        }
+
+        event.cancelEvent()
+        delayedPacketQueue.add(PacketSnapshot(packet, event.origin, System.currentTimeMillis()))
     }
 
     abstract class RenderChoice(name: String) : Choice(name) {
@@ -250,28 +252,6 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
             get() = espMode
     }
 
-    /**
-     * When we process packets, we must imitate the game's server-packet handling logic
-     * This means the module MUST have top priority.
-     *
-     * @see net.minecraft.client.MinecraftClient.render
-     *
-     * Runnable runnable;
-     * while((runnable = (Runnable)this.renderTaskQueue.poll()) != null) {
-     *      runnable.run();
-     * }
-     *
-     * That gets called first, then the client's packets.
-     */
-    @Suppress("unused")
-    private val handleRenderTaskQueue = handler<GameRenderTaskQueueEvent> {
-        if (shouldCancelPackets()) {
-            processPackets()
-        } else {
-            clear()
-        }
-    }
-
     @Suppress("unused")
     private val worldChangeHandler = handler<WorldChangeEvent> {
         // Clear packets on disconnect only
@@ -311,7 +291,7 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
     }
 
     private fun processTarget(enemy: Entity) {
-        shouldPause = enemy is LivingEntity && enemy.hurtTime >= pauseOnHurtTime.hurtTime
+        shouldPause = enemy is LivingEntity && enemy.hurtTime >= PauseOnHurtTime.hurtTime
 
         if (!shouldBacktrack(enemy)) {
             return
@@ -319,7 +299,7 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
 
         // Reset on enemy change
         if (enemy != target) {
-            clear()
+            clear(resetChronometer = false)
 
             // Instantly set new position, so it does not look like the box was created with delay
             position = TrackedPosition().apply { this.pos = enemy.trackedPosition.pos }
@@ -336,25 +316,25 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
         clear(true)
     }
 
-    private fun processPackets(clear: Boolean = false) {
-        synchronized(packetQueue) {
-            packetQueue.removeIf {
-                if (clear || it.timestamp <= System.currentTimeMillis() - delay.random()) {
-                    mc.renderTaskQueue.add { handlePacket(it.packet) }
-                    return@removeIf true
-                }
-                false
+    fun processPackets(clear: Boolean = false) {
+        delayedPacketQueue.removeIf {
+            if (clear || it.timestamp <= System.currentTimeMillis() - currentDelay) {
+                packetProcessQueue.add(it.packet)
+                return@removeIf true
             }
+            false
         }
     }
 
-    fun clear(handlePackets: Boolean = true, clearOnly: Boolean = false) {
+    fun clear(handlePackets: Boolean = true, clearOnly: Boolean = false, resetChronometer: Boolean = true) {
         if (handlePackets && !clearOnly) {
             processPackets(true)
         } else if (clearOnly) {
-            synchronized(packetQueue) {
-                packetQueue.clear()
-            }
+            delayedPacketQueue.clear()
+        }
+
+        if (target != null && resetChronometer) {
+            chronometer.waitForAtLeast(nextBacktrackDelay.random().toLong())
         }
 
         target = null
@@ -362,6 +342,8 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
     }
 
     private fun shouldBacktrack(target: Entity): Boolean {
+        val player = mc.player ?: return false
+
         val inRange = target.boxedDistanceTo(player) in range
 
         if (inRange) {
@@ -377,10 +359,10 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
             !attackChronometer.hasElapsed(lastAttackTimeToWork.toLong())
     }
 
-    fun isLagging() = running && packetQueue.isNotEmpty()
+    fun isLagging() = running && !arePacketQueuesEmpty
 
     private fun shouldPause() = pauseOnHurtTime.enabled && shouldPause
 
-    private fun shouldCancelPackets() =
+    fun shouldCancelPackets() =
         target?.let { target -> target.isAlive && shouldBacktrack(target) } ?: false
 }

@@ -125,7 +125,6 @@ fun ClosedFloatingPointRange<Float>.random(): Float {
     return (start + (endInclusive - start) * Math.random()).toFloat()
 }
 
-// Due to name conflicts, we have to rename the function
 fun ClosedFloatingPointRange<Double>.random(): Double {
     require(start.isFinite())
     require(endInclusive.isFinite())

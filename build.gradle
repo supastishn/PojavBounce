@@ -180,7 +180,6 @@ dependencies {
 //    runtimeOnly "ai.djl.mxnet:mxnet-engine:${djl_version}"
 //    runtimeOnly "ai.djl.tensorflow:tensorflow-engine:${djl_version}"
 
-
     // HTTP library
     includeDependency "com.squareup.okhttp3:okhttp:5.0.0-alpha.14"
 

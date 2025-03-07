@@ -30,8 +30,8 @@ import net.ccbluex.netty.http.HttpServer
 import net.ccbluex.netty.http.middleware.CorsMiddleware
 import net.ccbluex.netty.http.model.RequestObject
 import net.ccbluex.netty.http.util.httpOk
+import java.net.BindException
 import java.net.Socket
-import kotlin.concurrent.thread
 
 /**
  * A client server implementation.
@@ -50,7 +50,7 @@ object ClientInteropServer {
             logger.info("Default port unavailable. Falling back to random port.")
             (15001..17000).random()
         }
-    } catch (expected: Exception) {
+    } catch (_: Exception) {
         logger.info("Default port $DEFAULT_PORT available.")
 
         DEFAULT_PORT
@@ -74,10 +74,25 @@ object ClientInteropServer {
         }.onFailure(ErrorHandler::fatal)
 
         // Start the HTTP server
-        thread(name = "netty-websocket") {
-            runCatching {
-                httpServer.start(port)
-            }.onFailure(ErrorHandler::fatal)
+        startServer()
+    }
+
+    private var attempt = 0
+    private fun startServer(port: Int = this.port) {
+        try {
+            httpServer.start(port)
+        } catch (bindException: BindException) {
+            if (attempt >= 5) {
+                ErrorHandler.fatal(bindException)
+                return
+            }
+
+            // Retry with random port
+            attempt++
+            logger.error("Failed to bind to port $port. Falling back to random port.")
+            startServer((15001..17000).random())
+        } catch (exception: Exception) {
+            ErrorHandler.fatal(exception)
         }
     }
 

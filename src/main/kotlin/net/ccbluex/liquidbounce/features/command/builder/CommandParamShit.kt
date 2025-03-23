@@ -1,10 +1,12 @@
 package net.ccbluex.liquidbounce.features.command.builder
 
 import net.ccbluex.liquidbounce.features.command.AutoCompletionProvider
-import net.ccbluex.liquidbounce.features.command.ParameterValidationResult
+import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.ParameterVerifier
+import net.ccbluex.liquidbounce.features.command.builder.CommandParameterTemplate.ParamTail.*
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.input.inputByNameOrNull
 import net.ccbluex.liquidbounce.utils.kotlin.subList
 import net.minecraft.client.util.InputUtil
@@ -16,13 +18,35 @@ class CommandParameterTemplate(
     val optionalTail: ParamTail
 ) {
     sealed class ParamTail {
-        class OptionalParamTail(
+        class OptionalParamsTail(
             val optionalParams: List<CommandParameter<ParameterParadigm.OptionalArgument<*>, Any?>>
         ) : ParamTail()
 
         class VarargParamTail(
             val varargParam: CommandParameter<ParameterParadigm.VarargArgument<*>, Any?>
         ) : ParamTail()
+
+        class TextParamTail(
+            val textParam: CommandParameter<ParameterParadigm.TextArgument<*>, Any?>
+        ) : ParamTail()
+    }
+
+    fun parseParams(params: LexedParameters): CommandParameters {
+        val required = this.requiredParams.mapIndexed { idx, declaredParam ->
+            declaredParam.parse(params.withOffset(idx))
+        }
+
+        val optionalTail = when (this.optionalTail) {
+            is OptionalParamsTail -> {
+                this.optionalTail.optionalParams.mapIndexed { idx, declaredParam ->
+                    declaredParam.parse(params.withOffset(this.requiredParams.size + idx))
+                }
+            }
+            is VarargParamTail -> this.optionalTail.varargParam.parse(params.withOffset(this.requiredParams.size))
+            is TextParamTail -> this.optionalTail.textParam.parse(params.withOffset(this.requiredParams.size))
+        }
+
+        return CommandParameters(required + optionalTail)
     }
 }
 
@@ -39,45 +63,58 @@ class CommandParameter<I, out T>(
     private val autocompleteWith: AutoCompletionProvider?,
     val paradigm: ParameterParadigm<I, T>
 ) {
-    fun parse(input: List<String>): ParameterValidationResult<T> {
+    fun parse(input: LexedParameters): T {
         val contextText = "failed to parse parameter ${this.name}"
 
-        val parsedInputs = input.map {
-            when (val result = verifier.verifyAndParse(it)) {
-                is ParameterValidationResult.Ok -> result.mappedResult
-                is ParameterValidationResult.Error -> return result.into<T>().withContext(contextText)
-            }
+        try {
+            return paradigm.accept(this.verifier, input)
+        } catch (e: CommandException) {
+            throw CommandException(contextText.asText(), e)
         }
-
-        return paradigm.accept(parsedInputs).withContext(contextText)
     }
 }
 
 sealed class ParameterParadigm<in I, out T> {
-    abstract fun accept(input: List<I>): ParameterValidationResult<T>
+    abstract fun accept(verifier: ParameterVerifier<I>, input: LexedParameters): T
 
     class RequiredArgument<T : Any> : ParameterParadigm<T, T>() {
-        override fun accept(input: List<T>): ParameterValidationResult<T> {
-            val first = input.firstOrNull()
+        override fun accept(verifier: ParameterVerifier<T>, input: LexedParameters): T {
+            val first = input.asTokens().firstOrNull()
 
             return if (first != null) {
-                ParameterValidationResult.Ok(first)
+                verifier.verifyAndParse(first)
             } else {
-                ParameterValidationResult.error("parameter is required")
+                throw CommandException("parameter is required".asText())
             }
         }
     }
 
     class OptionalArgument<T : Any> : ParameterParadigm<T, T?>() {
-        override fun accept(input: List<T>): ParameterValidationResult<T?> {
-            return ParameterValidationResult.ok(input.firstOrNull())
+        override fun accept(verifier: ParameterVerifier<T>, input: LexedParameters): T? {
+            val param =  input.asTokens().firstOrNull()
+
+            return if (param != null) {
+                verifier.verifyAndParse(param)
+            } else {
+                null
+            }
         }
     }
 
     class VarargArgument<T : Any> : ParameterParadigm<T, List<T>>() {
-        override fun accept(input: List<T>): ParameterValidationResult<List<T>> {
-            return ParameterValidationResult.ok(input)
+        override fun accept(verifier: ParameterVerifier<T>, input: LexedParameters): List<T> {
+            return input.asTokens().map { verifier.verifyAndParse(it) }
         }
+    }
+
+    class TextArgument<T: Any> : ParameterParadigm<T, T>() {
+        override fun accept(
+            verifier: ParameterVerifier<T>,
+            input: LexedParameters
+        ): T {
+            return verifier.verifyAndParse(input.text)
+        }
+
     }
 }
 
@@ -107,11 +144,11 @@ abstract class ParameterContainer {
 
         // Check the first argument after the required arguments.
         val tail = when (first?.paradigm) {
-            null -> CommandParameterTemplate.ParamTail.OptionalParamTail(emptyList())
+            null -> OptionalParamsTail(emptyList())
             is ParameterParadigm.VarargArgument<*> -> {
                 val casted = first as CommandParameter<ParameterParadigm.VarargArgument<*>, Any?>
 
-                CommandParameterTemplate.ParamTail.VarargParamTail(casted)
+                VarargParamTail(casted)
             }
 
             is ParameterParadigm.OptionalArgument<*> -> {
@@ -126,9 +163,14 @@ abstract class ParameterContainer {
                     it as CommandParameter<ParameterParadigm.OptionalArgument<*>, Any?>
                 }
 
-                CommandParameterTemplate.ParamTail.OptionalParamTail(converted)
+                OptionalParamsTail(converted)
             }
             is ParameterParadigm.RequiredArgument<*> -> error("Impossible to reach")
+            is ParameterParadigm.TextArgument<*> -> {
+                val casted = first as CommandParameter<ParameterParadigm.TextArgument<*>, Any?>
+
+                TextParamTail(casted)
+            }
         }
 
         return CommandParameterTemplate(requiredParams, tail)
@@ -155,7 +197,7 @@ abstract class ParameterContainer {
         autocompleteWith: AutoCompletionProvider? = null,
     ): CommandParameter<String, T> {
         return parameter(name, paradigm, autocompleteWith) { txt ->
-            ParameterValidationResult.Ok(txt)
+            txt
         }
     }
 
@@ -164,7 +206,7 @@ abstract class ParameterContainer {
         paradigm: ParameterParadigm<String, T>,
     ): CommandParameter<String, T> {
         return parameter(name, paradigm, TODO()) { txt ->
-            ParameterValidationResult.Ok(txt)
+            txt
         }
     }
 
@@ -175,9 +217,9 @@ abstract class ParameterContainer {
     ): CommandParameter<Int, T> {
         return parameter(name, paradigm, autocompleteWith) { txt ->
             try {
-                ParameterValidationResult.ok(txt.toInt())
-            } catch (e: NumberFormatException) {
-                ParameterValidationResult.error("'$txt' is not a valid integer")
+                txt.toInt()
+            } catch (ignored: NumberFormatException) {
+                throw CommandException("'$txt' is not a valid integer".asText())
             }
         }
     }
@@ -192,12 +234,12 @@ abstract class ParameterContainer {
                 val integer = txt.toInt()
 
                 if (integer >= 0) {
-                    ParameterValidationResult.ok(integer)
+                    integer
                 } else {
-                    ParameterValidationResult.error("The integer '$txt' must be positive")
+                    throw CommandException("The integer '$txt' must be positive".asText())
                 }
-            } catch (e: NumberFormatException) {
-                ParameterValidationResult.error("'$txt' is not a valid integer")
+            } catch (ignored: NumberFormatException) {
+                throw CommandException("'$txt' is not a valid integer".asText())
             }
         }
     }
@@ -210,11 +252,7 @@ abstract class ParameterContainer {
         return parameter(name, paradigm, autocompleteWith) { txt ->
             val mod = ModuleManager.find { it.name.equals(txt, true) }
 
-            if (mod == null) {
-                ParameterValidationResult.error("Module '$txt' not found")
-            } else {
-                ParameterValidationResult.ok(mod)
-            }
+            mod ?: throw CommandException("Module '$txt' not found".asText())
         }
     }
 
@@ -226,11 +264,7 @@ abstract class ParameterContainer {
         return parameter(name, paradigm, autocompleteWith) { txt ->
             val inputKey = inputByNameOrNull(txt, acceptNoneKey = false)
 
-            if (inputKey != null) {
-                ParameterValidationResult.ok(inputKey)
-            } else {
-                ParameterValidationResult.error("Input key '$txt' was not found")
-            }
+            inputKey ?: throw CommandException("Input key '$txt' was not found".asText())
         }
     }
 
@@ -245,10 +279,14 @@ abstract class ParameterContainer {
             if (inputKey != null) {
                 val processedKey = inputKey.takeUnless { inputKey == InputUtil.UNKNOWN_KEY }
 
-                ParameterValidationResult.ok(Optional.ofNullable(processedKey))
+                Optional.ofNullable(processedKey)
             } else {
-                ParameterValidationResult.error("Input key '$txt' was not found")
+                throw CommandException("Input key '$txt' was not found".asText())
             }
         }
+    }
+
+    protected fun text(name: String): CommandParameter<String, String> {
+        return parameter(name, ParameterParadigm.TextArgument(), null) { txt -> txt }
     }
 }

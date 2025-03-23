@@ -55,7 +55,7 @@ fun interface ParameterVerifier<out T> {
      * @return the text is not valid, this function returns [ParameterValidationResult.error], otherwise
      * [ParameterValidationResult.ok] with the parsed content is returned.
      */
-    fun verifyAndParse(sourceText: String): ParameterValidationResult<T>
+    fun verifyAndParse(sourceText: String): T
 }
 
 /**

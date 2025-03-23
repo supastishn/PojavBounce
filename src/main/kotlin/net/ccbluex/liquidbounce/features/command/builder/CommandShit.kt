@@ -2,17 +2,12 @@ package net.ccbluex.liquidbounce.features.command.builder
 
 import net.ccbluex.liquidbounce.features.command.*
 import net.ccbluex.liquidbounce.features.misc.FriendManager
-import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.lang.translation
 import net.ccbluex.liquidbounce.utils.client.MessageMetadata
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.variable
-import net.ccbluex.liquidbounce.utils.input.inputByNameOrNull
-import net.minecraft.client.util.InputUtil
 import net.minecraft.text.Text
-import java.util.Optional
 import kotlin.jvm.Throws
 import kotlin.jvm.optionals.getOrNull
 
@@ -20,13 +15,20 @@ typealias PositiveInt = Int
 
 typealias CommandReference = () -> CommandTemplate
 
-
-abstract class CommandTemplate(
+sealed class CommandTemplate(
     val name: String,
     val aliases: Array<String> = emptyArray(),
-    val parent: () -> CommandTemplate? = { null },
+    val parent: CommandReference? = null,
     val requireIngame: Boolean = false
 ): ParameterContainer() {
+    val canonicalName: String
+        get() {
+            val parent = this.parent?.invoke() ?: return this.name
+
+            return "${parent.canonicalName} ${this.name}"
+        }
+    val usageInfo: List<String> by lazy { usage() }
+
     fun failCommand(key: String, vararg args: Any, cause: Throwable? = null): Nothing {
         val translationText =  TODO() //translation("$translationBaseKey.result.$key", args = args)
 
@@ -44,11 +46,46 @@ abstract class CommandTemplate(
         chat(translationText, command = TODO())
     }
 
+    /**
+     * Checks if the [name] refers to the name or an alias of this command.
+     *
+     * For example, A command with the name `username` and the aliases [`ign`, `whoami`] would accept all the given
+     * strings.
+     */
+    fun isValidAlias(name: String): Boolean {
+        if (this.name.equals(name, true)) {
+            return true
+        }
+
+        return this.aliases.any { it.equals(name, true) }
+    }
+
+    private fun usage(): List<String> {
+        TODO()
+    }
+
+
     @Throws(CommandException::class)
-    abstract fun execute(params: CommandParameters)
+    abstract fun executeRaw(lexedParameters: LexedParameters)
 }
 
-private class BindCommand: CommandTemplate("bind") {
+abstract class ExecutableCommandTemplate(
+    name: String,
+    aliases: Array<String> = emptyArray(),
+    parent: CommandReference? = null,
+    requireIngame: Boolean = false,
+): CommandTemplate(name = name, aliases = aliases, parent = parent, requireIngame = requireIngame) {
+    @Throws(CommandException::class)
+    abstract fun execute(params: CommandParameters)
+
+    final override fun executeRaw(lexedParameters: LexedParameters) {
+        val params = this.template.parseParams(lexedParameters)
+
+        this.execute(params)
+    }
+}
+
+private class BindCommand: ExecutableCommandTemplate("bind") {
     private val targetModule = moduleParameter("module", required())
     private val targetKey = inputKeyOrNoneParameter("key", required())
 
@@ -75,9 +112,19 @@ private class BindCommand: CommandTemplate("bind") {
     }
 }
 
+private class ChatCommand: ExecutableCommandTemplate("chat") {
+    private val targetModule = text("text")
+
+    override fun execute(params: CommandParameters) {
+        val module = params[targetModule]
+
+        chat(module)
+    }
+}
+
 private object FriendsCommand: HubCommand("friend", subcommands = arrayOf(AddSubcommand)) {
 
-    private object AddSubcommand: CommandTemplate("add", parent = { FriendsCommand }) {
+    private object AddSubcommand: ExecutableCommandTemplate("add", parent = { FriendsCommand }) {
         private val nameParam = playerNameParameter("name", required())
         private val aliasParam = stringParameter("alias", optional())
 
@@ -98,14 +145,32 @@ private object FriendsCommand: HubCommand("friend", subcommands = arrayOf(AddSub
     }
 }
 
-
 abstract class HubCommand(
     name: String,
     aliases: Array<String> = emptyArray(),
-    parent: CommandTemplate? = null,
+    parent: CommandReference? = null,
     val subcommands: Array<CommandTemplate>
-): CommandTemplate(name, aliases) {
-    final override fun execute(params: CommandParameters) {
-        TODO("Not yet implemented")
+): CommandTemplate(name, aliases, parent = parent) {
+
+    final override fun executeRaw(lexedParameters: LexedParameters) {
+        // There was no subcommand specified. That's bad.
+        if (lexedParameters.size == 0) {
+            throw CommandException(
+                translation("liquidbounce.commandManager.invalidUsage", this.canonicalName),
+                usageInfo = this.usageInfo
+            )
+        }
+
+        val subcommandName = lexedParameters[0]
+
+        val subcommand = subcommands.find { it.isValidAlias(subcommandName) } ?: throw CommandException(
+            translation(
+                "liquidbounce.commandManager.unknownCommand",
+                subcommandName
+            ),
+            usageInfo = this.usageInfo
+        )
+
+        subcommand.executeRaw(lexedParameters.withOffset(1))
     }
 }

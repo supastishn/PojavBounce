@@ -10,19 +10,19 @@ class ParameterContainerTest {
         val noParamOptionalTail = noParam.optionalTail
 
         assertTrue(noParam.requiredParams.isEmpty())
-        assertTrue(noParamOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamTail && noParamOptionalTail.optionalParams.isEmpty())
+        assertTrue(noParamOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamsTail && noParamOptionalTail.optionalParams.isEmpty())
 
         val onlyRequiredParam = OnlyRequiredParams.intoTemplate()
         val onlyRequiredOptionalTail = onlyRequiredParam.optionalTail
 
         assertTrue(onlyRequiredParam.requiredParams[0].name == "A" && onlyRequiredParam.requiredParams[1].name == "B")
-        assertTrue(onlyRequiredOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamTail && onlyRequiredOptionalTail.optionalParams.isEmpty())
+        assertTrue(onlyRequiredOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamsTail && onlyRequiredOptionalTail.optionalParams.isEmpty())
 
         val onlyOptionalParams = OnlyOptionalParams.intoTemplate()
         val onlyOptionalTail = onlyOptionalParams.optionalTail
 
         assertTrue(onlyOptionalParams.requiredParams.isEmpty())
-        assertTrue(onlyOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamTail && onlyOptionalTail.optionalParams.size == 2 && onlyOptionalTail.optionalParams[0].name == "A" && onlyOptionalTail.optionalParams[1].name == "B")
+        assertTrue(onlyOptionalTail is CommandParameterTemplate.ParamTail.OptionalParamsTail && onlyOptionalTail.optionalParams.size == 2 && onlyOptionalTail.optionalParams[0].name == "A" && onlyOptionalTail.optionalParams[1].name == "B")
 
         val varargParams = VarargParams.intoTemplate()
         val varargOptionalTail = varargParams.optionalTail

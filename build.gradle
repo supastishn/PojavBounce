@@ -193,6 +193,7 @@ dependencies {
             }))
         }
     }
+    testImplementation "org.jetbrains.kotlin:kotlin-test:2.1.0"
 }
 
 processResources {
@@ -401,3 +402,5 @@ tasks.register("copyZipInclude", Copy) {
 
 sourcesJar.dependsOn bundleTheme
 build.dependsOn copyZipInclude
+
+tasks.named("compileJava").configure { dependsOn("genSources") }

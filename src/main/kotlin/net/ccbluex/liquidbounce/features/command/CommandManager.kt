@@ -405,8 +405,10 @@ object CommandManager : Iterable<Command> by commands {
             // Is the current char an escape char?
             if (c == '\\') {
                 escaped = true // Enable escape for the next character
-            } else if (c == '"') {
-                quote = !quote
+            } else if (quote && c == '"') {
+                quote = false
+            } else if (stringBuilder.isEmpty() && c == '"') {
+                quote = true
             } else if (c == ' ' && !quote) {
                 // Is the buffer not empty? Also ignore stuff like .friend   add SenkJu
                 if (stringBuilder.trim().isNotEmpty()) {
@@ -421,7 +423,7 @@ object CommandManager : Iterable<Command> by commands {
             }
         }
 
-        // Is there something left in the buffer?
+        // Is there anything left in the buffer?
         if (stringBuilder.trim().isNotEmpty()) {
             // If a string was not closed, don't remove the quote
             // e.g. .friend add "SenkJu -> [.friend, add, "SenkJu]

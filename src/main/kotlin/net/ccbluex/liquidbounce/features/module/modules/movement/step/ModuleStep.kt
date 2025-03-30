@@ -279,8 +279,8 @@ object ModuleStep : ClientModule("Step", Category.MOVEMENT) {
         private var stepping = false
 
         private val stepHeight get() = when {
-            player.canStep(1.25) -> 1.25
             player.canStep(1.0) -> 1.0
+            player.canStep(1.25) -> 1.25
             else -> 1.5
         }
 

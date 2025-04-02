@@ -25,7 +25,7 @@ import net.ccbluex.liquidbounce.utils.item.isNothing
 class CleanupPlanGenerator(
     private val template: CleanupPlanPlacementTemplate,
     private val availableItems: List<ItemSlot>,
-) : ItemPacker.ItemAmountContraintProvider {
+) : ItemPacker.ItemAmountContraintEnforcer {
     private val hotbarSwaps: ArrayList<InventorySwap> = ArrayList()
 
     private val packer = ItemPacker()
@@ -117,8 +117,8 @@ class CleanupPlanGenerator(
         return itemsByType
     }
 
-    override fun getSatisfactionStatus(item: ItemFacet): ItemPacker.ItemAmountContraintProvider.SatisfactionStatus {
-        val constraints = this.template.itemAmountConstraintProvider(item)
+    override fun getSatisfactionStatus(item: ItemFacet): ItemPacker.ItemAmountContraintEnforcer.SatisfactionStatus {
+        val constraints = this.template.itemAmountConstraintProvider.getApplyingConstraints(item)
 
         constraints.sortBy { it.group.priority }
 
@@ -126,23 +126,42 @@ class CleanupPlanGenerator(
             val currentCount = this.currentLimit[constraintInfo.group] ?: 0
 
             if (currentCount > constraintInfo.group.acceptableRange.last) {
-                return ItemPacker.ItemAmountContraintProvider.SatisfactionStatus.OVERSATURATED
+                return ItemPacker.ItemAmountContraintEnforcer.SatisfactionStatus.OVERSATURATED
             } else if (currentCount < constraintInfo.group.acceptableRange.first) {
-                return ItemPacker.ItemAmountContraintProvider.SatisfactionStatus.NOT_SATISFIED
+                return ItemPacker.ItemAmountContraintEnforcer.SatisfactionStatus.NOT_SATISFIED
             }
         }
 
-        return ItemPacker.ItemAmountContraintProvider.SatisfactionStatus.SATISFIED
+        return ItemPacker.ItemAmountContraintEnforcer.SatisfactionStatus.SATISFIED
     }
 
     override fun addItem(item: ItemFacet) {
-        val constraints = this.template.itemAmountConstraintProvider(item)
+        val constraints = this.template.itemAmountConstraintProvider.getApplyingConstraints(item)
 
         for (constraintInfo in constraints) {
             val current = this.currentLimit.getOrDefault(constraintInfo.group, 0)
 
             this.currentLimit[constraintInfo.group] = current + constraintInfo.amountAddedByItem
         }
+    }
+}
+
+interface ItemAmountConstraintProvider {
+    fun getConstraints(item: ItemFacet): ArrayList<ItemConstraintInfo>
+
+    /**
+     * Filters out not applying default configurations.
+     *
+     * See [ItemConstraintInfo.default] for further information on that.
+     */
+    fun getApplyingConstraints(item: ItemFacet): ArrayList<ItemConstraintInfo> {
+        val constraints = getConstraints(item)
+
+        if (constraints.any { !it.default }) {
+            constraints.removeIf { it.default }
+        }
+
+        return constraints
     }
 }
 
@@ -155,7 +174,7 @@ class CleanupPlanPlacementTemplate(
      * A function which provides constraint groups for each item category and the number which the item counts against
      * the given constraint. More info on how constraints work at [ItemNumberContraintGroup].
      */
-    val itemAmountConstraintProvider: (ItemFacet) -> ArrayList<ItemConstraintInfo>,
+    val itemAmountConstraintProvider: ItemAmountConstraintProvider,
     /**
      * If false, slots which also contains items of that category, those items are not replaced with other items.
      */

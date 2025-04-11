@@ -80,7 +80,7 @@ import kotlin.math.pow
 object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
     // Attack speed
-    val clickScheduler = tree(KillAuraClicker)
+    val clicker = tree(KillAuraClicker)
 
     // Range
     internal val range by float("Range", 4.2f, 1f..8f)
@@ -238,7 +238,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
     val shouldBlockSprinting
         get() = !ModuleElytraTarget.running
-            && criticalsSelectionMode.shouldStopSprinting(clickScheduler, targetTracker.target)
+            && criticalsSelectionMode.shouldStopSprinting(clicker, targetTracker.target)
 
     @Suppress("unused")
     private val sprintHandler = handler<SprintEvent> { event ->
@@ -287,8 +287,8 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
         ModuleDebug.debugParameter(ModuleKillAura, "Valid Rotation", rotation)
 
         // Attack enemy, according to the attack scheduler
-        if (clickScheduler.isClickTick && validateAttack(target)) {
-            clickScheduler.attack(sequence, rotation) {
+        if (clicker.isClickTick && validateAttack(target)) {
+            clicker.attack(sequence, rotation) {
                 // On each click, we check if we are still ready to attack
                 if (!validateAttack(target)) {
                     return@attack false
@@ -306,7 +306,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
                 true
             }
-        } else if (KillAuraAutoBlock.currentTickOff > 0 && clickScheduler.willClickAt(KillAuraAutoBlock.currentTickOff)
+        } else if (KillAuraAutoBlock.currentTickOff > 0 && clicker.willClickAt(KillAuraAutoBlock.currentTickOff)
             && KillAuraAutoBlock.shouldUnblockToHit) {
             KillAuraAutoBlock.stopBlocking(pauses = true)
         } else {
@@ -317,7 +317,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
     private fun updateTarget() {
         // Determine aim situation based on click scheduler
         val situation = when {
-            clickScheduler.isClickTick || clickScheduler.willClickAt(1)
+            clicker.isClickTick || clicker.willClickAt(1)
                 -> PointTracker.AimSituation.FOR_NEXT_TICK
             else -> PointTracker.AimSituation.FOR_THE_FUTURE
         }
@@ -373,7 +373,7 @@ object ModuleKillAura : ClientModule("KillAura", Category.COMBAT) {
 
             // If our click scheduler is not going to click the moment we reach the target,
             // we should not start aiming towards the target just yet.
-            SNAP -> if (!clickScheduler.willClickAt(ticks.coerceAtLeast(1))) {
+            SNAP -> if (!clicker.willClickAt(ticks.coerceAtLeast(1))) {
                 return true
             }
 

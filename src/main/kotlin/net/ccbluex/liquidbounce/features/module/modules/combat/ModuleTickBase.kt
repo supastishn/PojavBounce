@@ -20,7 +20,6 @@ package net.ccbluex.liquidbounce.features.module.modules.combat
 
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.event.events.MovementInputEvent
-import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.PlayerTickEvent
 import net.ccbluex.liquidbounce.event.events.WorldRenderEvent
 import net.ccbluex.liquidbounce.event.handler
@@ -30,6 +29,8 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleBlink
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugGeometry
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
 import net.ccbluex.liquidbounce.render.drawLineStrip
 import net.ccbluex.liquidbounce.render.engine.Color4b
 import net.ccbluex.liquidbounce.render.renderEnvironmentForWorld
@@ -39,9 +40,7 @@ import net.ccbluex.liquidbounce.utils.entity.PlayerSimulationCache
 import net.ccbluex.liquidbounce.utils.kotlin.mapArray
 import net.ccbluex.liquidbounce.utils.math.sq
 import net.ccbluex.liquidbounce.utils.math.toVec3
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket
 import net.minecraft.util.math.Vec3d
-import kotlin.math.min
 
 /**
  * TickBase
@@ -54,28 +53,24 @@ internal object ModuleTickBase : ClientModule("TickBase", Category.COMBAT) {
         .apply { tagBy(this) }
     private val call by enumChoice("Call", TickBaseCall.GAME)
 
-    /**
-     * The range defines where we want to tickbase into. The first value is the minimum range, which we can
-     * tick into, and the second value is the range where we cannot tickbase at all.
-     */
-    private val range by floatRange("Range", 2.5f..4f, 0f..8f)
+    // Range to tick-base into
+    private val inRange by floatRange("In-Range", 2.5f..3f, 0f..5f)
+    // Maximum ticks we can use for tick-base
+    private val movingTicks by int("Moving", 4, 1..20, "ticks")
+    // Ticks we throw away after the tick-base (This should usually be 0)
+    private val additionalTicks by int("Additional", 0, 0..20, "ticks")
 
-    private val balanceRecoveryIncrement by float("BalanceRecoverIncrement", 1f, 0f..2f)
-    private val balanceMaxValue by int("BalanceMaxValue", 20, 0..200)
-    private val maxTicksAtATime by int("MaxTicksAtATime", 4, 1..20, "ticks")
-    private val pauseOnFlag by boolean("PauseOfFlag", true)
-    private val pause by int("Pause", 0, 0..20, "ticks")
-    private val cooldown by int("Cooldown", 0, 0..100, "ticks")
-    private val forceGround by boolean("ForceGround", false)
+    // Ticks we want to wait until we can tick-base again
+    private val cooldown by intRange("Cooldown", 0..0, 0..100, "ticks")
+
+    // Requirements for a tick to be valid
+    private val requires by multiEnumChoice("Requires", TickBaseRequirements.KILLAURA)
+
+    // The walk line color
     private val lineColor by color("Line", Color4b.WHITE)
         .doNotIncludeAlways()
 
-    private val requiresKillAura by boolean("RequiresKillAura", true)
-
     private var ticksToSkip = 0
-    private var tickBalance = 0f
-    private var reachedTheLimit = false
-
     private val tickBuffer = mutableListOf<TickData>()
 
     override fun disable() {
@@ -101,80 +96,80 @@ internal object ModuleTickBase : ClientModule("TickBase", Category.COMBAT) {
             return@tickHandler
         }
 
-        val nearbyEnemy = world.findEnemy(0f..range.endInclusive) ?: return@tickHandler
-        val currentDistance = player.pos.squaredDistanceTo(nearbyEnemy.pos)
-        val rangeSq = range.start.sq()..range.endInclusive.sq()
+        val target = ModuleKillAura.targetTracker.target.takeIf { ModuleKillAura.running }
+            ?: world.findEnemy(0f..10f)
+            ?: return@tickHandler
+        this@ModuleTickBase.debugParameter("Target") { target.nameForScoreboard }
 
-        // Find the best tick that is able to hit the target and is not too far away from the player, as well as
-        // able to crit the target
-        var possibleTicks = tickBuffer
+        var distanceSq = player.pos.squaredDistanceTo(target.pos)
+        val rangeSq = inRange.start.sq()..inRange.endInclusive.sq()
+
+        var ticks = tickBuffer
             .withIndex()
-            .filter { (_, tick) ->
-                val distSq = tick.position.squaredDistanceTo(nearbyEnemy.pos)
-                distSq < currentDistance && distSq in rangeSq
-            }
+            .filter { (index, tick) ->
+                val distSq = tick.position.squaredDistanceTo(target.pos)
 
-        if (forceGround) {
-            possibleTicks = possibleTicks.filter { (_, tick) ->
-                tick.onGround
+                if (distSq < distanceSq && distSq in rangeSq && requires.any { it.meets(index) }) {
+                    distanceSq = distSq
+                    true
+                } else {
+                    false
+                }
             }
+        this@ModuleTickBase.debugGeometry("Ticks") {
+            ModuleDebug.DebugCollection(ticks.map { (_, tick) ->
+                ModuleDebug.DebuggedPoint(tick.position, Color4b.BLUE, 0.05)
+            })
         }
 
-        val criticalTick = possibleTicks.firstOrNull { (_, tick) ->
+        // We want to prefer ticks that let us do a critical hit
+        val criticalTick = ticks.firstOrNull { (_, tick) ->
             tick.fallDistance > 0.0f
         }
 
-        val (bestTick, _) = criticalTick ?: possibleTicks.firstOrNull() ?: return@tickHandler
+        val (tick, _) = criticalTick ?: ticks.firstOrNull() ?: return@tickHandler
+        this@ModuleTickBase.debugParameter("Tick") { tick }
+        this@ModuleTickBase.debugParameter("Critical Tick") { criticalTick?.index ?: -1 }
 
-        if (bestTick == 0) {
-            return@tickHandler
-        }
-
-        // We do not want to tickbase if killaura is not ready to attack
-        fun breakRequirement() = requiresKillAura && !(ModuleKillAura.running &&
-                ModuleKillAura.clickScheduler.willClickAt(bestTick))
-
-        if (breakRequirement()) {
+        if (tick == 0) {
             return@tickHandler
         }
 
         when (mode) {
             TickBaseMode.PAST -> {
-                ticksToSkip = bestTick + pause
+                ticksToSkip = tick + additionalTicks
                 waitTicks(ticksToSkip)
 
-                repeat(bestTick) {
+                repeat(tick) {
                     call.tick()
-                    tickBalance -= 1
                 }
 
-                ModuleDebug.debugParameter(this, "Recommended Skip", bestTick)
+                ModuleDebug.debugParameter(this, "Recommended Skip", tick)
                 ticksToSkip = 0
             }
 
             TickBaseMode.FUTURE -> {
                 var totalSkipped = 0
 
-                for (i in 0 until bestTick) {
+                for (i in 0 until tick) {
                     call.tick()
-                    tickBalance -= 1
                     totalSkipped++
 
-                    if (breakRequirement()) {
+                    if (requires.none { it.meets(0) }) {
                         break
                     }
                 }
 
                 ModuleDebug.debugParameter(this, "Total Skipped", totalSkipped)
-                ModuleDebug.debugParameter(this, "Recommended Skip", bestTick)
+                ModuleDebug.debugParameter(this, "Recommended Skip", tick)
 
-                ticksToSkip = totalSkipped + pause
+                ticksToSkip = totalSkipped + additionalTicks
                 waitTicks(ticksToSkip)
                 ticksToSkip = 0
             }
         }
 
-        waitTicks(cooldown)
+        waitTicks(cooldown.random())
     }
 
     @Suppress("unused")
@@ -187,23 +182,7 @@ internal object ModuleTickBase : ClientModule("TickBase", Category.COMBAT) {
         tickBuffer.clear()
 
         val simulatedPlayer = PlayerSimulationCache.getSimulationForLocalPlayer()
-
-        if (tickBalance <= 0) {
-            reachedTheLimit = true
-        }
-        if (tickBalance > balanceMaxValue / 2) {
-            reachedTheLimit = false
-        }
-        if (tickBalance <= balanceMaxValue) {
-            tickBalance += balanceRecoveryIncrement
-        }
-
-        if (reachedTheLimit) {
-            return@handler
-        }
-
-        val tickRange = 0 until min(tickBalance.toInt(), maxTicksAtATime)
-        val snapshots = simulatedPlayer.getSnapshotsBetween(tickRange)
+        val snapshots = simulatedPlayer.getSnapshotsBetween(0 until movingTicks)
 
         snapshots.mapTo(tickBuffer) { snapshot ->
             TickData(
@@ -227,14 +206,6 @@ internal object ModuleTickBase : ClientModule("TickBase", Category.COMBAT) {
                     relativeToCamera(tick.position).toVec3()
                 })
             }
-        }
-    }
-
-    @Suppress("unused")
-    private val packetHandler = handler<PacketEvent> {
-        // Stops when you got flagged
-        if (it.packet is PlayerPositionLookS2CPacket && pauseOnFlag) {
-            tickBalance = 0f
         }
     }
 
@@ -274,6 +245,27 @@ internal object ModuleTickBase : ClientModule("TickBase", Category.COMBAT) {
          * so it is kept for compatibility reasons.
          */
         PLAYER("Player", { player.tick() })
+    }
+
+    @Suppress("unused")
+    enum class TickBaseRequirements(
+        override val choiceName: String,
+        val meets: (Int) -> Boolean
+    ) : NamedChoice {
+        /**
+         * This will check if the tick can be used for Kill Aura.
+         */
+        KILLAURA("KillAura", { tick ->
+            ModuleKillAura.running && ModuleKillAura.targetTracker.target != null &&
+                ModuleKillAura.clicker.willClickAt(tick)
+        }),
+        /**
+         * This will check if the tick can be used for Auto Clicker.
+         */
+        AUTO_CLICKER("AutoClicker", {
+            ModuleAutoClicker.running && ModuleAutoClicker.AttackButton.running &&
+                ModuleAutoClicker.AttackButton.clicker.willClickAt(it)
+        });
     }
 
 }

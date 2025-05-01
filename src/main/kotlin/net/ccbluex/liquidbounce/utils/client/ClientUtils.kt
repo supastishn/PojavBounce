@@ -43,39 +43,34 @@ val inGame: Boolean
 
 // Chat formatting
 private val clientPrefix = Text.empty()
-    .styled { it.withFormatting(Formatting.RESET) }.styled { it.withFormatting(Formatting.GRAY) }
-    .append(Text.literal("Liquid")
-        .styled { it.withColor(Formatting.WHITE) }.styled { it.withFormatting(Formatting.BOLD) })
-    .append(Text.literal("Bounce")
-        .styled { it.withColor(Formatting.BLUE) }.styled { it.withFormatting(Formatting.BOLD) })
-    .append(Text.literal(" ▸ ")
-        .styled { it.withFormatting(Formatting.RESET) }.styled { it.withColor(Formatting.DARK_GRAY) })
+    .formatted(Formatting.RESET, Formatting.GRAY)
+    .append(Text.literal("Liquid").formatted(Formatting.WHITE, Formatting.BOLD))
+    .append(Text.literal("Bounce").formatted(Formatting.BLUE, Formatting.BOLD))
+    .append(Text.literal(" ▸ ").formatted(Formatting.RESET, Formatting.GRAY))
 
-fun dot() = regular(".")
+fun regular(text: MutableText) = text.formatted(Formatting.GRAY)
 
-fun regular(text: MutableText) = text.styled { it.withColor(Formatting.GRAY) }
+fun regular(text: String) = text.asText().formatted(Formatting.GRAY)
 
-fun regular(text: String) = text.asText().styled { it.withColor(Formatting.GRAY) }
+fun variable(text: MutableText) = text.formatted(Formatting.GOLD)
 
-fun variable(text: MutableText) = text.styled { it.withColor(Formatting.GOLD) }
+fun variable(text: String) = text.asText().formatted(Formatting.GOLD)
 
-fun variable(text: String) = text.asText().styled { it.withColor(Formatting.GOLD) }
+fun highlight(text: MutableText) = text.formatted(Formatting.DARK_PURPLE)
 
-fun highlight(text: MutableText) = text.styled { it.withColor(Formatting.DARK_PURPLE) }
+fun highlight(text: String) = text.asText().formatted(Formatting.DARK_PURPLE)
 
-fun highlight(text: String) = text.asText().styled { it.withColor(Formatting.DARK_PURPLE) }
+fun warning(text: MutableText) = text.formatted(Formatting.YELLOW)
 
-fun warning(text: MutableText) = text.styled { it.withColor(Formatting.YELLOW) }
+fun warning(text: String) = text.asText().formatted(Formatting.YELLOW)
 
-fun warning(text: String) = text.asText().styled { it.withColor(Formatting.YELLOW) }
+fun markAsError(text: String) = text.asText().formatted(Formatting.RED)
 
-fun markAsError(text: String) = text.asText().styled { it.withColor(Formatting.RED) }
+fun markAsError(text: MutableText) = text.formatted(Formatting.RED)
 
-fun markAsError(text: MutableText) = text.styled { it.withColor(Formatting.RED) }
-
-fun withColor(text: MutableText, color: TextColor) = text.styled { it.withColor(color) }
-fun withColor(text: MutableText, color: Formatting) = text.styled { it.withColor(color) }
-fun withColor(text: String, color: Formatting) = text.asText().styled { it.withColor(color) }
+fun withColor(text: MutableText, color: TextColor) = text.styled { style -> style.withColor(color) }
+fun withColor(text: MutableText, color: Formatting) = text.formatted(color)
+fun withColor(text: String, color: Formatting) = text.asText().formatted(color)
 
 fun bypassNameProtection(text: MutableText) = text.styled {
     val color = it.color ?: TextColor.fromFormatting(Formatting.RESET)

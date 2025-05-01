@@ -26,8 +26,10 @@ import net.ccbluex.liquidbounce.event.events.NotificationEvent
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.interfaces.ClientTextColorAdditions
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.minecraft.client.MinecraftClient
 import net.minecraft.text.MutableText
+import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.text.TextColor
 import net.minecraft.util.Formatting
@@ -44,8 +46,12 @@ val inGame: Boolean
 // Chat formatting
 private val clientPrefix = Text.empty()
     .formatted(Formatting.RESET, Formatting.GRAY)
-    .append(Text.literal("Liquid").formatted(Formatting.WHITE, Formatting.BOLD))
-    .append(Text.literal("Bounce").formatted(Formatting.BLUE, Formatting.BOLD))
+    .append(
+        gradientText("LiquidBounce",
+            Color4b(84, 218, 244),
+            Color4b(36, 55, 170),
+        )
+    )
     .append(Text.literal(" ▸ ").formatted(Formatting.RESET, Formatting.GRAY))
 
 fun regular(text: MutableText) = text.formatted(Formatting.GRAY)
@@ -71,6 +77,26 @@ fun markAsError(text: MutableText) = text.formatted(Formatting.RED)
 fun withColor(text: MutableText, color: TextColor) = text.styled { style -> style.withColor(color) }
 fun withColor(text: MutableText, color: Formatting) = text.formatted(color)
 fun withColor(text: String, color: Formatting) = text.asText().formatted(color)
+
+/**
+ * Creates text with a color gradient between two colors.
+ *
+ * @param text The string to apply the gradient to
+ * @param startColor The first color in the gradient
+ * @param endColor The second color in the gradient
+ * @return A MutableText with the gradient applied
+ */
+fun gradientText(text: String, startColor: Color4b, endColor: Color4b): MutableText {
+    return text.foldIndexed(Text.empty()) { index, newText, char ->
+        val factor = if (text.length > 1) index / (text.length - 1.0) else 0.0
+        val color = startColor.interpolateTo(endColor, factor)
+
+        newText.append(
+            Text.literal(char.toString())
+                .setStyle(Style.EMPTY.withColor(TextColor.fromRgb(color.toARGB())))
+        )
+    }
+}
 
 fun bypassNameProtection(text: MutableText) = text.styled {
     val color = it.color ?: TextColor.fromFormatting(Formatting.RESET)

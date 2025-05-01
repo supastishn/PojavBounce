@@ -69,6 +69,16 @@ object ConfigSystem {
         }
     }
 
+    val backupFolder = File(
+        rootFolder, "backups"
+    ).apply {
+        // Check if there is already a config folder and if not create new folder
+        // (mkdirs not needed - .minecraft should always exist)
+        if (!exists()) {
+            mkdir()
+        }
+    }
+
     // A mutable list of all root configurable classes (and their subclasses)
     private val configurables = ArrayList<Configurable>()
 
@@ -108,7 +118,7 @@ object ConfigSystem {
      * Create a ZIP file of root configurable files
      */
     fun backup(fileName: String) = runCatching {
-        configurables.map { it.jsonFile }.createZipArchive(File(rootFolder, fileName))
+        configurables.map { it.jsonFile }.createZipArchive(File(backupFolder, fileName))
     }.onFailure {
         logger.error("Unable to create backup", it)
     }

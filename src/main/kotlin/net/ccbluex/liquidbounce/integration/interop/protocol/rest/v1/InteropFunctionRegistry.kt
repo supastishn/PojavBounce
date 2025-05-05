@@ -35,6 +35,12 @@ internal fun registerInteropFunctions(node: Node) = node.withPath("/api/v1/clien
     get("/window", ::getWindowInfo)
     post("/browse", ::postBrowse)
 
+    // User Functions
+    get("/user", ::getUser).apply {
+        post("/login", ::loginUser)
+        post("/logout", ::logoutUser)
+    }
+
     // LocalStorage Functions
     get("/localStorage/all", ::getAllLocalStorage)
     put("/localStorage/all", ::putAllLocalStorage)

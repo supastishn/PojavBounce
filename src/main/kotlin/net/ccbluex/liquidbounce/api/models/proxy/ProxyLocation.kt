@@ -20,6 +20,27 @@ package net.ccbluex.liquidbounce.api.models.proxy
 
 import com.google.gson.annotations.SerializedName
 
+data class ProxySubscription(
+    @SerializedName("subscription_id")
+    val subscriptionId: String,
+    @SerializedName("valid_until")
+    val validUntil: String,
+    val status: Byte, // 0 is unbanned, 1 or higher is banned for a specific reason
+    val plans: List<ProxyPlan>,
+    val credentials: ProxyCredentials
+)
+
+data class ProxyPlan(
+    val level: Byte,
+    val name: String,
+    val active: Boolean
+)
+
+data class ProxyCredentials(
+    val username: String,
+    val password: String
+)
+
 data class ProxyLocation(
     val name: String,
     val location: String, // human-readable location

@@ -20,12 +20,20 @@ package net.ccbluex.liquidbounce.api.services.proxy
 
 import net.ccbluex.liquidbounce.api.core.API_V3_ENDPOINT
 import net.ccbluex.liquidbounce.api.core.BaseApi
+import net.ccbluex.liquidbounce.api.models.auth.OAuthSession
+import net.ccbluex.liquidbounce.api.models.auth.addAuth
 import net.ccbluex.liquidbounce.api.models.proxy.ProxyLocation
+import net.ccbluex.liquidbounce.api.models.proxy.ProxySubscription
 
 /**
  * API for LiquidProxy-related endpoints
  */
 object ProxyApi : BaseApi(API_V3_ENDPOINT) {
+
+    suspend fun getSubscription(session: OAuthSession) = get<ProxySubscription>(
+        "/proxy/subscription",
+        headers = { addAuth(session) }
+    )
 
     suspend fun getLocations() = get<Set<ProxyLocation>>("/proxy/locations")
 

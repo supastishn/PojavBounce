@@ -124,6 +124,7 @@ configurations {
 repositories {
     mavenCentral()
     mavenLocal()
+    maven { url "https://maven.ccbluex.net/releases" }
     maven { url = "https://maven.fabricmc.net/" }
     maven {
         name = "Jitpack"
@@ -181,7 +182,7 @@ dependencies {
 
     // JCEF Support
     includeModDependency "com.github.CCBlueX:mcef:${project.mcef_version}"
-    includeDependency "com.github.CCBlueX:netty-httpserver:2.1.1"
+    includeDependency "net.ccbluex:netty-httpserver:2.2.1"
 
     // Discord RPC Support
     includeDependency "com.github.CCBlueX:DiscordIPC:4.0.0"

@@ -24,9 +24,11 @@ import net.ccbluex.liquidbounce.event.events.MovementInputEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ScaffoldBlockItemSelection.isValidBlock
 import net.ccbluex.liquidbounce.utils.entity.isCloseToEdge
-import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
+import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.SAFETY_FEATURE
+import net.ccbluex.liquidbounce.utils.kotlin.random
 
 /**
  * An eagle module
@@ -37,7 +39,13 @@ object ModuleEagle : ClientModule("Eagle", Category.PLAYER,
     aliases = arrayOf("FastBridge", "BridgeAssistant", "LegitScaffold")
 ) {
 
-    private val edgeDistance by float("EagleEdgeDistance", 0.4f, 0.01f..1.3f)
+    private val edgeDistance by floatRange("EdgeDistance", 0.4f..0.6f, 0.01f..1.3f)
+        .onChanged {
+            currentEdgeDistance = it.random()
+        }
+
+    private var currentEdgeDistance: Float = edgeDistance.random()
+    private var wasSneaking = false
 
     private object Conditional : ToggleableConfigurable(this, "Conditional", true) {
         private val conditions by multiEnumChoice("Conditions",
@@ -82,14 +90,26 @@ object ModuleEagle : ClientModule("Eagle", Category.PLAYER,
         tree(Conditional)
     }
 
+    override fun disable() {
+        wasSneaking = false
+        super.disable()
+    }
+
     @Suppress("unused")
-    private val handleMovementInput = handler<MovementInputEvent>(
-        priority = EventPriorityConvention.SAFETY_FEATURE
-    ) { event ->
+    private val handleMovementInput = handler<MovementInputEvent>(priority = SAFETY_FEATURE) { event ->
+        debugParameter("EdgeDistance") { currentEdgeDistance }
+
         val shouldBeActive = !player.abilities.flying && Conditional.shouldSneak(event) &&
-            player.isCloseToEdge(event.directionalInput, edgeDistance.toDouble())
+            player.isCloseToEdge(event.directionalInput, currentEdgeDistance.toDouble())
 
         event.sneak = event.sneak && !Conditional.shouldSneak(event) || shouldBeActive
+
+        if (event.sneak) {
+            wasSneaking = true
+        } else if (wasSneaking) {
+            currentEdgeDistance = edgeDistance.random()
+            wasSneaking = false
+        }
     }
 
 }

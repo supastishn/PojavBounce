@@ -18,8 +18,6 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
-import net.ccbluex.liquidbounce.config.types.ItemListValue
-import net.ccbluex.liquidbounce.config.types.ValueType
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.Sequence
@@ -67,13 +65,6 @@ object ModuleDebug : ClientModule("Debug", Category.RENDER) {
     }
 
     private val expireTime by int("Expires", 5, 1..30, "secs")
-
-    private val testList = itemList<MutableSet<String>, String>(
-        "TestList",
-        mutableSetOf<String>("Test1", "Test2"),
-        setOf(ItemListValue.NamedItem("Nummero Uno", "Test1"), ItemListValue.NamedItem("Zwei", "Test2")),
-        valueType = ValueType.TEXT
-    )
 
     private val fontRenderer
         get() = FontManager.FONT_RENDERER

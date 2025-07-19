@@ -14,7 +14,7 @@
 <!-- svelte-ignore a11y-no-static-element-interactions -->
 <!-- svelte-ignore a11y-click-events-have-key-events -->
 <div class="item" on:click={() => dispatch("toggle", {enabled: !enabled, value:value})}>
-    {#if !icon}
+    {#if icon}
         <img class="icon" src="{icon}" alt={value}/>
     {:else}
         <div class="spacer"></div>

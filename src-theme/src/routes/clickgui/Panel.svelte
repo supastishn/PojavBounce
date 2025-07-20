@@ -4,7 +4,7 @@
     import {listen} from "../../integration/ws";
     import Module from "./Module.svelte";
     import type {ModuleToggleEvent} from "../../integration/events";
-    import {fly} from "svelte/transition";
+    import {fade} from "svelte/transition";
     import {quintOut} from "svelte/easing";
     import {
         gridSize,
@@ -23,8 +23,6 @@
     let panelElement: HTMLElement;
     let modulesElement: HTMLElement;
     let expandButtonElement: HTMLElement;
-
-    let renderedModules: TModule[] = [];
 
     let moving = false;
     let offsetX = 0;
@@ -71,10 +69,6 @@
 
             if (config.zIndex > $maxPanelZIndex) {
                 $maxPanelZIndex = config.zIndex;
-            }
-
-            if (config.expanded) {
-                renderedModules = modules;
             }
 
             return config;
@@ -125,18 +119,10 @@
     }
 
     function toggleExpanded() {
-        if (panelConfig.expanded) {
-            renderedModules = [];
-        } else {
-            renderedModules = modules;
-        }
-
         panelConfig.expanded = !panelConfig.expanded;
 
-        setTimeout(() => {
-            fixPosition();
-            savePanelConfig();
-        }, 500);
+        fixPosition();
+        savePanelConfig();
     }
 
     function handleModulesScroll() {
@@ -157,7 +143,6 @@
         if (highlightModule) {
             panelConfig.zIndex = ++$maxPanelZIndex;
             panelConfig.expanded = true;
-            renderedModules = modules;
             savePanelConfig();
         }
     });
@@ -171,22 +156,17 @@
 
         mod.enabled = moduleEnabled;
         modules = modules;
-        if (panelConfig.expanded) {
-            renderedModules = modules;
-        }
     });
 
     onMount(() => {
-        setTimeout(() => {
-            if (!modulesElement) {
-                return;
-            }
+        if (!modulesElement) {
+            return;
+        }
 
-            modulesElement.scrollTo({
-                top: panelConfig.scrollTop,
-                behavior: "smooth"
-            })
-        }, 500);
+        modulesElement.scrollTo({
+            top: panelConfig.scrollTop,
+            behavior: "smooth"
+        });
     });
 
     function handleKeydown(e: KeyboardEvent) {
@@ -214,8 +194,7 @@
         class="panel"
         style="left: {panelConfig.left}px; top: {panelConfig.top}px; z-index: {panelConfig.zIndex};"
         bind:this={panelElement}
-        in:fly|global={{y: -30, duration: 200, easing: quintOut}}
-        out:fly|global={{y: -30, duration: 200, easing: quintOut}}
+        transition:fade|global={{duration: 200, easing: quintOut}}
 >
     <!-- svelte-ignore a11y-no-static-element-interactions -->
     <div
@@ -236,8 +215,13 @@
         </button>
     </div>
 
-    <div class="modules" on:scroll={handleModulesScroll} bind:this={modulesElement}>
-        {#each renderedModules as {name, enabled, description, aliases} (name)}
+    <div
+            class="modules"
+            class:expanded={panelConfig.expanded}
+            on:scroll={handleModulesScroll}
+            bind:this={modulesElement}
+    >
+        {#each modules as {name, enabled, description, aliases} (name)}
             <Module {name} {enabled} {description} {aliases}/>
         {/each}
     </div>
@@ -275,10 +259,16 @@
   }
 
   .modules {
-    max-height: 545px;
+    transition: max-height 300ms ease;
+    scroll-behavior: smooth;
+    max-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
     background-color: rgba($clickgui-base-color, 0.8);
+
+    &.expanded {
+      max-height: 545px;
+    }
   }
 
   .modules::-webkit-scrollbar {

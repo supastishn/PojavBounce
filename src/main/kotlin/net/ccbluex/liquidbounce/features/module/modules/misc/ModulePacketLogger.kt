@@ -25,12 +25,7 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.isDestructed
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.utils.client.MessageMetadata
-import net.ccbluex.liquidbounce.utils.client.asText
-import net.ccbluex.liquidbounce.utils.client.bold
-import net.ccbluex.liquidbounce.utils.client.chat
-import net.ccbluex.liquidbounce.utils.client.copyable
-import net.ccbluex.liquidbounce.utils.client.highlight
+import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.collection.Filter
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
 import net.ccbluex.liquidbounce.utils.mappings.EnvironmentRemapper
@@ -38,13 +33,7 @@ import net.minecraft.network.packet.Packet
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import java.lang.reflect.Field
-import java.lang.reflect.GenericArrayType
-import java.lang.reflect.Modifier
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
-import java.lang.reflect.TypeVariable
-import java.lang.reflect.WildcardType
+import java.lang.reflect.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
@@ -61,7 +50,7 @@ object ModulePacketLogger : ClientModule("PacketLogger", Category.MISC) {
 
     private val bound by multiEnumChoice("Bound", PacketBound.SERVER)
     private val filter by enumChoice("Filter", Filter.BLACKLIST)
-    private val packets by textArray("Packets", sortedSetOf())
+    private val packets by textList("Packets", sortedSetOf())
     private val showFieldType by boolean("ShowFieldType", true)
 
     private val classNames = ConcurrentHashMap<Class<out Packet<*>>, String>()

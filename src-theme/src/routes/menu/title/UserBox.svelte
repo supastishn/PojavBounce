@@ -3,6 +3,7 @@
     import {listen} from "../../../integration/ws";
     import {getClientUser, loginClientUser, logoutClientUser} from "../../../integration/rest";
     import type {ClientUser} from "../../../integration/types";
+    import ToolTip from "../common/ToolTip.svelte";
 
     let user: ClientUser | null = null;
     let loading = true;
@@ -70,42 +71,32 @@
 </script>
 
 <div class="user-box">
-    {#if !loading}
-        {#if user}
-            <div class="user-info">
-                <div class="avatar-container">
-                    <img src={avatarUrl} alt="avatar" class="avatar">
-                    {#if user.premium}
-                        <div class="premium-badge">
-                            <img src="img/menu/icon-star.svg" alt="premium" class="star-icon">
-                        </div>
-                    {/if}
+    <div class="user-info">
+        <div class="avatar-container">
+            <img src={avatarUrl} alt="avatar" class="avatar {user ? '' : 'steve-avatar'}">
+            {#if user?.premium}
+                <div class="premium-badge">
+                    <img src="img/menu/icon-star.svg" alt="premium" class="star-icon">
                 </div>
-                <div class="user-details">
-                    <div class="username">{user.nickname || user.name || "Unknown"}</div>
-                    <div class="groups" title={user.groups.join(", ")}>
-                        {formatGroups(user.groups)}
-                    </div>
-                </div>
-                <button class="logout-button" on:click={logout} title="Logout">
-                    <img src="img/menu/icon-back.svg" alt="logout" class="logout-icon">
-                </button>
+            {/if}
+        </div>
+        <div class="user-details">
+            <div class="user-main-text">
+                {user ? (user.nickname || user.name || "Unknown") : loading ? "Loading..." : "Sign in to LiquidBounce"}
             </div>
-        {:else}
-            <div class="login-prompt">
-                <div class="avatar-container">
-                    <img src="img/steve.png" alt="avatar" class="avatar steve-avatar">
+            {#if user}
+                <div class="groups" title={user.groups.join(", ")}>
+                    {formatGroups(user.groups)}
                 </div>
-                <div class="login-text">Sign in to LiquidBounce</div>
-                <button class="login-button" on:click={login}>
-                    <img src="img/menu/altmanager/icon-login.svg" alt="login" class="login-icon">
-                    Login
-                </button>
-            </div>
+            {/if}
+        </div>
+        {#if !loading}
+            <button class="icon-button" on:click={user ? logout : login}>
+                <ToolTip text={user ? "Logout" : "Login"} />
+                <img src={user ? "img/menu/icon-back.svg" : "img/menu/altmanager/icon-login.svg"} alt={user ? "logout" : "login"} class="icon">
+            </button>
         {/if}
-    {:else}
-        <div class="loading">Loading...</div>
-    {/if}
+    </div>
 </div>
 
 <style lang="scss">
@@ -125,14 +116,6 @@
         &:hover {
             background-color: rgba(lighten($menu-base-color, 5%), 0.68);
         }
-    }
-
-    .loading {
-        color: $menu-text-dimmed-color;
-        text-align: center;
-        font-size: 16px;
-        padding: 15px;
-        width: 100%;
     }
 
     .user-info {
@@ -190,16 +173,25 @@
         flex: 1;
         min-width: 0;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 90px;
     }
 
-    .username {
+    .user-main-text {
         font-weight: 600;
         color: $menu-text-color;
         font-size: 26px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-bottom: 5px;
+        width: 100%;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .groups {
@@ -208,9 +200,11 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        text-align: center;
+        width: 100%;
     }
 
-    .logout-button {
+    .icon-button {
         background: none;
         border: none;
         cursor: pointer;
@@ -221,57 +215,15 @@
         justify-content: center;
         transition: color 0.2s;
         flex-shrink: 0;
+        position: relative;
 
         &:hover {
             color: $menu-text-color;
         }
 
-        .logout-icon {
+        .icon {
             width: 28px;
             height: 28px;
-            filter: invert(70%);
-            
-            &:hover {
-                filter: invert(100%);
-            }
-        }
-    }
-
-    .login-prompt {
-        display: flex;
-        align-items: center;
-        gap: 25px;
-        width: 100%;
-    }
-
-    .login-text {
-        flex: 1;
-        font-size: 26px;
-        color: $menu-text-color;
-        font-weight: 600;
-    }
-
-    .login-button {
-        background-color: $accent-color;
-        color: white;
-        border: none;
-        border-radius: 3px;
-        padding: 10px 24px;
-        font-size: 16px;
-        cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-
-        &:hover {
-            background-color: darken($accent-color, 10%);
-        }
-        
-        .login-icon {
-            width: 20px;
-            height: 20px;
-            filter: brightness(0) invert(1);
         }
     }
 </style>

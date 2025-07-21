@@ -68,7 +68,7 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
     }
     
     private fun renderGrid(context: DrawContext) {
-        val gridSize = 20
+        val gridSize = GuiConfig.gridSize
         val gridColor = 0x33FFFFFF
         
         // Vertical lines
@@ -88,14 +88,19 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
     
     private fun renderInstructions(context: DrawContext) {
         val instructions = listOf(
-            "Click and drag to move HUD elements",
-            "Press ESC to exit HUD editor",
-            "Right-click elements for settings"
+            "Left-click and drag to move HUD elements",
+            "Right-click elements to toggle enabled/disabled", 
+            "Press ESC to save and exit HUD editor",
+            "Elements snap to ${GuiConfig.gridSize}px grid for alignment"
         )
+        
+        // Background for instructions
+        context.fill(5, 5, 300, 5 + instructions.size * 12 + 10, 0x80000000.toInt())
+        context.drawBorder(5, 5, 295, instructions.size * 12 + 10, 0xFF444444.toInt())
         
         var yOffset = 10
         for (instruction in instructions) {
-            context.drawText(textRenderer, instruction, 10, yOffset, 0xFFFFFF, true)
+            context.drawText(textRenderer, instruction, 10, yOffset, 0xFFFFFF, false)
             yOffset += 12
         }
     }
@@ -130,9 +135,10 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
             val newX = mouseX.toInt() - dragOffsetX
             val newY = mouseY.toInt() - dragOffsetY
             
-            // Snap to grid
-            selectedElement!!.x = (newX / 20) * 20
-            selectedElement!!.y = (newY / 20) * 20
+            // Snap to grid using config
+            val snapped = GuiConfig.getGridSnappedPosition(newX, newY)
+            selectedElement!!.x = snapped.first
+            selectedElement!!.y = snapped.second
             
             // Keep within bounds
             selectedElement!!.x = selectedElement!!.x.coerceIn(0, width - selectedElement!!.width)
@@ -154,9 +160,11 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
     }
     
     private fun saveElementPositions() {
-        // Placeholder for saving element positions to configuration
-        for (element in hudElements) {
-            // element.savePosition()
+        try {
+            // Save all element positions to configuration
+            HudConfig.saveConfig()
+        } catch (e: Exception) {
+            println("Error saving HUD element positions: ${e.message}")
         }
     }
     

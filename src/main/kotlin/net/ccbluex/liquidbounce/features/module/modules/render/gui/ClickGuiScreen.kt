@@ -46,11 +46,14 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         for ((category, modules) in modulesByCategory) {
             val panel = ClickGuiPanel(
                 category = category,
-                modules = modules,
-                x = 20,
-                y = 20 + panelIndex * 50,
-                width = 250,
-                height = 25
+                allModules = modules,
+                x = 20 + panelIndex * (GuiConfig.panelWidth + 20), // Space panels with config width
+                y = 20,
+                width = GuiConfig.panelWidth,
+                height = GuiConfig.headerHeight,
+                onOpenSettings = { module -> 
+                    mc.setScreen(ModuleSettingsScreen(module, this))
+                }
             )
             panels[category] = panel
             panelIndex++
@@ -111,8 +114,21 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         // Border
         context.drawBorder(x, y, searchBarWidth, searchBarHeight, 0xFF555555.toInt())
         
-        // Search text
-        context.drawText(textRenderer, "Search: $searchText", x + 5, y + 10, 0xFFFFFF, false)
+        // Search text with placeholder
+        val displayText = if (searchText.isEmpty()) {
+            "Type to search modules... (F3 to toggle, ESC/DEL to clear)"
+        } else {
+            "Search: $searchText"
+        }
+        
+        val textColor = if (searchText.isEmpty()) 0x888888 else 0xFFFFFF
+        context.drawText(textRenderer, displayText, x + 5, y + 10, textColor, false)
+        
+        // Cursor indicator when typing
+        if (searchText.isNotEmpty()) {
+            val textWidth = textRenderer.getWidth("Search: $searchText")
+            context.fill(x + 5 + textWidth, y + 8, x + 5 + textWidth + 1, y + 22, 0xFFFFFF)
+        }
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -159,18 +175,46 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
         // Handle search functionality
-        if (keyCode == 256) { // ESC key
-            searchVisible = false
-            searchText = ""
-        } else if (keyCode == 265) { // F6 or other search key
-            searchVisible = !searchVisible
+        when (keyCode) {
+            256 -> { // ESC key
+                if (searchVisible) {
+                    searchVisible = false
+                    searchText = ""
+                    filterModules()
+                    return true
+                } else {
+                    close() // Close GUI if search not visible
+                }
+            }
+            342 -> { // F3 key (configurable)
+                searchVisible = !searchVisible
+                if (!searchVisible) {
+                    searchText = ""
+                    filterModules()
+                }
+                return true
+            }
+            259 -> { // Backspace key
+                if (searchVisible && searchText.isNotEmpty()) {
+                    searchText = searchText.dropLast(1)
+                    filterModules()
+                    return true
+                }
+            }
+            261 -> { // Delete key
+                if (searchVisible) {
+                    searchText = ""
+                    filterModules()
+                    return true
+                }
+            }
         }
         
         return super.keyPressed(keyCode, scanCode, modifiers)
     }
     
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
-        if (searchVisible && chr.isLetterOrDigit()) {
+        if (searchVisible && (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-')) {
             searchText += chr
             // Filter modules based on search
             filterModules()

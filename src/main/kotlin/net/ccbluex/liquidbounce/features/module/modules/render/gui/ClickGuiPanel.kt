@@ -34,7 +34,8 @@ class ClickGuiPanel(
     var x: Int,
     var y: Int,
     val width: Int,
-    var height: Int
+    var height: Int,
+    private val onOpenSettings: (Module) -> Unit = {}
 ) {
     private var expanded = false
     private var isDragging = false
@@ -42,32 +43,32 @@ class ClickGuiPanel(
     private var dragOffsetY = 0
     private var scrollOffset = 0
     private var filteredModules = allModules
-    private val moduleHeight = 25
-    private val headerHeight = 25
+    private val moduleHeight get() = GuiConfig.moduleHeight
+    private val headerHeight get() = GuiConfig.headerHeight
     
     fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         // Calculate actual height based on expansion state
         val actualHeight = if (expanded) {
-            headerHeight + min(filteredModules.size * moduleHeight, 300) // Max height of 300px
+            headerHeight + min(filteredModules.size * moduleHeight, GuiConfig.panelMaxHeight)
         } else {
             headerHeight
         }
         
         // Panel background
-        context.fill(x, y, x + width, y + actualHeight, 0xE6000000.toInt())
+        context.fill(x, y, x + width, y + actualHeight, GuiConfig.backgroundColor)
         
         // Panel border
-        context.drawBorder(x, y, width, actualHeight, 0xFF444444.toInt())
+        context.drawBorder(x, y, width, actualHeight, GuiConfig.borderColor)
         
         // Header background
-        context.fill(x, y, x + width, y + headerHeight, 0xFF222222.toInt())
+        context.fill(x, y, x + width, y + headerHeight, GuiConfig.headerColor)
         
         // Accent border at bottom of header
-        context.fill(x, y + headerHeight - 2, x + width, y + headerHeight, 0xFF00AAFF.toInt())
+        context.fill(x, y + headerHeight - 2, x + width, y + headerHeight, GuiConfig.accentColor)
         
         // Category name
         val categoryName = category.name.lowercase().replaceFirstChar { it.uppercase() }
-        context.drawText(mc.textRenderer, categoryName, x + 10, y + 8, 0xFFFFFF, false)
+        context.drawText(mc.textRenderer, categoryName, x + 10, y + 8, GuiConfig.textColor, false)
         
         // Expand/collapse button
         renderExpandButton(context, x + width - 20, y + 5)
@@ -99,7 +100,7 @@ class ClickGuiPanel(
     
     private fun renderModules(context: DrawContext, mouseX: Int, mouseY: Int) {
         val moduleAreaY = y + headerHeight
-        val moduleAreaHeight = min(filteredModules.size * moduleHeight, 300)
+        val moduleAreaHeight = min(filteredModules.size * moduleHeight, GuiConfig.panelMaxHeight)
         
         // Clip rendering to module area
         context.enableScissor(x, moduleAreaY, x + width, moduleAreaY + moduleAreaHeight)
@@ -116,7 +117,7 @@ class ClickGuiPanel(
         context.disableScissor()
         
         // Scrollbar if needed
-        if (filteredModules.size * moduleHeight > 300) {
+        if (filteredModules.size * moduleHeight > GuiConfig.panelMaxHeight) {
             renderScrollbar(context, moduleAreaY, moduleAreaHeight)
         }
     }
@@ -127,17 +128,17 @@ class ClickGuiPanel(
         
         // Module background
         val bgColor = when {
-            module.running -> 0xFF003366.toInt() // Enabled module color
-            isHovered -> 0xFF333333.toInt()      // Hover color
-            else -> 0xFF111111.toInt()           // Default color
+            module.running -> GuiConfig.enabledModuleColor
+            isHovered -> GuiConfig.hoverColor
+            else -> 0xFF111111.toInt()
         }
         context.fill(moduleX, moduleY, moduleX + width, moduleY + moduleHeight, bgColor)
         
         // Module border
-        context.fill(moduleX, moduleY + moduleHeight - 1, moduleX + width, moduleY + moduleHeight, 0xFF444444.toInt())
+        context.fill(moduleX, moduleY + moduleHeight - 1, moduleX + width, moduleY + moduleHeight, GuiConfig.borderColor)
         
         // Module name
-        val textColor = if (module.running) 0x00AAFF else 0xBBBBBB
+        val textColor = if (module.running) GuiConfig.accentColor else 0xBBBBBB
         context.drawText(mc.textRenderer, module.name, moduleX + 10, moduleY + 8, textColor, false)
         
         // Settings indicator if module has settings
@@ -214,8 +215,8 @@ class ClickGuiPanel(
                     module.toggle()
                     return true
                 } else if (button == 1) {
-                    // Open module settings (placeholder)
-                    // In real implementation, would open settings panel
+                    // Open module settings
+                    onOpenSettings(module)
                     return true
                 }
             }

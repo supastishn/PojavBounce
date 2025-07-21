@@ -25,17 +25,63 @@ import net.minecraft.client.gui.DrawContext
  * Base class for HUD elements
  */
 abstract class HudElement(
-    var x: Int,
-    var y: Int,
+    x: Int,
+    y: Int,
     val width: Int,
     val height: Int
 ) {
     abstract val name: String
     
+    var x: Int = x
+        set(value) {
+            field = value
+            savePosition()
+        }
+    
+    var y: Int = y
+        set(value) {
+            field = value
+            savePosition()
+        }
+    
+    var enabled: Boolean = true
+        set(value) {
+            field = value
+            HudConfig.setElementEnabled(name, value)
+        }
+    
+    init {
+        // Load saved position and enabled state
+        loadFromConfig()
+    }
+    
+    private fun loadFromConfig() {
+        try {
+            val savedPosition = HudConfig.getElementPosition(name)
+            if (savedPosition != null) {
+                this.x = savedPosition.first
+                this.y = savedPosition.second
+            }
+            this.enabled = HudConfig.getElementEnabled(name)
+        } catch (e: Exception) {
+            println("Error loading config for HUD element $name: ${e.message}")
+        }
+    }
+    
+    private fun savePosition() {
+        try {
+            HudConfig.setElementPosition(name, x, y)
+        } catch (e: Exception) {
+            println("Error saving position for HUD element $name: ${e.message}")
+        }
+    }
+    
     abstract fun render(context: DrawContext, isSelected: Boolean)
     
     open fun renderPreview(context: DrawContext) {
-        render(context, false)
+        if (enabled) {
+            render(context, false)
+        }
     }
     
     fun isMouseOver(mouseX: Int, mouseY: Int): Boolean {
@@ -43,7 +89,8 @@ abstract class HudElement(
     }
     
     open fun openSettings() {
-        // Override in subclasses to open specific settings
+        // Toggle enabled state as default setting
+        enabled = !enabled
     }
     
     protected fun renderBackground(context: DrawContext, isSelected: Boolean) {

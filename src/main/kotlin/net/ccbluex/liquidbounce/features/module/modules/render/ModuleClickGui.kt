@@ -27,6 +27,7 @@ import net.ccbluex.liquidbounce.event.sequenceHandler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.integration.IntegrationListener
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.ClickGuiScreen
 import net.ccbluex.liquidbounce.integration.VirtualDisplayScreen
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
 import net.ccbluex.liquidbounce.integration.backend.browser.Browser
@@ -77,7 +78,7 @@ object ModuleClickGui :
     }
 
     val isInSearchBar: Boolean
-        get() = (mc.currentScreen is VirtualDisplayScreen || mc.currentScreen is ClickScreen) && isTyping
+        get() = mc.currentScreen is ClickGuiScreen && isTyping
 
     object Snapping : ToggleableConfigurable(this, "Snapping", true) {
 
@@ -106,13 +107,8 @@ object ModuleClickGui :
             return
         }
 
-        mc.setScreen(
-            if (clickGuiBrowser == null) {
-                VirtualDisplayScreen(VirtualScreenType.CLICK_GUI)
-            } else {
-                ClickScreen()
-            }
-        )
+        // Use native ClickGUI implementation instead of JCEF
+        mc.setScreen(ClickGuiScreen())
         super.enable()
     }
 

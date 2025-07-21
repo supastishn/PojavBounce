@@ -24,7 +24,7 @@ import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.gson.GsonInstance
 import net.ccbluex.liquidbounce.config.gson.util.decode
 import net.ccbluex.liquidbounce.utils.client.logger
-import net.ccbluex.liquidbounce.mcef.utils.FileUtils as McefFileUtils
+// import net.ccbluex.liquidbounce.mcef.utils.FileUtils as McefFileUtils  // Optional MCEF import
 import net.minecraft.client.texture.NativeImage
 import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.util.Util
@@ -81,7 +81,19 @@ object HttpClient {
                 throw e
             }
         }
-        .build().also(McefFileUtils::setOkHttpClient)
+        .build().apply {
+            try {
+                // Try to set OkHttp client for MCEF if available (for JCEF backend compatibility)
+                val mcefFileUtilsClass = Class.forName("net.ccbluex.liquidbounce.mcef.utils.FileUtils")
+                val setOkHttpClientMethod = mcefFileUtilsClass.getMethod("setOkHttpClient", OkHttpClient::class.java)
+                setOkHttpClientMethod.invoke(null, this)
+            } catch (e: ClassNotFoundException) {
+                // MCEF not available, which is expected in PojavLauncher mode
+                logger.info("MCEF not available - using Minecraft UI browser backend")
+            } catch (e: Exception) {
+                logger.warn("Failed to set OkHttp client for MCEF: ${e.message}")
+            }
+        }
 
     suspend fun request(
         url: String,

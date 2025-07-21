@@ -65,7 +65,7 @@ object HideAppearance : EventListener {
      * And we'll provide the value after first removing the mod
      */
     private val modContainersToHide: MutableMap<String, Mod?> = arrayOf(
-        "liquidbounce", "mcef"
+        "liquidbounce" // "mcef" removed as it's no longer used in PojavLauncher mode
     ).associateWith { null }.toMutableMap()
 
     private val shiftChronometer = Chronometer()

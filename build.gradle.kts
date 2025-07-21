@@ -158,8 +158,8 @@ dependencies {
     // Minecraft Authlib
     includeDependency("com.github.CCBlueX:mc-authlib:${project.property("mc_authlib_version")}")
 
-    // JCEF Support
-    includeModDependency("com.github.CCBlueX:mcef:${project.property("mcef_version")}")
+    // JCEF Support - Disabled for PojavLauncher compatibility
+    // includeModDependency("com.github.CCBlueX:mcef:${project.property("mcef_version")}")
     includeDependency("net.ccbluex:netty-httpserver:2.2.1")
 
     // Discord RPC Support

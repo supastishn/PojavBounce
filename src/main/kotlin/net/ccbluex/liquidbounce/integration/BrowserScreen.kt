@@ -68,9 +68,32 @@ class BrowserScreen(val url: String, title: Text = "".asText()) : Screen(title) 
                 EventManager.callEvent(BrowserUrlChangeEvent(selectedIndex, currentUrl))
                 recentUrl = currentUrl
             }
-        }
 
-        // render nothing
+            // Show basic URL information for Minecraft UI mode
+            if (browser.texture == null) {
+                context.drawCenteredTextWithShadow(
+                    textRenderer,
+                    "Minecraft UI Browser",
+                    width / 2,
+                    height / 2 - 20,
+                    0xFFFFFF
+                )
+                context.drawCenteredTextWithShadow(
+                    textRenderer,
+                    "URL: $currentUrl",
+                    width / 2,
+                    height / 2,
+                    0xAAAAAA
+                )
+                context.drawCenteredTextWithShadow(
+                    textRenderer,
+                    "Web content not available in PojavLauncher mode",
+                    width / 2,
+                    height / 2 + 20,
+                    0x888888
+                )
+            }
+        }
     }
 
     override fun shouldPause() = false

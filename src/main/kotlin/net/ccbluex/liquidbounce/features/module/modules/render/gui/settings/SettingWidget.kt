@@ -148,6 +148,7 @@ class FloatSettingWidget(
     
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
     
+    @Suppress("UnusedParameter")
     fun mouseDragged(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isDragging && button == 0) {
             updateValue(mouseX)
@@ -156,6 +157,7 @@ class FloatSettingWidget(
         return false
     }
     
+    @Suppress("UnusedParameter")
     fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
         isDragging = false
     }
@@ -218,6 +220,7 @@ class IntSettingWidget(
     
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
     
+    @Suppress("UnusedParameter")
     fun mouseDragged(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (isDragging && button == 0) {
             updateValue(mouseX)
@@ -226,6 +229,7 @@ class IntSettingWidget(
         return false
     }
     
+    @Suppress("UnusedParameter")
     fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
         isDragging = false
     }

@@ -46,7 +46,8 @@ class ClickGuiPanel(
     private val moduleHeight get() = GuiConfig.moduleHeight
     private val headerHeight get() = GuiConfig.headerHeight
     
-    fun render(context: DrawContext, mouseX: Int, mouseY: Int, _delta: Float) {
+    @Suppress("UnusedParameter")
+    fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         // Calculate actual height based on expansion state
         val actualHeight = if (expanded) {
             headerHeight + min(filteredModules.size * moduleHeight, GuiConfig.panelMaxHeight)
@@ -122,7 +123,14 @@ class ClickGuiPanel(
         }
     }
     
-    private fun renderModule(context: DrawContext, module: ClientModule, moduleX: Int, moduleY: Int, mouseX: Int, mouseY: Int) {
+    private fun renderModule(
+        context: DrawContext, 
+        module: ClientModule, 
+        moduleX: Int, 
+        moduleY: Int, 
+        mouseX: Int, 
+        mouseY: Int
+    ) {
         val isHovered = mouseX >= moduleX && mouseX <= moduleX + width && 
                        mouseY >= moduleY && mouseY <= moduleY + moduleHeight
         
@@ -132,7 +140,13 @@ class ClickGuiPanel(
             isHovered -> GuiConfig.hoverColor
             else -> 0xFF111111.toInt()
         }
-        context.fill(moduleX, moduleY, moduleX + width, moduleY + moduleHeight, bgColor)
+        context.fill(
+            moduleX, 
+            moduleY, 
+            moduleX + width, 
+            moduleY + moduleHeight, 
+            bgColor
+        )
         
         // Module border
         context.fill(moduleX, moduleY + moduleHeight - 1, moduleX + width, moduleY + moduleHeight, GuiConfig.borderColor)
@@ -162,7 +176,8 @@ class ClickGuiPanel(
         context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFFAAAAAA.toInt())
     }
     
-    private fun moduleHasSettings(_module: ClientModule): Boolean {
+    @Suppress("UnusedParameter")
+    private fun moduleHasSettings(module: ClientModule): Boolean {
         // Simple check - in real implementation, would check module's configuration tree
         return true // Placeholder
     }
@@ -225,7 +240,8 @@ class ClickGuiPanel(
         return false
     }
     
-    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, _deltaX: Double, _deltaY: Double): Boolean {
+    @Suppress("UnusedParameter")
+    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (isDragging && button == 0) {
             x = mouseX.toInt() - dragOffsetX
             y = mouseY.toInt() - dragOffsetY
@@ -240,7 +256,8 @@ class ClickGuiPanel(
         return false
     }
     
-    fun mouseReleased(_mouseX: Double, _mouseY: Double, _button: Int) {
+    @Suppress("UnusedParameter")
+    fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
         isDragging = false
     }
     

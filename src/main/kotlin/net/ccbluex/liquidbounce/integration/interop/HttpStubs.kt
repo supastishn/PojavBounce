@@ -16,15 +16,16 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
+
+// Suppress unused parameter warnings for all stub implementations
+@file:Suppress("UnusedParameter", "TooManyFunctions")
+
 package net.ccbluex.liquidbounce.integration.interop
 
 /**
  * Stub types to replace HTTP interop functionality since we're using native GUI instead of web-based UI.
  * These stubs prevent compilation errors while the HTTP server functionality is being phased out.
  */
-
-// Suppress unused parameter warnings for all stub implementations
-@file:Suppress("UnusedParameter", "TooManyFunctions")
 
 // HTTP Method enum stub
 enum class HttpMethod {

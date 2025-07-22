@@ -102,7 +102,8 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         }
     }
     
-    private fun renderSearchBar(context: DrawContext, _mouseX: Int, _mouseY: Int) {
+    @Suppress("UnusedParameter")
+    private fun renderSearchBar(context: DrawContext, mouseX: Int, mouseY: Int) {
         val searchBarWidth = 300
         val searchBarHeight = 30
         val x = (width - searchBarWidth) / 2
@@ -162,7 +163,12 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         return super.mouseReleased(mouseX, mouseY, button)
     }
     
-    override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+    override fun mouseScrolled(
+        mouseX: Double, 
+        mouseY: Double, 
+        horizontalAmount: Double, 
+        verticalAmount: Double
+    ): Boolean {
         // Handle panel scrolling
         for (panel in panels.values) {
             if (panel.mouseScrolled(mouseX, mouseY, verticalAmount)) {

@@ -159,8 +159,7 @@ object ScriptManager {
         scripts.forEach(PolyglotScript::enable)
 
         if (scripts.isNotEmpty()) {
-            // Reload the ClickGUI to update the module list.
-            RenderSystem.recordRenderCall(ModuleClickGui::reload)
+            // Note: Native ClickGUI doesn't need reloading - module list updates automatically
         }
     }
 

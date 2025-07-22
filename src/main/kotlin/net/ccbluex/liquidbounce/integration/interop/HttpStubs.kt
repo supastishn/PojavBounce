@@ -23,26 +23,49 @@ package net.ccbluex.liquidbounce.integration.interop
  * These stubs prevent compilation errors while the HTTP server functionality is being phased out.
  */
 
+// HTTP Method enum stub
+enum class HttpMethod {
+    GET, POST, PUT, DELETE, PATCH, HEAD, OPTIONS
+}
+
 // HTTP Request/Response stubs
 data class RequestObject(
     val data: Any? = null,
     val queryParams: Map<String, String> = emptyMap(),
-    val body: String = ""
+    val body: String = "",
+    val method: HttpMethod = HttpMethod.GET,
+    val params: Map<String, String> = emptyMap()
 ) {
     inline fun <reified T> asJson(): T = data as T
 }
 
 interface FullHttpResponse
 
-// HTTP Response functions stubs
-fun httpOk(data: Any) = data
-fun httpBadRequest(message: String) = message
-fun httpForbidden(message: String) = message
-fun httpNotFound(message: String) = message
-fun httpInternalServerError(message: String) = message
-fun httpNoContent() = Unit
-fun httpCreated(data: Any) = data
-fun httpAccepted(data: Any) = data
+// Create concrete implementation for return type compatibility
+class StubHttpResponse(val data: Any) : FullHttpResponse
+
+// HTTP Response functions stubs - return proper FullHttpResponse types
+fun httpOk(data: Any): FullHttpResponse = StubHttpResponse(data)
+fun httpBadRequest(message: String): FullHttpResponse = StubHttpResponse(message)
+fun httpForbidden(message: String): FullHttpResponse = StubHttpResponse(message)
+fun httpNotFound(message: String): FullHttpResponse = StubHttpResponse(message)
+fun httpInternalServerError(message: String): FullHttpResponse = StubHttpResponse(message)
+fun httpNoContent(): FullHttpResponse = StubHttpResponse(Unit)
+fun httpCreated(data: Any): FullHttpResponse = StubHttpResponse(data)
+fun httpAccepted(data: Any): FullHttpResponse = StubHttpResponse(data)
+
+// File streaming stub
+fun httpFileStream(file: Any): FullHttpResponse = StubHttpResponse(file)
+fun httpFile(file: Any): FullHttpResponse = StubHttpResponse(file)
+
+// Image utilities stub
+fun readImageAsBase64(file: Any): String? = null
+
+// HTTP routing stubs
+fun post(path: String, handler: (RequestObject) -> FullHttpResponse) {}
+fun get(path: String, handler: (RequestObject) -> FullHttpResponse) {}
+fun put(path: String, handler: (RequestObject) -> FullHttpResponse) {}
+fun delete(path: String, handler: (RequestObject) -> FullHttpResponse) {}
 
 // HTTP Server stubs
 interface HttpServer {

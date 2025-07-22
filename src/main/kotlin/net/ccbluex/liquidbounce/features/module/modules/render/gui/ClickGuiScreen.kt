@@ -19,7 +19,7 @@
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.utils.client.mc
@@ -40,7 +40,7 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         super.init()
         
         // Initialize panels for each category
-        val modulesByCategory = ModuleManager.modules.groupBy { it.category }
+        val modulesByCategory = ModuleManager.getModules().groupBy { it.category }
         var panelIndex = 0
         
         for ((category, modules) in modulesByCategory) {

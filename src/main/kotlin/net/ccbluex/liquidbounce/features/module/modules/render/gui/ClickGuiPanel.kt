@@ -19,7 +19,7 @@
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
 import net.ccbluex.liquidbounce.features.module.Category
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.DrawContext
 import kotlin.math.max
@@ -212,7 +212,7 @@ class ClickGuiPanel(
                 
                 if (button == 0) {
                     // Toggle module
-                    module.toggle()
+                    module.enabled = !module.enabled
                     return true
                 } else if (button == 1) {
                     // Open module settings

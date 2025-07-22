@@ -89,7 +89,7 @@ object ThemeManager : Configurable("theme") {
             // Update integration browser
             IntegrationListener.update()
             ModuleHud.reopen()
-            ModuleClickGui.reload(true)
+            // Note: ModuleClickGui.reload() no longer needed with native GUI
         }
 
     private val takesInputHandler = InputAcceptor { mc.currentScreen != null && mc.currentScreen !is ChatScreen }

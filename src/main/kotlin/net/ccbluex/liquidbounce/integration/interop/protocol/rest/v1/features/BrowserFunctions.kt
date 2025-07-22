@@ -24,9 +24,16 @@ import net.ccbluex.liquidbounce.config.gson.util.emptyJsonObject
 import net.ccbluex.liquidbounce.integration.BrowserScreen
 import net.ccbluex.liquidbounce.integration.browserBrowsers
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.ccbluex.netty.http.model.RequestObject
-import net.ccbluex.netty.http.util.httpBadRequest
-import net.ccbluex.netty.http.util.httpOk
+// import net.ccbluex.netty.http.model.RequestObject // Removed: No longer using HTTP interop with native GUI
+// import net.ccbluex.netty.http.util.httpBadRequest // Removed: No longer using HTTP interop with native GUI  
+// import net.ccbluex.netty.http.util.httpOk // Removed: No longer using HTTP interop with native GUI
+
+// Stub types to replace HTTP interop since we're using native GUI
+data class RequestObject(val data: Any? = null) {
+    inline fun <reified T> asJson(): T = data as T
+}
+fun httpOk(data: Any) = data
+fun httpBadRequest(message: String) = message
 
 // GET /api/v1/client/browser
 @Suppress("UNUSED_PARAMETER")

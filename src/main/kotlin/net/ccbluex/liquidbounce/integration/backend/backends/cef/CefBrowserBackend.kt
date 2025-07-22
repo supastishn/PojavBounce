@@ -26,9 +26,9 @@ import net.ccbluex.liquidbounce.integration.backend.BrowserBackend
 import net.ccbluex.liquidbounce.integration.backend.browser.BrowserSettings
 import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport
 import net.ccbluex.liquidbounce.integration.backend.input.InputAcceptor
-import net.ccbluex.liquidbounce.integration.task.MCEFProgressForwarder
+// import net.ccbluex.liquidbounce.integration.task.MCEFProgressForwarder // Removed: No longer using MCEF
 import net.ccbluex.liquidbounce.integration.task.TaskManager
-import net.ccbluex.liquidbounce.mcef.MCEF
+// import net.ccbluex.liquidbounce.mcef.MCEF // Removed: No longer using JCEF
 import net.ccbluex.liquidbounce.utils.client.error.ErrorHandler
 import net.ccbluex.liquidbounce.utils.client.error.QuickFix
 import net.ccbluex.liquidbounce.utils.client.error.errors.JcefIsntCompatible

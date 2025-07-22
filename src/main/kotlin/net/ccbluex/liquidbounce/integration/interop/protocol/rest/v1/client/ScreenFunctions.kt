@@ -23,17 +23,28 @@ package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
 import com.google.gson.JsonObject
 import com.mojang.blaze3d.systems.RenderSystem
-import io.netty.handler.codec.http.FullHttpResponse
+// import io.netty.handler.codec.http.FullHttpResponse // Removed: No longer using HTTP interop with native GUI
+
+// Stub type to replace HTTP response
+interface FullHttpResponse
 import net.ccbluex.liquidbounce.config.gson.util.emptyJsonObject
 import net.ccbluex.liquidbounce.integration.IntegrationListener
 import net.ccbluex.liquidbounce.integration.VirtualDisplayScreen
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
 import net.ccbluex.liquidbounce.utils.client.inGame
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.ccbluex.netty.http.model.RequestObject
-import net.ccbluex.netty.http.util.httpForbidden
-import net.ccbluex.netty.http.util.httpNoContent
-import net.ccbluex.netty.http.util.httpOk
+// import net.ccbluex.netty.http.model.RequestObject // Removed: No longer using HTTP interop with native GUI
+// import net.ccbluex.netty.http.util.httpForbidden // Removed: No longer using HTTP interop with native GUI
+// import net.ccbluex.netty.http.util.httpNoContent // Removed: No longer using HTTP interop with native GUI
+// import net.ccbluex.netty.http.util.httpOk // Removed: No longer using HTTP interop with native GUI
+
+// Stub types to replace HTTP interop since we're using native GUI
+data class RequestObject(val data: Any? = null) {
+    inline fun <reified T> asJson(): T = data as T
+}
+fun httpOk(data: Any) = data
+fun httpForbidden(message: String) = message
+fun httpNoContent() = Unit
 import net.minecraft.client.gui.screen.SplashOverlay
 import net.minecraft.client.gui.screen.TitleScreen
 

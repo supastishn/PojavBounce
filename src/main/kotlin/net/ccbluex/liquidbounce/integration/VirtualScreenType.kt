@@ -131,9 +131,8 @@ enum class VirtualScreenType(
         open = { openVfpProtocolSelection() }
     ),
 
-    BROWSER("browser",
-        recognizer = { it is BrowserScreen }
-    );
+    // Note: BROWSER screen type removed - using native GUI only
+    // BROWSER("browser", recognizer = { it is BrowserScreen });
 
     fun open() = RenderSystem.recordRenderCall(open)
 

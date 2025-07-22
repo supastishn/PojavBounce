@@ -22,12 +22,25 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.BrowserUrlChangeEvent
 import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
-import net.ccbluex.liquidbounce.integration.backend.browser.Browser
-import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport
+// import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager // Removed: No longer using browser backend
+// import net.ccbluex.liquidbounce.integration.backend.browser.Browser // Removed: No longer using browser backend
+// import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport // Removed: No longer using browser backend
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
+
+// Stub classes to replace browser backend since we're using native GUI
+data class BrowserViewport(val x: Int, val y: Int, val width: Int, val height: Int)
+
+interface Browser {
+    var viewport: BrowserViewport
+    var url: String
+    fun close()
+    fun reload()
+    fun forceReload()
+    fun goForward()
+    fun goBack()
+}
 
 var browserBrowsers = mutableListOf<Browser>()
 
@@ -49,10 +62,18 @@ class BrowserScreen(val url: String, title: Text = "".asText()) : Screen(title) 
         )
 
         if (browserBrowsers.isEmpty()) {
-            val browser = BrowserBackendManager.browserBackend
-
-            browser.createBrowser(url, viewport, priority = 20) { mc.currentScreen == this }
-                .also { browserBrowsers.add(it) }
+            // Note: Browser creation removed - native GUI doesn't use browsers
+            // Create a stub browser object to prevent crashes
+            val stubBrowser = object : Browser {
+                override var viewport: BrowserViewport = viewport
+                override var url: String = this@BrowserScreen.url
+                override fun close() {}
+                override fun reload() {}
+                override fun forceReload() {}
+                override fun goForward() {}
+                override fun goBack() {}
+            }
+            browserBrowsers.add(stubBrowser)
             return
         }
 

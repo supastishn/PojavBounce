@@ -30,7 +30,7 @@ import net.ccbluex.liquidbounce.integration.IntegrationListener
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.ClickGuiScreen
 import net.ccbluex.liquidbounce.integration.VirtualDisplayScreen
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
-import net.ccbluex.liquidbounce.integration.backend.browser.Browser
+// import net.ccbluex.liquidbounce.integration.backend.browser.Browser // Removed: Using native GUI
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.isTyping
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.utils.client.asText
@@ -95,7 +95,8 @@ object ModuleClickGui :
         }
     }
 
-    private var clickGuiBrowser: Browser? = null
+    // Note: Browser variable removed - no longer needed with native GUI
+    // private var clickGuiBrowser: Browser? = null
     private const val WORLD_CHANGE_SECONDS_UNTIL_RELOAD = 5
 
     init {

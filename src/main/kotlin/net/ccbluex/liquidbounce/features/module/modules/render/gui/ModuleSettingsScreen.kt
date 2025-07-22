@@ -18,7 +18,7 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
-import net.ccbluex.liquidbounce.features.module.Module
+import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.BooleanSettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.FloatSettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.IntSettingWidget
@@ -34,7 +34,7 @@ import kotlin.math.min
 /**
  * Screen for configuring module settings
  */
-class ModuleSettingsScreen(private val module: Module, private val parent: Screen) : Screen(Text.literal("${module.name} Settings")) {
+class ModuleSettingsScreen(private val module: ClientModule, private val parent: Screen) : Screen(Text.literal("${module.name} Settings")) {
     
     private val settingWidgets = mutableListOf<SettingWidget<*>>()
     private var scrollOffset = 0

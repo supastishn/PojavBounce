@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.api.services.auth
 
+import net.ccbluex.liquidbounce.api.models.auth.ClientAccount
 import net.ccbluex.liquidbounce.utils.client.logger
 import kotlin.coroutines.suspendCoroutine
 
@@ -45,6 +46,19 @@ object OAuthClient {
         cont.resumeWith(Result.failure(
             UnsupportedOperationException("OAuth authentication is temporarily disabled during native GUI migration")
         ))
+    }
+
+    /**
+     * Stub implementation of OAuth authentication with callback
+     * 
+     * TODO: Implement proper OAuth flow without Netty dependency
+     */
+    suspend fun startAuth(onUrl: (String) -> Unit): ClientAccount = suspendCoroutine { cont ->
+        logger.warn("OAuth authentication is currently disabled due to native GUI migration")
+        logger.warn("OAuth functionality will be restored in a future update")
+        
+        // Return empty account for now
+        cont.resume(ClientAccount.EMPTY_ACCOUNT)
     }
 
     /**

@@ -20,7 +20,6 @@ package net.ccbluex.liquidbounce.integration.backend.backends.cef
 
 import net.ccbluex.liquidbounce.integration.backend.browser.Browser
 import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport
-import net.ccbluex.liquidbounce.utils.client.logger
 
 /**
  * Stub implementation of CEF Browser for native GUI migration
@@ -29,12 +28,11 @@ import net.ccbluex.liquidbounce.utils.client.logger
  * since the native GUI doesn't require embedded browsers.
  */
 class CefBrowser(
-    override val url: String,
+    initialUrl: String,
     initialWidth: Int = 0,
     initialHeight: Int = 0
 ) : Browser {
     
-    private val logger = logger()
     private var stubViewport = BrowserViewport(0, 0, initialWidth, initialHeight)
     
     override var viewport: BrowserViewport
@@ -44,55 +42,38 @@ class CefBrowser(
             // No-op for native GUI
         }
     
-    override val visible: Boolean = false
-    override val scale: Float = 1.0f
-    
-    override fun loadUrl(url: String) {
-        logger.debug("CefBrowser.loadUrl($url) called - no-op for native GUI")
-    }
+    override var visible: Boolean = false
+    override var priority: Short = 0
+    override var url: String = initialUrl
+    override val texture: net.ccbluex.liquidbounce.integration.backend.BrowserTexture? = null
     
     override fun reload() {
-        logger.debug("CefBrowser.reload() called - no-op for native GUI")
+        // No-op for native GUI
+    }
+    
+    override fun forceReload() {
+        // No-op for native GUI
     }
     
     override fun goBack() {
-        logger.debug("CefBrowser.goBack() called - no-op for native GUI")
+        // No-op for native GUI
     }
     
     override fun goForward() {
-        logger.debug("CefBrowser.goForward() called - no-op for native GUI")
+        // No-op for native GUI
     }
     
-    override fun executeJavaScript(script: String) {
-        logger.debug("CefBrowser.executeJavaScript() called - no-op for native GUI")
+    override fun update(width: Int, height: Int) {
+        // No-op for native GUI
+    }
+    
+    override fun invalidate() {
+        // No-op for native GUI
     }
     
     override fun close() {
-        logger.debug("CefBrowser.close() called - no-op for native GUI")
+        // No-op for native GUI
     }
     
-    override fun onKey(key: Int, scancode: Int, action: Int, mods: Int): Boolean {
-        // No-op for native GUI
-        return false
-    }
-    
-    override fun onChar(codepoint: Int, mods: Int): Boolean {
-        // No-op for native GUI
-        return false
-    }
-    
-    override fun onMouseButton(button: Int, action: Int, mods: Int): Boolean {
-        // No-op for native GUI
-        return false
-    }
-    
-    override fun onMouseMove(mouseX: Double, mouseY: Double): Boolean {
-        // No-op for native GUI
-        return false
-    }
-    
-    override fun onMouseScroll(xOffset: Double, yOffset: Double): Boolean {
-        // No-op for native GUI
-        return false
-    }
+    override fun toString(): String = "CefBrowser(stub)"
 }

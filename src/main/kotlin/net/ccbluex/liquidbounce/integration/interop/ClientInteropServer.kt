@@ -15,92 +15,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package net.ccbluex.liquidbounce.integration.interop
-import net.ccbluex.liquidbounce.integration.interop.*
 
-import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.LiquidBounce
-import net.ccbluex.liquidbounce.integration.interop.protocol.event.SocketEventListener
-import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.registerInteropFunctions
-import net.ccbluex.liquidbounce.integration.theme.ThemeManager
-import net.ccbluex.liquidbounce.utils.client.error.ErrorHandler
 import net.ccbluex.liquidbounce.utils.client.logger
-import java.net.BindException
-import java.net.Socket
-import kotlin.concurrent.thread
 
 /**
- * A client server implementation.
- *
- * Allows the browser to communicate with the client. (e.g. for UIs)
+ * Stub implementation of Client Interop Server for native GUI migration
+ * 
+ * This replaces the original HTTP interop server functionality with no-op stubs
+ * since the native GUI doesn't require HTTP communication.
  */
 object ClientInteropServer {
-
-    internal var httpServer = HttpServer()
-    private var socketEventHandler = SocketEventListener()
-
-    private const val DEFAULT_PORT = 15000
-
-    val port = try {
-        Socket("127.0.0.1", DEFAULT_PORT).use {
-            logger.info("Default port unavailable. Falling back to random port.")
-            (15001..17000).random()
-        }
-    } catch (_: Exception) {
-        logger.info("Default port $DEFAULT_PORT available.")
-
-        DEFAULT_PORT
-    }
-    val url = "http://127.0.0.1:$port"
-
+    
+    private val logger = logger()
+    
     fun start() {
-        runCatching {
-            // RestAPI
-            httpServer.routeController.apply {
-                get("/", ::getRootResponse)
-                registerInteropFunctions(this)
-                file("/", ThemeManager.themesFolder)
-            }
-
-            // Add CORS middleware
-            httpServer.middleware(CorsMiddleware())
-
-            // Register events with @WebSocketEvent annotation
-            socketEventHandler.registerAll()
-        }.onFailure {
-            ErrorHandler.fatal(it, additionalMessage = "Register endpoints")
-        }
-
-        // Start the HTTP server
-        thread(name = "netty-websocket", isDaemon = true, block = ::startServer)
+        logger.info("Client Interop Server is disabled - using native GUI instead of HTTP interop")
     }
-
-    private var attempt = 0
-    private fun startServer(port: Int = this.port) {
-        try {
-            httpServer.start(port)
-        } catch (bindException: BindException) {
-            if (attempt >= 5) {
-                ErrorHandler.fatal(bindException, additionalMessage = "Bind interop server")
-                return
-            }
-
-            // Retry with random port
-            attempt++
-            logger.error("Failed to bind to port $port. Falling back to random port.")
-            startServer((15001..17000).random())
-        } catch (exception: Exception) {
-            ErrorHandler.fatal(exception, additionalMessage = "Start interop server")
-        }
+    
+    fun stop() {
+        logger.info("Client Interop Server stop() called - no-op for native GUI")
     }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun getRootResponse(requestObject: RequestObject) = httpOk(JsonObject().apply {
-        addProperty("name", LiquidBounce.CLIENT_NAME)
-        addProperty("version", LiquidBounce.clientVersion)
-        addProperty("author", LiquidBounce.CLIENT_AUTHOR)
-    })
-
 }

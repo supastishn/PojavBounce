@@ -30,12 +30,12 @@ import kotlin.math.min
  */
 class ClickGuiPanel(
     val category: Category,
-    private val allModules: List<Module>,
+    private val allModules: List<ClientModule>,
     var x: Int,
     var y: Int,
     val width: Int,
     var height: Int,
-    private val onOpenSettings: (Module) -> Unit = {}
+    private val onOpenSettings: (ClientModule) -> Unit = {}
 ) {
     private var expanded = false
     private var isDragging = false
@@ -122,7 +122,7 @@ class ClickGuiPanel(
         }
     }
     
-    private fun renderModule(context: DrawContext, module: Module, moduleX: Int, moduleY: Int, mouseX: Int, mouseY: Int) {
+    private fun renderModule(context: DrawContext, module: ClientModule, moduleX: Int, moduleY: Int, mouseX: Int, mouseY: Int) {
         val isHovered = mouseX >= moduleX && mouseX <= moduleX + width && 
                        mouseY >= moduleY && mouseY <= moduleY + moduleHeight
         
@@ -162,7 +162,7 @@ class ClickGuiPanel(
         context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFFAAAAAA.toInt())
     }
     
-    private fun moduleHasSettings(module: Module): Boolean {
+    private fun moduleHasSettings(module: ClientModule): Boolean {
         // Simple check - in real implementation, would check module's configuration tree
         return true // Placeholder
     }

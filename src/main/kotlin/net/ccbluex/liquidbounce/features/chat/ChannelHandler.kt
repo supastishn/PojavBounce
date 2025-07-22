@@ -15,98 +15,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
-
 package net.ccbluex.liquidbounce.features.chat
 
-import io.netty.channel.ChannelHandlerContext
-import io.netty.channel.ChannelPromise
-import io.netty.channel.SimpleChannelInboundHandler
-import net.ccbluex.liquidbounce.event.EventManager
-import net.ccbluex.liquidbounce.event.events.ClientChatErrorEvent
-import net.ccbluex.liquidbounce.event.events.ClientChatStateChange
 import net.ccbluex.liquidbounce.utils.client.logger
 
-class ChannelHandler(private val chatClient: ChatClient,
-                     private val handshaker: WebSocketClientHandshaker) : SimpleChannelInboundHandler<Any>() {
-
-    lateinit var handshakeFuture: ChannelPromise
-
-    /**
-     * Do nothing by default, sub-classes may override this method.
-     */
-    override fun handlerAdded(ctx: ChannelHandlerContext) {
-        handshakeFuture = ctx.newPromise()
-    }
-
-    /**
-     * Calls [ChannelHandlerContext.fireChannelActive] to forward
-     * to the next [ChannelInboundHandler] in the [ChannelPipeline].
-     *
-     * Sub-classes may override this method to change behavior.
-     */
-    override fun channelActive(ctx: ChannelHandlerContext) {
-        handshaker.handshake(ctx.channel())
-    }
-
-    /**
-     * Calls [ChannelHandlerContext.fireChannelInactive] to forward
-     * to the next [ChannelInboundHandler] in the [ChannelPipeline].
-     *
-     * Sub-classes may override this method to change behavior.
-     */
-    override fun channelInactive(ctx: ChannelHandlerContext) {
-        EventManager.callEvent(ClientChatStateChange(ClientChatStateChange.State.DISCONNECTED))
-    }
-
-    /**
-     * Calls [ChannelHandlerContext.fireExceptionCaught] to forward
-     * to the next [ChannelHandler] in the [ChannelPipeline].
-     *
-     * Sub-classes may override this method to change behavior.
-     */
-    override fun exceptionCaught(ctx: ChannelHandlerContext, cause: Throwable) {
-        logger.error("LiquidChat error", cause)
-        EventManager.callEvent(ClientChatErrorEvent(
-            cause.localizedMessage ?: cause.message ?: cause.javaClass.name
-        ))
-
-        if (!handshakeFuture.isDone) {
-            handshakeFuture.setFailure(cause)
-        }
-        ctx.close()
-    }
-
-    /**
-     * **Please keep in mind that this method will be renamed to
-     * `messageReceived(ChannelHandlerContext, I)` in 5.0.**
-     *
-     * Is called for each message of type [I].
-     *
-     * @param ctx           the [ChannelHandlerContext] which this [SimpleChannelInboundHandler]
-     * belongs to
-     * @param msg           the message to handle
-     * @throws Exception    is thrown if an error occurred
-     */
-    override fun channelRead0(ctx: ChannelHandlerContext, msg: Any) {
-        val channel = ctx.channel()
-
-        if (!handshaker.isHandshakeComplete) {
-            try {
-                handshaker.finishHandshake(channel, msg as FullHttpResponse)
-                handshakeFuture.setSuccess()
-
-            } catch (exception: WebSocketHandshakeException) {
-                handshakeFuture.setFailure(exception)
-            }
-            return
-        }
-
-        when (msg) {
-            is TextWebSocketFrame -> chatClient.handlePlainMessage(msg.text())
-            is CloseWebSocketFrame -> channel.close()
-        }
+/**
+ * Stub implementation of ChannelHandler for native GUI migration
+ * 
+ * This replaces the WebSocket channel handler functionality with no-op stubs
+ * since the chat system requires WebSocket libraries that were removed.
+ */
+class ChannelHandler {
+    
+    private val logger = logger()
+    
+    init {
+        logger.info("ChannelHandler initialized as stub - WebSocket chat functionality is disabled")
     }
 }

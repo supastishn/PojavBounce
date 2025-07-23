@@ -33,7 +33,7 @@ jobs:
         with:
           arguments: genSources build -x test -x detekt
 
-      - name: Upload artifact
+      - name: Upload artifact (external)
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
         run: |
@@ -49,6 +49,7 @@ jobs:
           echo Version: $LB_VERSION, Minecraft: $MINECRAFT_VERSION
           cd build/libs
           export JAR=$(find . -regex '.*liquidbounce-[0-9.]*\.jar')
+          mkdir -p zip
           cp $JAR zip/liquidbounce.jar
           cd zip
           zip -r liquidbounce.zip *
@@ -69,6 +70,12 @@ jobs:
             -F "kotlin_version=$KOTLIN_VERSION" \
             -F "fabric_kotlin_version=$FABRIC_KOTLIN_VERSION" \
             https://api.liquidbounce.net/api/v1/version/new
+
+      - name: Upload build artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: liquidbounce-nextgen-zip
+          path: build/libs/zip/liquidbounce.zip
 
   verify-pr:
     runs-on: ubuntu-latest

@@ -305,20 +305,24 @@ object LiquidBounce : EventListener {
                 }
             },
             scope.async {
-                ThemeManager.themesFolder.listFiles()
-                    ?.filter { file -> file.isDirectory }
-                    ?.forEach { file ->
-                        runCatching {
-                            val assetsFolder = File(file, "assets")
-                            if (!assetsFolder.exists()) {
-                                return@forEach
-                            }
+                runCatching {
+                    ThemeManager.themesFolder.listFiles()
+                        ?.filter { file -> file.isDirectory }
+                        ?.forEach { file ->
+                            runCatching {
+                                val assetsFolder = File(file, "assets")
+                                if (!assetsFolder.exists()) {
+                                    return@forEach
+                                }
 
-                            FontManager.queueFolder(assetsFolder)
-                        }.onFailure {
-                            logger.error("Failed to queue fonts from theme '${file.name}'.", it)
+                                FontManager.queueFolder(assetsFolder)
+                            }.onFailure {
+                                logger.error("Failed to queue fonts from theme '${file.name}'.", it)
+                            }
                         }
-                    }
+                }.onFailure {
+                    logger.error("Failed to process theme font loading", it)
+                }
             }
         ).awaitAll()
     }
@@ -328,8 +332,12 @@ object LiquidBounce : EventListener {
      * This will load [ThemeManager] and [ClientInteropServer] for native GUI components.
      */
     private fun prepareGuiStage() {
-        // Load theme and component overlay
-        ThemeManager
+        // Load theme and component overlay with error handling
+        runCatching {
+            ThemeManager
+        }.onFailure {
+            logger.error("Failed to initialize ThemeManager", it)
+        }
         // Note: BrowserBackendManager removed - using native GUI instead
         // BrowserBackendManager
 

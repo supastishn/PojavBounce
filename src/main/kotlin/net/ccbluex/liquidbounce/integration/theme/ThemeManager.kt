@@ -72,24 +72,45 @@ object ThemeManager : Configurable("theme") {
 
     var activeTheme = defaultTheme
         set(value) {
-            if (!value.exists) {
-                logger.warn("Unable to set theme to ${value.name}, theme does not exist")
-                return
+            try {
+                if (!value.exists) {
+                    logger.warn("Unable to set theme to ${value.name}, theme does not exist. Using default theme instead.")
+                    if (field != defaultTheme) {
+                        field.close()
+                        field = defaultTheme
+                    }
+                    return
+                }
+
+                if (field != defaultTheme) {
+                    field.close()
+                }
+
+                field = value
+
+                // Update components
+                ComponentOverlay.insertDefaultComponents()
+
+                // Update integration browser
+                IntegrationListener.update()
+                ModuleHud.reopen()
+                // Note: ModuleClickGui.reload() no longer needed with native GUI
+            } catch (e: Exception) {
+                logger.error("Failed to set active theme to ${value.name}, falling back to default theme", e)
+                if (field != defaultTheme) {
+                    runCatching { field.close() }
+                    field = defaultTheme
+                }
+                
+                // Still try to update components with default theme
+                try {
+                    ComponentOverlay.insertDefaultComponents()
+                    IntegrationListener.update()
+                    ModuleHud.reopen()
+                } catch (updateException: Exception) {
+                    logger.error("Failed to update components after theme fallback", updateException)
+                }
             }
-
-            if (field != defaultTheme) {
-                activeTheme.close()
-            }
-
-            field = value
-
-            // Update components
-            ComponentOverlay.insertDefaultComponents()
-
-            // Update integration browser
-            IntegrationListener.update()
-            ModuleHud.reopen()
-            // Note: ModuleClickGui.reload() no longer needed with native GUI
         }
 
     private val takesInputHandler = InputAcceptor { mc.currentScreen != null && mc.currentScreen !is ChatScreen }
@@ -138,12 +159,18 @@ object ThemeManager : Configurable("theme") {
     }
 
     fun route(virtualScreenType: VirtualScreenType? = null, markAsStatic: Boolean = false): Route {
-        val theme = if (virtualScreenType == null || activeTheme.doesAccept(virtualScreenType.routeName)) {
-            activeTheme
-        } else if (defaultTheme.doesAccept(virtualScreenType.routeName)) {
+        val theme = try {
+            if (virtualScreenType == null || activeTheme.doesAccept(virtualScreenType.routeName)) {
+                activeTheme
+            } else if (defaultTheme.doesAccept(virtualScreenType.routeName)) {
+                defaultTheme
+            } else {
+                logger.warn("No theme supports the route ${virtualScreenType.routeName}, using default theme")
+                defaultTheme
+            }
+        } catch (e: Exception) {
+            logger.error("Error while determining theme for route ${virtualScreenType?.routeName}, falling back to default theme", e)
             defaultTheme
-        } else {
-            error("No theme supports the route ${virtualScreenType.routeName}")
         }
 
         return Route(
@@ -153,14 +180,22 @@ object ThemeManager : Configurable("theme") {
     }
 
     fun initializeBackground() {
-        // Load background image of active theme and fallback to default theme if not available
-        if (!activeTheme.loadBackgroundImage()) {
-            defaultTheme.loadBackgroundImage()
+        runCatching {
+            // Load background image of active theme and fallback to default theme if not available
+            if (!activeTheme.loadBackgroundImage()) {
+                defaultTheme.loadBackgroundImage()
+            }
+        }.onFailure {
+            logger.error("Failed to load background images", it)
         }
 
-        // Compile shader of active theme and fallback to default theme if not available
-        if (shaderEnabled && !activeTheme.compileShader()) {
-            defaultTheme.compileShader()
+        runCatching {
+            // Compile shader of active theme and fallback to default theme if not available
+            if (shaderEnabled && !activeTheme.compileShader()) {
+                defaultTheme.compileShader()
+            }
+        }.onFailure {
+            logger.error("Failed to compile shaders", it)
         }
     }
 
@@ -195,10 +230,22 @@ object ThemeManager : Configurable("theme") {
     }
 
     fun chooseTheme(name: String) {
-        activeTheme = Theme(name)
+        try {
+            val newTheme = Theme(name)
+            activeTheme = newTheme
+        } catch (e: Exception) {
+            logger.error("Failed to load theme '$name', falling back to default theme", e)
+            if (activeTheme != defaultTheme) {
+                activeTheme = defaultTheme
+            }
+        }
     }
 
-    fun themes() = themesFolder.listFiles()?.filter { it.isDirectory }?.mapNotNull { it.name } ?: emptyList()
+    fun themes() = runCatching {
+        themesFolder.listFiles()?.filter { it.isDirectory }?.mapNotNull { it.name } ?: emptyList()
+    }.onFailure {
+        logger.error("Failed to list available themes", it)
+    }.getOrElse { emptyList() }
 
     data class Route(val theme: Theme, val url: String)
 
@@ -210,17 +257,21 @@ class Theme(val name: String) : Closeable {
 
     init {
         if (!exists) {
-            error("Theme $name does not exist")
+            throw IllegalArgumentException("Theme $name does not exist")
         }
     }
 
     private val metadata: ThemeMetadata = run {
         val metadataFile = File(folder, "metadata.json")
         if (!metadataFile.exists()) {
-            error("Theme $name does not contain a metadata file")
+            throw IllegalArgumentException("Theme $name does not contain a metadata file")
         }
 
-        decode<ThemeMetadata>(metadataFile.inputStream())
+        try {
+            decode<ThemeMetadata>(metadataFile.inputStream())
+        } catch (e: Exception) {
+            throw IllegalArgumentException("Failed to parse metadata for theme $name: ${e.message}", e)
+        }
     }
 
     val exists: Boolean
@@ -243,29 +294,45 @@ class Theme(val name: String) : Closeable {
             return true
         }
 
-        readShaderBackground()?.let { shaderBackground ->
-            compiledShaderBackground = CanvasShader(resourceToString("/resources/liquidbounce/shaders/vertex.vert"),
-                shaderBackground)
-            logger.info("Compiled background shader for theme $name")
-            return true
-        }
-        return false
+        return runCatching {
+            readShaderBackground()?.let { shaderBackground ->
+                compiledShaderBackground = CanvasShader(resourceToString("/resources/liquidbounce/shaders/vertex.vert"),
+                    shaderBackground)
+                logger.info("Compiled background shader for theme $name")
+                true
+            } ?: false
+        }.onFailure {
+            logger.error("Failed to compile shader for theme $name", it)
+        }.getOrElse { false }
     }
 
-    private fun readShaderBackground() = backgroundShader.takeIf { it.exists() }?.readText()
-    private fun readBackgroundImage() = backgroundImage.takeIf { it.exists() }
-        ?.inputStream()?.use { NativeImage.read(it) }
+    private fun readShaderBackground() = runCatching { 
+        backgroundShader.takeIf { it.exists() }?.readText() 
+    }.onFailure {
+        logger.error("Failed to read shader file for theme $name", it)
+    }.getOrNull()
+    
+    private fun readBackgroundImage() = runCatching {
+        backgroundImage.takeIf { it.exists() }
+            ?.inputStream()?.use { NativeImage.read(it) }
+    }.onFailure {
+        logger.error("Failed to read background image for theme $name", it)
+    }.getOrNull()
 
     fun loadBackgroundImage(): Boolean {
         if (loadedBackgroundImage != null) {
             return true
         }
 
-        val image = NativeImageBackedTexture(readBackgroundImage() ?: return false)
-        loadedBackgroundImage = Identifier.of("liquidbounce", "theme-bg-${name.lowercase()}")
-        mc.textureManager.registerTexture(loadedBackgroundImage, image)
-        logger.info("Loaded background image for theme $name")
-        return true
+        return runCatching {
+            val image = NativeImageBackedTexture(readBackgroundImage() ?: return false)
+            loadedBackgroundImage = Identifier.of("liquidbounce", "theme-bg-${name.lowercase()}")
+            mc.textureManager.registerTexture(loadedBackgroundImage, image)
+            logger.info("Loaded background image for theme $name")
+            true
+        }.onFailure {
+            logger.error("Failed to load background image for theme $name", it)
+        }.getOrElse { false }
     }
 
     /**
@@ -286,34 +353,54 @@ class Theme(val name: String) : Closeable {
     fun doesOverlay(name: String?) = name != null && metadata.overlays.contains(name)
 
     fun parseComponents(): MutableList<Component> {
-        val themeComponent = metadata.rawComponents
-            .map { it.asJsonObject }
-            .associateBy { it["name"].asString!! }
-
         val componentList = mutableListOf<Component>()
-
-        for ((name, obj) in themeComponent) {
-            runCatching {
-                val componentType = ComponentType.byName(name) ?: error("Unknown component type: $name")
-                val component = componentType.createComponent()
-
-                runCatching {
-                    ConfigSystem.deserializeConfigurable(component, obj)
-                }.onFailure {
-                    logger.error("Failed to deserialize component $name", it)
+        
+        try {
+            val themeComponent = metadata.rawComponents
+                .mapNotNull { element ->
+                    runCatching {
+                        element.asJsonObject to element.asJsonObject["name"]?.asString
+                    }.onFailure { 
+                        logger.error("Failed to parse component element in theme $name", it)
+                    }.getOrNull()
                 }
+                .filter { it.second != null }
+                .associate { it.second!! to it.first }
 
-                componentList.add(component)
-            }.onFailure {
-                logger.error("Failed to create component $name", it)
+            for ((name, obj) in themeComponent) {
+                runCatching {
+                    val componentType = ComponentType.byName(name)
+                    if (componentType == null) {
+                        logger.warn("Unknown component type: $name in theme $name, skipping")
+                        return@runCatching
+                    }
+                    
+                    val component = componentType.createComponent()
+
+                    runCatching {
+                        ConfigSystem.deserializeConfigurable(component, obj)
+                    }.onFailure {
+                        logger.error("Failed to deserialize component $name in theme $name", it)
+                    }
+
+                    componentList.add(component)
+                }.onFailure {
+                    logger.error("Failed to create component $name in theme $name", it)
+                }
             }
+        } catch (e: Exception) {
+            logger.error("Failed to parse components for theme $name", e)
         }
 
         return componentList
     }
 
     override fun close() {
-        mc.textureManager.destroyTexture(loadedBackgroundImage)
+        runCatching {
+            mc.textureManager.destroyTexture(loadedBackgroundImage)
+        }.onFailure {
+            logger.error("Failed to destroy texture for theme $name", it)
+        }
     }
 
     companion object {
@@ -334,7 +421,32 @@ class Theme(val name: String) : Closeable {
             logger.error("Unable to extract default theme", it)
         }.onSuccess {
             logger.info("Successfully extracted default theme")
+        }.recover { 
+            // If we can't extract the default theme, create a minimal fallback
+            logger.warn("Creating minimal fallback theme due to default theme extraction failure")
+            createMinimalFallbackTheme()
         }.getOrThrow()
+
+        private fun createMinimalFallbackTheme(): Theme {
+            val folder = ThemeManager.themesFolder.resolve("default")
+            folder.mkdirs()
+            
+            // Create minimal metadata.json
+            val metadataFile = File(folder, "metadata.json")
+            metadataFile.writeText("""
+                {
+                    "name": "Default Fallback",
+                    "author": "LiquidBounce",
+                    "version": "1.0.0",
+                    "supports": [],
+                    "overlays": [],
+                    "components": []
+                }
+            """.trimIndent())
+            
+            folder.deleteOnExit()
+            return Theme("default")
+        }
 
     }
 

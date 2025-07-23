@@ -305,26 +305,33 @@ object LiquidBounce : EventListener {
                 }
             },
             scope.async {
-                runCatching {
-                    ThemeManager.themesFolder.listFiles()
-                        ?.filter { file -> file.isDirectory }
-                        ?.forEach { file ->
-                            runCatching {
-                                val assetsFolder = File(file, "assets")
-                                if (!assetsFolder.exists()) {
-                                    return@forEach
-                                }
-
-                                FontManager.queueFolder(assetsFolder)
-                            }.onFailure {
-                                logger.error("Failed to queue fonts from theme '${file.name}'.", it)
-                            }
-                        }
-                }.onFailure {
-                    logger.error("Failed to process theme font loading", it)
-                }
+                loadThemeFonts()
             }
         ).awaitAll()
+    }
+
+    /**
+     * Load fonts from theme folders to FontManager
+     */
+    private fun loadThemeFonts() {
+        runCatching {
+            ThemeManager.themesFolder.listFiles()
+                ?.filter { file -> file.isDirectory }
+                ?.forEach { file ->
+                    runCatching {
+                        val assetsFolder = File(file, "assets")
+                        if (!assetsFolder.exists()) {
+                            return@forEach
+                        }
+
+                        FontManager.queueFolder(assetsFolder)
+                    }.onFailure {
+                        logger.error("Failed to queue fonts from theme '${file.name}'.", it)
+                    }
+                }
+        }.onFailure {
+            logger.error("Failed to process theme font loading", it)
+        }
     }
 
     /**

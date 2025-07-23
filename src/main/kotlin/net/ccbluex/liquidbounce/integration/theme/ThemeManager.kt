@@ -74,7 +74,9 @@ object ThemeManager : Configurable("theme") {
         set(value) {
             try {
                 if (!value.exists) {
-                    logger.warn("Unable to set theme to ${value.name}, theme does not exist. Using default theme instead.")
+                    logger.warn(
+                        "Unable to set theme to ${value.name}, theme does not exist. Using default theme instead."
+                    )
                     if (field != defaultTheme) {
                         field.close()
                         field = defaultTheme
@@ -169,7 +171,11 @@ object ThemeManager : Configurable("theme") {
                 defaultTheme
             }
         } catch (e: Exception) {
-            logger.error("Error while determining theme for route ${virtualScreenType?.routeName}, falling back to default theme", e)
+            logger.error(
+                "Error while determining theme for route ${virtualScreenType?.routeName}, " +
+                    "falling back to default theme",
+                e
+            )
             defaultTheme
         }
 
@@ -256,16 +262,12 @@ class Theme(val name: String) : Closeable {
     private val folder = File(ThemeManager.themesFolder, name)
 
     init {
-        if (!exists) {
-            throw IllegalArgumentException("Theme $name does not exist")
-        }
+        require(exists) { "Theme $name does not exist" }
     }
 
     private val metadata: ThemeMetadata = run {
         val metadataFile = File(folder, "metadata.json")
-        if (!metadataFile.exists()) {
-            throw IllegalArgumentException("Theme $name does not contain a metadata file")
-        }
+        require(metadataFile.exists()) { "Theme $name does not contain a metadata file" }
 
         try {
             decode<ThemeMetadata>(metadataFile.inputStream())

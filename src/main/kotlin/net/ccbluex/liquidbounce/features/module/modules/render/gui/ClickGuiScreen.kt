@@ -30,6 +30,7 @@ import net.minecraft.text.Text
 /**
  * Native Minecraft ClickGUI Screen that replaces the Svelte-based implementation
  */
+@Suppress("TooManyFunctions")
 class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     
     private val panels = mutableMapOf<Category, ClickGuiPanel>()

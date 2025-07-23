@@ -27,6 +27,7 @@ import net.minecraft.text.Text
 /**
  * Native HUD configuration screen that replaces the Svelte-based implementation
  */
+@Suppress("TooManyFunctions")
 class HudScreen : Screen(Text.literal("HUD Editor")) {
     
     private val hudElements = mutableListOf<HudElement>()

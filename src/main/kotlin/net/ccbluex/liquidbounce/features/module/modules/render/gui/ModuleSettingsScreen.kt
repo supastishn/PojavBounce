@@ -37,6 +37,7 @@ import kotlin.math.min
 /**
  * Screen for configuring module settings
  */
+@Suppress("TooManyFunctions")
 class ModuleSettingsScreen(
     private val module: ClientModule, 
     private val parent: Screen

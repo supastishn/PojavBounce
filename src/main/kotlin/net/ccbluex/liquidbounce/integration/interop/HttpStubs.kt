@@ -63,7 +63,11 @@ fun httpFileStream(file: Any): FullHttpResponse = StubHttpResponse(file)
 fun httpFile(file: Any): FullHttpResponse = StubHttpResponse(file)
 
 // Image utilities stub
-fun readImageAsBase64(file: Any): String? = null
+const val STUB_IMAGE_BASE64 = "data:image/png;base64," +
+    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg=="
+
+@Suppress("UnusedParameter")
+fun readImageAsBase64(file: Any): String? = STUB_IMAGE_BASE64
 
 // HTTP routing stubs
 fun post(path: String, handler: (RequestObject) -> FullHttpResponse) { /* Stub - HTTP routing disabled */ }

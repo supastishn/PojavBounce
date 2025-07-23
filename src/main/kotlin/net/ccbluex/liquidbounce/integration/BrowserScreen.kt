@@ -22,9 +22,10 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.BrowserUrlChangeEvent
 import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.mc
-// import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager // Removed: No longer using browser backend
-// import net.ccbluex.liquidbounce.integration.backend.browser.Browser // Removed: No longer using browser backend
-// import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport // Removed: No longer using browser backend
+// Removed: No longer using browser backend
+// import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
+// import net.ccbluex.liquidbounce.integration.backend.browser.Browser
+// import net.ccbluex.liquidbounce.integration.backend.browser.BrowserViewport
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text

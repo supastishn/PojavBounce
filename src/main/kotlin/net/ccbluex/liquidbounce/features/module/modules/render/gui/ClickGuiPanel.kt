@@ -38,6 +38,7 @@ data class PanelConfig(
 /**
  * A draggable panel containing modules for a specific category
  */
+@Suppress("TooManyFunctions")
 class ClickGuiPanel(
     val category: Category,
     private val allModules: List<ClientModule>,
@@ -239,44 +240,30 @@ class ClickGuiPanel(
     }
     
     private fun isClickWithinBounds(mouseX: Int, mouseY: Int): Boolean {
-        if (mouseX < x || mouseX > x + width || mouseY < y) {
-            return false
-        }
-        
-        val actualHeight = if (expanded) headerHeight + min(filteredModules.size * moduleHeight, 300) else headerHeight
-        return mouseY <= y + actualHeight
+        val bounds = ClickGuiPanelInteraction.PanelBounds(
+            x, y, width, expanded, headerHeight, filteredModules.size, moduleHeight
+        )
+        return ClickGuiPanelInteraction.isClickWithinBounds(mouseX, mouseY, bounds)
     }
     
     private fun isHeaderClick(mouseY: Int): Boolean {
-        return mouseY <= y + headerHeight
+        return ClickGuiPanelInteraction.isHeaderClick(mouseY, y, headerHeight)
     }
     
     private fun isModuleAreaClick(mouseY: Int): Boolean {
-        return expanded && mouseY > y + headerHeight
+        return ClickGuiPanelInteraction.isModuleAreaClick(mouseY, y, headerHeight, expanded)
     }
     
     private fun handleHeaderClick(mouseX: Int, mouseY: Int, button: Int): Boolean {
-        // Expand button click
-        if (mouseX >= x + width - 20) {
-            expanded = !expanded
-            return true
-        }
-        
-        // Start dragging
-        if (button == 0) {
+        val clickData = ClickGuiPanelInteraction.HeaderClickData(
+            mouseX, mouseY, button, x, y, width, expanded
+        )
+        return ClickGuiPanelInteraction.handleHeaderClick(clickData) { newExpanded ->
+            expanded = newExpanded
             isDragging = true
             dragOffsetX = mouseX - x
             dragOffsetY = mouseY - y
-            return true
         }
-        
-        // Right click to expand/collapse
-        if (button == 1) {
-            expanded = !expanded
-            return true
-        }
-        
-        return false
     }
     
     private fun handleModuleClick(@Suppress("UnusedParameter") mouseX: Int, mouseY: Int, button: Int): Boolean {
@@ -381,8 +368,86 @@ object ClickGuiPanelRenderer {
  * Helper object for ClickGui panel utilities
  */
 object ClickGuiPanelHelper {
+    const val HAS_SETTINGS = true // Placeholder
+    
+    @Suppress("UnusedParameter")
     fun moduleHasSettings(module: ClientModule): Boolean {
         // Simple check - in real implementation, would check module's configuration tree
-        return true // Placeholder
+        return HAS_SETTINGS
+    }
+}
+
+/**
+ * Helper object for ClickGui panel interaction logic
+ */
+object ClickGuiPanelInteraction {
+    
+    /**
+     * Data class for panel bounds checking
+     */
+    data class PanelBounds(
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val expanded: Boolean,
+        val headerHeight: Int,
+        val moduleCount: Int,
+        val moduleHeight: Int
+    )
+    
+    /**
+     * Data class for header click handling
+     */
+    data class HeaderClickData(
+        val mouseX: Int,
+        val mouseY: Int,
+        val button: Int,
+        val panelX: Int,
+        val panelY: Int,
+        val panelWidth: Int,
+        val expanded: Boolean
+    )
+    
+    fun isClickWithinBounds(mouseX: Int, mouseY: Int, bounds: PanelBounds): Boolean {
+        if (mouseX < bounds.x || mouseX > bounds.x + bounds.width || mouseY < bounds.y) {
+            return false
+        }
+        
+        val actualHeight = if (bounds.expanded) {
+            bounds.headerHeight + min(bounds.moduleCount * bounds.moduleHeight, 300)
+        } else {
+            bounds.headerHeight
+        }
+        return mouseY <= bounds.y + actualHeight
+    }
+    
+    fun isHeaderClick(mouseY: Int, panelY: Int, headerHeight: Int): Boolean {
+        return mouseY <= panelY + headerHeight
+    }
+    
+    fun isModuleAreaClick(mouseY: Int, panelY: Int, headerHeight: Int, expanded: Boolean): Boolean {
+        return expanded && mouseY > panelY + headerHeight
+    }
+    
+    fun handleHeaderClick(clickData: HeaderClickData, onAction: (Boolean) -> Unit): Boolean {
+        // Expand button click
+        if (clickData.mouseX >= clickData.panelX + clickData.panelWidth - 20) {
+            onAction(!clickData.expanded)
+            return true
+        }
+        
+        // Start dragging
+        if (clickData.button == 0) {
+            onAction(clickData.expanded)
+            return true
+        }
+        
+        // Right click to expand/collapse
+        if (clickData.button == 1) {
+            onAction(!clickData.expanded)
+            return true
+        }
+        
+        return false
     }
 }

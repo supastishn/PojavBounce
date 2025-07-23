@@ -60,7 +60,9 @@ enum class VirtualScreenType(
             ALT_MANAGER -> {
                 // Create a dummy parent screen if current screen is null
                 val parentScreen = mc.currentScreen ?: object : Screen(Text.literal("")) {}
-                mc.setScreen(net.ccbluex.liquidbounce.features.module.modules.render.gui.menu.AltManagerScreen(parentScreen))
+                val altManagerScreen = net.ccbluex.liquidbounce.features.module.modules.render.gui.menu
+                    .AltManagerScreen(parentScreen)
+                mc.setScreen(altManagerScreen)
             }
             else -> {
                 val screenType = byName(routeName)

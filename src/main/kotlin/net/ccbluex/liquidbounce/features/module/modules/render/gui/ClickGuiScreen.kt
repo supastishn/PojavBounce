@@ -46,8 +46,8 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         
         for ((category, modules) in modulesByCategory) {
             val panelConfig = PanelConfig(
-                x = 20 + panelIndex * (GuiConfig.panelWidth + 20), // Space panels with config width
-                y = 20,
+                x = 20, // Fixed x position - panels now stack vertically
+                y = 20 + panelIndex * (GuiConfig.headerHeight + 10), // Vertical positioning with spacing
                 width = GuiConfig.panelWidth,
                 height = GuiConfig.headerHeight
             )
@@ -85,25 +85,7 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         // Semi-transparent background
         context.fill(0, 0, width, height, 0x99000000.toInt())
         
-        // Grid background if snapping is enabled
-        if (ModuleClickGui.Snapping.enabled) {
-            val gridSize = 10 // TODO: Get from ModuleClickGui.Snapping.gridSize
-            val gridColor = 0x44FFFFFF
-            
-            // Draw vertical lines
-            var x = 0
-            while (x < width) {
-                context.fill(x, 0, x + 1, height, gridColor)
-                x += gridSize
-            }
-            
-            // Draw horizontal lines
-            var y = 0
-            while (y < height) {
-                context.fill(0, y, width, y + 1, gridColor)
-                y += gridSize
-            }
-        }
+        // Grid removed as requested - no longer rendering grid lines
     }
     
     @Suppress("UnusedParameter")

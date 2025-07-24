@@ -126,8 +126,8 @@ class ModuleSettingsScreen(
     }
     
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        // Background
-        context.fillGradient(0, 0, width, height, 0x80000000.toInt(), 0x80222222.toInt())
+        // Fixed background - no more blur, cleaner rendering
+        context.fill(0, 0, width, height, 0xE6000000.toInt()) // More opaque background to reduce blur
         
         // Title
         val title = "${module.name} Settings"
@@ -139,10 +139,10 @@ class ModuleSettingsScreen(
         val descWidth = textRenderer.getWidth(description)
         context.drawText(textRenderer, description, (width - descWidth) / 2, 35, 0xAAAAAA, false)
         
-        // Settings area background
+        // Settings area background - more solid to eliminate blur issues
         val settingsAreaY = 55
         val settingsAreaHeight = height - 100
-        context.fill(10, settingsAreaY, width - 10, settingsAreaY + settingsAreaHeight, 0x88000000.toInt())
+        context.fill(10, settingsAreaY, width - 10, settingsAreaY + settingsAreaHeight, 0xDD000000.toInt())
         context.drawBorder(10, settingsAreaY, width - 20, settingsAreaHeight, 0xFF444444.toInt())
         
         // Render settings with scrolling

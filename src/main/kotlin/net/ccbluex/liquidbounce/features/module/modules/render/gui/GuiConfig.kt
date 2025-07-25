@@ -31,10 +31,10 @@ object GuiConfig {
     
     // Default values
     private const val DEFAULT_GRID_SIZE = 20
-    private const val DEFAULT_PANEL_WIDTH = 50  // Made 3x smaller for more compact tabs
-    private const val DEFAULT_PANEL_MAX_HEIGHT = 80  // Made 3x smaller for more compact tabs
-    private const val DEFAULT_MODULE_HEIGHT = 16  // Made smaller but still readable
-    private const val DEFAULT_HEADER_HEIGHT = 16  // Made smaller but still readable
+    private const val DEFAULT_PANEL_WIDTH = 17  // Made 3x smaller than previous 50px
+    private const val DEFAULT_PANEL_MAX_HEIGHT = 27  // Made 3x smaller than previous 80px
+    private const val DEFAULT_MODULE_HEIGHT = 6  // Made 3x smaller but still readable
+    private const val DEFAULT_HEADER_HEIGHT = 6  // Made 3x smaller but still readable
     private const val DEFAULT_SEARCH_KEY = 342 // F3
     
     // Color defaults - lighter to reduce darkish tint

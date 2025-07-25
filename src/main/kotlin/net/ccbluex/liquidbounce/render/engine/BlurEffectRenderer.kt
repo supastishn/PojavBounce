@@ -114,7 +114,9 @@ object BlurEffectRenderer : MinecraftShortcuts {
         wasScreenOpen = isScreenOpen
 
         return if (isScreenOpen) {
-            val normalFactor = easeFunction((lastTimeScreenOpened.elapsed.toFloat() / 500.0F + 0.1F).coerceIn(0.0F..1.0F))
+            val normalFactor = easeFunction(
+                (lastTimeScreenOpened.elapsed.toFloat() / 500.0F + 0.1F).coerceIn(0.0F..1.0F)
+            )
             // Reduce blur intensity for ClickGUI screens to prevent interference
             if (isClickGuiScreen) {
                 normalFactor * 0.3f // Reduce blur by 70% for ClickGUI screens
@@ -127,7 +129,8 @@ object BlurEffectRenderer : MinecraftShortcuts {
     }
 
     private fun getBlurRadius(): Float {
-        return (this.getBlurRadiusFactor() * 20.0F).coerceIn(2.0F..20.0F) // Lowered min radius to help with reduced blur
+        // Lowered min radius to help with reduced blur
+        return (this.getBlurRadiusFactor() * 20.0F).coerceIn(2.0F..20.0F)
     }
 
     fun startOverlayDrawing(context: DrawContext, tickDelta: Float) {

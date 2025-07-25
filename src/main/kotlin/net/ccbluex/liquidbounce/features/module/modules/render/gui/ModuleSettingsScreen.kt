@@ -142,7 +142,8 @@ class ModuleSettingsScreen(
         // Settings area background - lighter to eliminate dark tint
         val settingsAreaY = 55
         val settingsAreaHeight = height - 100
-        context.fill(10, settingsAreaY, width - 10, settingsAreaY + settingsAreaHeight, 0x99000000.toInt()) // Reduced opacity
+        // Reduced opacity
+        context.fill(10, settingsAreaY, width - 10, settingsAreaY + settingsAreaHeight, 0x99000000.toInt())
         context.drawBorder(10, settingsAreaY, width - 20, settingsAreaHeight, 0xFF444444.toInt())
         
         // Render settings with scrolling

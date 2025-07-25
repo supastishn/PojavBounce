@@ -87,12 +87,12 @@ class ClickGuiPanel(
         // Accent border at bottom of header
         context.fill(x, y + headerHeight - 2, x + width, y + headerHeight, GuiConfig.accentColor)
         
-        // Category name
+        // Category name (adjusted for smaller tabs)
         val categoryName = category.name.lowercase().replaceFirstChar { it.uppercase() }
-        context.drawText(mc.textRenderer, categoryName, x + 10, y + 8, GuiConfig.textColor, false)
+        context.drawText(mc.textRenderer, categoryName, x + 4, y + 4, GuiConfig.textColor, false)
         
-        // Expand/collapse button
-        renderExpandButton(context, x + width - 20, y + 5)
+        // Expand/collapse button (adjusted for smaller tabs)
+        renderExpandButton(context, x + width - 12, y + 2)
         
         // Module list if expanded
         if (expanded) {
@@ -169,24 +169,24 @@ class ClickGuiPanel(
             GuiConfig.borderColor
         )
         
-        // Module name
+        // Module name (adjusted for smaller tabs)
         val textColor = if (renderData.module.running) GuiConfig.accentColor else 0xBBBBBB
         renderData.context.drawText(
             mc.textRenderer, 
             renderData.module.name, 
-            renderData.moduleX + 10, 
-            renderData.moduleY + 8, 
+            renderData.moduleX + 4, 
+            renderData.moduleY + 4, 
             textColor, 
             false
         )
         
-        // Settings indicator if module has settings
+        // Settings indicator if module has settings (adjusted for smaller tabs)
         if (moduleHasSettings(renderData.module)) {
             renderData.context.drawText(
                 mc.textRenderer, 
                 "...", 
-                renderData.moduleX + width - 20, 
-                renderData.moduleY + 8, 
+                renderData.moduleX + width - 12, 
+                renderData.moduleY + 4, 
                 0x888888, 
                 false
             )
@@ -345,21 +345,21 @@ class ClickGuiPanel(
  */
 object ClickGuiPanelRenderer {
     fun renderExpandButton(context: DrawContext, buttonX: Int, buttonY: Int, expanded: Boolean) {
-        val buttonSize = 15
+        val buttonSize = 10  // Made smaller for compact tabs
         
         // Button background
         context.fill(buttonX, buttonY, buttonX + buttonSize, buttonY + buttonSize, 0x88444444.toInt())
         
-        // Plus/minus icon
+        // Plus/minus icon (adjusted for smaller button)
         val centerX = buttonX + buttonSize / 2
         val centerY = buttonY + buttonSize / 2
         
-        // Horizontal line
-        context.fill(centerX - 4, centerY - 1, centerX + 4, centerY + 1, 0xFFFFFF)
+        // Horizontal line (smaller)
+        context.fill(centerX - 3, centerY - 1, centerX + 3, centerY + 1, 0xFFFFFF)
         
-        // Vertical line (only for collapsed state)
+        // Vertical line (only for collapsed state, smaller)
         if (!expanded) {
-            context.fill(centerX - 1, centerY - 4, centerX + 1, centerY + 4, 0xFFFFFF)
+            context.fill(centerX - 1, centerY - 3, centerX + 1, centerY + 3, 0xFFFFFF)
         }
     }
 }
@@ -430,8 +430,8 @@ object ClickGuiPanelInteraction {
     }
     
     fun handleHeaderClick(clickData: HeaderClickData, onAction: (Boolean) -> Unit): Boolean {
-        // Expand button click
-        if (clickData.mouseX >= clickData.panelX + clickData.panelWidth - 20) {
+        // Expand button click (adjusted for smaller button)
+        if (clickData.mouseX >= clickData.panelX + clickData.panelWidth - 12) {
             onAction(!clickData.expanded)
             return true
         }

@@ -43,7 +43,8 @@ class ClickGuiPanel(
     val category: Category,
     private val allModules: List<ClientModule>,
     val config: PanelConfig,
-    private val onOpenSettings: (ClientModule) -> Unit = {}
+    private val onOpenSettings: (ClientModule, Int, Int, Int, Int) -> Unit = { _, _, _, _, _ -> },
+    private val onPanelStateChanged: (Category, Int, Int, Boolean) -> Unit = { _, _, _, _ -> }
 ) {
     var x: Int
         get() = config.x
@@ -259,10 +260,16 @@ class ClickGuiPanel(
             mouseX, mouseY, button, x, y, width, expanded
         )
         return ClickGuiPanelInteraction.handleHeaderClick(clickData) { newExpanded ->
+            val wasExpanded = expanded
             expanded = newExpanded
             isDragging = true
             dragOffsetX = mouseX - x
             dragOffsetY = mouseY - y
+            
+            // Notify about state change if expansion state changed
+            if (wasExpanded != expanded) {
+                onPanelStateChanged(category, x, y, expanded)
+            }
         }
     }
     
@@ -278,8 +285,10 @@ class ClickGuiPanel(
                     return true
                 }
                 1 -> {
-                    // Open module settings
-                    onOpenSettings(module)
+                    // Open module settings popup next to the module
+                    val moduleX = x
+                    val moduleY = y + headerHeight + moduleIndex * moduleHeight - scrollOffset
+                    onOpenSettings(module, moduleX, moduleY, width, moduleHeight)
                     return true
                 }
             }
@@ -290,12 +299,15 @@ class ClickGuiPanel(
     @Suppress("UnusedParameter")
     fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
         if (isDragging && button == 0) {
-            x = mouseX.toInt() - dragOffsetX
-            y = mouseY.toInt() - dragOffsetY
+            val newX = mouseX.toInt() - dragOffsetX
+            val newY = mouseY.toInt() - dragOffsetY
             
             // Keep panel within screen bounds
-            x = max(0, min(x, mc.window.scaledWidth - width))
-            y = max(0, min(y, mc.window.scaledHeight - height))
+            x = max(0, min(newX, mc.window.scaledWidth - width))
+            y = max(0, min(newY, mc.window.scaledHeight - height))
+            
+            // Notify about state change
+            onPanelStateChanged(category, x, y, expanded)
             
             return true
         }
@@ -338,6 +350,18 @@ class ClickGuiPanel(
         // Reset scroll when filtering
         scrollOffset = 0
     }
+    
+    /**
+     * Set the expanded state of the panel
+     */
+    fun setExpanded(expanded: Boolean) {
+        this.expanded = expanded
+    }
+    
+    /**
+     * Get the expanded state of the panel
+     */
+    fun getExpanded(): Boolean = expanded
 }
 
 /**

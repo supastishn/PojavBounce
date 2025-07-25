@@ -47,7 +47,7 @@ class ModuleSettingsPopup(
     private val moduleX: Int,
     private val moduleY: Int,
     private val moduleWidth: Int,
-    private val moduleHeight: Int
+    @Suppress("UNUSED_PARAMETER") private val moduleHeight: Int
 ) {
     
     companion object {
@@ -167,7 +167,12 @@ class ModuleSettingsPopup(
     }
     
     @Suppress("UNCHECKED_CAST")
-    private fun createBooleanWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): BooleanSettingWidget {
+    private fun createBooleanWidget(
+        value: Value<*>, 
+        widgetX: Int, 
+        widgetY: Int, 
+        widgetWidth: Int
+    ): BooleanSettingWidget {
         val typedValue = value as Value<Boolean>
         return BooleanSettingWidget(
             name = value.name,
@@ -253,7 +258,7 @@ class ModuleSettingsPopup(
     /**
      * Render the popup
      */
-    fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    fun render(context: DrawContext, mouseX: Int, mouseY: Int, @Suppress("UNUSED_PARAMETER") delta: Float) {
         if (!isVisible) return
         
         // Popup background with shadow effect
@@ -441,7 +446,13 @@ class ModuleSettingsPopup(
     /**
      * Handle mouse dragging for sliders
      */
-    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+    fun mouseDragged(
+        mouseX: Double, 
+        mouseY: Double, 
+        button: Int, 
+        @Suppress("UNUSED_PARAMETER") deltaX: Double, 
+        @Suppress("UNUSED_PARAMETER") deltaY: Double
+    ): Boolean {
         if (!isVisible) return false
         
         for (widget in settingWidgets) {
@@ -486,7 +497,12 @@ class ModuleSettingsPopup(
     /**
      * Handle scrolling within the popup
      */
-    fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+    fun mouseScrolled(
+        mouseX: Double, 
+        mouseY: Double, 
+        @Suppress("UNUSED_PARAMETER") horizontalAmount: Double, 
+        verticalAmount: Double
+    ): Boolean {
         if (!isVisible || !isMouseOver(mouseX.toInt(), mouseY.toInt())) return false
         
         val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)

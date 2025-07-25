@@ -65,6 +65,8 @@ class ModuleSettingsPopup(
     private var y = 0
     private var height = 0
     private var isVisible = false
+    private var isScrollDragging = false
+    private var scrollDragStartY = 0.0
     
     init {
         calculatePosition()
@@ -401,13 +403,25 @@ class ModuleSettingsPopup(
         }
         
         // Handle widget clicks
+        var foundWidgetClick = false
         for (widget in settingWidgets) {
             if (handleWidgetClick(widget, mouseX, mouseY, button)) {
+                foundWidgetClick = true
+                break
+            }
+        }
+        
+        if (!foundWidgetClick && button == 0) {
+            // Check if clicking in scrollable area (below title bar, not on widgets)
+            val titleBarHeight = 20
+            if (intMouseY > y + titleBarHeight && canScroll()) {
+                isScrollDragging = true
+                scrollDragStartY = mouseY
                 return true
             }
         }
         
-        return true // Consume click if inside popup
+        return foundWidgetClick || true // Consume click if inside popup
     }
     
     private fun handleWidgetClick(widget: SettingWidget<*>, mouseX: Double, mouseY: Double, button: Int): Boolean {
@@ -455,6 +469,24 @@ class ModuleSettingsPopup(
     ): Boolean {
         if (!isVisible) return false
         
+        // Handle scroll dragging first
+        if (isScrollDragging && button == 0) {
+            val deltaY = mouseY - scrollDragStartY
+            val scrollSensitivity = 2.0 // How much to scroll per pixel of mouse movement
+            val scrollDelta = (deltaY * scrollSensitivity).toInt()
+            
+            val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
+            val areaHeight = height - 20 // Subtract title bar height
+            val maxScroll = totalHeight - areaHeight
+            
+            if (maxScroll > 0) {
+                scrollOffset = max(0, min(maxScroll, scrollOffset - scrollDelta))
+            }
+            
+            scrollDragStartY = mouseY
+            return true
+        }
+        
         for (widget in settingWidgets) {
             val adjustedY = widget.y - scrollOffset
             val adjustedWidget = createAdjustedWidget(widget, adjustedY)
@@ -483,6 +515,8 @@ class ModuleSettingsPopup(
      */
     fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (!isVisible) return false
+        
+        isScrollDragging = false
         
         for (widget in settingWidgets) {
             when (widget) {
@@ -543,6 +577,15 @@ class ModuleSettingsPopup(
         return false
     }
     
+    /**
+     * Check if content can be scrolled
+     */
+    private fun canScroll(): Boolean {
+        val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
+        val areaHeight = height - 20 // Subtract title bar height
+        return totalHeight > areaHeight
+    }
+
     /**
      * Handle character input for text widgets
      */

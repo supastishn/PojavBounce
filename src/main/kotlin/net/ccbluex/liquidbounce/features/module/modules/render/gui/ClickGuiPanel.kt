@@ -63,6 +63,8 @@ class ClickGuiPanel(
     private var dragOffsetX = 0
     private var dragOffsetY = 0
     private var scrollOffset = 0
+    private var isScrollDragging = false
+    private var scrollDragStartY = 0.0
     private var filteredModules = allModules
     private val moduleHeight get() = GuiConfig.moduleHeight
     private val headerHeight get() = GuiConfig.headerHeight
@@ -292,6 +294,11 @@ class ClickGuiPanel(
                     return true
                 }
             }
+        } else if (button == 0 && canScroll()) {
+            // Start scroll dragging if clicked in empty scrollable area
+            isScrollDragging = true
+            scrollDragStartY = mouseY.toDouble()
+            return true
         }
         return false
     }
@@ -312,12 +319,26 @@ class ClickGuiPanel(
             return true
         }
         
+        if (isScrollDragging && button == 0) {
+            // Handle scroll dragging
+            val deltaY = mouseY - scrollDragStartY
+            val scrollSensitivity = 2.0 // How much to scroll per pixel of mouse movement
+            val scrollDelta = (deltaY * scrollSensitivity).toInt()
+            
+            val maxScroll = max(0, filteredModules.size * moduleHeight - GuiConfig.panelMaxHeight)
+            scrollOffset = max(0, min(maxScroll, scrollOffset - scrollDelta))
+            
+            scrollDragStartY = mouseY
+            return true
+        }
+        
         return false
     }
     
     @Suppress("UnusedParameter")
     fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
         isDragging = false
+        isScrollDragging = false
     }
     
     fun mouseScrolled(mouseX: Double, mouseY: Double, amount: Double): Boolean {
@@ -356,6 +377,13 @@ class ClickGuiPanel(
      */
     fun setExpanded(expanded: Boolean) {
         this.expanded = expanded
+    }
+    
+    /**
+     * Check if content can be scrolled (i.e., there's more content than visible area)
+     */
+    private fun canScroll(): Boolean {
+        return expanded && filteredModules.size * moduleHeight > GuiConfig.panelMaxHeight
     }
     
     /**

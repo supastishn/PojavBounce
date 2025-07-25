@@ -102,68 +102,78 @@ class ModuleSettingsScreen(
     @Suppress("UNCHECKED_CAST")
     private fun createWidgetForValue(value: Value<*>, x: Int, y: Int): SettingWidget<*>? {
         return when (value.valueType) {
-            ValueType.BOOLEAN -> {
-                val typedValue = value as Value<Boolean>
-                BooleanSettingWidget(
-                    name = value.name,
-                    value = typedValue.get(),
-                    config = WidgetConfig(x = x, y = y),
-                    onValueChanged = { newValue -> typedValue.set(newValue) }
-                )
-            }
-            ValueType.FLOAT -> {
-                val typedValue = value as Value<Float>
-                val currentValue = typedValue.get()
-                // For ranged values, we need to check if it has range metadata
-                val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
-                FloatSettingWidget(
-                    name = value.name,
-                    value = currentValue,
-                    config = RangeWidgetConfig(x = x, y = y, min = min, max = max),
-                    onValueChanged = { newValue -> typedValue.set(newValue) }
-                )
-            }
-            ValueType.INT -> {
-                val typedValue = value as Value<Int>
-                val currentValue = typedValue.get()
-                // For ranged values, we need to check if it has range metadata
-                val (min, max) = getRangeForValue(value, 0, 1000)
-                IntSettingWidget(
-                    name = value.name,
-                    value = currentValue,
-                    config = IntRangeWidgetConfig(x = x, y = y, min = min, max = max),
-                    onValueChanged = { newValue -> typedValue.set(newValue) }
-                )
-            }
-            ValueType.TEXT -> {
-                val typedValue = value as Value<String>
-                TextSettingWidget(
-                    name = value.name,
-                    value = typedValue.get(),
-                    config = WidgetConfig(x = x, y = y),
-                    onValueChanged = { newValue -> typedValue.set(newValue) }
-                )
-            }
-            ValueType.CHOOSE -> {
-                val chooseValue = value as ChooseListValue<*>
-                val currentChoice = chooseValue.get() as NamedChoice
-                val choiceNames = chooseValue.choices.map { it.choiceName }.toTypedArray()
-                
-                EnumSettingWidget(
-                    name = value.name,
-                    value = currentChoice.choiceName,
-                    choices = choiceNames,
-                    config = WidgetConfig(x = x, y = y, height = 25), // Slightly taller for dropdown
-                    onValueChanged = { choiceName -> 
-                        chooseValue.setByString(choiceName)
-                    }
-                )
-            }
-            else -> {
-                // For unsupported value types, create a simple display widget
-                null
-            }
+            ValueType.BOOLEAN -> createBooleanWidget(value, x, y)
+            ValueType.FLOAT -> createFloatWidget(value, x, y)
+            ValueType.INT -> createIntWidget(value, x, y)
+            ValueType.TEXT -> createTextWidget(value, x, y)
+            ValueType.CHOOSE -> createChooseWidget(value, x, y)
+            else -> null
         }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createBooleanWidget(value: Value<*>, x: Int, y: Int): BooleanSettingWidget {
+        val typedValue = value as Value<Boolean>
+        return BooleanSettingWidget(
+            name = value.name,
+            value = typedValue.get(),
+            config = WidgetConfig(x = x, y = y),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createFloatWidget(value: Value<*>, x: Int, y: Int): FloatSettingWidget {
+        val typedValue = value as Value<Float>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
+        return FloatSettingWidget(
+            name = value.name,
+            value = currentValue,
+            config = RangeWidgetConfig(x = x, y = y, min = min, max = max),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createIntWidget(value: Value<*>, x: Int, y: Int): IntSettingWidget {
+        val typedValue = value as Value<Int>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0, 1000)
+        return IntSettingWidget(
+            name = value.name,
+            value = currentValue,
+            config = IntRangeWidgetConfig(x = x, y = y, min = min, max = max),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createTextWidget(value: Value<*>, x: Int, y: Int): TextSettingWidget {
+        val typedValue = value as Value<String>
+        return TextSettingWidget(
+            name = value.name,
+            value = typedValue.get(),
+            config = WidgetConfig(x = x, y = y),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createChooseWidget(value: Value<*>, x: Int, y: Int): EnumSettingWidget {
+        val chooseValue = value as ChooseListValue<*>
+        val currentChoice = chooseValue.get() as NamedChoice
+        val choiceNames = chooseValue.choices.map { it.choiceName }.toTypedArray()
+        
+        return EnumSettingWidget(
+            name = value.name,
+            value = currentChoice.choiceName,
+            choices = choiceNames,
+            config = WidgetConfig(x = x, y = y, height = 25),
+            onValueChanged = { choiceName -> 
+                chooseValue.setByString(choiceName)
+            }
+        )
     }
     
     @Suppress("UNCHECKED_CAST")
@@ -181,6 +191,8 @@ class ModuleSettingsScreen(
                 Pair(defaultMin, defaultMax)
             }
         } catch (e: Exception) {
+            // Log the exception for debugging purposes
+            println("Warning: Failed to extract range from value '${value.name}': ${e.message}")
             Pair(defaultMin, defaultMax)
         }
     }

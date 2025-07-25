@@ -309,7 +309,8 @@ class TextSettingWidget(
         val displayValue = if (isEditing) editingValue else value
         
         context.fill(x + 5, fieldY, x + width - 5, fieldY + fieldHeight, 0xFF333333.toInt())
-        context.drawBorder(x + 5, fieldY, width - 10, fieldHeight, if (isEditing) 0xFF00AAFF.toInt() else 0xFF666666.toInt())
+        val borderColor = if (isEditing) 0xFF00AAFF.toInt() else 0xFF666666.toInt()
+        context.drawBorder(x + 5, fieldY, width - 10, fieldHeight, borderColor)
         
         // Text content
         val textColor = if (isEditing) 0xFFFFFF else 0xCCCCCC
@@ -362,10 +363,14 @@ class TextSettingWidget(
         return false
     }
     
+    private fun isValidTextChar(chr: Char): Boolean {
+        return chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-' || chr == '.'
+    }
+    
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
         if (!isEditing) return false
         
-        if (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-' || chr == '.') {
+        if (isValidTextChar(chr)) {
             editingValue += chr
             return true
         }
@@ -389,12 +394,20 @@ class EnumSettingWidget(
     
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
         renderBackground(context, isHovered)
+        renderMainDisplay(context)
+        renderDropdownArrow(context)
         
-        // Setting name and current value
+        if (isDropdownOpen) {
+            renderDropdownList(context, mouseX, mouseY)
+        }
+    }
+    
+    private fun renderMainDisplay(context: DrawContext) {
         val displayText = "$name: $value"
         context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 5, 0xFFFFFF, false)
-        
-        // Dropdown arrow
+    }
+    
+    private fun renderDropdownArrow(context: DrawContext) {
         val arrowX = x + width - 15
         val arrowY = y + 7
         val arrowColor = if (isDropdownOpen) 0xFF00AAFF.toInt() else 0xFF888888.toInt()
@@ -405,35 +418,47 @@ class EnumSettingWidget(
         context.fill(arrowX + 2, arrowY + 2, arrowX + 6, arrowY + 3, arrowColor)
         context.fill(arrowX + 3, arrowY + 3, arrowX + 5, arrowY + 4, arrowColor)
         context.fill(arrowX + 4, arrowY + 4, arrowX + 4, arrowY + 5, arrowColor)
+    }
+    
+    private data class DropdownRenderData(
+        val choice: String,
+        val index: Int,
+        val dropdownY: Int,
+        val mouseX: Int,
+        val mouseY: Int
+    )
+    
+    private fun renderDropdownList(context: DrawContext, mouseX: Int, mouseY: Int) {
+        val dropdownY = y + height
+        val dropdownHeight = choices.size * 15
         
-        // Dropdown list
-        if (isDropdownOpen) {
-            val dropdownY = y + height
-            val dropdownHeight = choices.size * 15
-            
-            context.fill(x, dropdownY, x + width, dropdownY + dropdownHeight, 0xFF222222.toInt())
-            context.drawBorder(x, dropdownY, width, dropdownHeight, 0xFF444444.toInt())
-            
-            for ((index, choice) in choices.withIndex()) {
-                val choiceY = dropdownY + index * 15
-                val isChoiceHovered = mouseX >= x && mouseX <= x + width && 
-                                     mouseY >= choiceY && mouseY <= choiceY + 15
-                val isCurrentChoice = choice == value
-                
-                val bgColor = when {
-                    isCurrentChoice -> 0xFF004444.toInt()
-                    isChoiceHovered -> 0xFF333333.toInt()
-                    else -> 0x00000000
-                }
-                
-                if (bgColor != 0x00000000) {
-                    context.fill(x, choiceY, x + width, choiceY + 15, bgColor)
-                }
-                
-                val textColor = if (isCurrentChoice) 0x00FFFF else 0xFFFFFF
-                context.drawText(mc.textRenderer, Text.literal(choice), x + 5, choiceY + 3, textColor, false)
-            }
+        context.fill(x, dropdownY, x + width, dropdownY + dropdownHeight, 0xFF222222.toInt())
+        context.drawBorder(x, dropdownY, width, dropdownHeight, 0xFF444444.toInt())
+        
+        for ((index, choice) in choices.withIndex()) {
+            val renderData = DropdownRenderData(choice, index, dropdownY, mouseX, mouseY)
+            renderDropdownChoice(context, renderData)
         }
+    }
+    
+    private fun renderDropdownChoice(context: DrawContext, data: DropdownRenderData) {
+        val choiceY = data.dropdownY + data.index * 15
+        val isChoiceHovered = data.mouseX >= x && data.mouseX <= x + width && 
+                             data.mouseY >= choiceY && data.mouseY <= choiceY + 15
+        val isCurrentChoice = data.choice == value
+        
+        val bgColor = when {
+            isCurrentChoice -> 0xFF004444.toInt()
+            isChoiceHovered -> 0xFF333333.toInt()
+            else -> 0x00000000
+        }
+        
+        if (bgColor != 0x00000000) {
+            context.fill(x, choiceY, x + width, choiceY + 15, bgColor)
+        }
+        
+        val textColor = if (isCurrentChoice) 0x00FFFF else 0xFFFFFF
+        context.drawText(mc.textRenderer, Text.literal(data.choice), x + 5, choiceY + 3, textColor, false)
     }
     
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {

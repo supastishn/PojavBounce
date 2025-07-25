@@ -56,6 +56,7 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
                 allModules = modules,
                 config = panelConfig,
                 onOpenSettings = { module -> 
+                    // Smooth transition to settings screen
                     mc.setScreen(ModuleSettingsScreen(module, this))
                 }
             )
@@ -82,8 +83,8 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     }
     
     override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
-        // Semi-transparent background
-        context.fill(0, 0, width, height, 0x99000000.toInt())
+        // Lighter semi-transparent background to reduce darkish tint
+        context.fill(0, 0, width, height, 0x66000000.toInt()) // Reduced opacity from 60% to 40%
         
         // Grid removed as requested - no longer rendering grid lines
     }

@@ -18,6 +18,11 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
+import net.ccbluex.liquidbounce.config.types.RangedValue
+import net.ccbluex.liquidbounce.config.types.Value
+import net.ccbluex.liquidbounce.config.types.ValueType
+import net.ccbluex.liquidbounce.config.types.ChooseListValue
+import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.BooleanSettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.FloatSettingWidget
@@ -26,6 +31,8 @@ import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.Sett
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.WidgetConfig
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.RangeWidgetConfig
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.IntRangeWidgetConfig
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.TextSettingWidget
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.EnumSettingWidget
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
@@ -71,57 +78,122 @@ class ModuleSettingsScreen(
     private fun initializeSettingWidgets() {
         settingWidgets.clear()
         
-        // Mock settings for demonstration - in real implementation, would iterate through module's configurable
         val startY = 60
         var currentY = startY
         
         try {
-            // Example boolean setting
-            settingWidgets.add(
-                BooleanSettingWidget(
-                    name = "Enabled",
-                    value = module.enabled,
-                    config = WidgetConfig(x = 20, y = currentY),
-                    onValueChanged = { module.enabled = it }
-                )
-            )
-            currentY += settingHeight + settingSpacing
+            // Dynamically discover module's configurable values
+            val values = module.containedValues
             
-            // Example float settings (mock)
-            settingWidgets.add(
-                FloatSettingWidget(
-                    name = "Range",
-                    value = 4.0f,
-                    config = RangeWidgetConfig(x = 20, y = currentY, min = 1.0f, max = 10.0f),
-                    onValueChanged = { /* save to module config */ }
-                )
-            )
-            currentY += settingHeight + settingSpacing
-            
-            // Example int setting (mock)
-            settingWidgets.add(
-                IntSettingWidget(
-                    name = "Delay",
-                    value = 100,
-                    config = IntRangeWidgetConfig(x = 20, y = currentY, min = 0, max = 1000),
-                    onValueChanged = { /* save to module config */ }
-                )
-            )
-            currentY += settingHeight + settingSpacing
-            
-            // Example boolean setting (mock)
-            settingWidgets.add(
-                BooleanSettingWidget(
-                    name = "Through Walls",
-                    value = false,
-                    config = WidgetConfig(x = 20, y = currentY),
-                    onValueChanged = { /* save to module config */ }
-                )
-            )
+            for (value in values) {
+                val widget = createWidgetForValue(value, 20, currentY)
+                if (widget != null) {
+                    settingWidgets.add(widget)
+                    currentY += settingHeight + settingSpacing
+                }
+            }
             
         } catch (e: Exception) {
             // Error handling for missing or corrupted module data
             println("Error initializing settings for module ${module.name}: ${e.message}")
+        }
+    }
+    
+    @Suppress("UNCHECKED_CAST")
+    private fun createWidgetForValue(value: Value<*>, x: Int, y: Int): SettingWidget<*>? {
+        return when (value.valueType) {
+            ValueType.BOOLEAN -> createBooleanWidget(value, x, y)
+            ValueType.FLOAT -> createFloatWidget(value, x, y)
+            ValueType.INT -> createIntWidget(value, x, y)
+            ValueType.TEXT -> createTextWidget(value, x, y)
+            ValueType.CHOOSE -> createChooseWidget(value, x, y)
+            else -> null
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createBooleanWidget(value: Value<*>, x: Int, y: Int): BooleanSettingWidget {
+        val typedValue = value as Value<Boolean>
+        return BooleanSettingWidget(
+            name = value.name,
+            value = typedValue.get(),
+            config = WidgetConfig(x = x, y = y),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createFloatWidget(value: Value<*>, x: Int, y: Int): FloatSettingWidget {
+        val typedValue = value as Value<Float>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
+        return FloatSettingWidget(
+            name = value.name,
+            value = currentValue,
+            config = RangeWidgetConfig(x = x, y = y, min = min, max = max),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createIntWidget(value: Value<*>, x: Int, y: Int): IntSettingWidget {
+        val typedValue = value as Value<Int>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0, 1000)
+        return IntSettingWidget(
+            name = value.name,
+            value = currentValue,
+            config = IntRangeWidgetConfig(x = x, y = y, min = min, max = max),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createTextWidget(value: Value<*>, x: Int, y: Int): TextSettingWidget {
+        val typedValue = value as Value<String>
+        return TextSettingWidget(
+            name = value.name,
+            value = typedValue.get(),
+            config = WidgetConfig(x = x, y = y),
+            onValueChanged = { newValue -> typedValue.set(newValue) }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createChooseWidget(value: Value<*>, x: Int, y: Int): EnumSettingWidget {
+        val chooseValue = value as ChooseListValue<*>
+        val currentChoice = chooseValue.get() as NamedChoice
+        val choiceNames = chooseValue.choices.map { it.choiceName }.toTypedArray()
+        
+        return EnumSettingWidget(
+            name = value.name,
+            value = currentChoice.choiceName,
+            choices = choiceNames,
+            config = WidgetConfig(x = x, y = y, height = 25),
+            onValueChanged = { choiceName -> 
+                chooseValue.setByString(choiceName)
+            }
+        )
+    }
+    
+    @Suppress("UNCHECKED_CAST")
+    private fun <T : Comparable<T>> getRangeForValue(value: Value<*>, defaultMin: T, defaultMax: T): Pair<T, T> {
+        return try {
+            // Check if this is a RangedValue
+            if (value is RangedValue<*>) {
+                val range = value.range
+                when (range) {
+                    is ClosedFloatingPointRange<*> -> Pair(range.start as T, range.endInclusive as T)
+                    is IntRange -> Pair(range.first as T, range.last as T)
+                    else -> Pair(defaultMin, defaultMax)
+                }
+            } else {
+                Pair(defaultMin, defaultMax)
+            }
+        } catch (e: Exception) {
+            // Log the exception for debugging purposes
+            println("Warning: Failed to extract range from value '${value.name}': ${e.message}")
+            Pair(defaultMin, defaultMax)
         }
     }
     
@@ -197,6 +269,17 @@ class ModuleSettingsScreen(
                 original.value,
                 IntRangeWidgetConfig(original.x, newY, 0, 1000) // Mock min/max, would get from actual setting  
             )
+            is TextSettingWidget -> TextSettingWidget(
+                original.name,
+                original.value,
+                WidgetConfig(original.x, newY)
+            )
+            is EnumSettingWidget -> EnumSettingWidget(
+                original.name,
+                original.value,
+                original.choices,
+                WidgetConfig(original.x, newY, height = 25)
+            )
             else -> original
         }
     }
@@ -253,6 +336,12 @@ class ModuleSettingsScreen(
                 original.value = adjusted.value
             }
             original is IntSettingWidget && adjusted is IntSettingWidget -> {
+                original.value = adjusted.value
+            }
+            original is TextSettingWidget && adjusted is TextSettingWidget -> {
+                original.value = adjusted.value
+            }
+            original is EnumSettingWidget && adjusted is EnumSettingWidget -> {
                 original.value = adjusted.value
             }
         }
@@ -313,28 +402,48 @@ class ModuleSettingsScreen(
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
     }
     
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // Handle widget key presses for text input
+        for (widget in settingWidgets) {
+            val adjustedY = widget.y - scrollOffset
+            val adjustedWidget = createAdjustedWidget(widget, adjustedY)
+            
+            if (adjustedWidget.keyPressed(keyCode, scanCode, modifiers)) {
+                updateWidgetValue(widget, adjustedWidget)
+                return true
+            }
+        }
+        
+        return super.keyPressed(keyCode, scanCode, modifiers)
+    }
+    
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        // Handle widget character input for text widgets
+        for (widget in settingWidgets) {
+            val adjustedY = widget.y - scrollOffset
+            val adjustedWidget = createAdjustedWidget(widget, adjustedY)
+            
+            if (adjustedWidget.charTyped(chr, modifiers)) {
+                updateWidgetValue(widget, adjustedWidget)
+                return true
+            }
+        }
+        
+        return super.charTyped(chr, modifiers)
+    }
+    
     private fun resetToDefaults() {
-        ModuleSettingsHelper.resetToDefaults {
+        try {
+            // Reset module to defaults
+            module.restore()
+            // Reinitialize the widgets to reflect the reset values
             initializeSettingWidgets()
+        } catch (e: Exception) {
+            println("Error resetting module settings: ${e.message}")
         }
     }
     
     override fun shouldPause(): Boolean {
         return false
-    }
-}
-
-/**
- * Helper object for module settings operations
- */
-object ModuleSettingsHelper {
-    fun resetToDefaults(onComplete: () -> Unit) {
-        try {
-            // Reset all settings to defaults
-            // In real implementation, would reset module's configurable values
-            onComplete()
-        } catch (e: Exception) {
-            println("Error resetting module settings: ${e.message}")
-        }
     }
 }

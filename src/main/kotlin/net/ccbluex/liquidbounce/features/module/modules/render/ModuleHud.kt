@@ -64,7 +64,7 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
         get() = "liquidbounce.module.hud"
     private var browserBrowser: Browser? = null
 
-    private val blur by boolean("Blur", true)
+
 
     @Suppress("unused")
     private val spaceSeperatedNames by boolean("SpaceSeperatedNames", true).onChange { state ->
@@ -75,7 +75,7 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
     val centeredCrosshair by boolean("CenteredCrosshair", false)
 
     val isBlurEffectActive
-        get() = blur && !(mc.options.hudHidden && mc.currentScreen == null)
+        get() = false  // Blur disabled entirely as requested
 
     var browserSettings: BrowserSettings? = null
 

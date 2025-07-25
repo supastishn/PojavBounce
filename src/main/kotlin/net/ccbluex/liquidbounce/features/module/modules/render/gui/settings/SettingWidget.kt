@@ -20,6 +20,7 @@ package net.ccbluex.liquidbounce.features.module.modules.render.gui.settings
 
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.DrawContext
+import net.minecraft.text.Text
 
 /**
  * Base class for setting widgets in the native ClickGUI
@@ -76,7 +77,7 @@ class BooleanSettingWidget(
         renderBackground(context, isHovered)
         
         // Setting name
-        context.drawText(mc.textRenderer, name, x + 5, y + 5, 0xFFFFFF, false)
+        context.drawText(mc.textRenderer, Text.literal(name), x + 5, y + 5, 0xFFFFFF, false)
         
         // Toggle switch
         val switchX = x + width - 40
@@ -139,7 +140,7 @@ class FloatSettingWidget(
         
         // Setting name and value
         val displayText = "$name: ${String.format(java.util.Locale.US, "%.2f", value)}"
-        context.drawText(mc.textRenderer, displayText, x + 5, y + 5, 0xFFFFFF, false)
+        context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 5, 0xFFFFFF, false)
         
         // Slider track
         val sliderY = y + height - 6
@@ -227,7 +228,7 @@ class IntSettingWidget(
         
         // Setting name and value
         val displayText = "$name: $value"
-        context.drawText(mc.textRenderer, displayText, x + 5, y + 5, 0xFFFFFF, false)
+        context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 5, 0xFFFFFF, false)
         
         // Slider track
         val sliderY = y + height - 6
@@ -280,5 +281,229 @@ class IntSettingWidget(
         
         value = (min + (max - min) * progress).toInt()
         onValueChanged(value)
+    }
+}
+
+/**
+ * Text input setting widget
+ */
+class TextSettingWidget(
+    name: String,
+    value: String,
+    config: WidgetConfig,
+    private val onValueChanged: (String) -> Unit = {}
+) : SettingWidget<String>(name, value, config.x, config.y, config.width, config.height) {
+    
+    private var isEditing = false
+    private var editingValue = value
+    
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        renderBackground(context, isHovered)
+        
+        // Setting name
+        context.drawText(mc.textRenderer, Text.literal(name), x + 5, y + 2, 0xFFFFFF, false)
+        
+        // Text input field
+        val fieldY = y + 12
+        val fieldHeight = 8
+        val displayValue = if (isEditing) editingValue else value
+        
+        context.fill(x + 5, fieldY, x + width - 5, fieldY + fieldHeight, 0xFF333333.toInt())
+        val borderColor = if (isEditing) 0xFF00AAFF.toInt() else 0xFF666666.toInt()
+        context.drawBorder(x + 5, fieldY, width - 10, fieldHeight, borderColor)
+        
+        // Text content
+        val textColor = if (isEditing) 0xFFFFFF else 0xCCCCCC
+        context.drawText(mc.textRenderer, Text.literal(displayValue), x + 7, fieldY + 1, textColor, false)
+        
+        // Cursor
+        if (isEditing) {
+            val textWidth = mc.textRenderer.getWidth(editingValue)
+            context.fill(x + 7 + textWidth, fieldY + 1, x + 8 + textWidth, fieldY + 7, 0xFFFFFF)
+        }
+    }
+    
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            isEditing = !isEditing
+            if (isEditing) {
+                editingValue = value
+            } else {
+                value = editingValue
+                onValueChanged(value)
+            }
+            return true
+        }
+        return false
+    }
+    
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (!isEditing) return false
+        
+        when (keyCode) {
+            257 -> { // Enter
+                isEditing = false
+                value = editingValue
+                onValueChanged(value)
+                return true
+            }
+            256 -> { // Escape
+                isEditing = false
+                editingValue = value
+                return true
+            }
+            259 -> { // Backspace
+                if (editingValue.isNotEmpty()) {
+                    editingValue = editingValue.dropLast(1)
+                }
+                return true
+            }
+        }
+        
+        return false
+    }
+    
+    private fun isValidTextChar(chr: Char): Boolean {
+        return chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-' || chr == '.'
+    }
+    
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (!isEditing) return false
+        
+        if (isValidTextChar(chr)) {
+            editingValue += chr
+            return true
+        }
+        
+        return false
+    }
+}
+
+/**
+ * Enum/Choice setting widget
+ */
+class EnumSettingWidget(
+    name: String,
+    value: String,
+    val choices: Array<String>,
+    config: WidgetConfig,
+    private val onValueChanged: (String) -> Unit = {}
+) : SettingWidget<String>(name, value, config.x, config.y, config.width, config.height) {
+    
+    private var isDropdownOpen = false
+    
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        renderBackground(context, isHovered)
+        renderMainDisplay(context)
+        renderDropdownArrow(context)
+        
+        if (isDropdownOpen) {
+            renderDropdownList(context, mouseX, mouseY)
+        }
+    }
+    
+    private fun renderMainDisplay(context: DrawContext) {
+        val displayText = "$name: $value"
+        context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 5, 0xFFFFFF, false)
+    }
+    
+    private fun renderDropdownArrow(context: DrawContext) {
+        val arrowX = x + width - 15
+        val arrowY = y + 7
+        val arrowColor = if (isDropdownOpen) 0xFF00AAFF.toInt() else 0xFF888888.toInt()
+        
+        // Simple triangle arrow
+        context.fill(arrowX, arrowY, arrowX + 8, arrowY + 1, arrowColor)
+        context.fill(arrowX + 1, arrowY + 1, arrowX + 7, arrowY + 2, arrowColor)
+        context.fill(arrowX + 2, arrowY + 2, arrowX + 6, arrowY + 3, arrowColor)
+        context.fill(arrowX + 3, arrowY + 3, arrowX + 5, arrowY + 4, arrowColor)
+        context.fill(arrowX + 4, arrowY + 4, arrowX + 4, arrowY + 5, arrowColor)
+    }
+    
+    private data class DropdownRenderData(
+        val choice: String,
+        val index: Int,
+        val dropdownY: Int,
+        val mouseX: Int,
+        val mouseY: Int
+    )
+    
+    private fun renderDropdownList(context: DrawContext, mouseX: Int, mouseY: Int) {
+        val dropdownY = y + height
+        val dropdownHeight = choices.size * 15
+        
+        context.fill(x, dropdownY, x + width, dropdownY + dropdownHeight, 0xFF222222.toInt())
+        context.drawBorder(x, dropdownY, width, dropdownHeight, 0xFF444444.toInt())
+        
+        for ((index, choice) in choices.withIndex()) {
+            val renderData = DropdownRenderData(choice, index, dropdownY, mouseX, mouseY)
+            renderDropdownChoice(context, renderData)
+        }
+    }
+    
+    private fun renderDropdownChoice(context: DrawContext, data: DropdownRenderData) {
+        val choiceY = data.dropdownY + data.index * 15
+        val isChoiceHovered = data.mouseX >= x && data.mouseX <= x + width && 
+                             data.mouseY >= choiceY && data.mouseY <= choiceY + 15
+        val isCurrentChoice = data.choice == value
+        
+        val bgColor = when {
+            isCurrentChoice -> 0xFF004444.toInt()
+            isChoiceHovered -> 0xFF333333.toInt()
+            else -> 0x00000000
+        }
+        
+        if (bgColor != 0x00000000) {
+            context.fill(x, choiceY, x + width, choiceY + 15, bgColor)
+        }
+        
+        val textColor = if (isCurrentChoice) 0x00FFFF else 0xFFFFFF
+        context.drawText(mc.textRenderer, Text.literal(data.choice), x + 5, choiceY + 3, textColor, false)
+    }
+    
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button != 0) return false
+        
+        // Check if clicking on the main widget
+        if (isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            isDropdownOpen = !isDropdownOpen
+            return true
+        }
+        
+        // Check if clicking on dropdown options
+        if (isDropdownOpen) {
+            val dropdownY = y + height
+            val dropdownHeight = choices.size * 15
+            
+            if (mouseX >= x && mouseX <= x + width && 
+                mouseY >= dropdownY && mouseY <= dropdownY + dropdownHeight) {
+                
+                val choiceIndex = ((mouseY - dropdownY) / 15).toInt()
+                if (choiceIndex >= 0 && choiceIndex < choices.size) {
+                    value = choices[choiceIndex]
+                    onValueChanged(value)
+                    isDropdownOpen = false
+                    return true
+                }
+            } else {
+                // Clicked outside dropdown, close it
+                isDropdownOpen = false
+            }
+        }
+        
+        return false
+    }
+    
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (!isDropdownOpen) return false
+        
+        when (keyCode) {
+            256 -> { // Escape
+                isDropdownOpen = false
+                return true
+            }
+        }
+        
+        return false
     }
 }

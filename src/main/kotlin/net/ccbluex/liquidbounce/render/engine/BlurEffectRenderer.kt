@@ -25,8 +25,6 @@ import net.ccbluex.liquidbounce.event.EventManager.callEvent
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.features.module.MinecraftShortcuts
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud.isBlurEffectActive
-import net.ccbluex.liquidbounce.features.module.modules.render.gui.ClickGuiScreen
-import net.ccbluex.liquidbounce.features.module.modules.render.gui.ModuleSettingsScreen
 import net.ccbluex.liquidbounce.render.shader.BlitShader
 import net.ccbluex.liquidbounce.render.shader.UniformProvider
 import net.ccbluex.liquidbounce.render.ui.ItemImageAtlas
@@ -103,9 +101,6 @@ object BlurEffectRenderer : MinecraftShortcuts {
 
     private fun getBlurRadiusFactor(): Float {
         val isScreenOpen = mc.currentScreen != null && mc.currentScreen !is ChatScreen
-        
-        // Check if it's a ClickGUI-related screen to reduce blur interference
-        val isClickGuiScreen = mc.currentScreen is ClickGuiScreen || mc.currentScreen is ModuleSettingsScreen
 
         if (isScreenOpen && !wasScreenOpen) {
             lastTimeScreenOpened.reset()
@@ -114,33 +109,22 @@ object BlurEffectRenderer : MinecraftShortcuts {
         wasScreenOpen = isScreenOpen
 
         return if (isScreenOpen) {
-            val normalFactor = easeFunction(
+            easeFunction(
                 (lastTimeScreenOpened.elapsed.toFloat() / 500.0F + 0.1F).coerceIn(0.0F..1.0F)
             )
-            // Reduce blur intensity for ClickGUI screens to prevent interference
-            if (isClickGuiScreen) {
-                normalFactor * 0.3f // Reduce blur by 70% for ClickGUI screens
-            } else {
-                normalFactor
-            }
         } else {
             1.0F
         }
     }
 
     private fun getBlurRadius(): Float {
-        // Lowered min radius to help with reduced blur
         return (this.getBlurRadiusFactor() * 20.0F).coerceIn(2.0F..20.0F)
     }
 
     fun startOverlayDrawing(context: DrawContext, tickDelta: Float) {
         ItemImageAtlas.updateAtlas(context)
 
-        // Reduce blur intensity during ClickGUI screen transitions to prevent visual artifacts
-        val shouldReduceBlur = mc.currentScreen is ClickGuiScreen || mc.currentScreen is ModuleSettingsScreen
-        val effectiveBlurActive = isBlurEffectActive && (!shouldReduceBlur || getBlurRadiusFactor() > 0.5f)
-
-        if (effectiveBlurActive) {
+        if (isBlurEffectActive) {
             this.isDrawingHudFramebuffer = true
 
             this.overlayFramebuffer.clear()

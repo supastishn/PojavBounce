@@ -232,7 +232,7 @@
 
   .panel {
     border-radius: 5px;
-    width: 250px;
+    width: 150px; /* Reduced from 250px to match native GUI changes */
     position: absolute;
     overflow: hidden;
     box-shadow: 0 0 10px rgba($clickgui-base-color, 0.5);
@@ -267,7 +267,7 @@
     background-color: rgba($clickgui-base-color, 0.8);
 
     &.expanded {
-      max-height: 545px;
+      max-height: 250px; /* Reduced from 545px to match native GUI changes */
     }
   }
 

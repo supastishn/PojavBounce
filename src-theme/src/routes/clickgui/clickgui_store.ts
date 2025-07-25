@@ -15,8 +15,8 @@ export const highlightModuleName: Writable<string | null> = writable(null);
 
 export const scaleFactor: Writable<number> = writable(2);
 
-export const showGrid: Writable<boolean> = writable(false);
+export const showGrid: Writable<boolean> = writable(false); // Grid disabled by default as requested
 
-export const snappingEnabled: Writable<boolean> = writable(true);
+export const snappingEnabled: Writable<boolean> = writable(false); // Snapping disabled to match grid removal
 
 export const gridSize: Writable<number> = writable(10);

@@ -86,12 +86,7 @@ class ModuleSettingsPopup(
      */
     fun hide() {
         isVisible = false
-        try {
-            // write this module's config back out
-            ConfigSystem.storeConfigurable(module as net.ccbluex.liquidbounce.config.types.nesting.Configurable)
-        } catch (e: Exception) {
-            println("Error saving ClickGUI settings for ${module.name}: ${e.message}")
-        }
+        saveModuleConfiguration()
     }
     
     /**
@@ -189,7 +184,6 @@ class ModuleSettingsPopup(
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth),
             onValueChanged = { newValue -> 
                 value.setByString(newValue.toString())
-                saveModuleConfiguration()
             }
         )
     }
@@ -205,7 +199,6 @@ class ModuleSettingsPopup(
             config = RangeWidgetConfig(x = widgetX, y = widgetY, min = min, max = max, width = widgetWidth),
             onValueChanged = { newValue -> 
                 value.setByString(newValue.toString())
-                saveModuleConfiguration()
             }
         )
     }
@@ -221,7 +214,6 @@ class ModuleSettingsPopup(
             config = IntRangeWidgetConfig(x = widgetX, y = widgetY, min = min, max = max, width = widgetWidth),
             onValueChanged = { newValue -> 
                 value.setByString(newValue.toString())
-                saveModuleConfiguration()
             }
         )
     }
@@ -235,7 +227,6 @@ class ModuleSettingsPopup(
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth),
             onValueChanged = { newValue -> 
                 value.setByString(newValue)
-                saveModuleConfiguration()
             }
         )
     }
@@ -253,7 +244,6 @@ class ModuleSettingsPopup(
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth),
             onValueChanged = { choiceName -> 
                 chooseValue.setByString(choiceName)
-                saveModuleConfiguration()
             }
         )
     }

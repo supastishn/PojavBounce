@@ -82,10 +82,16 @@ class ModuleSettingsPopup(
     }
     
     /**
-     * Hide the popup
+     * Hide the popup and immediately persist any changes
      */
     fun hide() {
         isVisible = false
+        try {
+            // write this module's config back out
+            ConfigSystem.storeConfigurable(module as net.ccbluex.liquidbounce.config.types.nesting.Configurable)
+        } catch (e: Exception) {
+            println("Error saving ClickGUI settings for ${module.name}: ${e.message}")
+        }
     }
     
     /**

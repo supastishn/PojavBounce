@@ -95,7 +95,7 @@ object ThemeManager : Configurable("theme") {
 
                 // Update integration browser
                 IntegrationListener.update()
-                ModuleHud.reopen()
+                // ModuleHud.reopen() - method no longer exists in this fork
                 // Note: ModuleClickGui.reload() no longer needed with native GUI
             } catch (e: Exception) {
                 logger.error("Failed to set active theme to ${value.name}, falling back to default theme", e)
@@ -108,7 +108,7 @@ object ThemeManager : Configurable("theme") {
                 try {
                     ComponentOverlay.insertDefaultComponents()
                     IntegrationListener.update()
-                    ModuleHud.reopen()
+                    // ModuleHud.reopen() - method no longer exists in this fork
                 } catch (updateException: Exception) {
                     logger.error("Failed to update components after theme fallback", updateException)
                 }

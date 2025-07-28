@@ -170,7 +170,7 @@ object IntegrationListener : EventListener {
         }
 
         try {
-            ModuleHud.reopen()
+            // ModuleHud.reopen() - method no longer exists in this fork
         } catch (e: Exception) {
             logger.error("Failed to restart HUD browser integration.", e)
         }

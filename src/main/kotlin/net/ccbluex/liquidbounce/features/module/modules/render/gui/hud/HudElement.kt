@@ -137,8 +137,16 @@ class ArrayListElement(x: Int, y: Int) : HudElement(x, y, 1, 1) { // Width and h
         }
 
         // Dynamically adjust width and height
-        val dynamicWidth = if (enabledModules.isNotEmpty()) enabledModules.maxOf { mc.textRenderer.getWidth(it.name) } + 10 else 100
-        val dynamicHeight = if (enabledModules.isNotEmpty()) enabledModules.size * (mc.textRenderer.fontHeight + 2) + 5 else 20
+        val dynamicWidth = if (enabledModules.isNotEmpty()) {
+            enabledModules.maxOf { mc.textRenderer.getWidth(it.name) } + 10
+        } else {
+            100
+        }
+        val dynamicHeight = if (enabledModules.isNotEmpty()) {
+            enabledModules.size * (mc.textRenderer.fontHeight + 2) + 5
+        } else {
+            20
+        }
         
         width = dynamicWidth
         height = dynamicHeight
@@ -155,10 +163,15 @@ class ArrayListElement(x: Int, y: Int) : HudElement(x, y, 1, 1) { // Width and h
         }
     }
 
-    private fun getRainbowColor(index: Int, speed: Float = 2000f, saturation: Float = 0.7f, brightness: Float = 0.8f): Int {
+    private fun getRainbowColor(
+        index: Int,
+        speed: Float = 2000f,
+        saturation: Float = 0.7f,
+        brightness: Float = 0.8f
+    ): Int {
         var hue = (System.currentTimeMillis() + index * 100) % speed.toLong()
         hue /= speed.toLong()
-        return Color.HSBtoRGB(hue, saturation, brightness)
+        return Color.HSBtoRGB(hue.toFloat(), saturation, brightness)
     }
 }
 

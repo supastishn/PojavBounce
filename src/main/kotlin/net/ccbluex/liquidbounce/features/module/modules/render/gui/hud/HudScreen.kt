@@ -23,6 +23,7 @@ import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
+import java.awt.Color
 
 /**
  * Native HUD configuration screen that replaces the Svelte-based implementation
@@ -44,11 +45,12 @@ class HudScreen : Screen(Text.literal("HUD Editor")) {
     }
     
     private fun initializeHudElements() {
-        // Add basic HUD elements
-        hudElements.add(WatermarkElement(10, 10))
-        hudElements.add(ArrayListElement(width - 200, 10))
-        hudElements.add(CoordinatesElement(10, height - 30))
-        hudElements.add(FpsElement(10, 30))
+        // Add HUD elements with new default positions to match the video
+        hudElements.clear()
+        hudElements.add(WatermarkElement(2, 2))
+        hudElements.add(ArrayListElement(width - 120, 2))
+        hudElements.add(InfoPanelElement(2, 30))
+        hudElements.add(SpeedElement(width / 2 - 50, height - 40))
     }
     
     override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
@@ -186,5 +188,11 @@ object HudScreenHelper {
         } catch (e: Exception) {
             println("Error saving HUD element positions: ${e.message}")
         }
+    }
+
+    fun getRainbowColor(index: Int, speed: Float = 2000f, saturation: Float = 0.7f, brightness: Float = 0.8f): Int {
+        var hue = (System.currentTimeMillis() + index * 100) % speed.toLong()
+        hue /= speed.toLong()
+        return Color.HSBtoRGB(hue, saturation, brightness)
     }
 }

@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render.gui.hud
 
+import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.DrawContext
 
@@ -94,86 +95,118 @@ abstract class HudElement(
     }
     
     protected fun renderBackground(context: DrawContext, isSelected: Boolean) {
-        val backgroundColor = if (isSelected) 0x80444444.toInt() else 0x80222222.toInt()
-        val borderColor = if (isSelected) 0xFF00AAFF.toInt() else 0xFF444444.toInt()
+        if (!isSelected) return // Only render background when selected in HUD editor
         
-        context.fill(x, y, x + width, y + height, backgroundColor)
-        context.drawBorder(x, y, width, height, borderColor)
+        context.fill(x, y, x + width, y + height, 0x80222222.toInt())
+        context.drawBorder(x, y, width, height, 0xFF00AAFF.toInt())
     }
 }
 
 /**
  * Watermark HUD element showing client name
  */
-class WatermarkElement(x: Int, y: Int) : HudElement(x, y, 120, 20) {
+class WatermarkElement(x: Int, y: Int) : HudElement(x, y, 120, 25) {
     override val name = "Watermark"
     
     override fun render(context: DrawContext, isSelected: Boolean) {
         renderBackground(context, isSelected)
         
-        val text = "LiquidBounce"
-        context.drawText(mc.textRenderer, text, x + 5, y + 6, 0x00AAFF, true)
+        val text1 = "LIQUID"
+        val text2 = "BOUNCE"
+        context.drawText(mc.textRenderer, text1, x + 5, y + 4, 0xFFFFFF, true)
+        context.drawText(mc.textRenderer, text2, x + 5, y + 14, 0x00AAFF, true)
     }
 }
 
 /**
  * ArrayList HUD element showing enabled modules
  */
-class ArrayListElement(x: Int, y: Int) : HudElement(x, y, 180, 100) {
+class ArrayListElement(x: Int, y: Int) : HudElement(x, y, 1, 1) { // Width and height will be dynamic
     override val name = "ArrayList"
     
     override fun render(context: DrawContext, isSelected: Boolean) {
-        renderBackground(context, isSelected)
+        val enabledModules = ModuleManager.getModules()
+            .filter { it.enabled && !it.hidden }
+            .sortedByDescending { mc.textRenderer.getWidth(it.name) }
+
+        if (enabledModules.isEmpty() && !isSelected) {
+            (this as HudElement).width = 0
+            (this as HudElement).height = 0
+            return
+        }
+
+        // Dynamically adjust width and height
+        val dynamicWidth = if (enabledModules.isNotEmpty()) enabledModules.maxOf { mc.textRenderer.getWidth(it.name) } + 10 else 100
+        val dynamicHeight = if (enabledModules.isNotEmpty()) enabledModules.size * (mc.textRenderer.fontHeight + 2) + 5 else 20
         
-        // Mock enabled modules for preview
-        val enabledModules = listOf("KillAura", "Fly", "Speed", "NoFall", "ESP")
+        (this as HudElement).width = dynamicWidth
+        (this as HudElement).height = dynamicHeight
+
+        renderBackground(context, isSelected)
         
         var yOffset = y + 5
         for ((index, module) in enabledModules.withIndex()) {
-            val color = 0xFF0000 + (index * 0x003300) // Rainbow-ish effect
-            context.drawText(mc.textRenderer, module, x + 5, yOffset, color, true)
+            val text = module.name
+            val textWidth = mc.textRenderer.getWidth(text)
+            val color = HudScreenHelper.getRainbowColor(index)
+            context.drawText(mc.textRenderer, text, x + width - textWidth - 5, yOffset, color, true)
             yOffset += mc.textRenderer.fontHeight + 2
         }
     }
 }
 
 /**
- * Coordinates HUD element showing player position
+ * InfoPanel HUD element showing various game/player stats
  */
-class CoordinatesElement(x: Int, y: Int) : HudElement(x, y, 150, 20) {
-    override val name = "Coordinates"
-    
+class InfoPanelElement(x: Int, y: Int) : HudElement(x, y, 150, 60) {
+    override val name = "InfoPanel"
+
     override fun render(context: DrawContext, isSelected: Boolean) {
         renderBackground(context, isSelected)
-        
+
         val player = mc.player
-        val text = if (player != null) {
-            "XYZ: ${player.x.toInt()}, ${player.y.toInt()}, ${player.z.toInt()}"
+        val infoLines = mutableListOf<Pair<String, String>>()
+
+        if (player != null) {
+            infoLines.add("XYZ:" to "${player.x.toInt()}, ${player.y.toInt()}, ${player.z.toInt()}")
+            infoLines.add("FPS:" to "${mc.currentFps}")
+            // In a real scenario, ping would be fetched from the network handler
+            val ping = mc.networkHandler?.getPlayerListEntry(player.uuid)?.latency ?: 0
+            infoLines.add("Ping:" to "$ping ms")
         } else {
-            "XYZ: 0, 0, 0"
+            infoLines.add("InfoPanel" to "Preview")
+        }
+
+        var yOffset = y + 5
+        for ((label, value) in infoLines) {
+            context.drawText(mc.textRenderer, "$label $value", x + 5, yOffset, 0xFFFFFF, true)
+            yOffset += mc.textRenderer.fontHeight + 2
         }
         
-        context.drawText(mc.textRenderer, text, x + 5, y + 6, 0xFFFFFF, true)
+        // Adjust height dynamically
+        (this as HudElement).height = infoLines.size * (mc.textRenderer.fontHeight + 2) + 10
     }
 }
 
 /**
- * FPS HUD element showing current framerate
+ * Speed HUD element showing player's horizontal speed
  */
-class FpsElement(x: Int, y: Int) : HudElement(x, y, 80, 20) {
-    override val name = "FPS"
-    
+class SpeedElement(x: Int, y: Int) : HudElement(x, y, 100, 20) {
+    override val name = "Speed"
+
     override fun render(context: DrawContext, isSelected: Boolean) {
         renderBackground(context, isSelected)
-        
-        val fps = mc.currentFps
-        val text = "FPS: $fps"
-        val color = when {
-            fps >= 60 -> 0x00FF00  // Green
-            fps >= 30 -> 0xFFFF00  // Yellow
-            else -> 0xFF0000       // Red
+
+        val player = mc.player
+        val speedText = if (player != null) {
+            val deltaX = player.x - player.prevX
+            val deltaZ = player.z - player.prevZ
+            val speed = kotlin.math.sqrt(deltaX * deltaX + deltaZ * deltaZ) * 20 // blocks per second
+            "Speed: %.2f".format(speed)
+        } else {
+            "Speed: 0.00"
         }
-        
-        context.drawText(mc.textRenderer, text, x + 5, y + 6, color, true)
+
+        context.drawText(mc.textRenderer, speedText, x + 5, y + 6, 0xFFFFFF, true)
     }
 }

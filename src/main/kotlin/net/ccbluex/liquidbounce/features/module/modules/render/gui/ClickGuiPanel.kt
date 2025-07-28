@@ -92,7 +92,7 @@ class ClickGuiPanel(
         
         // Category name (adjusted for smaller tabs)
         val categoryName = category.name.lowercase().replaceFirstChar { it.uppercase() }
-        context.drawText(mc.textRenderer, categoryName, x + 4, y + 4, 0xFFFFFFFF, false)
+        context.drawText(mc.textRenderer, categoryName, x + 4, y + 4, 0xFFFFFFFF.toInt(), false)
         
         // Expand/collapse button (adjusted for smaller tabs)
         renderExpandButton(context, x + width - 12, y + 2)
@@ -163,7 +163,7 @@ class ClickGuiPanel(
         )
         
         // Module name (adjusted for smaller tabs)
-        val textColor = if (renderData.module.running) 0xFF80BFFF else 0xBBBBBB
+        val textColor = if (renderData.module.running) 0xFF80BFFF.toInt() else 0xBBBBBB
         renderData.context.drawText(
             mc.textRenderer, 
             renderData.module.name, 
@@ -448,11 +448,11 @@ object ClickGuiPanelRenderer {
         val centerY = buttonY + buttonSize / 2
         
         // Horizontal line for minus
-        context.fill(centerX - 3, centerY, centerX + 4, centerY + 1, 0xFFFFFFFF)
+        context.fill(centerX - 3, centerY, centerX + 4, centerY + 1, 0xFFFFFFFF.toInt())
         
         // Vertical line for plus
         if (!expanded) {
-            context.fill(centerX, centerY - 3, centerX + 1, centerY + 4, 0xFFFFFFFF)
+            context.fill(centerX, centerY - 3, centerX + 1, centerY + 4, 0xFFFFFFFF.toInt())
         }
     }
 }

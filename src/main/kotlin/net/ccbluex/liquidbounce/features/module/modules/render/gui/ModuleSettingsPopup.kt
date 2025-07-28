@@ -299,7 +299,7 @@ class ModuleSettingsPopup(
         val title = "${module.name} Settings"
         val titleWidth = mc.textRenderer.getWidth(title)
         val titleX = x + (POPUP_WIDTH - titleWidth) / 2
-        context.drawText(mc.textRenderer, title, titleX, y + 6, 0xFFFFFFFF, false)
+        context.drawText(mc.textRenderer, title, titleX, y + 6, 0xFFFFFFFF.toInt(), false)
         
         // Close button (X)
         val closeButtonX = x + POPUP_WIDTH - 16
@@ -432,9 +432,9 @@ class ModuleSettingsPopup(
         
         // Handle scroll dragging first
         if (isScrollDragging && button == 0) {
-            val deltaY_ = mouseY - scrollDragStartY
+            val deltaY = mouseY - scrollDragStartY
             val scrollSensitivity = 2.0 // How much to scroll per pixel of mouse movement
-            val scrollDelta = (deltaY_ * scrollSensitivity).toInt()
+            val scrollDelta = (deltaY * scrollSensitivity).toInt()
             
             val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
             val areaHeight = height - 20 // Subtract title bar height

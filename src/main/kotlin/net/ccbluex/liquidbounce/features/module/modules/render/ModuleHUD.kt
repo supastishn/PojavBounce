@@ -18,8 +18,8 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
-import net.ccbluex.liquidbounce.event.EventTarget
-import net.ccbluex.liquidbounce.event.OverlayRenderEvent
+import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
+import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.hud.HudManager
@@ -36,11 +36,10 @@ object ModuleHUD : ClientModule("HUD", Category.RENDER) {
         enabled = true // The HUD is visible by default
     }
 
-    @EventTarget
-    fun onRender(event: OverlayRenderEvent) {
-        // Don't render if the module is disabled, F3 menu is open, or any other screen is open
-        if (!enabled || mc.options.debugEnabled || mc.currentScreen != null) {
-            return
+    val renderHandler = handler<OverlayRenderEvent> { event ->
+        // Don't render if the module is disabled or any other screen is open
+        if (!enabled || mc.currentScreen != null) {
+            return@handler
         }
 
         // Ensure elements are initialized

@@ -153,7 +153,7 @@ class ClickGuiPanel(
                        renderData.mouseY <= renderData.moduleY + moduleHeight
         
         if (isHovered) {
-            hoveredModuleDescription = renderData.module.description
+            hoveredModuleDescription = renderData.module.description.get()
         }
         
         // Module background

@@ -317,16 +317,16 @@ class ModuleSettingsPopup(
         // Enable scissor for scrolling
         context.enableScissor(x, settingsAreaY, x + POPUP_WIDTH, settingsAreaY + settingsAreaHeight)
         
+        context.matrices.push()
+        context.matrices.translate(0.0, -scrollOffset.toDouble(), 0.0)
+        
         try {
             for (widget in settingWidgets) {
-                val adjustedY = widget.y - scrollOffset
-                if (adjustedY + SETTING_HEIGHT > settingsAreaY && adjustedY < settingsAreaY + settingsAreaHeight) {
-                    val adjustedWidget = createAdjustedWidget(widget, adjustedY)
-                    val isHovered = adjustedWidget.isMouseOver(mouseX, mouseY)
-                    adjustedWidget.render(context, mouseX, mouseY, isHovered)
-                }
+                val isHovered = widget.isMouseOver(mouseX, mouseY + scrollOffset)
+                widget.render(context, mouseX, mouseY + scrollOffset, isHovered)
             }
         } finally {
+            context.matrices.pop()
             context.disableScissor()
         }
         
@@ -334,79 +334,6 @@ class ModuleSettingsPopup(
         val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
         if (totalHeight > settingsAreaHeight) {
             renderScrollbar(context, settingsAreaY, settingsAreaHeight, totalHeight)
-        }
-    }
-    
-    @Suppress("UNCHECKED_CAST")
-    private fun createAdjustedWidget(original: SettingWidget<*>, newY: Int): SettingWidget<*> {
-        val widgetWidth = POPUP_WIDTH - POPUP_PADDING * 2
-        val value = module.containedValues.find { it.name == original.name } ?: return original
-
-        return when (original) {
-            is BooleanSettingWidget -> {
-                val typedValue = value as Value<Boolean>
-                BooleanSettingWidget(
-                    name = original.name,
-                    value = original.value,
-                    config = WidgetConfig(x = original.x, y = newY, width = widgetWidth),
-                    onValueChanged = { newValue ->
-                        typedValue.set(newValue)
-                        saveModuleConfiguration()
-                    }
-                )
-            }
-            is FloatSettingWidget -> {
-                val typedValue = value as Value<Float>
-                val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
-                FloatSettingWidget(
-                    name = original.name,
-                    value = original.value,
-                    config = RangeWidgetConfig(x = original.x, y = newY, min = min, max = max, width = widgetWidth),
-                    onValueChanged = { newValue ->
-                        typedValue.set(newValue)
-                        saveModuleConfiguration()
-                    }
-                )
-            }
-            is IntSettingWidget -> {
-                val typedValue = value as Value<Int>
-                val (min, max) = getRangeForValue(value, 0, 1000)
-                IntSettingWidget(
-                    name = original.name,
-                    value = original.value,
-                    config = IntRangeWidgetConfig(x = original.x, y = newY, min = min, max = max, width = widgetWidth),
-                    onValueChanged = { newValue ->
-                        typedValue.set(newValue)
-                        saveModuleConfiguration()
-                    }
-                )
-            }
-            is TextSettingWidget -> {
-                val typedValue = value as Value<String>
-                TextSettingWidget(
-                    name = original.name,
-                    value = original.value,
-                    config = WidgetConfig(x = original.x, y = newY, width = widgetWidth),
-                    onValueChanged = { newValue ->
-                        typedValue.setByString(newValue)
-                        saveModuleConfiguration()
-                    }
-                )
-            }
-            is EnumSettingWidget -> {
-                val typedValue = value as ChooseListValue<*>
-                EnumSettingWidget(
-                    name = original.name,
-                    value = original.value,
-                    choices = original.choices,
-                    config = WidgetConfig(x = original.x, y = newY, width = widgetWidth),
-                    onValueChanged = { choiceName ->
-                        typedValue.setByString(choiceName)
-                        saveModuleConfiguration()
-                    }
-                )
-            }
-            else -> original
         }
     }
     
@@ -484,36 +411,11 @@ class ModuleSettingsPopup(
     }
     
     private fun handleWidgetClick(widget: SettingWidget<*>, mouseX: Double, mouseY: Double, button: Int): Boolean {
-        val adjustedY = widget.y - scrollOffset
-        val adjustedWidget = createAdjustedWidget(widget, adjustedY)
-        
-        if (adjustedWidget.isMouseOver(mouseX.toInt(), mouseY.toInt())) {
-            if (adjustedWidget.mouseClicked(mouseX, mouseY, button)) {
-                updateWidgetValue(widget, adjustedWidget)
-                return true
-            }
+        val localMouseY = mouseY + scrollOffset
+        if (widget.mouseClicked(mouseX, localMouseY, button)) {
+            return true
         }
         return false
-    }
-    
-    private fun updateWidgetValue(original: SettingWidget<*>, adjusted: SettingWidget<*>) {
-        when {
-            original is BooleanSettingWidget && adjusted is BooleanSettingWidget -> {
-                original.value = adjusted.value
-            }
-            original is FloatSettingWidget && adjusted is FloatSettingWidget -> {
-                original.value = adjusted.value
-            }
-            original is IntSettingWidget && adjusted is IntSettingWidget -> {
-                original.value = adjusted.value
-            }
-            original is TextSettingWidget && adjusted is TextSettingWidget -> {
-                original.value = adjusted.value
-            }
-            original is EnumSettingWidget && adjusted is EnumSettingWidget -> {
-                original.value = adjusted.value
-            }
-        }
     }
     
     /**
@@ -530,9 +432,9 @@ class ModuleSettingsPopup(
         
         // Handle scroll dragging first
         if (isScrollDragging && button == 0) {
-            val deltaY = mouseY - scrollDragStartY
+            val deltaY_ = mouseY - scrollDragStartY
             val scrollSensitivity = 2.0 // How much to scroll per pixel of mouse movement
-            val scrollDelta = (deltaY * scrollSensitivity).toInt()
+            val scrollDelta = (deltaY_ * scrollSensitivity).toInt()
             
             val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
             val areaHeight = height - 20 // Subtract title bar height
@@ -546,20 +448,16 @@ class ModuleSettingsPopup(
             return true
         }
         
+        val localMouseY = mouseY + scrollOffset
         for (widget in settingWidgets) {
-            val adjustedY = widget.y - scrollOffset
-            val adjustedWidget = createAdjustedWidget(widget, adjustedY)
-            
-            when (adjustedWidget) {
+            when (widget) {
                 is FloatSettingWidget -> {
-                    if (adjustedWidget.mouseDragged(mouseX, mouseY, button)) {
-                        (widget as FloatSettingWidget).value = adjustedWidget.value
+                    if (widget.mouseDragged(mouseX, localMouseY, button)) {
                         return true
                     }
                 }
                 is IntSettingWidget -> {
-                    if (adjustedWidget.mouseDragged(mouseX, mouseY, button)) {
-                        (widget as IntSettingWidget).value = adjustedWidget.value
+                    if (widget.mouseDragged(mouseX, localMouseY, button)) {
                         return true
                     }
                 }
@@ -577,10 +475,11 @@ class ModuleSettingsPopup(
         
         isScrollDragging = false
         
+        val localMouseY = mouseY + scrollOffset
         for (widget in settingWidgets) {
             when (widget) {
-                is FloatSettingWidget -> widget.mouseReleased(mouseX, mouseY, button)
-                is IntSettingWidget -> widget.mouseReleased(mouseX, mouseY, button)
+                is FloatSettingWidget -> widget.mouseReleased(mouseX, localMouseY, button)
+                is IntSettingWidget -> widget.mouseReleased(mouseX, localMouseY, button)
             }
         }
         
@@ -624,11 +523,7 @@ class ModuleSettingsPopup(
         
         // Handle widget key presses for text input
         for (widget in settingWidgets) {
-            val adjustedY = widget.y - scrollOffset
-            val adjustedWidget = createAdjustedWidget(widget, adjustedY)
-            
-            if (adjustedWidget.keyPressed(keyCode, scanCode, modifiers)) {
-                updateWidgetValue(widget, adjustedWidget)
+            if (widget.keyPressed(keyCode, scanCode, modifiers)) {
                 return true
             }
         }
@@ -652,11 +547,7 @@ class ModuleSettingsPopup(
         if (!isVisible) return false
         
         for (widget in settingWidgets) {
-            val adjustedY = widget.y - scrollOffset
-            val adjustedWidget = createAdjustedWidget(widget, adjustedY)
-            
-            if (adjustedWidget.charTyped(chr, modifiers)) {
-                updateWidgetValue(widget, adjustedWidget)
+            if (widget.charTyped(chr, modifiers)) {
                 return true
             }
         }

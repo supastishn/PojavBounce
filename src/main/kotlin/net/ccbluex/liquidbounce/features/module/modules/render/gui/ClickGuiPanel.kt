@@ -79,20 +79,20 @@ class ClickGuiPanel(
         }
         
         // Panel background
-        context.fill(x, y, x + width, y + actualHeight, GuiConfig.backgroundColor)
+        context.fill(x, y, x + width, y + actualHeight, 0xAA101010.toInt())
         
         // Panel border
-        context.drawBorder(x, y, width, actualHeight, GuiConfig.borderColor)
+        context.drawBorder(x, y, width, actualHeight, 0xAA252525.toInt())
         
         // Header background
-        context.fill(x, y, x + width, y + headerHeight, GuiConfig.headerColor)
+        // No separate header color for a blended look
         
-        // Accent border at bottom of header
-        context.fill(x, y + headerHeight - 2, x + width, y + headerHeight, GuiConfig.accentColor)
+        // Thin separator line below header
+        context.fill(x, y + headerHeight - 1, x + width, y + headerHeight, 0xFF505050.toInt())
         
         // Category name (adjusted for smaller tabs)
         val categoryName = category.name.lowercase().replaceFirstChar { it.uppercase() }
-        context.drawText(mc.textRenderer, categoryName, x + 4, y + 4, GuiConfig.textColor, false)
+        context.drawText(mc.textRenderer, categoryName, x + 4, y + 4, 0xFFFFFFFF, false)
         
         // Expand/collapse button (adjusted for smaller tabs)
         renderExpandButton(context, x + width - 12, y + 2)
@@ -151,9 +151,8 @@ class ClickGuiPanel(
         
         // Module background
         val bgColor = when {
-            renderData.module.running -> GuiConfig.enabledModuleColor
-            isHovered -> GuiConfig.hoverColor
-            else -> 0xFF111111.toInt()
+            isHovered -> 0xAA252525.toInt()
+            else -> 0x00000000 // Transparent background
         }
         renderData.context.fill(
             renderData.moduleX, 
@@ -163,17 +162,8 @@ class ClickGuiPanel(
             bgColor
         )
         
-        // Module border
-        renderData.context.fill(
-            renderData.moduleX, 
-            renderData.moduleY + moduleHeight - 1, 
-            renderData.moduleX + width, 
-            renderData.moduleY + moduleHeight, 
-            GuiConfig.borderColor
-        )
-        
         // Module name (adjusted for smaller tabs)
-        val textColor = if (renderData.module.running) GuiConfig.accentColor else 0xBBBBBB
+        val textColor = if (renderData.module.running) 0xFF80BFFF else 0xBBBBBB
         renderData.context.drawText(
             mc.textRenderer, 
             renderData.module.name, 
@@ -215,7 +205,7 @@ class ClickGuiPanel(
         val thumbY = moduleAreaY + 
             (scrollOffset * (moduleAreaHeight - thumbHeight)) / (totalHeight - moduleAreaHeight)
         
-        context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFFAAAAAA.toInt())
+        context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFF80BFFF.toInt())
     }
     
     @Suppress("UnusedParameter", "FunctionOnlyReturningConstant")
@@ -453,19 +443,16 @@ object ClickGuiPanelRenderer {
     fun renderExpandButton(context: DrawContext, buttonX: Int, buttonY: Int, expanded: Boolean) {
         val buttonSize = 10  // Made smaller for compact tabs
         
-        // Button background
-        context.fill(buttonX, buttonY, buttonX + buttonSize, buttonY + buttonSize, 0x88444444.toInt())
-        
         // Plus/minus icon (adjusted for smaller button)
         val centerX = buttonX + buttonSize / 2
         val centerY = buttonY + buttonSize / 2
         
-        // Horizontal line (smaller)
-        context.fill(centerX - 3, centerY - 1, centerX + 3, centerY + 1, 0xFFFFFF)
+        // Horizontal line for minus
+        context.fill(centerX - 3, centerY, centerX + 4, centerY + 1, 0xFFFFFFFF)
         
-        // Vertical line (only for collapsed state, smaller)
+        // Vertical line for plus
         if (!expanded) {
-            context.fill(centerX - 1, centerY - 3, centerX + 1, centerY + 3, 0xFFFFFF)
+            context.fill(centerX, centerY - 3, centerX + 1, centerY + 4, 0xFFFFFFFF)
         }
     }
 }

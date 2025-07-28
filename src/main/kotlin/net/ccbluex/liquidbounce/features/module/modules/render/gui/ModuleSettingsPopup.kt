@@ -284,22 +284,22 @@ class ModuleSettingsPopup(
         if (!isVisible) return
         
         // Popup background with shadow effect
-        context.fill(x + 2, y + 2, x + POPUP_WIDTH + 2, y + height + 2, 0x88000000.toInt()) // Shadow
-        context.fill(x, y, x + POPUP_WIDTH, y + height, 0xFF1A1A1A.toInt()) // Main background
+        context.fill(x + 2, y + 2, x + POPUP_WIDTH + 2, y + height + 2, 0x99000000.toInt()) // Shadow
+        context.fill(x, y, x + POPUP_WIDTH, y + height, 0xCC101010.toInt()) // Main background
         
         // Popup border
-        context.drawBorder(x, y, POPUP_WIDTH, height, GuiConfig.accentColor)
+        context.drawBorder(x, y, POPUP_WIDTH, height, 0xFF505050.toInt())
         
         // Title bar
         val titleBarHeight = 20
-        context.fill(x, y, x + POPUP_WIDTH, y + titleBarHeight, GuiConfig.headerColor)
-        context.fill(x, y + titleBarHeight - 1, x + POPUP_WIDTH, y + titleBarHeight, GuiConfig.accentColor)
+        // No separate title bar color
+        context.fill(x, y + titleBarHeight - 1, x + POPUP_WIDTH, y + titleBarHeight, 0xFF505050.toInt())
         
         // Module name in title bar
         val title = "${module.name} Settings"
         val titleWidth = mc.textRenderer.getWidth(title)
         val titleX = x + (POPUP_WIDTH - titleWidth) / 2
-        context.drawText(mc.textRenderer, title, titleX, y + 6, GuiConfig.textColor, false)
+        context.drawText(mc.textRenderer, title, titleX, y + 6, 0xFFFFFFFF, false)
         
         // Close button (X)
         val closeButtonX = x + POPUP_WIDTH - 16
@@ -353,7 +353,7 @@ class ModuleSettingsPopup(
             areaY
         }
         
-        context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, GuiConfig.accentColor)
+        context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFF80BFFF.toInt())
     }
     
     /**

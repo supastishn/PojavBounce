@@ -110,7 +110,7 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     
     override fun renderBackground(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
         // Much lighter semi-transparent background for better visibility
-        context.fill(0, 0, width, height, 0x44000000.toInt()) // Further reduced to 27% opacity for maximum visibility
+        context.fill(0, 0, width, height, 0x99000000.toInt()) // Dark, semi-transparent background
         
         // Grid removed as requested - no longer rendering grid lines
     }

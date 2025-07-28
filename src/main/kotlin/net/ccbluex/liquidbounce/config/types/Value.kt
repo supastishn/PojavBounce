@@ -234,6 +234,7 @@ open class Value<T : Any>(
             }
         }.onSuccess {
             apply(currT)
+            inner = currT
             EventManager.callEvent(ValueChangedEvent(this))
             changedListeners.forEach { it(currT) }
             stateFlow.value = currT

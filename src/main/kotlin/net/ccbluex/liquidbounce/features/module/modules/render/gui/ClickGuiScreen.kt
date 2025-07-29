@@ -131,7 +131,13 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
             val tooltipWidth = wrappedText.maxOfOrNull { textRenderer.getWidth(it) }?.plus(6) ?: maxWidth
 
             // Background
-            context.fill(tooltipX - 3, tooltipY - 3, tooltipX + tooltipWidth, tooltipY + tooltipHeight, 0xE0101010.toInt())
+            context.fill(
+                tooltipX - 3, 
+                tooltipY - 3, 
+                tooltipX + tooltipWidth, 
+                tooltipY + tooltipHeight, 
+                0xE0101010.toInt()
+            )
 
             // Render wrapped text
             var currentY = tooltipY

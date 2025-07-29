@@ -38,7 +38,7 @@ object ModuleHUD : ClientModule("HUD", Category.RENDER) {
 
     val renderHandler = handler<OverlayRenderEvent> { event ->
         // Don't render if the module is disabled or the debug screen is open
-        if (!enabled || mc.options.debugEnabled) {
+        if (!enabled || mc.inGameHud.debugHud.shouldShowDebugHud()) {
             return@handler
         }
 

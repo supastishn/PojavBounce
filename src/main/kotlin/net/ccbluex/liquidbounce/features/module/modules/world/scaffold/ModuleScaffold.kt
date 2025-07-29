@@ -185,7 +185,6 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
     // SimulatePlacement settings (flattened)
     val simulatePlacement by boolean("SimulatePlacement", false)
     val simulatePlacementClicker = tree(Clicker(this, mc.options.useKey, false, maxCps = 100))
-        .doNotIncludeWhen { !simulatePlacement }
     val failedAttemptsOnly by boolean("FailedAttemptsOnly", true).doNotIncludeWhen { !simulatePlacement }
 
 
@@ -429,6 +428,9 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
 
     @Suppress("unused")
     private val tickHandler = tickHandler {
+        // Capture clicker reference to avoid scoping issues
+        val clicker = this@ModuleScaffold.simulatePlacementClicker
+        
         updateRenderCount(blockCount)
 
         if (player.isOnGround) {
@@ -448,7 +450,10 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
 
         val target = currentTarget
 
-        val currentRotation = if (rotationsEnabled && (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP) && target != null) {
+        val currentRotation = if (rotationsEnabled &&
+            (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP) &&
+            target != null
+        ) {
             target.rotation
         } else {
             RotationManager.currentRotation ?: player.rotation
@@ -468,9 +473,9 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             arrayOf(Hand.MAIN_HAND, Hand.OFF_HAND).firstOrNull { isValidBlock(player.getStackInHand(it)) }
 
         if (simulatePlacementAttempts(currentCrosshairTarget, suitableHand) && player.moving
-            && simulatePlacementClicker.isClickTick
+            && clicker.isClickTick
         ) {
-            simulatePlacementClicker.click {
+            clicker.click {
                 doPlacement(currentCrosshairTarget!!, suitableHand!!, swingMode = swingMode)
                 true
             }
@@ -498,7 +503,9 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
         val handToInteractWith = if (hasBlockInMainHand) Hand.MAIN_HAND else Hand.OFF_HAND
         var wasSuccessful = false
 
-        if (rotationsEnabled && (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP)) {
+        if (rotationsEnabled &&
+            (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP)
+        ) {
             // Check if server rotation matches the current rotation
             if (currentRotation != RotationManager.serverRotation) {
                 network.sendPacket(
@@ -516,7 +523,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
                 RotationManager.setRotationTarget(
                     currentRotation,
                     considerInventory = considerInventory,
-                    configurable = RotationsConfigurable(this),
+                    configurable = RotationsConfigurable(this@ModuleScaffold),
                     provider = this@ModuleScaffold,
                     priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
                 )
@@ -535,7 +542,9 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             true
         }, swingMode = swingMode)
 
-        if (rotationsEnabled && rotationTiming == RotationTimingMode.ON_TICK && RotationManager.serverRotation != player.rotation) {
+        if (rotationsEnabled && rotationTiming == RotationTimingMode.ON_TICK &&
+            RotationManager.serverRotation != player.rotation
+        ) {
             network.sendPacket(
                 Full(
                     player.x, player.y, player.z, player.withFixedYaw(currentRotation), player.pitch, player.isOnGround,

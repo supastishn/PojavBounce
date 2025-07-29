@@ -382,6 +382,39 @@ class TextSettingWidget(
 /**
  * Enum/Choice setting widget
  */
+class SectionHeaderWidget(
+    name: String,
+    val isExpanded: Boolean,
+    config: WidgetConfig
+) : SettingWidget<Boolean>(name, isExpanded, config.x, config.y, config.width, config.height) {
+
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        val backgroundColor = if (isHovered) 0xFF3A3A3A.toInt() else 0xFF2A2A2A.toInt()
+        context.fill(x, y, x + width, y + height, backgroundColor)
+        context.drawBorder(x, y, width, height, 0xFF444444.toInt())
+
+        // Arrow
+        val arrowChar = if (isExpanded) "▾" else "▸"
+        context.drawText(mc.textRenderer, arrowChar, x + 5, y + 7, 0xFFFFFFFF.toInt(), false)
+
+        // Section name
+        context.drawText(mc.textRenderer, Text.literal(name), x + 15, y + 7, 0xFFFFFFFF.toInt(), false)
+    }
+
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            // The actual collapse/expand logic is in ModuleSettingsPopup
+            return true
+        }
+        return false
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
+}
+
+/**
+ * Enum/Choice setting widget
+ */
 class EnumSettingWidget(
     name: String,
     value: String,

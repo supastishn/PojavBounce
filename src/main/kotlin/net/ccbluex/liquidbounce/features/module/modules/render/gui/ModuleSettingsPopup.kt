@@ -56,6 +56,7 @@ class ModuleSettingsPopup(
     }
     
     private val settingWidgets = mutableListOf<SettingWidget<*>>()
+    private val sections = mutableMapOf<String, Boolean>() // Key: section name, Value: expanded
     private var openDropdown: EnumSettingWidget? = null
     private var scrollOffset = 0
     private var x = 0
@@ -101,11 +102,11 @@ class ModuleSettingsPopup(
     private fun initializeSettingWidgets() {
         settingWidgets.clear()
 
-        val values = mutableListOf<Value<*>>()
-        collectValues(module, values)
+        val widgetCreators = mutableListOf<Pair<Value<*>, Int>>() // Value and indent level
+        collectValues(module, widgetCreators, 0)
 
         // Calculate height based on content
-        val contentHeight = values.size * (SETTING_HEIGHT + SETTING_SPACING) + POPUP_PADDING * 2
+        val contentHeight = widgetCreators.size * (SETTING_HEIGHT + SETTING_SPACING) + POPUP_PADDING * 2
         val popupHeight = min(max(contentHeight, POPUP_MIN_HEIGHT), POPUP_MAX_HEIGHT)
 
         // Calculate final position
@@ -137,8 +138,10 @@ class ModuleSettingsPopup(
 
         // Create widgets with the final correct positions
         var currentY = this.y + POPUP_PADDING
-        for (value in values) {
-            val widget = createWidgetForValue(value, this.x + POPUP_PADDING, currentY)
+        for ((value, indent) in widgetCreators) {
+            val widgetX = this.x + POPUP_PADDING + indent * 10
+            val widgetWidth = POPUP_WIDTH - POPUP_PADDING * 2 - indent * 10
+            val widget = createWidgetForValue(value, widgetX, currentY, widgetWidth)
             if (widget != null) {
                 settingWidgets.add(widget)
                 currentY += SETTING_HEIGHT + SETTING_SPACING
@@ -146,22 +149,28 @@ class ModuleSettingsPopup(
         }
     }
 
-    private fun collectValues(configurable: Configurable, list: MutableList<Value<*>>) {
+    private fun collectValues(configurable: Configurable, list: MutableList<Pair<Value<*>, Int>>, indent: Int) {
         for (value in configurable.inner) {
-            list.add(value)
-            
-            if (value is net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable<*>) {
-                collectValues(value.activeChoice, list)
-            } else if (value is Configurable) {
-                collectValues(value, list)
+            list.add(Pair(value, indent))
+
+            val isSectionExpanded = sections.getOrPut(value.name) { true }
+
+            if (isSectionExpanded) {
+                if (value is net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable<*>) {
+                    collectValues(value.activeChoice, list, indent + 1)
+                } else if (value is Configurable) {
+                    collectValues(value, list, indent + 1)
+                }
             }
         }
     }
     
     @Suppress("UNCHECKED_CAST")
-    private fun createWidgetForValue(value: Value<*>, widgetX: Int, widgetY: Int): SettingWidget<*>? {
-        val widgetWidth = POPUP_WIDTH - POPUP_PADDING * 2
-        
+    private fun createWidgetForValue(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): SettingWidget<*>? {
+        if (value is Configurable) {
+            return createSectionHeaderWidget(value, widgetX, widgetY, widgetWidth)
+        }
+
         return when (value.valueType) {
             ValueType.BOOLEAN -> createBooleanWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth)
@@ -507,6 +516,10 @@ class ModuleSettingsPopup(
     private fun handleWidgetClick(widget: SettingWidget<*>, mouseX: Double, mouseY: Double, button: Int): Boolean {
         val localMouseY = mouseY + scrollOffset
         if (widget.mouseClicked(mouseX, localMouseY, button)) {
+            if (widget is SectionHeaderWidget) {
+                sections[widget.name] = !sections.getOrDefault(widget.name, true)
+                initializeSettingWidgets() // Rebuild the widget list
+            }
             return true
         }
         return false
@@ -658,6 +671,14 @@ class ModuleSettingsPopup(
         } catch (e: Exception) {
             println("Error saving configuration for module ${module.name}: ${e.message}")
         }
+    }
+
+    private fun createSectionHeaderWidget(value: Configurable, widgetX: Int, widgetY: Int, widgetWidth: Int): SectionHeaderWidget {
+        return SectionHeaderWidget(
+            name = value.name,
+            isExpanded = sections.getOrDefault(value.name, true),
+            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT)
+        )
     }
 
     @Suppress("UNCHECKED_CAST")

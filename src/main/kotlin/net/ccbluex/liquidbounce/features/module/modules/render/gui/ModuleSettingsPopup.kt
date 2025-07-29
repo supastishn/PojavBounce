@@ -66,7 +66,6 @@ class ModuleSettingsPopup(
     private var scrollDragStartY = 0.0
     
     init {
-        calculatePosition()
         initializeSettingWidgets()
     }
     
@@ -97,63 +96,54 @@ class ModuleSettingsPopup(
     fun isVisible(): Boolean = isVisible
     
     /**
-     * Calculate the optimal position for the popup next to the module
+     * Initialize setting widgets from module configuration and calculate popup position
      */
-    private fun calculatePosition() {
+    private fun initializeSettingWidgets() {
+        settingWidgets.clear()
+
+        val values = mutableListOf<Value<*>>()
+        collectValues(module, values)
+
+        // Calculate height based on content
+        val contentHeight = values.size * (SETTING_HEIGHT + SETTING_SPACING) + POPUP_PADDING * 2
+        val popupHeight = min(max(contentHeight, POPUP_MIN_HEIGHT), POPUP_MAX_HEIGHT)
+
+        // Calculate final position
         val screenWidth = mc.window.scaledWidth
         val screenHeight = mc.window.scaledHeight
         
-        // Try to position popup to the right of the module first
         var popupX = moduleX + moduleWidth + 10
         var popupY = moduleY
         
-        // If popup would go off the right edge, position it to the left
         if (popupX + POPUP_WIDTH > screenWidth) {
             popupX = moduleX - POPUP_WIDTH - 10
-            
-            // If it still goes off the left edge, center it horizontally
             if (popupX < 0) {
                 popupX = (screenWidth - POPUP_WIDTH) / 2
             }
         }
         
-        // Calculate popup height based on number of settings
-        val contentHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING) + POPUP_PADDING * 2
-        height = min(max(contentHeight, POPUP_MIN_HEIGHT), POPUP_MAX_HEIGHT)
-        
-        // Ensure popup doesn't go off the bottom of the screen
-        if (popupY + height > screenHeight) {
-            popupY = screenHeight - height - 10
+        if (popupY + popupHeight > screenHeight) {
+            popupY = screenHeight - popupHeight - 10
         }
         
-        // Ensure popup doesn't go off the top of the screen
         if (popupY < 10) {
             popupY = 10
         }
-        
-        x = popupX
-        y = popupY
-    }
-    
-    /**
-     * Initialize setting widgets from module configuration
-     */
-    private fun initializeSettingWidgets() {
-        settingWidgets.clear()
-        
-        val values = mutableListOf<Value<*>>()
-        collectValues(module, values)
 
-        var currentY = y + POPUP_PADDING
+        // Set final popup properties
+        this.x = popupX
+        this.y = popupY
+        this.height = popupHeight
+
+        // Create widgets with the final correct positions
+        var currentY = this.y + POPUP_PADDING
         for (value in values) {
-            val widget = createWidgetForValue(value, x + POPUP_PADDING, currentY)
+            val widget = createWidgetForValue(value, this.x + POPUP_PADDING, currentY)
             if (widget != null) {
                 settingWidgets.add(widget)
                 currentY += SETTING_HEIGHT + SETTING_SPACING
             }
         }
-        
-        calculatePosition() // Recalculate size and position based on content
     }
 
     private fun collectValues(configurable: Configurable, list: MutableList<Value<*>>) {

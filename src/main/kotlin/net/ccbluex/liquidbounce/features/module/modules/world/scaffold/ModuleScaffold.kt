@@ -33,9 +33,6 @@ import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleSafeWalk
 import net.ccbluex.liquidbounce.features.module.modules.player.nofall.modes.NoFallBlink
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
-import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold.ScaffoldRotationConfigurable.RotationTimingMode.*
-import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold.ScaffoldRotationConfigurable.considerInventory
-import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold.ScaffoldRotationConfigurable.rotationTiming
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ScaffoldBlockItemSelection.isValidBlock
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.features.*
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.techniques.ScaffoldBreezilyTechnique
@@ -172,46 +169,28 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
     @Suppress("unused")
     private val safeWalkMode = choices("SafeWalk", 1, ModuleSafeWalk::safeWalkChoices)
 
-    internal object ScaffoldRotationConfigurable : RotationsConfigurable(this) {
-
-        val considerInventory by boolean("ConsiderInventory", false)
-        val rotationTiming by enumChoice("RotationTiming", NORMAL)
-
-        enum class RotationTimingMode(override val choiceName: String) : NamedChoice {
-
-            /**
-             * Rotates the player before the block is placed
-             */
-            NORMAL("Normal"),
-
-            /**
-             * Rotates the player on the tick the block is placed
-             */
-            ON_TICK("OnTick"),
-
-            /**
-             * Similar to ON_TICK, but the player will keep the rotation after placing
-             */
-            ON_TICK_SNAP("OnTickSnap")
-
-        }
-
+    // Rotations settings (flattened)
+    val rotationsEnabled by boolean("Rotations", true)
+    val considerInventory by boolean("ConsiderInventory", false).doNotIncludeWhen { !rotationsEnabled }
+    enum class RotationTimingMode(override val choiceName: String) : NamedChoice {
+        NORMAL("Normal"), ON_TICK("OnTick"), ON_TICK_SNAP("OnTickSnap")
     }
+    val rotationTiming by enumChoice("RotationTiming", RotationTimingMode.NORMAL).doNotIncludeWhen { !rotationsEnabled }
+
 
     private var currentTarget: BlockPlacementTarget? = null
 
     private var swingMode by enumChoice("Swing", SwingMode.DO_NOT_HIDE)
 
-    object SimulatePlacementAttempts : ToggleableConfigurable(this, "SimulatePlacementAttempts", false) {
+    // SimulatePlacement settings (flattened)
+    val simulatePlacement by boolean("SimulatePlacement", false)
+    val simulatePlacementClicker = tree(Clicker(this, mc.options.useKey, false, maxCps = 100))
+        .doNotIncludeWhen { !simulatePlacement }
+    val failedAttemptsOnly by boolean("FailedAttemptsOnly", true).doNotIncludeWhen { !simulatePlacement }
 
-        internal val clicker = tree(Clicker(ModuleScaffold, mc.options.useKey, false, maxCps = 100))
-        val failedAttemptsOnly by boolean("FailedAttemptsOnly", true)
-    }
 
     init {
-        tree(ScaffoldRotationConfigurable)
         tree(ScaffoldSprintControlFeature)
-        tree(SimulatePlacementAttempts)
         tree(ScaffoldAccelerationFeature)
         tree(ScaffoldStrafeFeature)
         tree(ScaffoldJumpStrafe)
@@ -363,13 +342,13 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
         }
 
         // Do not aim yet in SKIP mode, since we want to aim at the block only when we are about to place it
-        if (rotationTiming == NORMAL) {
+        if (rotationsEnabled && rotationTiming == RotationTimingMode.NORMAL) {
             val rotation = technique.getRotations(target)
 
             RotationManager.setRotationTarget(
                 rotation ?: return@handler,
                 considerInventory = considerInventory,
-                configurable = ScaffoldRotationConfigurable,
+                configurable = RotationsConfigurable(this),
                 provider = this@ModuleScaffold,
                 priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
             )
@@ -469,7 +448,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
 
         val target = currentTarget
 
-        val currentRotation = if ((rotationTiming == ON_TICK || rotationTiming == ON_TICK_SNAP) && target != null) {
+        val currentRotation = if (rotationsEnabled && (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP) && target != null) {
             target.rotation
         } else {
             RotationManager.currentRotation ?: player.rotation
@@ -489,9 +468,9 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             arrayOf(Hand.MAIN_HAND, Hand.OFF_HAND).firstOrNull { isValidBlock(player.getStackInHand(it)) }
 
         if (simulatePlacementAttempts(currentCrosshairTarget, suitableHand) && player.moving
-            && SimulatePlacementAttempts.clicker.isClickTick
+            && simulatePlacementClicker.isClickTick
         ) {
-            SimulatePlacementAttempts.clicker.click {
+            simulatePlacementClicker.click {
                 doPlacement(currentCrosshairTarget!!, suitableHand!!, swingMode = swingMode)
                 true
             }
@@ -519,7 +498,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
         val handToInteractWith = if (hasBlockInMainHand) Hand.MAIN_HAND else Hand.OFF_HAND
         var wasSuccessful = false
 
-        if (rotationTiming == ON_TICK || rotationTiming == ON_TICK_SNAP) {
+        if (rotationsEnabled && (rotationTiming == RotationTimingMode.ON_TICK || rotationTiming == RotationTimingMode.ON_TICK_SNAP)) {
             // Check if server rotation matches the current rotation
             if (currentRotation != RotationManager.serverRotation) {
                 network.sendPacket(
@@ -533,11 +512,11 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
                 )
             }
 
-            if (rotationTiming == ON_TICK_SNAP) {
+            if (rotationTiming == RotationTimingMode.ON_TICK_SNAP) {
                 RotationManager.setRotationTarget(
                     currentRotation,
                     considerInventory = considerInventory,
-                    configurable = ScaffoldRotationConfigurable,
+                    configurable = RotationsConfigurable(this),
                     provider = this@ModuleScaffold,
                     priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
                 )
@@ -556,7 +535,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             true
         }, swingMode = swingMode)
 
-        if (rotationTiming == ON_TICK && RotationManager.serverRotation != player.rotation) {
+        if (rotationsEnabled && rotationTiming == RotationTimingMode.ON_TICK && RotationManager.serverRotation != player.rotation) {
             network.sendPacket(
                 Full(
                     player.x, player.y, player.z, player.withFixedYaw(currentRotation), player.pitch, player.isOnGround,
@@ -642,9 +621,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             player.offHandStack
         }
 
-        val option = SimulatePlacementAttempts
-
-        if (hitResult == null || suitableHand == null || !option.enabled) {
+        if (hitResult == null || suitableHand == null || !simulatePlacement) {
             return false
         }
 
@@ -657,7 +634,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
         val canPlaceOnFace = (stack.item as BlockItem).getPlacementState(ItemPlacementContext(context)) != null
 
         return when {
-            SimulatePlacementAttempts.failedAttemptsOnly -> {
+            failedAttemptsOnly -> {
                 !canPlaceOnFace
             }
 

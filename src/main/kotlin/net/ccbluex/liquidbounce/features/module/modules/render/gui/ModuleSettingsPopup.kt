@@ -19,6 +19,8 @@
 @file:Suppress("SwallowedException")
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
+import net.ccbluex.liquidbounce.lang.LanguageManager
+import net.ccbluex.liquidbounce.lang.translation
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.types.*
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
@@ -57,6 +59,7 @@ class ModuleSettingsPopup(
     }
     
     private val settingWidgets = mutableListOf<SettingWidget<*>>()
+    private val widgetToValueMap = mutableMapOf<SettingWidget<*>, Value<*>>()
     private val sections = mutableMapOf<String, Boolean>() // Key: section name, Value: expanded
     private var openDropdown: EnumSettingWidget? = null
     private var scrollOffset = 0
@@ -102,6 +105,7 @@ class ModuleSettingsPopup(
      */
     private fun initializeSettingWidgets() {
         settingWidgets.clear()
+        widgetToValueMap.clear()
 
         val widgetCreators = mutableListOf<Pair<Value<*>, Int>>() // Value and indent level
         collectValues(module, widgetCreators, 0)
@@ -145,6 +149,7 @@ class ModuleSettingsPopup(
             val widget = createWidgetForValue(value, widgetX, currentY, widgetWidth)
             if (widget != null) {
                 settingWidgets.add(widget)
+                widgetToValueMap[widget] = value
                 currentY += SETTING_HEIGHT + SETTING_SPACING
             }
         }
@@ -404,6 +409,8 @@ class ModuleSettingsPopup(
         val settingsAreaY = y + titleBarHeight
         val settingsAreaHeight = height - titleBarHeight
         
+        var hoveredValue: Value<*>? = null
+        
         // Enable scissor for scrolling
         context.enableScissor(x, settingsAreaY, x + POPUP_WIDTH, settingsAreaY + settingsAreaHeight)
         
@@ -416,6 +423,10 @@ class ModuleSettingsPopup(
                 
                 val isHovered = widget.isMouseOver(mouseX, mouseY + scrollOffset)
                 widget.render(context, mouseX, mouseY + scrollOffset, isHovered)
+
+                if (isHovered) {
+                    hoveredValue = widgetToValueMap[widget]
+                }
             }
         } finally {
             context.matrices.pop()
@@ -430,10 +441,25 @@ class ModuleSettingsPopup(
             context.matrices.pop()
         }
         
+        // Render description tooltip
+        hoveredValue?.let {
+            renderDescription(context, mouseX, mouseY, it)
+        }
+        
         // Scrollbar if needed
         val totalHeight = settingWidgets.size * (SETTING_HEIGHT + SETTING_SPACING)
         if (totalHeight > settingsAreaHeight) {
             renderScrollbar(context, settingsAreaY, settingsAreaHeight, totalHeight)
+        }
+    }
+    
+    private fun renderDescription(context: DrawContext, mouseX: Int, mouseY: Int, value: Value<*>) {
+        // The description key is derived from the module's key and the value's name.
+        // This assumes that Value objects have a 'key' property that correctly represents their hierarchical path.
+        val descriptionKey = "${(module as Configurable).key}.settings.${value.name}.description"
+        if (LanguageManager.hasFallbackTranslation(descriptionKey)) {
+            val descriptionText = translation(descriptionKey)
+            context.drawTooltip(mc.textRenderer, descriptionText, mouseX, mouseY)
         }
     }
     

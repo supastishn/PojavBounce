@@ -16,6 +16,7 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
+@file:Suppress("SwallowedException")
 package net.ccbluex.liquidbounce.features.module.modules.render.gui
 
 import net.ccbluex.liquidbounce.config.ConfigSystem
@@ -275,7 +276,12 @@ class ModuleSettingsPopup(
     }
     
     @Suppress("UNCHECKED_CAST")
-    private fun createChoiceConfigurableWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): EnumSettingWidget {
+    private fun createChoiceConfigurableWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): EnumSettingWidget {
         val choiceConfigurable = value as net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable<*>
         val currentChoice = choiceConfigurable.activeChoice
         val choiceNames = choiceConfigurable.choices.map { it.choiceName }.toTypedArray()
@@ -315,7 +321,12 @@ class ModuleSettingsPopup(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createIntRangeAsTextWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): TextSettingWidget {
+    private fun createIntRangeAsTextWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): TextSettingWidget {
         val typedValue = value as Value<IntRange>
         return TextSettingWidget(
             name = value.name,
@@ -333,7 +344,12 @@ class ModuleSettingsPopup(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createFloatRangeAsTextWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): TextSettingWidget {
+    private fun createFloatRangeAsTextWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): TextSettingWidget {
         val typedValue = value as Value<ClosedFloatingPointRange<Float>>
         return TextSettingWidget(
             name = value.name,
@@ -733,7 +749,12 @@ class ModuleSettingsPopup(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createMultiChooseWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int): TextSettingWidget {
+    private fun createMultiChooseWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): TextSettingWidget {
         val typedValue = value as MultiChooseListValue<*>
         val valueString = typedValue.get().joinToString(", ") {
             if (it is Enum<*>) it.name else it.toString()

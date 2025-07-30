@@ -18,33 +18,16 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
-import net.ccbluex.liquidbounce.config.types.nesting.Configurable
-import net.ccbluex.liquidbounce.config.types.Value
 import net.ccbluex.liquidbounce.event.EventManager
-import net.ccbluex.liquidbounce.event.events.BrowserReadyEvent
-import net.ccbluex.liquidbounce.event.events.DisconnectEvent
-import net.ccbluex.liquidbounce.event.events.ScreenEvent
+import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.events.SpaceSeperatedNamesChangeEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.isDestructed
-import net.ccbluex.liquidbounce.features.misc.HideAppearance.isHidingNow
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.integration.VirtualScreenType
-import net.ccbluex.liquidbounce.integration.backend.browser.Browser
-import net.ccbluex.liquidbounce.integration.backend.browser.BrowserSettings
-import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
-import net.ccbluex.liquidbounce.integration.theme.ThemeManager
-import net.ccbluex.liquidbounce.integration.theme.component.components
-import net.ccbluex.liquidbounce.integration.theme.component.customComponents
-import net.ccbluex.liquidbounce.integration.theme.component.types.minimap.ChunkRenderer
-import net.ccbluex.liquidbounce.utils.block.ChunkScanner
-import net.ccbluex.liquidbounce.utils.client.chat
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.hud.HudManager
 import net.ccbluex.liquidbounce.utils.client.inGame
-import net.ccbluex.liquidbounce.utils.client.markAsError
-import net.ccbluex.liquidbounce.utils.entity.RenderedEntities
-import net.minecraft.client.gui.screen.DisconnectedScreen
-import net.minecraft.client.gui.screen.DownloadingTerrainScreen
+import net.ccbluex.liquidbounce.utils.client.mc
 
 /**
  * Module HUD
@@ -57,9 +40,6 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
     override val running
         get() = this.enabled && !isDestructed && inGame
 
-    override val baseKey: String
-        get() = "liquidbounce.module.hud"
-
     @Suppress("unused")
     private val spaceSeperatedNames by boolean("SpaceSeperatedNames", true).onChange { state ->
         EventManager.callEvent(SpaceSeperatedNamesChangeEvent(state))
@@ -68,29 +48,17 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
 
     val centeredCrosshair by boolean("CenteredCrosshair", false)
 
-    val isBlurEffectActive
-        get() = false  // Blur disabled entirely as requested
-
-    init {
-        tree(Configurable("In-built", value = components as MutableList<Value<*>>))
-        tree(Configurable("Custom", value = customComponents as MutableList<Value<*>>))
-    }
-
-    override fun enable() {
-        if (isHidingNow) {
-            chat(markAsError(message("hidingAppearance")))
+    val renderHandler = handler<OverlayRenderEvent> { event ->
+        // Don't render if the module is disabled or the debug screen is open
+        if (!enabled || mc.inGameHud.debugHud.shouldShowDebugHud()) {
+            return@handler
         }
 
-        // Minimap
-        RenderedEntities.subscribe(this)
-        ChunkScanner.subscribe(ChunkRenderer.MinimapChunkUpdateSubscriber)
-    }
+        // Ensure elements are initialized
+        HudManager.initialize()
 
-    override fun disable() {
-        // Minimap
-        RenderedEntities.unsubscribe(this)
-        ChunkScanner.unsubscribe(ChunkRenderer.MinimapChunkUpdateSubscriber)
-        ChunkRenderer.unloadEverything()
+        for (element in HudManager.elements) {
+            element.renderPreview(event.context)
+        }
     }
-
 }

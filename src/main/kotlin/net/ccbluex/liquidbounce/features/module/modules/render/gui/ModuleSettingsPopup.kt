@@ -454,9 +454,8 @@ class ModuleSettingsPopup(
     }
     
     private fun renderDescription(context: DrawContext, mouseX: Int, mouseY: Int, value: Value<*>) {
-        // The description key is derived from the module's key and the value's name.
-        // This assumes that Value objects have a 'key' property that correctly represents their hierarchical path.
-        val descriptionKey = "${(module as Configurable).key}.settings.${value.name}.description"
+        // The description key is derived from the value's own unique key.
+        val descriptionKey = "${value.key}.description"
         if (LanguageManager.hasFallbackTranslation(descriptionKey)) {
             val descriptionText = translation(descriptionKey)
             context.drawTooltip(mc.textRenderer, descriptionText, mouseX, mouseY)

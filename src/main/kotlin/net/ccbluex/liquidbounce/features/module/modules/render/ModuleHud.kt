@@ -47,6 +47,11 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
     }
 
     val centeredCrosshair by boolean("CenteredCrosshair", false)
+    
+    /**
+     * Blur effect is completely disabled
+     */
+    const val isBlurEffectActive = false
 
     val renderHandler = handler<OverlayRenderEvent> { event ->
         // Don't render if the module is disabled or the debug screen is open

@@ -46,28 +46,36 @@ object CommandAllowMobileTrain : CommandFactory {
             )
             .handler { command, args ->
                 if (args.isEmpty()) {
-                    // Show current status
-                    val currentStatus = DeepLearningEngine.isMobileTrainingAllowed
-                    val androidStatus = if (DeepLearningEngine.runningOnAndroid) "yes" else "no"
-                    
-                    chat(regular(command.result("status", 
-                        variable(if (currentStatus) "enabled" else "disabled"),
-                        variable(androidStatus)
-                    )))
+                    showCurrentStatus(command)
                 } else {
-                    // Set new value
-                    val enabled = args[0] as Boolean
-                    DeepLearningEngine.isMobileTrainingAllowed = enabled
-                    
-                    val statusText = if (enabled) command.result("enabled") else command.result("disabled")
-                    chat(regular(command.result("changed", variable(statusText))))
-                    
-                    // Show warning if on Android and training is disabled
-                    if (DeepLearningEngine.runningOnAndroid && !enabled) {
-                        chat(regular(command.result("androidWarning")))
-                    }
+                    setTrainingAllowed(command, args[0] as Boolean)
                 }
             }
             .build()
+    }
+
+    private fun showCurrentStatus(command: Command) {
+        val currentStatus = DeepLearningEngine.isMobileTrainingAllowed
+        val androidStatus = if (DeepLearningEngine.runningOnAndroid) "yes" else "no"
+        
+        chat(regular(command.result("status", 
+            variable(if (currentStatus) "enabled" else "disabled"),
+            variable(androidStatus)
+        )))
+    }
+
+    private fun setTrainingAllowed(command: Command, enabled: Boolean) {
+        DeepLearningEngine.isMobileTrainingAllowed = enabled
+        
+        val statusText = if (enabled) command.result("enabled") else command.result("disabled")
+        chat(regular(command.result("changed", variable(statusText))))
+        
+        showAndroidWarningIfNeeded(command, enabled)
+    }
+
+    private fun showAndroidWarningIfNeeded(command: Command, enabled: Boolean) {
+        if (DeepLearningEngine.runningOnAndroid && !enabled) {
+            chat(regular(command.result("androidWarning")))
+        }
     }
 }

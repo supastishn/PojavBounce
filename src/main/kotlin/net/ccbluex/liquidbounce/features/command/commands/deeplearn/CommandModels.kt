@@ -73,20 +73,8 @@ object CommandModels : CommandFactory {
             .suspendHandler { command, args ->
                 val name = args[0] as String
 
-                // Check if training is allowed on mobile devices
-                if (!DeepLearningEngine.isTrainingAllowed()) {
-                    throw CommandException(command.result("mobileTrainingDisabled"))
-                }
-
-                // Check if model exists
-                if (models.choices.any { model -> model.name.equals(name, true) }) {
-                    throw CommandException(command.result("modelExists", name))
-                }
-
-                // Check if the name is a valid name
-                if (name.contains(Regex("[^a-zA-Z0-9-]"))) {
-                    throw CommandException(command.result("invalidName"))
-                }
+                validateTrainingAllowed(command)
+                validateModelCreation(command, name)
 
                 chat(command.result("trainingStart", name))
                 withContext(Dispatchers.Default) {
@@ -108,13 +96,8 @@ object CommandModels : CommandFactory {
             .suspendHandler { command, args ->
                 val name = args[0] as String
 
-                // Check if training is allowed on mobile devices
-                if (!DeepLearningEngine.isTrainingAllowed()) {
-                    throw CommandException(command.result("mobileTrainingDisabled"))
-                }
-
-                val model = models.choices.find { model -> model.name.equals(name, true) } ?:
-                    throw CommandException(command.result("modelNotFound", name))
+                validateTrainingAllowed(command)
+                val model = findModelOrThrow(command, name)
 
                 chat(command.result("trainingStart", name))
                 withContext(Dispatchers.Default) {
@@ -211,6 +194,29 @@ object CommandModels : CommandFactory {
         chat(command.result("trainingEnd", name, trainingTime.toString(DurationUnit.MINUTES, decimals = 2)))
     }.onFailure { error ->
         chat(markAsError(command.result("trainingFailed", error.localizedMessage)))
+    }
+
+    private fun validateTrainingAllowed(command: Command) {
+        if (!DeepLearningEngine.isTrainingAllowed()) {
+            throw CommandException(command.result("mobileTrainingDisabled"))
+        }
+    }
+
+    private fun validateModelCreation(command: Command, name: String) {
+        // Check if model exists
+        if (models.choices.any { model -> model.name.equals(name, true) }) {
+            throw CommandException(command.result("modelExists", name))
+        }
+
+        // Check if the name is a valid name
+        if (name.contains(Regex("[^a-zA-Z0-9-]"))) {
+            throw CommandException(command.result("invalidName"))
+        }
+    }
+
+    private fun findModelOrThrow(command: Command, name: String): MinaraiModel {
+        return models.choices.find { model -> model.name.equals(name, true) } ?:
+            throw CommandException(command.result("modelNotFound", name))
     }
 
 }

@@ -182,7 +182,7 @@ dependencies {
     includeDependency("ai.djl:api:${project.property("djl_version")}")
     includeDependency("ai.djl.pytorch:pytorch-engine:${project.property("djl_version")}")
     // Add Android ARM64 native libraries for PyTorch
-    includeDependency("ai.djl.pytorch:pytorch-native-cpu:${project.property("djl_version")}:android-aarch64")
+//    includeDependency("ai.djl.pytorch:pytorch-native-cpu:${project.property("djl_version")}:android-aarch64")
 //    runtimeOnly("ai.djl.mxnet:mxnet-engine:${project.property("djl_version")}")
 //    runtimeOnly("ai.djl.tensorflow:tensorflow-engine:${project.property("djl_version")}")
 

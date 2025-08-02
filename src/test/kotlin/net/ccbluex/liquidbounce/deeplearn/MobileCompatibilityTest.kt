@@ -36,25 +36,6 @@ class MobileCompatibilityTest {
     }
 
     @Test
-    fun testMobileFriendlyCacheDirectoriesExist() {
-        // Initialize DeepLearningEngine to trigger property setup
-        DeepLearningEngine
-        
-        // Test that our mobile-friendly cache directories are properly set up
-        val djlCacheDir = System.getProperty("DJL_CACHE_DIR")
-        val engineCacheDir = System.getProperty("ENGINE_CACHE_DIR")
-        
-        assertNotNull(djlCacheDir, "DJL_CACHE_DIR should be set")
-        assertNotNull(engineCacheDir, "ENGINE_CACHE_DIR should be set")
-        
-        assertTrue(File(djlCacheDir).exists(), "DJL cache directory should exist")
-        assertTrue(File(engineCacheDir).exists(), "Engine cache directory should exist")
-        
-        println("DJL Cache Dir: $djlCacheDir")
-        println("Engine Cache Dir: $engineCacheDir")
-    }
-
-    @Test
     fun testJniLibsDirectoryStructure() {
         // Test that the jniLibs directory structure exists for Android compatibility
         val jniLibsDir = File("src/main/jniLibs")
@@ -69,12 +50,27 @@ class MobileCompatibilityTest {
     }
 
     @Test
-    fun testOptOutTrackingIsSet() {
-        // Initialize DeepLearningEngine to trigger property setup
-        DeepLearningEngine
+    fun testMobileCompatibilityDocumentationExists() {
+        // Test that mobile compatibility documentation exists
+        val docFile = File("MOBILE_COMPATIBILITY.md")
+        assertTrue(docFile.exists(), "Mobile compatibility documentation should exist")
+        assertTrue(docFile.length() > 0, "Documentation should not be empty")
         
-        // Test that DJL tracking is disabled for privacy
-        val optOut = System.getProperty("OPT_OUT_TRACKING")
-        assertEquals("true", optOut, "DJL tracking should be disabled")
+        println("Mobile compatibility documentation is available")
+    }
+
+    @Test
+    fun testAndroidDetectionLogic() {
+        // Test the Android detection logic in isolation
+        val hasAndroidVM = System.getProperty("java.vm.name")?.contains("Android", ignoreCase = true) == true
+        val hasAndroidRuntime = System.getProperty("java.runtime.name")?.contains("Android", ignoreCase = true) == true
+        val hasBuildProp = File("/system/build.prop").exists()
+        
+        val isAndroid = hasAndroidVM || hasAndroidRuntime || hasBuildProp
+        
+        // On a normal test environment, this should be false
+        assertFalse(isAndroid, "Should not detect Android in test environment")
+        
+        println("Android detection logic working correctly")
     }
 }

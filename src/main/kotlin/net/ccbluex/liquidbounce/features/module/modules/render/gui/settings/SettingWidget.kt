@@ -29,7 +29,7 @@ abstract class SettingWidget<T>(
     val name: String,
     var value: T,
     val x: Int,
-    val y: Int,
+    var y: Int,
     val width: Int,
     val height: Int
 ) {

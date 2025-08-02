@@ -85,6 +85,9 @@ public class MixinSplashOverlay {
                 .build();
     }
 
+    @Unique
+    private boolean wasMousePressed = false;
+
     @Inject(method = "render", at = @At("RETURN"))
     private void render(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
         EventManager.INSTANCE.callEvent(new ScreenRenderEvent(context, delta));
@@ -92,6 +95,19 @@ public class MixinSplashOverlay {
         // Render skip button if not hiding appearance
         if (!HideAppearance.INSTANCE.isHidingNow() && skipButton != null) {
             skipButton.render(context, mouseX, mouseY, delta);
+            
+            // Simple mouse click detection for the button
+            boolean isMousePressed = org.lwjgl.glfw.GLFW.glfwGetMouseButton(
+                client.getWindow().getHandle(), 
+                org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT
+            ) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+            
+            // Detect click (press and release)
+            if (wasMousePressed && !isMousePressed && skipButton.isMouseOver(mouseX, mouseY)) {
+                advanceToGame();
+            }
+            
+            wasMousePressed = isMousePressed;
         }
     }
 

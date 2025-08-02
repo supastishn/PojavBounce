@@ -89,10 +89,9 @@ object ClickGuiPanelWidgetFactory {
             ValueType.BOOLEAN -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.INT -> createIntWidget(value, widgetX, widgetY, widgetWidth, module)
-            ValueType.TEXT, ValueType.BIND -> createTextBasedWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.CHOOSE, ValueType.CHOICE -> createEnumWidget(value, widgetX, widgetY, widgetWidth, module)
-            ValueType.LIST, ValueType.BLOCK, ValueType.COLOR, ValueType.MULTI_CHOOSE -> 
-                createComplexTextWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.TEXT, ValueType.BIND, ValueType.LIST, ValueType.BLOCK, ValueType.COLOR, ValueType.MULTI_CHOOSE -> 
+                createTextWidget(value, widgetX, widgetY, widgetWidth, module)
             else -> null
         }
     }
@@ -112,7 +111,11 @@ object ClickGuiPanelWidgetFactory {
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
             onValueChanged = { newValue ->
                 typedValue.set(newValue)
-                saveModuleConfiguration(module)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
             }
         )
     }
@@ -135,7 +138,11 @@ object ClickGuiPanelWidgetFactory {
             ),
             onValueChanged = { newValue ->
                 typedValue.set(newValue)
-                saveModuleConfiguration(module)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
             }
         )
     }
@@ -158,7 +165,11 @@ object ClickGuiPanelWidgetFactory {
             ),
             onValueChanged = { newValue ->
                 typedValue.set(newValue)
-                saveModuleConfiguration(module)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
             }
         )
     }
@@ -185,7 +196,7 @@ object ClickGuiPanelWidgetFactory {
 
 
     @Suppress("UNCHECKED_CAST")
-    private fun createTextBasedWidget(
+    private fun createTextWidget(
         value: Value<*>, 
         widgetX: Int, 
         widgetY: Int, 
@@ -201,37 +212,6 @@ object ClickGuiPanelWidgetFactory {
                 val typedValue = value as Value<InputBind>
                 typedValue.get().boundKey.translationKey
             }
-            else -> value.toString()
-        }
-        
-        return TextSettingWidget(
-            name = value.name,
-            value = displayValue,
-            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
-            onValueChanged = { newValue ->
-                try {
-                    when (value.valueType) {
-                        ValueType.TEXT -> value.setByString(newValue)
-                        ValueType.BIND -> value.setByString(newValue)
-                        else -> value.setByString(newValue)
-                    }
-                    saveModuleConfiguration(module)
-                } catch (e: Exception) { 
-                    println("Parse error: ${e.message}") 
-                }
-            }
-        )
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun createComplexTextWidget(
-        value: Value<*>, 
-        widgetX: Int, 
-        widgetY: Int, 
-        widgetWidth: Int, 
-        module: ClientModule
-    ): TextSettingWidget {
-        val displayValue = when (value.valueType) {
             ValueType.COLOR -> {
                 val typedValue = value as Value<Color4b>
                 "#" + typedValue.get().toARGB().toUInt().toString(16)
@@ -243,21 +223,7 @@ object ClickGuiPanelWidgetFactory {
             ValueType.LIST, ValueType.BLOCK -> {
                 val typedValue = value as ListValue<*, *>
                 if (typedValue is RegistryListValue<*, *>) {
-                    val collection = typedValue.get() as Collection<Any>
-                    try {
-                        when (typedValue.innerType) {
-                            Block::class.java -> collection.joinToString(", ") { 
-                                Registries.BLOCK.getId(it as Block).toString() 
-                            }
-                            Item::class.java -> collection.joinToString(", ") { 
-                                Registries.ITEM.getId(it as Item).toString() 
-                            }
-                            else -> collection.joinToString(", ")
-                        }
-                    } catch (e: Exception) {
-                        println("Registry access error for ${value.name}: ${e.message}")
-                        collection.joinToString(", ")
-                    }
+                    formatRegistryListValue(typedValue)
                 } else {
                     typedValue.get().joinToString(", ")
                 }
@@ -272,12 +238,35 @@ object ClickGuiPanelWidgetFactory {
             onValueChanged = { newValue ->
                 try {
                     value.setByString(newValue)
-                    saveModuleConfiguration(module)
+                    try {
+                        ConfigSystem.storeConfigurable(module)
+                    } catch (e: Exception) {
+                        println("Error saving configuration for module ${module.name}: ${e.message}")
+                    }
                 } catch (e: Exception) { 
                     println("Parse error: ${e.message}") 
                 }
             }
         )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun formatRegistryListValue(value: RegistryListValue<*, *>): String {
+        val collection = value.get() as Collection<Any>
+        return try {
+            when (value.innerType) {
+                Block::class.java -> collection.joinToString(", ") { 
+                    Registries.BLOCK.getId(it as Block).toString() 
+                }
+                Item::class.java -> collection.joinToString(", ") { 
+                    Registries.ITEM.getId(it as Item).toString() 
+                }
+                else -> collection.joinToString(", ")
+            }
+        } catch (e: Exception) {
+            println("Registry access error for ${value.name}: ${e.message}")
+            collection.joinToString(", ")
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -311,20 +300,13 @@ object ClickGuiPanelWidgetFactory {
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
             onValueChanged = { choiceName ->
                 value.setByString(choiceName)
-                saveModuleConfiguration(module)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
             }
         )
     }
-
-
-
-    private fun saveModuleConfiguration(module: ClientModule) {
-        try {
-            ConfigSystem.storeConfigurable(module)
-        } catch (e: Exception) {
-            println("Error saving configuration for module ${module.name}: ${e.message}")
-        }
-    }
-
 
 }

@@ -143,9 +143,15 @@ object DeepLearningEngine {
             System.setProperty("ai.djl.pytorch.graph_optimizer", "false")
             
             if (isFCL) {
-                logger.info("[DeepLearning] FCL (Fold Craft Launcher) environment detected, using runtime directory for DJL cache")
+                logger.info(
+                    "[DeepLearning] FCL (Fold Craft Launcher) environment detected, " +
+                    "using runtime directory for DJL cache"
+                )
             } else {
-                logger.info("[DeepLearning] Android environment detected without FCL, using external storage for DJL cache")
+                logger.info(
+                    "[DeepLearning] Android environment detected without FCL, " +
+                    "using external storage for DJL cache"
+                )
             }
         }
 
@@ -168,7 +174,10 @@ object DeepLearningEngine {
 
         // Check if DJL can be initialized on this platform
         if (!canInitializeDJL()) {
-            logger.warn("[DeepLearning] Cannot initialize DJL: Platform requirements not met (Android requires FCL runtime directory)")
+            logger.warn(
+                "[DeepLearning] Cannot initialize DJL: Platform requirements not met " +
+                "(Android requires FCL runtime directory)"
+            )
             this.task = null
             return
         }

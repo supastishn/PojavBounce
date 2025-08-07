@@ -109,7 +109,10 @@ object DeepLearningEngine {
         try {
             // In test environment, use a simple temp directory approach
             if (isInTestEnvironment()) {
-                File(System.getProperty("java.io.tmpdir", "."), "liquidbounce-test/deeplearning").apply { mkdirs() }
+                File(
+                    System.getProperty("java.io.tmpdir", "."), 
+                    "liquidbounce-test/deeplearning"
+                ).apply { mkdirs() }
             } else {
                 when {
                     fclRuntimePath != null -> {
@@ -128,7 +131,10 @@ object DeepLearningEngine {
                         } catch (e: Exception) {
                             // Fallback if rootFolder is not available
                             System.err.println("rootFolder access failed: ${e.message}")
-                            File(System.getProperty("java.io.tmpdir", "."), "liquidbounce/deeplearning").apply { mkdirs() }
+                            File(
+                                System.getProperty("java.io.tmpdir", "."), 
+                                "liquidbounce/deeplearning"
+                            ).apply { mkdirs() }
                         }
                     }
                 }
@@ -136,7 +142,10 @@ object DeepLearningEngine {
         } catch (e: Exception) {
             // Fallback for any initialization issues - log the error
             System.err.println("DeepLearning initialization warning: ${e.message}")
-            File(System.getProperty("java.io.tmpdir", "."), "liquidbounce-test/deeplearning").apply { mkdirs() }
+            File(
+                System.getProperty("java.io.tmpdir", "."), 
+                "liquidbounce-test/deeplearning"
+            ).apply { mkdirs() }
         }
     }
 

@@ -226,9 +226,11 @@ class ClickGuiPanel(
             if (currentY >= renderContext.moduleAreaData.y + renderContext.moduleAreaData.height) break
             
             if (isInVisibleArea(currentY, SETTING_HEIGHT, renderContext.moduleAreaData)) {
+                // Update widget position to match current panel position
+                widget.x = x + 10 // Indented from panel edge
                 widget.y = currentY
-                val isHovered = renderContext.mouseX >= x && renderContext.mouseX <= x + width && 
-                              renderContext.mouseY >= currentY && renderContext.mouseY <= currentY + SETTING_HEIGHT
+                val isHovered = renderContext.mouseX >= widget.x && renderContext.mouseX <= widget.x + widget.width && 
+                              renderContext.mouseY >= widget.y && renderContext.mouseY <= widget.y + widget.height
                 widget.render(renderContext.context, renderContext.mouseX, renderContext.mouseY, isHovered)
             }
             currentY += SETTING_HEIGHT + SETTING_SPACING
@@ -432,7 +434,9 @@ class ClickGuiPanel(
         val widgets = moduleSettingWidgets[module] ?: return SettingsClickResult(false, currentY)
         
         for (widget in widgets) {
-            widget.y = currentY // Temporarily set y for hit-testing
+            // Update widget position for hit-testing
+            widget.x = x + 10 // Indented from panel edge
+            widget.y = currentY
             
             if (widget.isMouseOver(mouseX, mouseY + scrollOffset)) {
                 val widgetClick = handleWidgetClick(
@@ -548,6 +552,8 @@ class ClickGuiPanel(
 
         // Delegate drag to setting widgets
         moduleSettingWidgets.values.flatten().forEach { widget ->
+            // Ensure widget has correct position for hit testing
+            widget.x = x + 10 // Update x position
             if (widget.isMouseOver(mouseX.toInt(), (mouseY + scrollOffset).toInt())) {
                 when (widget) {
                     is FloatSettingWidget -> widget.mouseDragged(mouseX, mouseY + scrollOffset, button)

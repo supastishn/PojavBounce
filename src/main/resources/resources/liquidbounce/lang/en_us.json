@@ -392,8 +392,8 @@
   "liquidbounce.command.allowMobileTrain.result.disabled": "disabled",
   "liquidbounce.command.allowMobileTrain.result.androidWarning": "⚠ You are running on Android and training is now disabled.",
 
-  "liquidbounce.unsupportedDeepLearning": "❌ The deep learning engine has not been initialized. Your system might not be supported.",
-  "liquidbounce.rotationSystem.angleSmooth.minarai.fallback": "The deep learning engine is required by Minarai, therefore falling back to %s angle smoothing.",
+  "liquidbounce.unsupportedDeepLearning": "❌ The deep learning engine has not been initialized. Your system might not be supported. If you are on Android, try using Fold Craft Launcher to use deep learning.",
+  "liquidbounce.rotationSystem.angleSmooth.minarai.fallback": "The deep learning engine is required by Minarai, therefore falling back to %s angle smoothing. If you are on Android, try using Fold Craft Launcher to use deep learning.",
 
   "liquidbounce.commandManager.commandExecuting": "Command \"%s\" is already executing, please wait...",
   "liquidbounce.commandManager.commandNotExecutable": "Command \"%s\" is not executable.",

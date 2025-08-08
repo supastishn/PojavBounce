@@ -12,6 +12,12 @@
 
 LiquidBounce is a free and open-source mixin-based injection hacked client using the Fabric API for Minecraft.
 
+## Mobile minarai support
+
+To use minarai or other deep lesrning features on Android set flag -Dai.djl.default_engine=TFLite in your launcher (dl only works on fold craft launcher for now).
+
+Not required on PC
+
 ## Issues
 
 If you notice any bugs or missing features, you can let us know by opening an

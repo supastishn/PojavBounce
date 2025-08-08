@@ -44,18 +44,10 @@ class AndroidDJLCompatibilityTest {
         // Test that we're using the correct Android dependencies structure
         // This doesn't test runtime loading, just that the classes are available
         assertDoesNotThrow {
-            // Test TensorFlow Lite engine is available for Android inference
-            val tfliteClass = try {
-                Class.forName("ai.djl.tflite.engine.TfLiteEngine")
-            } catch (e: ClassNotFoundException) {
-                // If exact class name is different, just verify that TensorFlow Lite is available
-                null
-            }
-            
             // The main thing is that DJL classes are available for use
             val engineClass = Class.forName("ai.djl.engine.Engine")
             assertNotNull(engineClass)
-            println("TensorFlow Lite and DJL classes structure ready for Android")
+            println("DJL classes structure ready for Android")
         }
     }
 

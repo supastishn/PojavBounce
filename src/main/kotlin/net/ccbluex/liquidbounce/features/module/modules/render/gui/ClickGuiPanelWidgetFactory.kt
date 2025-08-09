@@ -319,8 +319,6 @@ object ClickGuiPanelWidgetFactory {
         )
     }
 
-}
-
     private fun createSectionHeaderWidget(
         value: Configurable,
         widgetX: Int,
@@ -334,3 +332,4 @@ object ClickGuiPanelWidgetFactory {
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT)
         )
     }
+}

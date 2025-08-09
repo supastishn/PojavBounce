@@ -98,7 +98,9 @@ object ClickGuiPanelWidgetFactory {
         return when (value.valueType) {
             ValueType.BOOLEAN, ValueType.TOGGLEABLE -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.FLOAT_RANGE -> createFloatRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.INT -> createIntWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.INT_RANGE -> createIntRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.CHOOSE, ValueType.CHOICE -> createEnumWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.TEXT, ValueType.BIND, ValueType.LIST, ValueType.BLOCK, ValueType.COLOR, ValueType.MULTI_CHOOSE ->
                 createTextWidget(value, widgetX, widgetY, widgetWidth, module)
@@ -322,6 +324,62 @@ object ClickGuiPanelWidgetFactory {
                     ConfigSystem.storeConfigurable(module)
                 } catch (e: Exception) {
                     println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
+            }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createIntRangeAsTextWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int,
+        module: ClientModule
+    ): TextSettingWidget {
+        val typedValue = value as Value<IntRange>
+        return TextSettingWidget(
+            name = value.name,
+            value = typedValue.get().let { "${it.first}..${it.last}" },
+            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
+            onValueChanged = { newValue ->
+                try {
+                    value.setByString(newValue)
+                    try {
+                        ConfigSystem.storeConfigurable(module)
+                    } catch (e: Exception) {
+                        println("Error saving configuration for module ${module.name}: ${e.message}")
+                    }
+                } catch (e: Exception) {
+                    println("Parse error: ${e.message}")
+                }
+            }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createFloatRangeAsTextWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int,
+        module: ClientModule
+    ): TextSettingWidget {
+        val typedValue = value as Value<ClosedFloatingPointRange<Float>>
+        return TextSettingWidget(
+            name = value.name,
+            value = typedValue.get().let { "${it.start}..${it.endInclusive}" },
+            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
+            onValueChanged = { newValue ->
+                try {
+                    value.setByString(newValue)
+                    try {
+                        ConfigSystem.storeConfigurable(module)
+                    } catch (e: Exception) {
+                        println("Error saving configuration for module ${module.name}: ${e.message}")
+                    }
+                } catch (e: Exception) {
+                    println("Parse error: ${e.message}")
                 }
             }
         )

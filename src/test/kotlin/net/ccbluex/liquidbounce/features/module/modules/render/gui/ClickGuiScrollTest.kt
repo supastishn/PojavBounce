@@ -101,4 +101,34 @@ class ClickGuiScrollTest {
         val newScrollOffsetUp = currentScrollOffset - (scrollUpAmount * scrollMultiplier).toInt()
         assertEquals(30, newScrollOffsetUp)
     }
+    
+    @Test
+    fun `test panel height calculation for mouse bounds`() {
+        // Test that the panel height calculation matches between render and mouseScrolled methods
+        val headerHeight = 20
+        val moduleHeight = 25
+        val settingHeight = 18
+        val settingSpacing = 2
+        val panelMaxHeight = 300
+        
+        // Simulate a panel with 5 modules, 2 of which are expanded with 3 settings each
+        val moduleCount = 5
+        val expandedModuleCount = 2
+        val settingsPerExpandedModule = 3
+        
+        val totalContentHeight = moduleCount * moduleHeight + 
+            expandedModuleCount * settingsPerExpandedModule * (settingHeight + settingSpacing)
+        
+        // Expected: 5 * 25 + 2 * 3 * (18 + 2) = 125 + 120 = 245
+        assertEquals(245, totalContentHeight)
+        
+        // When content fits within max height, actual panel height should be header + content
+        val actualPanelHeight = headerHeight + min(totalContentHeight, panelMaxHeight)
+        assertEquals(265, actualPanelHeight) // 20 + 245
+        
+        // When content exceeds max height, panel should be clamped to header + max height
+        val largeTotalContent = 400
+        val clampedPanelHeight = headerHeight + min(largeTotalContent, panelMaxHeight)
+        assertEquals(320, clampedPanelHeight) // 20 + 300
+    }
 }

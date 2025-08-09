@@ -582,16 +582,19 @@ class ClickGuiPanel(
         val intMouseX = mouseX.toInt()
         val intMouseY = mouseY.toInt()
         
+        // Calculate actual panel height (same as in render method)
+        val totalContentHeight = filteredModules.sumOf { module ->
+            var height = moduleHeight
+            if (expandedModules.getOrDefault(module, false)) {
+                height += (moduleSettingWidgets[module]?.size ?: 0) * (SETTING_HEIGHT + SETTING_SPACING)
+            }
+            height
+        }
+        val actualPanelHeight = headerHeight + min(totalContentHeight, GuiConfig.panelMaxHeight)
+        
         if (intMouseX >= x && intMouseX <= x + width &&
-            intMouseY >= y + headerHeight && intMouseY <= y + height) {
+            intMouseY >= y + headerHeight && intMouseY <= y + actualPanelHeight) {
             if (canScroll()) {
-                val totalContentHeight = filteredModules.sumOf { module ->
-                    var height = moduleHeight
-                    if (expandedModules.getOrDefault(module, false)) {
-                        height += (moduleSettingWidgets[module]?.size ?: 0) * (SETTING_HEIGHT + SETTING_SPACING)
-                    }
-                    height
-                }
                 val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
                 // Fixed scroll direction: Minecraft gives negative amount for scrolling down, positive for up
                 // We want scrolling down (negative) to increase scroll, scrolling up (positive) to decrease

@@ -26,7 +26,7 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.*
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.input.InputBind
-import net.ccbluex.liquidbounce.utils.input.Key
+import net.minecraft.client.util.InputUtil
 import net.minecraft.block.Block
 import net.minecraft.item.Item
 import net.minecraft.registry.Registries
@@ -273,7 +273,7 @@ object ClickGuiPanelWidgetFactory {
 
     @Suppress("UNCHECKED_CAST")
     private fun createKeyWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
-        val typedValue = value as Value<Key>
+        val typedValue = value as Value<InputUtil.Key>
         return TextSettingWidget(
             name = value.name,
             value = typedValue.get().translationKey,

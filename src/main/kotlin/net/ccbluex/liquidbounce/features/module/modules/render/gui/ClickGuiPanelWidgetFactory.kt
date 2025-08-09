@@ -67,9 +67,11 @@ object ClickGuiPanelWidgetFactory {
         expandedSections: Map<String, Boolean>
     ) {
         for (value in configurable.inner) {
-            list.add(Pair(value, indent))
+            if (value.notAnOption) continue
 
             if (value is Configurable) {
+                list.add(Pair(value, indent)) // Add section header
+
                 val isSectionExpanded = expandedSections.getOrDefault(value.name, true)
                 if (isSectionExpanded) {
                     if (value is net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable<*>) {
@@ -78,6 +80,8 @@ object ClickGuiPanelWidgetFactory {
                         collectValues(value, list, indent + 1, expandedSections)
                     }
                 }
+            } else {
+                list.add(Pair(value, indent)) // Add normal value
             }
         }
     }
@@ -92,7 +96,7 @@ object ClickGuiPanelWidgetFactory {
         expandedSections: Map<String, Boolean>
     ): SettingWidget<*>? {
         return when (value.valueType) {
-            ValueType.BOOLEAN -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.BOOLEAN, ValueType.TOGGLEABLE -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.INT -> createIntWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.CHOOSE, ValueType.CHOICE -> createEnumWidget(value, widgetX, widgetY, widgetWidth, module)
@@ -120,7 +124,11 @@ object ClickGuiPanelWidgetFactory {
             value = typedValue.get(),
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
             onValueChanged = { newValue ->
-                typedValue.set(newValue)
+                if (value is ToggleableConfigurable) {
+                    value.enabled = newValue
+                } else {
+                    typedValue.set(newValue)
+                }
                 try {
                     ConfigSystem.storeConfigurable(module)
                 } catch (e: Exception) {

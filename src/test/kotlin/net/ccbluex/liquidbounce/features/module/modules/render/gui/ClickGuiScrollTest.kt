@@ -30,18 +30,19 @@ class ClickGuiScrollTest {
     @Test
     fun `test scroll offset calculation logic`() {
         // Test the scroll offset calculation logic used in mouseScrolled
-        // Positive amount (scrolling down) should increase scroll offset
+        // In Minecraft: negative amount = scrolling down, positive amount = scrolling up  
+        // We want: scrolling down = increase scroll offset, scrolling up = decrease scroll offset
         val scrollSensitivity = 20.0
-        val positiveAmount = 1.0  // Scrolling down
-        val expectedScrollDelta = (positiveAmount * scrollSensitivity).toInt()
+        val scrollDownAmount = -1.0  // Minecraft gives negative for scrolling down
+        val expectedScrollDelta = (-scrollDownAmount * scrollSensitivity).toInt()
         
         assertEquals(20, expectedScrollDelta)
         
-        // Test negative amount (scrolling up) should decrease scroll offset  
-        val negativeAmount = -1.0  // Scrolling up
-        val negativeScrollDelta = (negativeAmount * scrollSensitivity).toInt()
+        // Test scrolling up (positive amount) should decrease scroll offset  
+        val scrollUpAmount = 1.0  // Minecraft gives positive for scrolling up
+        val scrollUpDelta = (-scrollUpAmount * scrollSensitivity).toInt()
         
-        assertEquals(-20, negativeScrollDelta)
+        assertEquals(-20, scrollUpDelta)
     }
     @Test
     fun `test scroll bounds calculation`() {
@@ -85,18 +86,19 @@ class ClickGuiScrollTest {
     
     @Test 
     fun `test scroll direction is intuitive`() {
-        // Test that scroll direction matches user expectations
-        // Scrolling down (positive amount) should move content up (increase scroll offset)
+        // Test that scroll direction matches user expectations for Minecraft
+        // In Minecraft: scrolling down gives negative amount, scrolling up gives positive amount
+        // We want: scrolling down (negative) to increase offset, scrolling up (positive) to decrease offset
         val currentScrollOffset = 50
-        val scrollDownAmount = 1.0
+        val scrollDownAmount = -1.0  // Minecraft scroll down amount
         val scrollMultiplier = 20
         
-        val newScrollOffset = currentScrollOffset + (scrollDownAmount * scrollMultiplier).toInt()
+        val newScrollOffset = currentScrollOffset - (scrollDownAmount * scrollMultiplier).toInt()
         assertEquals(70, newScrollOffset)
         
-        // Scrolling up (negative amount) should move content down (decrease scroll offset)
-        val scrollUpAmount = -1.0
-        val newScrollOffsetUp = currentScrollOffset + (scrollUpAmount * scrollMultiplier).toInt()
+        // Scrolling up (positive amount) should move content down (decrease scroll offset)
+        val scrollUpAmount = 1.0  // Minecraft scroll up amount  
+        val newScrollOffsetUp = currentScrollOffset - (scrollUpAmount * scrollMultiplier).toInt()
         assertEquals(30, newScrollOffsetUp)
     }
 }

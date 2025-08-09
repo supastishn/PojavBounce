@@ -593,8 +593,8 @@ class ClickGuiPanel(
                     height
                 }
                 val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
-                // Fixed scroll direction: Minecraft gives negative amount for scrolling down, positive for scrolling up
-                // We want scrolling down (negative amount) to increase scroll offset, scrolling up (positive amount) to decrease it
+                // Fixed scroll direction: Minecraft gives negative amount for scrolling down, positive for up
+                // We want scrolling down (negative) to increase scroll, scrolling up (positive) to decrease
                 scrollOffset = max(0, min(maxScroll, scrollOffset - (amount * 20).toInt()))
                 return true
             }

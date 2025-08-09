@@ -671,8 +671,8 @@ class ModuleSettingsPopup(
         
         if (totalHeight > areaHeight) {
             val maxScroll = totalHeight - areaHeight
-            // Fixed scroll direction: Minecraft gives negative verticalAmount for scrolling down, positive for scrolling up
-            // We want scrolling down (negative amount) to increase scroll offset, scrolling up (positive amount) to decrease it
+            // Fixed scroll direction: Minecraft gives negative verticalAmount for scrolling down, positive for up
+            // We want scrolling down (negative) to increase scroll, scrolling up (positive) to decrease
             scrollOffset = max(0, min(maxScroll, scrollOffset - (verticalAmount * 30).toInt()))
             return true
         }

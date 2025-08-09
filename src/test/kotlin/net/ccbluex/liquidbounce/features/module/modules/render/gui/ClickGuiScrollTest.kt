@@ -88,7 +88,7 @@ class ClickGuiScrollTest {
     fun `test scroll direction is intuitive`() {
         // Test that scroll direction matches user expectations for Minecraft
         // In Minecraft: scrolling down gives negative amount, scrolling up gives positive amount
-        // We want: scrolling down (negative amount) to increase scroll offset, scrolling up (positive amount) to decrease scroll offset
+        // We want: scrolling down (negative) to increase offset, scrolling up (positive) to decrease offset
         val currentScrollOffset = 50
         val scrollDownAmount = -1.0  // Minecraft scroll down amount
         val scrollMultiplier = 20

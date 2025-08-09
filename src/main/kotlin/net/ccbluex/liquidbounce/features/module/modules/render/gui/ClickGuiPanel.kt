@@ -72,7 +72,7 @@ class ClickGuiPanel(
     private var isDragging = false
     private var dragOffsetX = 0
     private var dragOffsetY = 0
-    private var scrollOffset = 0
+    private var scrollOffset = 0.0
     private var isScrollDragging = false
     private var scrollDragStartY = 0.0
     private var filteredModules = allModules
@@ -149,8 +149,8 @@ class ClickGuiPanel(
         // Render open dropdown outside scissor
         openDropdown?.let { dropdown ->
             context.matrices.push()
-            context.matrices.translate(0.0, -scrollOffset.toDouble(), 0.0)
-            dropdown.render(context, mouseX, mouseY + scrollOffset, true)
+            context.matrices.translate(0.0, -scrollOffset, 0.0)
+            dropdown.render(context, mouseX, (mouseY + scrollOffset).toInt(), true)
             context.matrices.pop()
         }
 
@@ -189,7 +189,7 @@ class ClickGuiPanel(
     
     private fun renderFilteredModules(context: DrawContext, mouseX: Int, mouseY: Int, moduleAreaData: ModuleAreaData) {
         val renderContext = RenderContext(context, mouseX, mouseY, moduleAreaData)
-        var currentY = moduleAreaData.y - scrollOffset
+        var currentY = moduleAreaData.y - scrollOffset.toInt()
         
         for (module in filteredModules) {
             if (currentY >= moduleAreaData.y + moduleAreaData.height) break
@@ -321,7 +321,7 @@ class ClickGuiPanel(
         val thumbY = moduleAreaY + 
             (scrollOffset * (moduleAreaHeight - thumbHeight)) / (totalHeight - moduleAreaHeight)
         
-        context.fill(scrollbarX, thumbY, scrollbarX + scrollbarWidth, thumbY + thumbHeight, 0xFF80BFFF.toInt())
+        context.fill(scrollbarX, thumbY.toInt(), scrollbarX + scrollbarWidth, thumbY.toInt() + thumbHeight, 0xFF80BFFF.toInt())
     }
     
     @Suppress("UnusedParameter", "FunctionOnlyReturningConstant")
@@ -390,7 +390,7 @@ class ClickGuiPanel(
     }
     
     private fun handleModuleAreaClick(mouseX: Int, mouseY: Int, button: Int): Boolean {
-        var currentY = y + headerHeight - scrollOffset
+        var currentY = y + headerHeight - scrollOffset.toInt()
         
         for (module in filteredModules) {
             val moduleBottomY = currentY + moduleHeight
@@ -546,7 +546,7 @@ class ClickGuiPanel(
             }
             val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
             // Fixed drag direction: dragging down (positive deltaY) should increase scroll offset
-            scrollOffset = max(0, min(maxScroll, (scrollOffset + scrollDelta).toInt()))
+            scrollOffset = (scrollOffset + scrollDelta).coerceIn(0.0, maxScroll.toDouble())
             
             scrollDragStartY = mouseY
             return true
@@ -598,7 +598,7 @@ class ClickGuiPanel(
                 val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
                 // Fixed scroll direction: Minecraft gives negative amount for scrolling down, positive for up
                 // We want scrolling down (negative) to increase scroll, scrolling up (positive) to decrease
-                scrollOffset = max(0, min(maxScroll, scrollOffset - (amount * 20).toInt()))
+                scrollOffset = (scrollOffset - amount * 20).coerceIn(0.0, maxScroll.toDouble())
                 return true
             }
         }
@@ -616,7 +616,7 @@ class ClickGuiPanel(
         }
         
         // Reset scroll when filtering
-        scrollOffset = 0
+        scrollOffset = 0.0
     }
     
     /**

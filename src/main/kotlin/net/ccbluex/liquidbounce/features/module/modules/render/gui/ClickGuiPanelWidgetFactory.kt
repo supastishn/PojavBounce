@@ -125,25 +125,37 @@ object ClickGuiPanelWidgetFactory {
         widgetY: Int, 
         widgetWidth: Int, 
         module: ClientModule
-    ): BooleanSettingWidget {
-        val typedValue = value as Value<Boolean>
-        return BooleanSettingWidget(
-            name = value.name,
-            value = typedValue.get(),
-            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
-            onValueChanged = { newValue ->
-                if (value.valueType == ValueType.TOGGLEABLE) {
-                    module.enabled = newValue
-                } else {
-                    typedValue.set(newValue)
-                }
-                try {
-                    ConfigSystem.storeConfigurable(module)
-                } catch (e: Exception) {
-                    println("Error saving configuration for module ${module.name}: ${e.message}")
-                }
+    ): BooleanSettingWidget? {
+        // Type safety check to prevent ClassCastException when value is not actually Boolean
+        try {
+            val actualValue = value.get()
+            if (actualValue !is Boolean) {
+                println("Warning: Expected Boolean value but got ${actualValue::class.java.simpleName} for ${value.name}")
+                return null
             }
-        )
+            
+            val typedValue = value as Value<Boolean>
+            return BooleanSettingWidget(
+                name = value.name,
+                value = typedValue.get(),
+                config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
+                onValueChanged = { newValue ->
+                    if (value.valueType == ValueType.TOGGLEABLE) {
+                        module.enabled = newValue
+                    } else {
+                        typedValue.set(newValue)
+                    }
+                    try {
+                        ConfigSystem.storeConfigurable(module)
+                    } catch (e: Exception) {
+                        println("Error saving configuration for module ${module.name}: ${e.message}")
+                    }
+                }
+            )
+        } catch (e: ClassCastException) {
+            println("Error: Cannot create boolean widget for ${value.name}: ${e.message}")
+            return null
+        }
     }
 
     @Suppress("UNCHECKED_CAST")

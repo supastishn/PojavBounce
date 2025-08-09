@@ -357,10 +357,19 @@ class ClickGuiPanel(
     }
     
     private fun isClickWithinBounds(mouseX: Int, mouseY: Int): Boolean {
-        val bounds = ClickGuiPanelInteraction.PanelBounds(
-            x, y, width, expanded, headerHeight, filteredModules.size, moduleHeight
-        )
-        return ClickGuiPanelInteraction.isClickWithinBounds(mouseX, mouseY, bounds)
+        val totalContentHeight = filteredModules.sumOf { module ->
+            var height = moduleHeight
+            if (expandedModules.getOrDefault(module, false)) {
+                height += (moduleSettingWidgets[module]?.size ?: 0) * (SETTING_HEIGHT + SETTING_SPACING)
+            }
+            height
+        }
+        val actualHeight = if (expanded) {
+            headerHeight + min(totalContentHeight, GuiConfig.panelMaxHeight)
+        } else {
+            headerHeight
+        }
+        return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + actualHeight
     }
     
     private fun isHeaderClick(mouseY: Int): Boolean {

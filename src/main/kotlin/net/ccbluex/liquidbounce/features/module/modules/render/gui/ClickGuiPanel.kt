@@ -438,11 +438,12 @@ class ClickGuiPanel(
             widget.x = x + 10 // Indented from panel edge
             widget.y = currentY
             
-            if (widget.isMouseOver(mouseX, mouseY + scrollOffset)) {
+            // Fixed hit testing: account for scroll offset correctly
+            if (widget.isMouseOver(mouseX, mouseY)) {
                 val widgetClick = handleWidgetClick(
                     widget, 
                     mouseX.toDouble(), 
-                    (mouseY + scrollOffset).toDouble(), 
+                    mouseY.toDouble(), 
                     button
                 )
                 if (widgetClick) {
@@ -544,7 +545,8 @@ class ClickGuiPanel(
                 height
             }
             val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
-            scrollOffset = max(0, min(maxScroll, (scrollOffset - scrollDelta).toInt()))
+            // Fixed drag direction: dragging down (positive deltaY) should increase scroll offset
+            scrollOffset = max(0, min(maxScroll, (scrollOffset + scrollDelta).toInt()))
             
             scrollDragStartY = mouseY
             return true
@@ -554,10 +556,10 @@ class ClickGuiPanel(
         moduleSettingWidgets.values.flatten().forEach { widget ->
             // Ensure widget has correct position for hit testing
             widget.x = x + 10 // Update x position
-            if (widget.isMouseOver(mouseX.toInt(), (mouseY + scrollOffset).toInt())) {
+            if (widget.isMouseOver(mouseX.toInt(), mouseY.toInt())) {
                 when (widget) {
-                    is FloatSettingWidget -> widget.mouseDragged(mouseX, mouseY + scrollOffset, button)
-                    is IntSettingWidget -> widget.mouseDragged(mouseX, mouseY + scrollOffset, button)
+                    is FloatSettingWidget -> widget.mouseDragged(mouseX, mouseY, button)
+                    is IntSettingWidget -> widget.mouseDragged(mouseX, mouseY, button)
                 }
             }
         }
@@ -569,8 +571,8 @@ class ClickGuiPanel(
         isDragging = false
         isScrollDragging = false
         moduleSettingWidgets.values.flatten().forEach { widget ->
-            if (widget is FloatSettingWidget) widget.mouseReleased(mouseX, mouseY + scrollOffset, button)
-            if (widget is IntSettingWidget) widget.mouseReleased(mouseX, mouseY + scrollOffset, button)
+            if (widget is FloatSettingWidget) widget.mouseReleased(mouseX, mouseY, button)
+            if (widget is IntSettingWidget) widget.mouseReleased(mouseX, mouseY, button)
         }
     }
     
@@ -591,7 +593,8 @@ class ClickGuiPanel(
                     height
                 }
                 val maxScroll = max(0, totalContentHeight - GuiConfig.panelMaxHeight)
-                scrollOffset = max(0, min(maxScroll, scrollOffset - (amount * 20).toInt()))
+                // Fixed scroll direction: positive amount (scrolling down) should increase scroll offset
+                scrollOffset = max(0, min(maxScroll, scrollOffset + (amount * 20).toInt()))
                 return true
             }
         }

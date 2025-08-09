@@ -609,7 +609,8 @@ class ModuleSettingsPopup(
             val maxScroll = totalHeight - areaHeight
             
             if (maxScroll > 0) {
-                scrollOffset = max(0, min(maxScroll, scrollOffset - scrollDelta))
+                // Fixed drag direction: dragging down (positive deltaY) should increase scroll offset
+                scrollOffset = max(0, min(maxScroll, scrollOffset + scrollDelta))
             }
             
             scrollDragStartY = mouseY
@@ -670,7 +671,8 @@ class ModuleSettingsPopup(
         
         if (totalHeight > areaHeight) {
             val maxScroll = totalHeight - areaHeight
-            scrollOffset = max(0, min(maxScroll, scrollOffset - (verticalAmount * 30).toInt()))
+            // Fixed scroll direction: positive verticalAmount (scrolling down) should increase scroll offset
+            scrollOffset = max(0, min(maxScroll, scrollOffset + (verticalAmount * 30).toInt()))
             return true
         }
         

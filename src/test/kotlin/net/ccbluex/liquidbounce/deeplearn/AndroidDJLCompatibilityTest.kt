@@ -67,21 +67,44 @@ class AndroidDJLCompatibilityTest {
     }
 
     @Test
+    fun testAndroidPojavLauncherCompatibility() {
+        // Test specifically for the issue described in the problem statement:
+        // preventing UnsatisfiedLinkError with path like:
+        // /data/data/com.tungsten.fcl/app_runtime/deeplearning/engines/pytorch/2.5.1-cpu-precxx11-linux-aarch64/
+        
+        val classpathEntries = System.getProperty("java.class.path").split(":")
+        
+        // Verify we don't have any JAR files that would extract Linux-specific native libraries
+        val problematicJars = classpathEntries.filter { path ->
+            val fileName = path.substringAfterLast("/")
+            fileName.contains("pytorch-native") && 
+            (fileName.contains("linux") || fileName.contains("cpu") || fileName.contains("precxx11"))
+        }
+        
+        assertTrue(problematicJars.isEmpty(), 
+            "Found JAR files that could cause UnsatisfiedLinkError on Android/PojavLauncher: $problematicJars")
+        
+        println("✓ Android/PojavLauncher compatibility verified - no problematic native library JARs")
+    }
+
+    @Test
     fun testNoLinuxSpecificDependencies() {
         // Test that we're not accidentally including Linux-specific PyTorch libraries
         // This is a classpath check to ensure we don't have the wrong dependencies
         
-        // Check that we don't have the problematic Linux PyTorch engine in our dependencies
         val classpathEntries = System.getProperty("java.class.path").split(":")
         
-        // Look for Linux-specific PyTorch native libraries
+        // Look for Linux-specific PyTorch native libraries that cause UnsatisfiedLinkError
         val hasLinuxPyTorch = classpathEntries.any { 
-            it.contains("pytorch-native-cpu") && it.contains("linux")
+            it.contains("pytorch-native-cpu") || 
+            it.contains("pytorch-native") && it.contains("linux") ||
+            it.contains("pytorch-native-auto")
         }
         
         assertFalse(hasLinuxPyTorch, 
-            "Should not have Linux-specific PyTorch native libraries in classpath")
+            "Should not have Linux-specific PyTorch native libraries in classpath. " +
+            "Found entries: ${classpathEntries.filter { it.contains("pytorch-native") }}")
         
-        println("No Linux-specific PyTorch dependencies detected")
+        println("✓ No Linux-specific PyTorch dependencies detected - Android compatibility ensured")
     }
 }

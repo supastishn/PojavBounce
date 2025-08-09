@@ -179,11 +179,15 @@ dependencies {
 //    includeDependency("org.graalvm.polyglot:llvm-native-community:${project.property("polyglot_version")}")
 
     // Machine Learning - Mobile/Android compatible setup
+    // Using standard DJL with explicit exclusions to prevent Linux-specific native library issues
     includeDependency("ai.djl:api:${project.property("djl_version")}")
-    // PyTorch engine for desktop - exclude Linux-specific native libraries 
+    // PyTorch engine with explicit exclusion of ALL native libraries (runtime will handle mobile inference)
     includeDependency("ai.djl.pytorch:pytorch-engine:${project.property("djl_version")}") {
         exclude(group = "ai.djl.pytorch", module = "pytorch-native-cpu")
+        exclude(group = "ai.djl.pytorch", module = "pytorch-native-cpu-precxx11")
+        exclude(group = "ai.djl.pytorch", module = "pytorch-native-auto")
     }
+    
     // Add TensorFlow Lite engine for mobile/Android inference support
     includeDependency("ai.djl.tflite:tflite-engine:${project.property("djl_tflite_version")}")
     includeDependency("org.tensorflow:tensorflow-lite:${project.property("tensorflow_lite_version")}")

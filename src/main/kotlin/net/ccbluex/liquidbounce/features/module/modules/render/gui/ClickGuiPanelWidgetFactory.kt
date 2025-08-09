@@ -21,10 +21,12 @@ package net.ccbluex.liquidbounce.features.module.modules.render.gui
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.types.*
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
+import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.*
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.input.InputBind
+import net.ccbluex.liquidbounce.utils.input.InputUtil
 import net.minecraft.block.Block
 import net.minecraft.item.Item
 import net.minecraft.registry.Registries
@@ -130,8 +132,8 @@ object ClickGuiPanelWidgetFactory {
             value = typedValue.get(),
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
             onValueChanged = { newValue ->
-                if (value is ToggleableConfigurable) {
-                    value.enabled = newValue
+                if (value.valueType == ValueType.TOGGLEABLE) {
+                    module.enabled = newValue
                 } else {
                     typedValue.set(newValue)
                 }
@@ -271,7 +273,7 @@ object ClickGuiPanelWidgetFactory {
 
     @Suppress("UNCHECKED_CAST")
     private fun createKeyWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
-        val typedValue = value as Value<net.ccbluex.liquidbounce.utils.input.InputUtil.Key>
+        val typedValue = value as Value<InputUtil.Key>
         return TextSettingWidget(
             name = value.name,
             value = typedValue.get().translationKey,

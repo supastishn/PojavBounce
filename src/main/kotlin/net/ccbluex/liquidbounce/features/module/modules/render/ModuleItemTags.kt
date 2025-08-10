@@ -31,6 +31,7 @@ import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.render.engine.type.Vec3
 import net.ccbluex.liquidbounce.render.newDrawContext
 import net.ccbluex.liquidbounce.render.renderEnvironmentForGUI
+import net.ccbluex.liquidbounce.utils.collection.Filter
 import net.ccbluex.liquidbounce.utils.entity.box
 import net.ccbluex.liquidbounce.utils.kotlin.forEachWithSelf
 import net.ccbluex.liquidbounce.utils.kotlin.proportionOfValue
@@ -59,10 +60,15 @@ object ModuleItemTags : ClientModule("ItemTags", Category.RENDER) {
     override val baseKey: String
         get() = "liquidbounce.module.itemTags"
 
+    private val filter by enumChoice("Filter", Filter.BLACKLIST)
+    private val items by items("Items", hashSetOf())
+
+    private val backgroundColor by color("BackgroundColor", Color4b(Int.MIN_VALUE, hasAlpha = true))
+
     private val clusterSizeMode = choices("ClusterSizeMode", ClusterSizeMode.Static,
         arrayOf(ClusterSizeMode.Static, ClusterSizeMode.Distance))
     private val scale by float("Scale", 1.5F, 0.25F..4F)
-    private val renderY by float("RenderY", 0F, -2F..2F)
+    private val renderOffset by vec3d("RenderOffset", Vec3d.ZERO)
     private val maximumDistance by float("MaximumDistance", 128F, 1F..256F)
 
     private sealed class ClusterSizeMode(name: String) : Choice(name) {
@@ -91,11 +97,12 @@ object ModuleItemTags : ClientModule("ItemTags", Category.RENDER) {
     private var itemEntities by computedOn<GameTickEvent, Map<Vec3d, List<ItemStack>>>(
         initialValue = emptyMap()
     ) { _, _ ->
+        val cameraPos = (mc.cameraEntity ?: player).pos
         val maxDistSquared = maximumDistance.sq()
 
         @Suppress("UNCHECKED_CAST")
         (world.entities.filter {
-            it is ItemEntity && it.squaredDistanceTo(player) < maxDistSquared
+            it is ItemEntity && it.squaredDistanceTo(cameraPos) < maxDistSquared && filter(it.stack.item, items)
         } as List<ItemEntity>).cluster()
     }
 
@@ -112,7 +119,7 @@ object ModuleItemTags : ClientModule("ItemTags", Category.RENDER) {
     private val renderHandler = handler<OverlayRenderEvent> {
         renderEnvironmentForGUI {
             itemEntities.mapNotNull { (center, items) ->
-                val renderPos = WorldToScreen.calculateScreenPos(center.add(0.0, renderY.toDouble(), 0.0))
+                val renderPos = WorldToScreen.calculateScreenPos(center.add(renderOffset))
                     ?: return@mapNotNull null
                 renderPos to items
             }.forEachWithSelf { (center, items), i, self ->
@@ -143,7 +150,7 @@ object ModuleItemTags : ClientModule("ItemTags", Category.RENDER) {
             -BACKGROUND_PADDING,
             width + BACKGROUND_PADDING,
             height + BACKGROUND_PADDING,
-            Color4b(0, 0, 0, 128).toARGB()
+            backgroundColor.toARGB()
         )
 
         // render stacks

@@ -364,7 +364,8 @@ class TextSettingWidget(
     }
     
     private fun isValidTextChar(chr: Char): Boolean {
-        return chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-' || chr == '.'
+        // Allow most printable characters for text input
+        return chr.isLetterOrDigit() || chr in " !@#$%^&*()_+-=[]{}|;':\",./<>?`~\\"
     }
     
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
@@ -376,6 +377,256 @@ class TextSettingWidget(
         }
         
         return false
+    }
+}
+
+/**
+ * Dual-slider widget for integer range values (like CPS)
+ */
+class IntRangeSliderWidget(
+    name: String,
+    value: IntRange,
+    config: IntRangeWidgetConfig,
+    private val onValueChanged: (IntRange) -> Unit = {}
+) : SettingWidget<IntRange>(name, value, config.x, config.y, config.width, config.height) {
+    
+    private val min = config.min
+    private val max = config.max
+    private var isDraggingStart = false
+    private var isDraggingEnd = false
+    
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        renderBackground(context, isHovered)
+        
+        // Setting name and value
+        val displayText = "$name: ${value.first}..${value.last}"
+        context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 2, 0xFFFFFF, false)
+        
+        // Slider track
+        val sliderY = y + height - 8
+        val sliderHeight = 4
+        val sliderStart = x + 5
+        val sliderWidth = width - 10
+        
+        context.fill(sliderStart, sliderY, sliderStart + sliderWidth, sliderY + sliderHeight, 0xFF444444.toInt())
+        
+        // Calculate positions for start and end handles
+        val startProgress = (value.first - min).toDouble() / (max - min).toDouble()
+        val endProgress = (value.last - min).toDouble() / (max - min).toDouble()
+        
+        val startHandleX = (sliderStart + sliderWidth * startProgress).toInt()
+        val endHandleX = (sliderStart + sliderWidth * endProgress).toInt()
+        
+        // Highlight range between handles
+        context.fill(startHandleX, sliderY, endHandleX, sliderY + sliderHeight, 0xFF0088FF.toInt())
+        
+        // Draw handles
+        val handleWidth = 8
+        
+        // Start handle
+        context.fill(
+            startHandleX - handleWidth / 2, 
+            sliderY - 2, 
+            startHandleX + handleWidth / 2, 
+            sliderY + sliderHeight + 2, 
+            if (isDraggingStart) 0xFFFFFF00.toInt() else 0xFF00AAFF.toInt()
+        )
+        
+        // End handle
+        context.fill(
+            endHandleX - handleWidth / 2, 
+            sliderY - 2, 
+            endHandleX + handleWidth / 2, 
+            sliderY + sliderHeight + 2, 
+            if (isDraggingEnd) 0xFFFFFF00.toInt() else 0xFF00AAFF.toInt()
+        )
+    }
+    
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            val sliderStart = x + 5
+            val sliderWidth = width - 10
+            val startProgress = (value.first - min).toDouble() / (max - min).toDouble()
+            val endProgress = (value.last - min).toDouble() / (max - min).toDouble()
+            
+            val startHandleX = sliderStart + sliderWidth * startProgress
+            val endHandleX = sliderStart + sliderWidth * endProgress
+            
+            // Determine which handle is closer
+            val distToStart = kotlin.math.abs(mouseX - startHandleX)
+            val distToEnd = kotlin.math.abs(mouseX - endHandleX)
+            
+            if (distToStart < distToEnd) {
+                isDraggingStart = true
+            } else {
+                isDraggingEnd = true
+            }
+            
+            updateValue(mouseX)
+            return true
+        }
+        return false
+    }
+    
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
+    
+    @Suppress("UnusedParameter")
+    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if ((isDraggingStart || isDraggingEnd) && button == 0) {
+            updateValue(mouseX)
+            return true
+        }
+        return false
+    }
+    
+    @Suppress("UnusedParameter")
+    fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
+        isDraggingStart = false
+        isDraggingEnd = false
+    }
+    
+    private fun updateValue(mouseX: Double) {
+        val sliderStart = x + 5
+        val sliderWidth = width - 10
+        val progress = ((mouseX - sliderStart) / sliderWidth).coerceIn(0.0, 1.0)
+        
+        val newValue = (min + (max - min) * progress).toInt()
+        
+        if (isDraggingStart) {
+            val newStart = if (newValue <= value.last) newValue else value.last
+            value = newStart..value.last
+        } else if (isDraggingEnd) {
+            val newEnd = if (newValue >= value.first) newValue else value.first
+            value = value.first..newEnd
+        }
+        
+        onValueChanged(value)
+    }
+}
+
+/**
+ * Dual-slider widget for float range values
+ */
+class FloatRangeSliderWidget(
+    name: String,
+    value: ClosedFloatingPointRange<Float>,
+    config: RangeWidgetConfig,
+    private val onValueChanged: (ClosedFloatingPointRange<Float>) -> Unit = {}
+) : SettingWidget<ClosedFloatingPointRange<Float>>(name, value, config.x, config.y, config.width, config.height) {
+    
+    private val min = config.min
+    private val max = config.max
+    private var isDraggingStart = false
+    private var isDraggingEnd = false
+    
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        renderBackground(context, isHovered)
+        
+        // Setting name and value
+        val startStr = String.format(java.util.Locale.US, "%.2f", value.start)
+        val endStr = String.format(java.util.Locale.US, "%.2f", value.endInclusive)
+        val displayText = "$name: $startStr..$endStr"
+        context.drawText(mc.textRenderer, Text.literal(displayText), x + 5, y + 2, 0xFFFFFF, false)
+        
+        // Slider track
+        val sliderY = y + height - 8
+        val sliderHeight = 4
+        val sliderStart = x + 5
+        val sliderWidth = width - 10
+        
+        context.fill(sliderStart, sliderY, sliderStart + sliderWidth, sliderY + sliderHeight, 0xFF444444.toInt())
+        
+        // Calculate positions for start and end handles
+        val startProgress = (value.start - min) / (max - min)
+        val endProgress = (value.endInclusive - min) / (max - min)
+        
+        val startHandleX = (sliderStart + sliderWidth * startProgress).toInt()
+        val endHandleX = (sliderStart + sliderWidth * endProgress).toInt()
+        
+        // Highlight range between handles
+        context.fill(startHandleX, sliderY, endHandleX, sliderY + sliderHeight, 0xFF0088FF.toInt())
+        
+        // Draw handles
+        val handleWidth = 8
+        
+        // Start handle
+        context.fill(
+            startHandleX - handleWidth / 2, 
+            sliderY - 2, 
+            startHandleX + handleWidth / 2, 
+            sliderY + sliderHeight + 2, 
+            if (isDraggingStart) 0xFFFFFF00.toInt() else 0xFF00AAFF.toInt()
+        )
+        
+        // End handle
+        context.fill(
+            endHandleX - handleWidth / 2, 
+            sliderY - 2, 
+            endHandleX + handleWidth / 2, 
+            sliderY + sliderHeight + 2, 
+            if (isDraggingEnd) 0xFFFFFF00.toInt() else 0xFF00AAFF.toInt()
+        )
+    }
+    
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            val sliderStart = x + 5
+            val sliderWidth = width - 10
+            val startProgress = (value.start - min) / (max - min)
+            val endProgress = (value.endInclusive - min) / (max - min)
+            
+            val startHandleX = sliderStart + sliderWidth * startProgress
+            val endHandleX = sliderStart + sliderWidth * endProgress
+            
+            // Determine which handle is closer
+            val distToStart = kotlin.math.abs(mouseX - startHandleX)
+            val distToEnd = kotlin.math.abs(mouseX - endHandleX)
+            
+            if (distToStart < distToEnd) {
+                isDraggingStart = true
+            } else {
+                isDraggingEnd = true
+            }
+            
+            updateValue(mouseX)
+            return true
+        }
+        return false
+    }
+    
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
+    
+    @Suppress("UnusedParameter")
+    fun mouseDragged(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if ((isDraggingStart || isDraggingEnd) && button == 0) {
+            updateValue(mouseX)
+            return true
+        }
+        return false
+    }
+    
+    @Suppress("UnusedParameter")
+    fun mouseReleased(mouseX: Double, mouseY: Double, button: Int) {
+        isDraggingStart = false
+        isDraggingEnd = false
+    }
+    
+    private fun updateValue(mouseX: Double) {
+        val sliderStart = x + 5
+        val sliderWidth = width - 10
+        val progress = ((mouseX - sliderStart) / sliderWidth).coerceIn(0.0, 1.0)
+        
+        val newValue = (min + (max - min) * progress).toFloat()
+        
+        if (isDraggingStart) {
+            val newStart = if (newValue <= value.endInclusive) newValue else value.endInclusive
+            value = newStart..value.endInclusive
+        } else if (isDraggingEnd) {
+            val newEnd = if (newValue >= value.start) newValue else value.start
+            value = value.start..newEnd
+        }
+        
+        onValueChanged(value)
     }
 }
 

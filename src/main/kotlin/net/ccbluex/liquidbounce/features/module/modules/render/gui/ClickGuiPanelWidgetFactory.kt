@@ -100,9 +100,21 @@ object ClickGuiPanelWidgetFactory {
         return when (value.valueType) {
             ValueType.BOOLEAN, ValueType.TOGGLEABLE -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth, module)
-            ValueType.FLOAT_RANGE -> createFloatRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.FLOAT_RANGE -> {
+                if (shouldUseDualSlider(value.name)) {
+                    createFloatRangeSliderWidget(value, widgetX, widgetY, widgetWidth, module)
+                } else {
+                    createFloatRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
+                }
+            }
             ValueType.INT -> createIntWidget(value, widgetX, widgetY, widgetWidth, module)
-            ValueType.INT_RANGE -> createIntRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.INT_RANGE -> {
+                if (shouldUseDualSlider(value.name)) {
+                    createIntRangeSliderWidget(value, widgetX, widgetY, widgetWidth, module)
+                } else {
+                    createIntRangeAsTextWidget(value, widgetX, widgetY, widgetWidth, module)
+                }
+            }
             ValueType.CHOOSE, ValueType.CHOICE -> createEnumWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.TEXT -> createTextWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.BIND -> createBindWidget(value, widgetX, widgetY, widgetWidth, module)
@@ -539,6 +551,86 @@ object ClickGuiPanelWidgetFactory {
             name = value.name,
             isExpanded = expandedSections.getOrDefault(value.name, true),
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT)
+        )
+    }
+
+    /**
+     * Determine if a range value should use dual sliders instead of text input
+     */
+    private fun shouldUseDualSlider(valueName: String): Boolean {
+        val lowerName = valueName.lowercase()
+        return lowerName.contains("cps") || 
+               lowerName.contains("clicks") ||
+               lowerName.contains("delay") ||
+               lowerName.contains("speed") ||
+               lowerName.contains("rate")
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createIntRangeSliderWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int,
+        module: ClientModule
+    ): IntRangeSliderWidget {
+        val typedValue = value as Value<IntRange>
+        val currentRange = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0, 100)
+        
+        return IntRangeSliderWidget(
+            name = value.name,
+            value = currentRange,
+            config = IntRangeWidgetConfig(
+                x = widgetX, 
+                y = widgetY, 
+                min = min, 
+                max = max, 
+                width = widgetWidth, 
+                height = SETTING_HEIGHT
+            ),
+            onValueChanged = { newRange ->
+                typedValue.set(newRange)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
+            }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createFloatRangeSliderWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int,
+        module: ClientModule
+    ): FloatRangeSliderWidget {
+        val typedValue = value as Value<ClosedFloatingPointRange<Float>>
+        val currentRange = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
+        
+        return FloatRangeSliderWidget(
+            name = value.name,
+            value = currentRange,
+            config = RangeWidgetConfig(
+                x = widgetX, 
+                y = widgetY, 
+                min = min, 
+                max = max, 
+                width = widgetWidth, 
+                height = SETTING_HEIGHT
+            ),
+            onValueChanged = { newRange ->
+                typedValue.set(newRange)
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
+            }
         )
     }
 }

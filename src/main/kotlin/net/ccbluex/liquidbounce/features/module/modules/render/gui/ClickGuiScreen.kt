@@ -214,6 +214,13 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     }
     
     override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // First check if any panel widget is handling input
+        for (panel in panels.values) {
+            if (panel.keyPressed(keyCode, scanCode, modifiers)) {
+                return true
+            }
+        }
+        
         // Handle search functionality
         return ClickGuiInputHandler.handleKeyInput(
             keyCode, searchVisible, searchText,
@@ -249,6 +256,13 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
     }
     
     override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        // First check if any panel widget is handling input
+        for (panel in panels.values) {
+            if (panel.charTyped(chr, modifiers)) {
+                return true
+            }
+        }
+        
         return ClickGuiInputHandler.handleCharInput(chr, searchVisible) { newChar ->
             searchText += newChar
             filterModules()

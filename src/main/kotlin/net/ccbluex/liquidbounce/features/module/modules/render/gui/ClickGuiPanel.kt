@@ -589,6 +589,8 @@ class ClickGuiPanel(
                         when (widget) {
                             is FloatSettingWidget -> widget.mouseDragged(mouseX, mouseY, button)
                             is IntSettingWidget -> widget.mouseDragged(mouseX, mouseY, button)
+                            is IntRangeSliderWidget -> widget.mouseDragged(mouseX, mouseY, button)
+                            is FloatRangeSliderWidget -> widget.mouseDragged(mouseX, mouseY, button)
                         }
 
                         currentY += SETTING_HEIGHT + SETTING_SPACING
@@ -607,6 +609,8 @@ class ClickGuiPanel(
         moduleSettingWidgets.values.flatten().forEach { widget ->
             if (widget is FloatSettingWidget) widget.mouseReleased(mouseX, mouseY, button)
             if (widget is IntSettingWidget) widget.mouseReleased(mouseX, mouseY, button)
+            if (widget is IntRangeSliderWidget) widget.mouseReleased(mouseX, mouseY, button)
+            if (widget is FloatRangeSliderWidget) widget.mouseReleased(mouseX, mouseY, button)
         }
     }
     
@@ -640,6 +644,47 @@ class ClickGuiPanel(
         return false
     }
     
+    /**
+     * Handle key press events and forward to active setting widgets
+     */
+    fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        if (!expanded) return false
+        
+        return forwardInputToExpandedModules { widgets ->
+            widgets.any { widget ->
+                widget.keyPressed(keyCode, scanCode, modifiers)
+            }
+        }
+    }
+
+    /**
+     * Handle character input and forward to active setting widgets
+     */
+    fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (!expanded) return false
+        
+        return forwardInputToExpandedModules { widgets ->
+            widgets.any { widget ->
+                widget.charTyped(chr, modifiers)
+            }
+        }
+    }
+
+    /**
+     * Helper method to forward input events to expanded modules
+     */
+    private fun forwardInputToExpandedModules(inputHandler: (List<SettingWidget<*>>) -> Boolean): Boolean {
+        for (module in filteredModules) {
+            if (expandedModules.getOrDefault(module, false)) {
+                val widgets = moduleSettingWidgets[module] ?: continue
+                if (inputHandler(widgets)) {
+                    return true
+                }
+            }
+        }
+        return false
+    }
+
     fun filterModules(searchText: String) {
         filteredModules = if (searchText.isEmpty()) {
             allModules

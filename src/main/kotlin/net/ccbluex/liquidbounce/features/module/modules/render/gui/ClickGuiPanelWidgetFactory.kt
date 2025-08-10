@@ -264,7 +264,13 @@ object ClickGuiPanelWidgetFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createBindWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
+    private fun createBindWidget(
+        value: Value<*>, 
+        widgetX: Int, 
+        widgetY: Int, 
+        widgetWidth: Int, 
+        module: ClientModule
+    ): TextSettingWidget {
         val typedValue = value as Value<InputBind>
         return TextSettingWidget(
             name = value.name,
@@ -286,7 +292,13 @@ object ClickGuiPanelWidgetFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createKeyWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
+    private fun createKeyWidget(
+        value: Value<*>, 
+        widgetX: Int, 
+        widgetY: Int, 
+        widgetWidth: Int, 
+        module: ClientModule
+    ): TextSettingWidget {
         val typedValue = value as Value<InputUtil.Key>
         return TextSettingWidget(
             name = value.name,
@@ -308,7 +320,13 @@ object ClickGuiPanelWidgetFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createListWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
+    private fun createListWidget(
+        value: Value<*>, 
+        widgetX: Int, 
+        widgetY: Int, 
+        widgetWidth: Int, 
+        module: ClientModule
+    ): TextSettingWidget {
         val typedValue = value as ListValue<*, *>
         val valueString = if (typedValue is RegistryListValue<*, *>) {
             formatRegistryListValue(typedValue)
@@ -336,7 +354,13 @@ object ClickGuiPanelWidgetFactory {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun createColorWidget(value: Value<*>, widgetX: Int, widgetY: Int, widgetWidth: Int, module: ClientModule): TextSettingWidget {
+    private fun createColorWidget(
+        value: Value<*>, 
+        widgetX: Int, 
+        widgetY: Int, 
+        widgetWidth: Int, 
+        module: ClientModule
+    ): TextSettingWidget {
         val typedValue = value as Value<Color4b>
         return TextSettingWidget(
             name = value.name,

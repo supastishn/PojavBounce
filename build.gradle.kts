@@ -343,7 +343,11 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-    dependsOn("genSources")
+}
+
+// Fix task dependency issue with genSourcesWithVineflower by making compileJava input explicit
+tasks.named("compileJava", JavaCompile::class) {
+    inputs.files(tasks.named("genSourcesWithVineflower"))
 }
 
 // Detekt check

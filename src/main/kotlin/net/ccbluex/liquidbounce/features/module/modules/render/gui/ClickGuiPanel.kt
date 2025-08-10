@@ -321,7 +321,11 @@ class ClickGuiPanel(
         val thumbY = moduleAreaY + 
             (scrollOffset * (moduleAreaHeight - thumbHeight)) / (totalHeight - moduleAreaHeight)
         
-        context.fill(scrollbarX, thumbY.toInt(), scrollbarX + scrollbarWidth, thumbY.toInt() + thumbHeight, 0xFF80BFFF.toInt())
+        context.fill(
+            scrollbarX, thumbY.toInt(), 
+            scrollbarX + scrollbarWidth, thumbY.toInt() + thumbHeight, 
+            0xFF80BFFF.toInt()
+        )
     }
     
     @Suppress("UnusedParameter", "FunctionOnlyReturningConstant")
@@ -475,7 +479,13 @@ class ClickGuiPanel(
         }
     }
 
-    private fun handleWidgetClick(module: ClientModule, widget: SettingWidget<*>, mouseX: Double, mouseY: Double, button: Int): Boolean {
+    private fun handleWidgetClick(
+        module: ClientModule, 
+        widget: SettingWidget<*>, 
+        mouseX: Double, 
+        mouseY: Double, 
+        button: Int
+    ): Boolean {
         if (widget.mouseClicked(mouseX, mouseY, button)) {
             if (widget is SectionHeaderWidget) {
                 expandedSettingSections[widget.name] = !expandedSettingSections.getOrDefault(widget.name, true)
@@ -673,7 +683,9 @@ class ClickGuiPanel(
     // WIDGET CREATION AND MANAGEMENT LOGIC (using factory)
 
     private fun initializeSettingsWidgets(module: ClientModule) {
-        ClickGuiPanelWidgetFactory.initializeSettingsWidgets(module, this.x, this.width, moduleSettingWidgets, expandedSettingSections)
+        ClickGuiPanelWidgetFactory.initializeSettingsWidgets(
+            module, this.x, this.width, moduleSettingWidgets, expandedSettingSections
+        )
     }
 }
 

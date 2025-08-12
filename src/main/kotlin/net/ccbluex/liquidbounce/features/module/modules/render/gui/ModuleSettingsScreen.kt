@@ -27,6 +27,8 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.BooleanSettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.FloatSettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.IntSettingWidget
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.FloatRangeSliderWidget
+import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.IntRangeSliderWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.SettingWidget
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.WidgetConfig
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.settings.RangeWidgetConfig
@@ -366,6 +368,18 @@ class ModuleSettingsScreen(
                         return true
                     }
                 }
+                is FloatRangeSliderWidget -> {
+                    if (adjustedWidget.mouseDragged(mouseX, mouseY, button)) {
+                        (widget as FloatRangeSliderWidget).value = adjustedWidget.value
+                        return true
+                    }
+                }
+                is IntRangeSliderWidget -> {
+                    if (adjustedWidget.mouseDragged(mouseX, mouseY, button)) {
+                        (widget as IntRangeSliderWidget).value = adjustedWidget.value
+                        return true
+                    }
+                }
             }
         }
         
@@ -378,6 +392,8 @@ class ModuleSettingsScreen(
             when (widget) {
                 is FloatSettingWidget -> widget.mouseReleased(mouseX, mouseY, button)
                 is IntSettingWidget -> widget.mouseReleased(mouseX, mouseY, button)
+                is FloatRangeSliderWidget -> widget.mouseReleased(mouseX, mouseY, button)
+                is IntRangeSliderWidget -> widget.mouseReleased(mouseX, mouseY, button)
             }
         }
         

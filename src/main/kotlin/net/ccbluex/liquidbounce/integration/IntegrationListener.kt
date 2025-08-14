@@ -41,6 +41,7 @@ import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIOR
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.screen.TitleScreen
 import org.lwjgl.glfw.GLFW
+import kotlin.math.min
 
 object IntegrationListener : EventListener {
 
@@ -223,6 +224,15 @@ object IntegrationListener : EventListener {
     }
 
     @Suppress("unused")
+    private val fpsLimitHandler = handler<FpsLimitEvent> { event ->
+        if (!browserSettings.syncGameFps || !isClientScreen(mc.currentScreen)) {
+            return@handler
+        }
+
+        event.fps = min(event.fps, browserSettings.currentFps)
+    }
+
+    @Suppress("unused")
     private val keyHandler = handler<KeyboardKeyEvent> { event ->
         val keyCode = event.keyCode
         val modifier = event.mods
@@ -307,5 +317,12 @@ object IntegrationListener : EventListener {
             }
         }
     }
+
+    /**
+     * Checks if the given screen is an active client screen.
+     */
+    @JvmStatic
+    fun isClientScreen(screen: Screen?) = screen is VirtualDisplayScreen || screen is ModuleClickGui.ClickScreen ||
+        screen is BrowserScreen
 
 }

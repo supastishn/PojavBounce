@@ -558,7 +558,7 @@ object ClickGuiPanelWidgetFactory {
      * Determine if a range value should use dual sliders instead of text input
      * Now returns true for ALL range values to provide better UX
      */
-    private fun shouldUseDualSlider(valueName: String): Boolean {
+    private fun shouldUseDualSlider(@Suppress("UNUSED_PARAMETER") valueName: String): Boolean {
         // Always use dual sliders for range values to provide better UX
         return true
     }

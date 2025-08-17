@@ -66,7 +66,7 @@ fun getModuleSettingsField(requestObject: RequestObject): FullHttpResponse {
         val response = JsonObject().apply {
             add("fieldId", JsonPrimitive(fieldPath))
             add("currentValue", interopGson.toJsonTree(value.get()))
-            add("defaultValue", interopGson.toJsonTree(value.defaultValue))
+            add("defaultValue", null) // TODO: Access defaultValue when public API available
             add("fieldType", JsonPrimitive(mapValueTypeToString(value.valueType)))
         }
         
@@ -154,7 +154,7 @@ private fun findValueByPathParts(configurable: Configurable, pathParts: List<Str
                     }
                     is ToggleableConfigurable -> {
                         if (remainingParts.size == 1 && remainingParts[0] == "enabled") {
-                            return value.enabled
+                            return value.inner.find { it.name == "Enabled" }
                         }
                         return findValueByPathParts(value, remainingParts)
                     }
@@ -173,17 +173,18 @@ private fun findValueByPathParts(configurable: Configurable, pathParts: List<Str
  * Create a virtual value for choice selection
  */
 private fun createVirtualChoiceValue(choiceConfigurable: ChoiceConfigurable<*>): Value<*> {
-    return object : Value<String>(
-        "active",
+    // Create a simple proxy that handles choice selection
+    val choiceValue = Value<String>(
+        name = "active",
+        aliases = emptyArray(),
         defaultValue = choiceConfigurable.choices.firstOrNull()?.name ?: "",
         valueType = ValueType.CHOICE
-    ) {
-        override fun get(): String = choiceConfigurable.activeChoice.name
-        
-        override fun set(newValue: String, apply: ((String) -> String)?) {
-            choiceConfigurable.setByString(newValue)
-        }
-    }
+    )
+    
+    // Set the current value to match the active choice
+    choiceValue.set(choiceConfigurable.activeChoice.name)
+    
+    return choiceValue
 }
 
 /**
@@ -211,8 +212,8 @@ private fun updateFieldValue(field: Value<*>, newValue: Any) {
             if (field is ChooseListValue<*>) {
                 field.setByString(newValue.toString())
             } else {
-                // Virtual choice value
-                field.set(newValue.toString())
+                // Virtual choice value - use setByString for type safety
+                field.setByString(newValue.toString())
             }
         }
         ValueType.INT_RANGE -> {

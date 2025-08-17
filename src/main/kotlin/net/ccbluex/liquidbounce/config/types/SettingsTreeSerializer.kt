@@ -39,7 +39,7 @@ object SettingsTreeSerializer {
         return SettingsTree(
             moduleId = module.name,
             moduleName = module.name,
-            moduleDescription = module.description.get(),
+            moduleDescription = module.description.get() ?: "",
             groups = serializeConfigurable(module, ""),
             stableId = generateStableId(module.name)
         )
@@ -127,7 +127,6 @@ object SettingsTreeSerializer {
      * Serialize a choice into setting groups
      */
     private fun serializeChoice(choice: Choice, pathPrefix: String): List<SettingsGroup> {
-        val choicePath = "$pathPrefix.${choice.name}"
         return serializeConfigurable(choice, pathPrefix).map { group ->
             group.copy(
                 visible = group.visible && choice.isSelected,
@@ -141,7 +140,7 @@ object SettingsTreeSerializer {
      */
     private fun createSettingsField(value: Value<*>, pathPrefix: String): SettingsField? {
         // Skip internal values that shouldn't be shown in UI
-        if (value.name.equals("Enabled", true) && value.doNotIncludeAlways()) {
+        if (value.name.equals("Enabled", true) && value.doNotInclude()) {
             return null
         }
         
@@ -152,7 +151,7 @@ object SettingsTreeSerializer {
             fieldName = value.name,
             fieldType = mapValueType(value.valueType),
             currentValue = value.get(),
-            defaultValue = value.defaultValue,
+            defaultValue = null, // TODO: Access defaultValue when public API available
             visible = isValueVisible(value),
             enabled = isValueEnabled(value),
             metadata = createFieldMetadata(value),
@@ -194,15 +193,16 @@ object SettingsTreeSerializer {
      */
     private fun createToggleField(toggleable: ToggleableConfigurable, pathPrefix: String): SettingsField {
         val fieldPath = "$pathPrefix.${toggleable.name}.enabled"
+        val enabledValue = toggleable.inner.find { it.name == "Enabled" } as? Value<Boolean>
         
         return SettingsField(
             fieldId = fieldPath,
             fieldName = "Enabled",
             fieldType = SettingsFieldType.BOOLEAN,
-            currentValue = toggleable.enabled.get(),
-            defaultValue = toggleable.enabled.defaultValue,
-            visible = isValueVisible(toggleable.enabled),
-            enabled = isValueEnabled(toggleable.enabled),
+            currentValue = toggleable.enabled,
+            defaultValue = null, // TODO: Access defaultValue when public API available
+            visible = enabledValue?.let { isValueVisible(it) } ?: true,
+            enabled = enabledValue?.let { isValueEnabled(it) } ?: true,
             metadata = emptyMap(),
             stableId = generateStableId(fieldPath),
             endpoint = SettingsEndpoint(
@@ -260,7 +260,7 @@ object SettingsTreeSerializer {
      * Check if a value is visible based on doNotIncludeWhen predicates
      */
     private fun isValueVisible(value: Value<*>): Boolean {
-        return value.doNotIncludeWhen.none { it() }
+        return !value.doNotInclude()
     }
     
     /**

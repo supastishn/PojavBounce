@@ -191,24 +191,32 @@ class SettingsTreeSerializerTest {
      */
     private class TestModule : ClientModule("TestModule", Category.MISC) {
         
+        @Suppress("UnusedPrivateProperty")
         private val testBoolean by boolean("testBoolean", true)
+        @Suppress("UnusedPrivateProperty") 
         private val testInt by int("testInt", 5, 1..10)
+        @Suppress("UnusedPrivateProperty")
         private val testFloat by float("testFloat", 1.5f, 0f..5f)
+        @Suppress("UnusedPrivateProperty")
         private val testString by text("testString", "default")
+        @Suppress("UnusedPrivateProperty")
         private val testRange by intRange("testRange", 1..5, 0..10)
         
         // Choice configurable
+        @Suppress("UnusedPrivateProperty")
         private val testChoice by choices("TestChoice", TestChoiceA(this), arrayOf(
             TestChoiceA(this),
             TestChoiceB(this)
         ))
         
         // Toggleable configurable  
+        @Suppress("UnusedPrivateProperty")
         private val testToggleable = tree(object : ToggleableConfigurable("TestToggleable") {
             val nestedValue by boolean("nestedBoolean", false)
         })
         
         // Nested configurable
+        @Suppress("UnusedPrivateProperty")
         private val testNested = tree(object : Configurable("TestNested") {
             val deepValue by text("deepValue", "nested")
         })

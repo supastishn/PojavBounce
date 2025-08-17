@@ -18,8 +18,6 @@
  */
 package net.ccbluex.liquidbounce.config.types
 
-import net.ccbluex.liquidbounce.config.types.nesting.Choice
-import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.features.module.Category
@@ -107,26 +105,13 @@ class SettingsTreeSerializerTest {
     }
 
     @Test
-    fun `should serialize choice configurables correctly`() {
-        val settingsTree = SettingsTreeSerializer.serializeModule(testModule)
-        val choiceGroup = settingsTree.groups.find { it.groupType == SettingsGroupType.CHOICE }
-
-        assertNotNull(choiceGroup)
-        assertEquals(SettingsGroupType.CHOICE, choiceGroup!!.groupType)
-        assertTrue(choiceGroup.fields.isNotEmpty())
-        
-        val choiceField = choiceGroup.fields.first()
-        assertEquals(SettingsFieldType.CHOICE, choiceField.fieldType)
-        assertTrue(choiceField.metadata.containsKey("choices"))
-    }
-
-    @Test
     fun `should serialize toggleable configurables correctly`() {
         val settingsTree = SettingsTreeSerializer.serializeModule(testModule)
         val toggleGroup = settingsTree.groups.find { it.groupType == SettingsGroupType.TOGGLEABLE }
 
         assertNotNull(toggleGroup)
         assertEquals(SettingsGroupType.TOGGLEABLE, toggleGroup!!.groupType)
+        assertTrue(toggleGroup.fields.isNotEmpty())
         
         val enabledField = toggleGroup.fields.find { it.fieldName == "Enabled" }
         assertNotNull(enabledField)
@@ -202,16 +187,9 @@ class SettingsTreeSerializerTest {
         @Suppress("UnusedPrivateProperty")
         private val testRange by intRange("testRange", 1..5, 0..10)
         
-        // Choice configurable
-        @Suppress("UnusedPrivateProperty")
-        private val testChoice by choices("TestChoice", TestChoiceA(this), arrayOf(
-            TestChoiceA(this),
-            TestChoiceB(this)
-        ))
-        
         // Toggleable configurable  
         @Suppress("UnusedPrivateProperty")
-        private val testToggleable = tree(object : ToggleableConfigurable("TestToggleable") {
+        private val testToggleable = tree(object : ToggleableConfigurable(null, "TestToggleable", true) {
             val nestedValue by boolean("nestedBoolean", false)
         })
         
@@ -220,13 +198,5 @@ class SettingsTreeSerializerTest {
         private val testNested = tree(object : Configurable("TestNested") {
             val deepValue by text("deepValue", "nested")
         })
-    }
-
-    private class TestChoiceA(override val parent: ChoiceConfigurable<*>) : Choice("ChoiceA") {
-        val choiceAValue by boolean("choiceAValue", true)
-    }
-
-    private class TestChoiceB(override val parent: ChoiceConfigurable<*>) : Choice("ChoiceB") {
-        val choiceBValue by int("choiceBValue", 10, 1..20)
     }
 }

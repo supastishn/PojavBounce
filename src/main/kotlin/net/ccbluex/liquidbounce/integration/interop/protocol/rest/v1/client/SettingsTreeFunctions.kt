@@ -137,36 +137,48 @@ private fun findValueByPathParts(configurable: Configurable, pathParts: List<Str
     val remainingParts = pathParts.drop(1)
     
     for (value in configurable.inner) {
-        when {
-            value.name == currentPart -> {
-                if (remainingParts.isEmpty()) {
-                    return value
-                }
-                
-                when (value) {
-                    is ChoiceConfigurable<*> -> {
-                        if (remainingParts.size == 1 && remainingParts[0] == "active") {
-                            // Special case for choice selection
-                            return createVirtualChoiceValue(value)
-                        }
-                        // Look in active choice
-                        return findValueByPathParts(value.activeChoice, remainingParts)
-                    }
-                    is ToggleableConfigurable -> {
-                        if (remainingParts.size == 1 && remainingParts[0] == "enabled") {
-                            return value.inner.find { it.name == "Enabled" }
-                        }
-                        return findValueByPathParts(value, remainingParts)
-                    }
-                    is Configurable -> {
-                        return findValueByPathParts(value, remainingParts)
-                    }
-                }
-            }
+        if (value.name == currentPart) {
+            return processMatchedValue(value, remainingParts)
         }
     }
     
     return null
+}
+
+/**
+ * Process a matched value and handle remaining path parts
+ */
+private fun processMatchedValue(value: Value<*>, remainingParts: List<String>): Value<*>? {
+    if (remainingParts.isEmpty()) {
+        return value
+    }
+    
+    return when (value) {
+        is ChoiceConfigurable<*> -> handleChoiceConfigurable(value, remainingParts)
+        is ToggleableConfigurable -> handleToggleableConfigurable(value, remainingParts)
+        is Configurable -> findValueByPathParts(value, remainingParts)
+        else -> null
+    }
+}
+
+/**
+ * Handle choice configurable path navigation
+ */
+private fun handleChoiceConfigurable(choice: ChoiceConfigurable<*>, remainingParts: List<String>): Value<*>? {
+    if (remainingParts.size == 1 && remainingParts[0] == "active") {
+        return createVirtualChoiceValue(choice)
+    }
+    return findValueByPathParts(choice.activeChoice, remainingParts)
+}
+
+/**
+ * Handle toggleable configurable path navigation
+ */
+private fun handleToggleableConfigurable(toggleable: ToggleableConfigurable, remainingParts: List<String>): Value<*>? {
+    if (remainingParts.size == 1 && remainingParts[0] == "enabled") {
+        return toggleable.inner.find { it.name == "Enabled" }
+    }
+    return findValueByPathParts(toggleable, remainingParts)
 }
 
 /**

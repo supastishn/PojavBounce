@@ -57,70 +57,103 @@ object SettingsTreeSerializer {
         val subGroups = mutableListOf<SettingsGroup>()
         
         for (value in configurable.inner) {
-            when (value) {
-                is ChoiceConfigurable<*> -> {
-                    // Create a group for the choice configurable
-                    val choiceGroup = SettingsGroup(
-                        groupId = "${currentPath}.${value.name}",
-                        groupName = value.name,
-                        groupType = SettingsGroupType.CHOICE,
-                        expanded = false,
-                        visible = isValueVisible(value),
-                        enabled = isValueEnabled(value),
-                        fields = listOf(createChoiceField(value, currentPath)),
-                        subGroups = value.choices.map { choice ->
-                            serializeChoice(choice, "${currentPath}.${value.name}")
-                        }.flatten(),
-                        stableId = generateStableId("${currentPath}.${value.name}")
-                    )
-                    subGroups.add(choiceGroup)
-                }
-                is ToggleableConfigurable -> {
-                    // Create a group for toggleable configurable
-                    val toggleGroup = SettingsGroup(
-                        groupId = "${currentPath}.${value.name}",
-                        groupName = value.name,
-                        groupType = SettingsGroupType.TOGGLEABLE,
-                        expanded = false,
-                        visible = isValueVisible(value),
-                        enabled = isValueEnabled(value),
-                        fields = listOf(createToggleField(value, currentPath)) + 
-                                 value.inner.mapNotNull { createSettingsField(it, "${currentPath}.${value.name}") },
-                        subGroups = emptyList(),
-                        stableId = generateStableId("${currentPath}.${value.name}")
-                    )
-                    subGroups.add(toggleGroup)
-                }
-                is Configurable -> {
-                    // Recursively serialize nested configurables
-                    subGroups.addAll(serializeConfigurable(value, currentPath))
-                }
-                else -> {
-                    // Regular value field
-                    createSettingsField(value, currentPath)?.let { field ->
-                        fields.add(field)
-                    }
-                }
-            }
+            processConfigurableValue(value, currentPath, fields, subGroups)
         }
         
         // Create main group if we have direct fields
         if (fields.isNotEmpty()) {
-            groups.add(SettingsGroup(
-                groupId = currentPath,
-                groupName = configurable.name,
-                groupType = SettingsGroupType.NORMAL,
-                expanded = false,
-                visible = true,
-                enabled = true,
-                fields = fields,
-                subGroups = emptyList(),
-                stableId = generateStableId(currentPath)
-            ))
+            groups.add(createMainGroup(configurable, currentPath, fields))
         }
         
         groups.addAll(subGroups)
         return groups
+    }
+    
+    /**
+     * Process a single configurable value and add to appropriate collection
+     */
+    private fun processConfigurableValue(
+        value: Value<*>, 
+        currentPath: String, 
+        fields: MutableList<SettingsField>, 
+        subGroups: MutableList<SettingsGroup>
+    ) {
+        when (value) {
+            is ChoiceConfigurable<*> -> {
+                subGroups.add(createChoiceGroup(value, currentPath))
+            }
+            is ToggleableConfigurable -> {
+                subGroups.add(createToggleableGroup(value, currentPath))
+            }
+            is Configurable -> {
+                // Recursively serialize nested configurables
+                subGroups.addAll(serializeConfigurable(value, currentPath))
+            }
+            else -> {
+                // Regular value field
+                createSettingsField(value, currentPath)?.let { field ->
+                    fields.add(field)
+                }
+            }
+        }
+    }
+    
+    /**
+     * Create a choice group
+     */
+    private fun createChoiceGroup(choiceConfigurable: ChoiceConfigurable<*>, currentPath: String): SettingsGroup {
+        return SettingsGroup(
+            groupId = "${currentPath}.${choiceConfigurable.name}",
+            groupName = choiceConfigurable.name,
+            groupType = SettingsGroupType.CHOICE,
+            expanded = false,
+            visible = isValueVisible(choiceConfigurable),
+            enabled = isValueEnabled(choiceConfigurable),
+            fields = listOf(createChoiceField(choiceConfigurable, currentPath)),
+            subGroups = choiceConfigurable.choices.map { choice ->
+                serializeChoice(choice, "${currentPath}.${choiceConfigurable.name}")
+            }.flatten(),
+            stableId = generateStableId("${currentPath}.${choiceConfigurable.name}")
+        )
+    }
+    
+    /**
+     * Create a toggleable group
+     */
+    private fun createToggleableGroup(toggleable: ToggleableConfigurable, currentPath: String): SettingsGroup {
+        return SettingsGroup(
+            groupId = "${currentPath}.${toggleable.name}",
+            groupName = toggleable.name,
+            groupType = SettingsGroupType.TOGGLEABLE,
+            expanded = false,
+            visible = isValueVisible(toggleable),
+            enabled = isValueEnabled(toggleable),
+            fields = listOf(createToggleField(toggleable, currentPath)) + 
+                     toggleable.inner.mapNotNull { createSettingsField(it, "${currentPath}.${toggleable.name}") },
+            subGroups = emptyList(),
+            stableId = generateStableId("${currentPath}.${toggleable.name}")
+        )
+    }
+    
+    /**
+     * Create the main group for direct fields
+     */
+    private fun createMainGroup(
+        configurable: Configurable, 
+        currentPath: String, 
+        fields: List<SettingsField>
+    ): SettingsGroup {
+        return SettingsGroup(
+            groupId = currentPath,
+            groupName = configurable.name,
+            groupType = SettingsGroupType.NORMAL,
+            expanded = false,
+            visible = true,
+            enabled = true,
+            fields = fields,
+            subGroups = emptyList(),
+            stableId = generateStableId(currentPath)
+        )
     }
     
     /**

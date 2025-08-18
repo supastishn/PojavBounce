@@ -177,6 +177,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
     }
     val rotationTiming by enumChoice("RotationTiming", RotationTimingMode.NORMAL).doNotIncludeWhen { !rotationsEnabled }
 
+    private val rotations = tree(ScaffoldRotationsConfigurable)
 
     private var currentTarget: BlockPlacementTarget? = null
 
@@ -347,7 +348,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
             RotationManager.setRotationTarget(
                 rotation ?: return@handler,
                 considerInventory = considerInventory,
-                configurable = RotationsConfigurable(this),
+                configurable = rotations,
                 provider = this@ModuleScaffold,
                 priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
             )
@@ -523,7 +524,7 @@ object ModuleScaffold : ClientModule("Scaffold", Category.WORLD) {
                 RotationManager.setRotationTarget(
                     currentRotation,
                     considerInventory = considerInventory,
-                    configurable = RotationsConfigurable(this@ModuleScaffold),
+                    configurable = rotations,
                     provider = this@ModuleScaffold,
                     priority = Priority.IMPORTANT_FOR_PLAYER_LIFE
                 )

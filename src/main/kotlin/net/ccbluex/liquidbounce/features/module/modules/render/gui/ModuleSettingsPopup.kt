@@ -60,7 +60,6 @@ class ModuleSettingsPopup(
     
     private val settingWidgets = mutableListOf<SettingWidget<*>>()
     private val widgetToValueMap = mutableMapOf<SettingWidget<*>, Value<*>>()
-    private val sections = mutableMapOf<String, Boolean>() // Key: section name, Value: expanded
     private var openDropdown: EnumSettingWidget? = null
     private var scrollOffset = 0
     private var x = 0
@@ -159,7 +158,7 @@ class ModuleSettingsPopup(
         for (value in configurable.inner) {
             list.add(Pair(value, indent))
 
-            val isSectionExpanded = sections.getOrPut(value.name) { true }
+            val isSectionExpanded = AccordionStateManager.isSectionExpanded(module, value.name, true)
 
             if (isSectionExpanded) {
                 if (value is net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable<*>) {
@@ -180,8 +179,8 @@ class ModuleSettingsPopup(
             ValueType.TEXT -> createTextWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.CHOOSE -> createChooseWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.CHOICE -> createChoiceConfigurableWidget(value, widgetX, widgetY, widgetWidth)
-            ValueType.INT_RANGE -> createIntRangeAsTextWidget(value, widgetX, widgetY, widgetWidth)
-            ValueType.FLOAT_RANGE -> createFloatRangeAsTextWidget(value, widgetX, widgetY, widgetWidth)
+            ValueType.INT_RANGE -> createIntRangeSliderWidget(value, widgetX, widgetY, widgetWidth)
+            ValueType.FLOAT_RANGE -> createFloatRangeSliderWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.BIND -> createBindWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.KEY -> createKeyWidget(value, widgetX, widgetY, widgetWidth)
             ValueType.LIST, ValueType.BLOCK -> createListWidget(value, widgetX, widgetY, widgetWidth)
@@ -326,52 +325,7 @@ class ModuleSettingsPopup(
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun createIntRangeAsTextWidget(
-        value: Value<*>,
-        widgetX: Int,
-        widgetY: Int,
-        widgetWidth: Int
-    ): TextSettingWidget {
-        val typedValue = value as Value<IntRange>
-        return TextSettingWidget(
-            name = value.name,
-            value = typedValue.get().let { "${it.first}..${it.last}" },
-            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth),
-            onValueChanged = { newValue ->
-                try {
-                    value.setByString(newValue)
-                    saveModuleConfiguration()
-                } catch (e: Exception) {
-                    // Could show an error, for now ignore invalid input.
-                }
-            }
-        )
-    }
 
-    @Suppress("UNCHECKED_CAST")
-    private fun createFloatRangeAsTextWidget(
-        value: Value<*>,
-        widgetX: Int,
-        widgetY: Int,
-        widgetWidth: Int
-    ): TextSettingWidget {
-        val typedValue = value as Value<ClosedFloatingPointRange<Float>>
-        return TextSettingWidget(
-            name = value.name,
-            value = typedValue.get().let { "${it.start}..${it.endInclusive}" },
-            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth),
-            onValueChanged = { newValue ->
-                try {
-                    value.setByString(newValue)
-                    saveModuleConfiguration()
-                } catch (e: Exception) {
-                    // Could show an error, for now ignore invalid input.
-                }
-            }
-        )
-    }
-    
     /**
      * Render the popup
      */
@@ -578,7 +532,8 @@ class ModuleSettingsPopup(
         val localMouseY = mouseY + scrollOffset
         if (widget.mouseClicked(mouseX, localMouseY, button)) {
             if (widget is SectionHeaderWidget) {
-                sections[widget.name] = !sections.getOrDefault(widget.name, true)
+                val currentState = AccordionStateManager.isSectionExpanded(module, widget.name, true)
+                AccordionStateManager.setSectionExpanded(module, widget.name, !currentState)
                 initializeSettingWidgets() // Rebuild the widget list
             }
             return true
@@ -599,6 +554,15 @@ class ModuleSettingsPopup(
         if (!isVisible) return false
         
         // Handle scroll dragging first
+        if (handleScrollDragging(mouseY, button)) {
+            return true
+        }
+        
+        // Handle widget dragging
+        return handleWidgetDragging(mouseX, mouseY, button)
+    }
+    
+    private fun handleScrollDragging(mouseY: Double, button: Int): Boolean {
         if (isScrollDragging && button == 0) {
             val deltaY = mouseY - scrollDragStartY
             val scrollSensitivity = 2.0 // How much to scroll per pixel of mouse movement
@@ -616,24 +580,20 @@ class ModuleSettingsPopup(
             scrollDragStartY = mouseY
             return true
         }
-        
+        return false
+    }
+    
+    private fun handleWidgetDragging(mouseX: Double, mouseY: Double, button: Int): Boolean {
         val localMouseY = mouseY + scrollOffset
-        for (widget in settingWidgets) {
+        return settingWidgets.any { widget ->
             when (widget) {
-                is FloatSettingWidget -> {
-                    if (widget.mouseDragged(mouseX, localMouseY, button)) {
-                        return true
-                    }
-                }
-                is IntSettingWidget -> {
-                    if (widget.mouseDragged(mouseX, localMouseY, button)) {
-                        return true
-                    }
-                }
+                is FloatSettingWidget -> widget.mouseDragged(mouseX, localMouseY, button)
+                is IntSettingWidget -> widget.mouseDragged(mouseX, localMouseY, button)
+                is IntRangeSliderWidget -> widget.mouseDragged(mouseX, localMouseY, button)
+                is FloatRangeSliderWidget -> widget.mouseDragged(mouseX, localMouseY, button)
+                else -> false
             }
         }
-        
-        return false
     }
     
     /**
@@ -649,6 +609,8 @@ class ModuleSettingsPopup(
             when (widget) {
                 is FloatSettingWidget -> widget.mouseReleased(mouseX, localMouseY, button)
                 is IntSettingWidget -> widget.mouseReleased(mouseX, localMouseY, button)
+                is IntRangeSliderWidget -> widget.mouseReleased(mouseX, localMouseY, button)
+                is FloatRangeSliderWidget -> widget.mouseReleased(mouseX, localMouseY, button)
             }
         }
         
@@ -692,9 +654,15 @@ class ModuleSettingsPopup(
             return true
         }
         
-        // Handle widget key presses for text input
+        // Handle widget key presses for text input and section headers
         for (widget in settingWidgets) {
             if (widget.keyPressed(keyCode, scanCode, modifiers)) {
+                // If it was a section header that handled the key, toggle it
+                if (widget is SectionHeaderWidget && (keyCode == 32 || keyCode == 257)) {
+                    val currentState = AccordionStateManager.isSectionExpanded(module, widget.name, true)
+                    AccordionStateManager.setSectionExpanded(module, widget.name, !currentState)
+                    initializeSettingWidgets() // Rebuild the widget list
+                }
                 return true
             }
         }
@@ -745,7 +713,7 @@ class ModuleSettingsPopup(
     ): SectionHeaderWidget {
         return SectionHeaderWidget(
             name = value.name,
-            isExpanded = sections.getOrDefault(value.name, true),
+            isExpanded = AccordionStateManager.isSectionExpanded(module, value.name, true),
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT)
         )
     }
@@ -866,6 +834,48 @@ class ModuleSettingsPopup(
                 } catch (e: Exception) {
                     // Could show an error, for now ignore invalid input.
                 }
+            }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createIntRangeSliderWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): IntRangeSliderWidget {
+        val typedValue = value as Value<IntRange>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0, 100)
+        return IntRangeSliderWidget(
+            name = value.name,
+            value = currentValue,
+            config = IntRangeWidgetConfig(x = widgetX, y = widgetY, min = min, max = max, width = widgetWidth),
+            onValueChanged = { newValue ->
+                typedValue.set(newValue)
+                saveModuleConfiguration()
+            }
+        )
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun createFloatRangeSliderWidget(
+        value: Value<*>,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int
+    ): FloatRangeSliderWidget {
+        val typedValue = value as Value<ClosedFloatingPointRange<Float>>
+        val currentValue = typedValue.get()
+        val (min, max) = getRangeForValue(value, 0.0f, 10.0f)
+        return FloatRangeSliderWidget(
+            name = value.name,
+            value = currentValue,
+            config = RangeWidgetConfig(x = widgetX, y = widgetY, min = min, max = max, width = widgetWidth),
+            onValueChanged = { newValue ->
+                typedValue.set(newValue)
+                saveModuleConfiguration()
             }
         )
     }

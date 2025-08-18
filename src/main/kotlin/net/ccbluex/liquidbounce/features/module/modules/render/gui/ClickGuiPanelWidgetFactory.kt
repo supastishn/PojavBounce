@@ -98,7 +98,15 @@ object ClickGuiPanelWidgetFactory {
         expandedSections: Map<String, Boolean>
     ): SettingWidget<*>? {
         return when (value.valueType) {
-            ValueType.BOOLEAN, ValueType.TOGGLEABLE -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.BOOLEAN -> createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
+            ValueType.TOGGLEABLE -> {
+                // ToggleableConfigurable should be treated as toggleable section headers
+                if (value is net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable) {
+                    createToggleableSectionHeaderWidget(value, widgetX, widgetY, widgetWidth, expandedSections, module)
+                } else {
+                    createBooleanWidget(value, widgetX, widgetY, widgetWidth, module)
+                }
+            }
             ValueType.FLOAT -> createFloatWidget(value, widgetX, widgetY, widgetWidth, module)
             ValueType.FLOAT_RANGE -> {
                 if (shouldUseDualSlider(value.name)) {
@@ -551,6 +559,30 @@ object ClickGuiPanelWidgetFactory {
             name = value.name,
             isExpanded = expandedSections.getOrDefault(value.name, true),
             config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT)
+        )
+    }
+
+    private fun createToggleableSectionHeaderWidget(
+        value: net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable,
+        widgetX: Int,
+        widgetY: Int,
+        widgetWidth: Int,
+        expandedSections: Map<String, Boolean>,
+        module: ClientModule
+    ): ToggleableSectionHeaderWidget {
+        return ToggleableSectionHeaderWidget(
+            name = value.name,
+            isEnabled = value.enabled,
+            isExpanded = expandedSections.getOrDefault(value.name, true),
+            config = WidgetConfig(x = widgetX, y = widgetY, width = widgetWidth, height = SETTING_HEIGHT),
+            onToggleChanged = { newEnabled ->
+                value.enabled = newEnabled
+                try {
+                    ConfigSystem.storeConfigurable(module)
+                } catch (e: Exception) {
+                    println("Error saving configuration for module ${module.name}: ${e.message}")
+                }
+            }
         )
     }
 

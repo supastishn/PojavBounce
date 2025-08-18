@@ -487,7 +487,7 @@ class ClickGuiPanel(
         button: Int
     ): Boolean {
         if (widget.mouseClicked(mouseX, mouseY, button)) {
-            if (widget is SectionHeaderWidget) {
+            if (widget is SectionHeaderWidget || widget is ToggleableSectionHeaderWidget) {
                 expandedSettingSections[widget.name] = !expandedSettingSections.getOrDefault(widget.name, true)
                 initializeSettingsWidgets(module)
             }

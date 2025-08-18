@@ -43,6 +43,9 @@ class ClickGuiScreen : Screen(Text.literal("ClickGUI")) {
         // Initialize the config manager
         ClickGuiConfigManager.initialize()
         
+        // Initialize the accordion state manager
+        AccordionStateManager.initialize()
+        
         // Initialize panels for each category
         val modulesByCategory = ModuleManager.getModules().groupBy { it.category }
         var panelIndex = 0

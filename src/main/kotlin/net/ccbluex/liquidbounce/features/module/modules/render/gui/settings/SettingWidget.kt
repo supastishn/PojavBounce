@@ -631,7 +631,7 @@ class FloatRangeSliderWidget(
 }
 
 /**
- * Enum/Choice setting widget
+ * Section header widget for regular Configurable objects
  */
 class SectionHeaderWidget(
     name: String,
@@ -660,7 +660,84 @@ class SectionHeaderWidget(
         return false
     }
 
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean = false
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // Support Space (32) and Enter (257) to toggle the section
+        if (keyCode == 32 || keyCode == 257) {
+            // Return true to indicate the key was handled
+            // The actual toggle logic is handled in ModuleSettingsPopup
+            return true
+        }
+        return false
+    }
+}
+
+/**
+ * Toggleable section header widget for ToggleableConfigurable objects
+ * Shows both the toggle state and expand/collapse functionality
+ */
+class ToggleableSectionHeaderWidget(
+    name: String,
+    var isEnabled: Boolean,
+    val isExpanded: Boolean,
+    config: WidgetConfig,
+    private val onToggleChanged: (Boolean) -> Unit = {}
+) : SettingWidget<Boolean>(name, isExpanded, config.x, config.y, config.width, config.height) {
+
+    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, isHovered: Boolean) {
+        val backgroundColor = if (isHovered) 0xFF3A3A3A.toInt() else 0xFF2A2A2A.toInt()
+        context.fill(x, y, x + width, y + height, backgroundColor)
+        context.drawBorder(x, y, width, height, 0xFF444444.toInt())
+
+        // Arrow for expand/collapse
+        val arrowChar = if (isExpanded) "▾" else "▸"
+        context.drawText(mc.textRenderer, arrowChar, x + 5, y + 7, 0xFFFFFFFF.toInt(), false)
+
+        // Section name with color based on enabled state
+        val textColor = if (isEnabled) 0xFF80BFFF.toInt() else 0xBBBBBB
+        context.drawText(mc.textRenderer, Text.literal(name), x + 15, y + 7, textColor, false)
+
+        // Toggle switch on the right side
+        val switchX = x + width - 40
+        val switchY = y + 2
+        val switchWidth = 35
+        val switchHeight = height - 4
+        
+        val switchColor = if (isEnabled) 0xFF00AA00.toInt() else 0xFF440044.toInt()
+        context.fill(switchX, switchY, switchX + switchWidth, switchY + switchHeight, switchColor)
+        
+        // Switch handle
+        val handleX = if (isEnabled) switchX + switchWidth - 12 else switchX + 2
+        val handleY = switchY + 2
+        val handleSize = switchHeight - 4
+        
+        context.fill(handleX, handleY, handleX + handleSize, handleY + handleSize, 0xFFFFFFFF.toInt())
+    }
+
+    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && isMouseOver(mouseX.toInt(), mouseY.toInt())) {
+            // Check if click is on the toggle switch area (right side)
+            val switchX = x + width - 40
+            if (mouseX >= switchX) {
+                // Toggle the enabled state
+                isEnabled = !isEnabled
+                onToggleChanged(isEnabled)
+            }
+            // Always return true to indicate the widget handled the click
+            // The expand/collapse logic is handled by the parent component
+            return true
+        }
+        return false
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // Support Space (32) and Enter (257) to toggle the section
+        if (keyCode == 32 || keyCode == 257) {
+            // Return true to indicate the key was handled
+            // The actual toggle logic is handled in ModuleSettingsPopup
+            return true
+        }
+        return false
+    }
 }
 
 /**

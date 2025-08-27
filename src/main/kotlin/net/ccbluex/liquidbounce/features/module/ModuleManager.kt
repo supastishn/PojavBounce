@@ -330,6 +330,7 @@ object ModuleManager : EventListener, Iterable<ClientModule> by modules {
             ModuleNoEntityInteract,
             ModuleNoFall,
             ModuleNoRotateSet,
+            ModuleNoSlotSet,
             ModuleReach,
             ModuleAutoQueue,
             ModuleSmartEat,

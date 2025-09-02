@@ -45,6 +45,7 @@ import net.ccbluex.liquidbounce.features.cosmetic.ClientAccountManager
 import net.ccbluex.liquidbounce.features.cosmetic.CosmeticService
 import net.ccbluex.liquidbounce.features.itemgroup.ClientItemGroups
 import net.ccbluex.liquidbounce.features.itemgroup.groups.heads
+import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
 import net.ccbluex.liquidbounce.features.misc.AccountManager
 import net.ccbluex.liquidbounce.features.misc.FriendManager
 import net.ccbluex.liquidbounce.features.misc.proxy.ProxyManager
@@ -230,6 +231,7 @@ object LiquidBounce : EventListener {
         ConfigSystem.root(LanguageManager)
         ConfigSystem.root(ClientAccountManager)
         ConfigSystem.root(SpooferManager)
+        ConfigSystem.root(MarketplaceManager)
         PostRotationExecutor
         ServerObserver
         ItemImageAtlas
@@ -298,7 +300,7 @@ object LiquidBounce : EventListener {
                         ClientAccountManager.clientAccount = ClientAccount.EMPTY_ACCOUNT
                     }.onSuccess {
                         logger.info("Successfully renewed client account token.")
-                        ConfigSystem.storeConfigurable(ClientAccountManager)
+                        ConfigSystem.store(ClientAccountManager)
                     }
                 }
             },
@@ -352,6 +354,19 @@ object LiquidBounce : EventListener {
                     // and we don't want to crash the client if it fails.
                     logger.info("Failed to initialize deep learning.", exception)
                 }
+            }
+
+            launch("Marketplace") { task ->
+                runCatching {
+                    // Preload marketplace items
+                    ConfigSystem.load(MarketplaceManager)
+                    MarketplaceManager.updateAll(task)
+                    ConfigSystem.store(MarketplaceManager)
+                }.onFailure { exception ->
+                    logger.error("Failed to update marketplace items.", exception)
+                }
+
+                task.isCompleted = true
             }
         }
 

@@ -28,6 +28,7 @@ enum class MarketplaceItemType(
     val isListable: Boolean,
     val isSubscribable: Boolean
 ) : NamedChoice {
+    @SerializedName("Config")
     CONFIG("Config", false, false),
     @SerializedName("Script")
     SCRIPT("Script", true, true),

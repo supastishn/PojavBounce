@@ -26,6 +26,7 @@ import net.ccbluex.liquidbounce.features.command.preset.pagedQuery
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.utils.client.*
 import net.minecraft.text.ClickEvent
+import net.minecraft.text.HoverEvent
 import net.minecraft.util.Formatting
 import net.minecraft.util.Util
 
@@ -74,24 +75,29 @@ object CommandClientThemeSubcommand {
                 ThemeManager.themes
             },
             eachRow = { _, theme ->
-                "\u2B25 ".asText()
+                regular("\u2B25 ".asText()
                     .formatted(Formatting.BLUE)
-                    .append(variable(theme.metadata.name).copyable())
+                    .append(variable(theme.metadata.name))
                     .append(regular(" ("))
-                    .append(variable(theme.metadata.id).copyable())
+                    .append(variable(theme.metadata.id))
                     .append(regular(" "))
-                    .append(variable(theme.metadata.version).copyable())
+                    .append(variable(theme.metadata.version))
                     .append(regular(")"))
                     .append(regular(" by "))
                     .append(variable(theme.metadata.authors.joinToString(separator = ", ")).copyable())
                     .append(regular(" from "))
                     .append(variable(theme.origin.choiceName))
-                    .onClick(
-                        ClickEvent(
-                            ClickEvent.Action.SUGGEST_COMMAND,
-                            ".client theme set ${theme.metadata.id}"
-                        )
+                ).onClick(
+                    ClickEvent(
+                        ClickEvent.Action.SUGGEST_COMMAND,
+                        ".client theme set ${theme.metadata.id}"
                     )
+                ).onHover(
+                    HoverEvent(
+                        HoverEvent.Action.SHOW_TEXT,
+                        variable("Click to set theme \"${theme.metadata.name}\".")
+                    )
+                )
             }
         )
 

@@ -54,6 +54,14 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
     private val itemMoveMode by enumChoice("MoveMode", ItemMoveMode.QUICK_MOVE)
     private val quickSwaps by boolean("QuickSwaps", true)
 
+    private val throwAction = ThrowAction.THROW
+//    private val throwAction by enumChoice("ThrowAction", ThrowAction.THROW)
+
+    private enum class ThrowAction(override val choiceName: String) : NamedChoice {
+        THROW("Throw"),
+        PUT_BACK("PutBack"),
+    }
+
     private object CheckScreenHandlerType : ToggleableConfigurable(this, "CheckScreenHandlerType", enabled = true) {
         private val types by registryList(
             "Types",
@@ -65,7 +73,7 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         private val filter by enumChoice("Filter", Filter.WHITELIST)
 
         fun canSteal(screen: HandledScreen<*>): Boolean {
-            return !enabled || filter(screen.screenHandler.type, types)
+            return !enabled || filter(runCatching { screen.screenHandler.type }.getOrNull(), types)
         }
     }
 
@@ -121,6 +129,8 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         tree(FeatureSilentScreen)
     }
 
+    private val mainInventory = Slots.Inventory + Slots.Hotbar
+
     @Suppress("unused")
     private val scheduleInventoryAction = handler<ScheduleInventoryActionEvent> { event ->
         // Check if we are in a chest screen
@@ -136,28 +146,31 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
 
         val stillRequiredSpace = getStillRequiredSpace(cleanupPlan, itemsToCollect.size)
         val sortedItemsToCollect = selectionMode.processor(itemsToCollect)
+        val emptySlots = mainInventory.filterTo(ArrayDeque()) { it.itemStack.isEmpty }
 
         for (slot in sortedItemsToCollect) {
-            if (!hasInventorySpace() && stillRequiredSpace > 0) {
+            val emptySlot = emptySlots.removeFirstOrNull()
+
+            if (emptySlot != null) {
+                val actions = getActionsForMove(screen, from = slot, to = emptySlot)
+
+                event.schedule(
+                    inventoryConstrains, actions,
+                    /**
+                     * we prioritize item based on how important it is
+                     * for example we should prioritize armor over apples
+                     */
+                    ItemCategorization(emptyList()).getItemFacets(slot).maxOf { it.category.type.allocationPriority }
+                )
+            } else if (stillRequiredSpace > 0) {
+                // Throw useless items
                 event.schedule(inventoryConstrains, throwItem(cleanupPlan, screen) ?: break)
             }
-
-            val emptySlot = findEmptyStorageSlotsInInventory().firstOrNull() ?: break
-
-            val actions = getActionsForMove(screen, from = slot, to = emptySlot)
-
-            event.schedule(inventoryConstrains, actions,
-                /**
-                 * we prioritize item based on how important it is
-                 * for example we should prioritize armor over apples
-                 */
-                ItemCategorization(listOf()).getItemFacets(slot).maxOf { it.category.type.allocationPriority }
-            )
         }
 
         // Check if stealing the chest was completed
         if (autoClose && sortedItemsToCollect.isEmpty()) {
-            event.schedule(inventoryConstrains, CloseContainerAction(screen))
+            event.schedule(inventoryConstrains, InventoryAction.CloseScreen(screen))
         }
     }
 
@@ -166,14 +179,14 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
      */
     private fun getActionsForMove(
         screen: HandledScreen<*>,
-        from: ContainerItemSlot,
+        from: ItemSlot,
         to: ItemSlot
-    ): List<ClickInventoryAction> {
+    ): List<InventoryAction.Click> {
         return when (itemMoveMode) {
-            ItemMoveMode.QUICK_MOVE -> listOf(ClickInventoryAction.performQuickMove(screen, from))
+            ItemMoveMode.QUICK_MOVE -> listOf(InventoryAction.Click.performQuickMove(screen, from))
             ItemMoveMode.DRAG_AND_DROP -> listOf(
-                ClickInventoryAction.performPickup(screen, from),
-                ClickInventoryAction.performPickup(screen, to),
+                InventoryAction.Click.performPickup(screen, from),
+                InventoryAction.Click.performPickup(screen, to),
             )
         }
     }
@@ -184,12 +197,19 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
     private fun throwItem(
         cleanupPlan: InventoryCleanupPlan,
         screen: HandledScreen<*>
-    ): InventoryAction? {
+    ): List<InventoryAction>? {
         val itemsInInv = findNonEmptySlotsInInventory()
-        val itemToThrowOut = ModuleInventoryCleaner.findItemsToThrowOut(cleanupPlan, itemsInInv)
+        val itemToThrowOut = cleanupPlan.findItemsToThrowOut(itemsInInv)
             .firstOrNull { it.getIdForServer(screen) != null } ?: return null
 
-        return ClickInventoryAction.performThrow(screen, itemToThrowOut)
+        return when (throwAction) {
+            ThrowAction.PUT_BACK -> {
+                val emptySlot = screen.getSlotsInContainer().firstOrNull { it.itemStack.isEmpty } ?: return null
+                getActionsForMove(screen, from = itemToThrowOut, to = emptySlot)
+            }
+
+            ThrowAction.THROW -> listOf(InventoryAction.Click.performThrow(screen, itemToThrowOut))
+        }
     }
 
     /**
@@ -199,7 +219,7 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         cleanupPlan: InventoryCleanupPlan,
         slotsToCollect: Int,
     ): Int {
-        val freeSlotsInInv = (Slots.Inventory + Slots.Hotbar).count { it.itemStack.isEmpty }
+        val freeSlotsInInv = mainInventory.count { it.itemStack.isEmpty }
 
         val spaceGainedThroughMerge = cleanupPlan.mergeableItems.entries.sumOf { (id, slots) ->
             val slotsInChest = slots.count { it.slotType == ItemSlotType.CONTAINER }
@@ -235,7 +255,7 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
 
             event.schedule(
                 inventoryConstrains,
-                ClickInventoryAction.performSwap(screen, hotbarSwap.from, hotbarSwap.to),
+                InventoryAction.Click.performSwap(screen, hotbarSwap.from, hotbarSwap.to),
                 /**
                  * we prioritize item based on how important it is
                  * for example we should prioritize armor over apples
@@ -262,7 +282,7 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         val cleanupPlan = if (!ModuleInventoryCleaner.running) {
             val usefulItems = screen.findItemsInContainer()
 
-            InventoryCleanupPlan(usefulItems.toMutableSet(), mutableListOf(), hashMapOf())
+            InventoryCleanupPlan(usefulItems.toHashSet(), mutableListOf(), hashMapOf())
         } else {
             val availableItems = findNonEmptySlotsInInventory() + screen.findItemsInContainer()
 
@@ -277,20 +297,7 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         override val choiceName: String,
         val processor: (List<ContainerItemSlot>) -> List<ContainerItemSlot>
     ) : NamedChoice {
-        DISTANCE("Distance", {
-            // TODO: this only works with 9xN types
-            it.sortedBy { slot ->
-                val slotId = slot.slotInContainer
-
-                val rowA = slotId / 9
-                val colA = slotId % 9
-
-                val rowB = InventoryManager.lastClickedSlot / 9
-                val colB = InventoryManager.lastClickedSlot % 9
-
-                (colA - colB) * (colA - colB) + (rowA - rowB) * (rowA - rowB)
-            }
-        }),
+        DISTANCE("Distance", { it.sortedWith(Comparator(ContainerItemSlot::distance)) }),
         INDEX("Index", { list -> list.sortedBy { it.slotInContainer } }),
         RANDOM("Random", List<ContainerItemSlot>::shuffled),
     }

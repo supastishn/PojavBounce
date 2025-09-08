@@ -32,6 +32,7 @@ import net.ccbluex.liquidbounce.features.module.modules.player.cheststealer.feat
 import net.ccbluex.liquidbounce.features.module.modules.player.invcleaner.*
 import net.ccbluex.liquidbounce.utils.collection.Filter
 import net.ccbluex.liquidbounce.utils.inventory.*
+import net.ccbluex.liquidbounce.utils.item.canMerge
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.screen.ScreenHandlerType
@@ -146,13 +147,15 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
 
         val stillRequiredSpace = getStillRequiredSpace(cleanupPlan, itemsToCollect.size)
         val sortedItemsToCollect = selectionMode.processor(itemsToCollect)
-        val emptySlots = mainInventory.filterTo(ArrayDeque()) { it.itemStack.isEmpty }
+
+        val usedTakeTargets = hashSetOf<ItemSlot>()
+        val usedThrowTargets = hashSetOf<ItemSlot>()
 
         for (slot in sortedItemsToCollect) {
-            val emptySlot = emptySlots.removeFirstOrNull()
+            val moveTo = mainInventory.findPossibleTarget(slot, usedTakeTargets)
 
-            if (emptySlot != null) {
-                val actions = getActionsForMove(screen, from = slot, to = emptySlot)
+            if (moveTo != null) {
+                val actions = getActionsForMove(screen, from = slot, to = moveTo)
 
                 event.schedule(
                     inventoryConstrains, actions,
@@ -164,13 +167,31 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
                 )
             } else if (stillRequiredSpace > 0) {
                 // Throw useless items
-                event.schedule(inventoryConstrains, throwItem(cleanupPlan, screen) ?: break)
+                event.schedule(
+                    inventoryConstrains,
+                    throwItem(cleanupPlan, screen, usedThrowTargets) ?: break
+                )
             }
         }
 
         // Check if stealing the chest was completed
         if (autoClose && sortedItemsToCollect.isEmpty()) {
             event.schedule(inventoryConstrains, InventoryAction.CloseScreen(screen))
+        }
+    }
+
+    /**
+     * Find first mergeable or empty slots
+     */
+    private fun Iterable<ItemSlot>.findPossibleTarget(
+        from: ItemSlot,
+        usedTargets: MutableSet<ItemSlot>? = null,
+    ): ItemSlot? {
+        val fromStack = from.itemStack
+        // TODO: Multi target pickup (e.g. from = 64, inventory has 32, 32)
+        return firstOrNull {
+            (usedTargets == null || it !in usedTargets) &&
+                (it.itemStack.isEmpty || it.itemStack.canMerge(fromStack))
         }
     }
 
@@ -196,7 +217,8 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
      */
     private fun throwItem(
         cleanupPlan: InventoryCleanupPlan,
-        screen: HandledScreen<*>
+        screen: HandledScreen<*>,
+        putBackUsedSlots: MutableSet<ItemSlot>,
     ): List<InventoryAction>? {
         val itemsInInv = findNonEmptySlotsInInventory()
         val itemToThrowOut = cleanupPlan.findItemsToThrowOut(itemsInInv)
@@ -204,7 +226,9 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
 
         return when (throwAction) {
             ThrowAction.PUT_BACK -> {
-                val emptySlot = screen.getSlotsInContainer().firstOrNull { it.itemStack.isEmpty } ?: return null
+                val emptySlot = screen.getSlotsInContainer().findPossibleTarget(
+                    itemToThrowOut, putBackUsedSlots
+                ) ?: return null
                 getActionsForMove(screen, from = itemToThrowOut, to = emptySlot)
             }
 

@@ -29,7 +29,6 @@ import net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinInGameHudAcc
 import net.ccbluex.liquidbounce.render.ItemStackListRenderer.Companion.drawItemStackList
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager
-import net.ccbluex.liquidbounce.utils.item.getCooldown
 import net.ccbluex.liquidbounce.utils.math.toFixed
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderLayer

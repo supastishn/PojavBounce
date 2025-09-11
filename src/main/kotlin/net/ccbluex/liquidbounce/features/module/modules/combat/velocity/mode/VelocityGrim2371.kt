@@ -84,13 +84,18 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
             is PlayerInteractEntityC2SPacket, is PlayerInteractBlockC2SPacket ->
                 shouldSkip = true
 
-            is PlayerMoveC2SPacket if packet.changesPosition() && waitForUpdate ->
-                event.cancelEvent()
+            is PlayerMoveC2SPacket -> {
+                if (packet.changesPosition() && waitForUpdate) {
+                    event.cancelEvent()
+                }
+            }
 
-            is CommonPongC2SPacket if waitForPing -> {
-                waitTicks(1)
-                waitForUpdate = false
-                waitForPing = false
+            is CommonPongC2SPacket -> {
+                if (waitForPing) {
+                    waitTicks(1)
+                    waitForUpdate = false
+                    waitForPing = false
+                }
             }
         }
 

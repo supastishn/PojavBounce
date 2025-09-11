@@ -19,6 +19,7 @@
 
 package net.ccbluex.liquidbounce.features.module.modules.player
 
+import net.ccbluex.liquidbounce.config.types.ValueType
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.utils.collection.Filter
@@ -45,7 +46,7 @@ object ModuleNoEntityInteract : ClientModule("NoEntityInteract", Category.PLAYER
     }
 
     private val entityTypeFilter by enumChoice("EntityTypeFilter", Filter.BLACKLIST)
-    private val entityTypes by entityTypes("EntityTypes", defaultEntityTypes())
+    private val entityTypes by registryList("EntityTypes", defaultEntityTypes(), ValueType.ENTITY_TYPE)
 
     private val holdingItemFilter by enumChoice("HoldingItemFilter", Filter.WHITELIST)
     private val holdingItems by items("HoldingItems", defaultHoldingItems())

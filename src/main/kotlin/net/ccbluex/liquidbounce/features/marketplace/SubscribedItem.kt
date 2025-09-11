@@ -11,7 +11,8 @@ import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.integration.task.type.ResourceTask
 import net.ccbluex.liquidbounce.mcef.listeners.OkHttpProgressInterceptor
 import net.ccbluex.liquidbounce.utils.io.extractZip
-import net.ccbluex.liquidbounce.utils.kotlin.MinecraftDispatcher
+import net.ccbluex.liquidbounce.utils.client.mc
+import kotlinx.coroutines.asCoroutineDispatcher
 import java.io.File
 
 data class SubscribedItem(val name: String, val id: Int, val type: MarketplaceItemType, var installedRevisionId: Int?) {
@@ -119,12 +120,12 @@ data class SubscribedItem(val name: String, val id: Int, val type: MarketplaceIt
                 }
             }
 
-            download(revisionUrl, revisionArchiveFile, progressListener = taskProgressUpdater)
+            download(revisionUrl, revisionArchiveFile)
             // TODO: Check checksum
             extractZip(revisionArchiveFile, revisionDir)
 
             installedRevisionId = revisionId
-            ConfigSystem.store(MarketplaceManager)
+            ConfigSystem.storeConfigurable(MarketplaceManager)
         } catch (exception: Exception) {
             if (revisionDir.exists()) {
                 revisionDir.deleteRecursively()
@@ -142,7 +143,7 @@ data class SubscribedItem(val name: String, val id: Int, val type: MarketplaceIt
         }
 
         // Reload the item type's manager on the render thread.
-        withContext(MinecraftDispatcher) {
+        withContext(mc.asCoroutineDispatcher()) {
             type.reload()
         }
     }

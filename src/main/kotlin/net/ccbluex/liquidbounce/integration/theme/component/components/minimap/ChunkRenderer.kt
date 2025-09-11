@@ -23,8 +23,7 @@ package net.ccbluex.liquidbounce.integration.theme.component.components.minimap
 import net.ccbluex.liquidbounce.utils.block.ChunkScanner
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.ccbluex.liquidbounce.utils.math.dotProduct
-import net.ccbluex.liquidbounce.utils.math.similarity
+import net.ccbluex.liquidbounce.utils.math.Vec2i
 import net.minecraft.block.BlockState
 import net.minecraft.block.MapColor.Brightness
 import net.minecraft.util.math.BlockPos
@@ -42,8 +41,12 @@ object ChunkRenderer {
     private val textureAtlasManager = MinimapTextureAtlasManager()
     private val heightmapManager = MinimapHeightmapManager()
 
-    val SUN_DIRECTION = Vector2i(2, 1)
+    val SUN_DIRECTION = Vec2i(2, 1)
 
+    // Helper extension functions for Vector2i compatibility with Vec2i
+    private fun Vector2i.toVec2i() = Vec2i(x, y)
+    private fun Vector2i.dotProductWith(x: Int, z: Int): Int = this.x * x + this.y * z
+    
     fun unloadEverything() {
         heightmapManager.unloadAllChunks()
         textureAtlasManager.deallocateAll()
@@ -124,8 +127,9 @@ object ChunkRenderer {
                     } else if (higherOffsetVec.x == 0 && higherOffsetVec.y == 0) {
                         130.0 / 255.0
                     } else {
-                        val similarityToSunDirection = higherOffsetVec.similarity(SUN_DIRECTION)
-                        val eee = higherOffsetVec.dotProduct(x, z).toDouble() / higherOffsetVec.length()
+                        val higherVec2i = higherOffsetVec.toVec2i()
+                        val similarityToSunDirection = higherVec2i.similarity(SUN_DIRECTION)
+                        val eee = higherOffsetVec.dotProductWith(x, z).toDouble() / higherOffsetVec.length()
                         val sine = sin(eee * 0.5 * PI)
 
                         (190.0 + (similarityToSunDirection * 55.0) + sine * 10.0) / 255.0
@@ -153,10 +157,9 @@ object ChunkRenderer {
             }
         }
 
-        override fun chunkUpdate(chunk: WorldChunk) {
-            val chunkPos = chunk.pos
-            val x = chunkPos.x
-            val z = chunkPos.z
+        override fun chunkUpdate(x: Int, z: Int) {
+            val chunkPos = ChunkPos(x, z)
+            val chunk = mc.world?.getChunk(chunkPos) ?: return
 
             val chunkBordersToUpdate =
                 arrayOf(
@@ -195,9 +198,14 @@ object ChunkRenderer {
             }
         }
 
-        override fun clearChunk(pos: ChunkPos) {
+        override fun clearChunk(x: Int, z: Int) {
+            val pos = ChunkPos(x, z)
             heightmapManager.unloadChunk(pos)
             textureAtlasManager.deallocate(pos)
+        }
+
+        override fun clearAllChunks() {
+            unloadEverything()
         }
 
         override fun clearAllChunks() {

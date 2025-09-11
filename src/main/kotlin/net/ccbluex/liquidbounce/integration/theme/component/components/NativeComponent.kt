@@ -26,6 +26,5 @@ import net.ccbluex.liquidbounce.utils.render.Alignment
 abstract class NativeComponent(
     name: String,
     enabled: Boolean,
-    alignment: Alignment,
-    tweaks: Array<ComponentTweak> = emptyArray()
-) : Component(name, enabled, alignment, tweaks)
+    alignment: Alignment
+) : Component(name, enabled, alignment)

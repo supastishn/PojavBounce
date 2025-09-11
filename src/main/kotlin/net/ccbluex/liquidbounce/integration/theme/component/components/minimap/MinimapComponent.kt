@@ -70,12 +70,12 @@ object MinimapComponent : NativeComponent("Minimap", false, Alignment(
         registerComponentListen(this)
     }
 
-    override fun onEnabled() {
+    fun onEnabled() {
         RenderedEntities.subscribe(this)
         ChunkScanner.subscribe(ChunkRenderer.MinimapChunkUpdateSubscriber)
     }
 
-    override fun onDisabled() {
+    fun onDisabled() {
         RenderedEntities.unsubscribe(this)
         ChunkScanner.unsubscribe(ChunkRenderer.MinimapChunkUpdateSubscriber)
         ChunkRenderer.unloadEverything()

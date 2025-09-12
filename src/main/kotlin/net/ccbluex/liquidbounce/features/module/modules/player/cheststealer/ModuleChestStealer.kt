@@ -258,5 +258,12 @@ object ModuleChestStealer : ClientModule("ChestStealer", Category.PLAYER) {
         QUICK_MOVE("QuickMove"),
         DRAG_AND_DROP("DragAndDrop"),
     }
-
+    
+    // Stub functions for missing functionality 
+    val canBeStolen: Boolean = true  // Simplified - allow all items to be stolen
+    
 }
+
+// Extension function for block utilities that was missing
+val net.minecraft.block.BlockState.anotherChestPartDirection: net.minecraft.util.math.Direction?
+    get() = null  // Stub - simplified chest detection

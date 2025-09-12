@@ -66,7 +66,7 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
     }
 
     override fun disable() {
-        PacketQueueManager.flush(TransferOrigin.INCOMING)
+        PacketQueueManager.flush { snapshot -> snapshot.origin == TransferOrigin.INCOMING }
     }
 
     private val Packet<*>.isSelfDamage
@@ -148,7 +148,7 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
         if (hitResult != null) {
             delay = false
 
-            PacketQueueManager.flush(TransferOrigin.INCOMING)
+            PacketQueueManager.flush { snapshot -> snapshot.origin == TransferOrigin.INCOMING }
 
             if (interaction.interactBlock(player, Hand.MAIN_HAND, hitResult).isAccepted) {
                 player.swingHand(Hand.MAIN_HAND)

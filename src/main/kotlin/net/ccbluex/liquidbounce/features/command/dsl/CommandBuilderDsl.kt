@@ -40,37 +40,4 @@ inline fun commandFactory(
     }
 }
 
-context(context: Command.Handler.Context)
-fun <T : Any> Parameter<T>.cast(): T {
-    requireOwner(context.command)
-    @Suppress("UNCHECKED_CAST")
-    return context.args.getOrNull(index) as T?
-        ?: requireNotNull(this.default) { "Parameter '$name' has no default value." }
-}
-
-context(context: Command.Handler.Context)
-fun <T : Any> Parameter<T>.castVararg(): Array<out T> {
-    requireOwner(context.command)
-    @Suppress("UNCHECKED_CAST")
-    return context.args[index] as Array<T>
-}
-
-context(context: Command.Handler.Context)
-fun <T : Any> Parameter<T>.castNotRequired(): T? {
-    requireOwner(context.command)
-    @Suppress("UNCHECKED_CAST")
-    return context.args.getOrNull(index) as T?
-}
-
-context(context: Command.Handler.Context)
-fun <T : Any> Parameter<T>.castNotRequired(default: T): T {
-    requireOwner(context.command)
-    @Suppress("UNCHECKED_CAST")
-    return context.args.getOrNull(index) as T? ?: default
-}
-
-private fun Parameter<*>.requireOwner(command: Command) {
-    require(command.parameters[index] === this && command === this.command) {
-        "Parameter is not part of command '${command.name}'"
-    }
-}
+// Context receiver functions removed - using parameter casting via command context instead

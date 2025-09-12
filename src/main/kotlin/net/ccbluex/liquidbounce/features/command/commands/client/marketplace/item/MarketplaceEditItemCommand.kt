@@ -1,4 +1,3 @@
-
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
@@ -20,55 +19,51 @@
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace.item
 
 import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemType
-import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
+import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
-import net.ccbluex.liquidbounce.features.command.CommandException
-import net.ccbluex.liquidbounce.features.command.builder.enumChoice
-import net.ccbluex.liquidbounce.features.command.CommandException
-import net.ccbluex.liquidbounce.features.command.dsl.addParam
-import net.ccbluex.liquidbounce.features.command.dsl.cast
-import net.ccbluex.liquidbounce.features.command.dsl.castVararg
-import net.ccbluex.liquidbounce.features.command.preset.accountOrException
-import net.ccbluex.liquidbounce.features.cosmetic.ClientAccountManager
-import net.ccbluex.liquidbounce.utils.client.chat
+import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
+import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
 import net.ccbluex.liquidbounce.utils.client.regular
-import net.ccbluex.liquidbounce.utils.client.variable
 
 /**
  * Edit marketplace item
  */
-fun marketplaceEditItemCommand() = buildCommand("edit") {
-
-    val id = addParam("id") {
-        verifiedBy(ParameterBuilder.INTEGER_VALIDATOR)
+fun marketplaceEditItemCommand() = CommandBuilder
+    .begin("edit")
+    .parameter(
+        ParameterBuilder
+            .begin<Int>("id")
+            .verifiedBy(ParameterBuilder.INTEGER_VALIDATOR)
             .required()
-    }
-
-    val name = addParam("name") {
-        verifiedBy(ParameterBuilder.STRING_VALIDATOR)
+            .build()
+    )
+    .parameter(
+        ParameterBuilder
+            .begin<String>("name")
+            .verifiedBy(ParameterBuilder.STRING_VALIDATOR)
             .required()
-    }
-
-    val type = addParam {
-        enumChoice<MarketplaceItemType>("type") { it.isListable }
+            .build()
+    )
+    .parameter(
+        ParameterBuilder.Companion.enumChoice<MarketplaceItemType>("type")
             .required()
-    }
-
-    val description = addParam("description") {
-        verifiedBy(ParameterBuilder.STRING_VALIDATOR)
-            .required()
+            .build()
+    )
+    .parameter(
+        ParameterBuilder
+            .begin<String>("description")
+            .verifiedBy(ParameterBuilder.STRING_VALIDATOR)
             .vararg()
-    }
-
-    this.suspendHandler { command, args ->
-        val clientAccount = ClientAccountManager.accountOrException()
-
-        val id = id.cast()
-        val name = name.cast()
-        val type = type.cast()
-        val description = description.castVararg().joinToString(" ")
-
+            .required()
+            .build()
+    )
+    .suspendHandler { command, args ->
+        val id = args[0] as Int
+        val name = args[1] as String
+        val type = args[2] as MarketplaceItemType
+        val description = (args[3] as Array<String>).joinToString(" ")
+        
         // Stubbed for native GUI - marketplace operations handled through web interface
         throw CommandException(regular("Marketplace item editing requires web interface access"))
     }
-
+    .build()

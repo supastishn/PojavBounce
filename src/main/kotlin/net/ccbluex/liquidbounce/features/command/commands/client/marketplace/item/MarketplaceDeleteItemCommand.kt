@@ -1,4 +1,3 @@
-
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
@@ -19,31 +18,28 @@
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace.item
 
-import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.CommandException
-import net.ccbluex.liquidbounce.features.command.dsl.addParam
-import net.ccbluex.liquidbounce.features.command.dsl.cast
-import net.ccbluex.liquidbounce.features.command.preset.accountOrException
-import net.ccbluex.liquidbounce.features.cosmetic.ClientAccountManager
-import net.ccbluex.liquidbounce.utils.client.chat
+import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
+import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
 import net.ccbluex.liquidbounce.utils.client.regular
-import net.ccbluex.liquidbounce.utils.client.variable
 
 /**
  * Delete marketplace item
  */
-fun marketplaceDeleteItemCommand() = buildCommand("delete") {
-
-    val id = addParam("id") {
-        verifiedBy(ParameterBuilder.INTEGER_VALIDATOR)
-        required()
-    }
-
-    this.suspendHandler { command, args ->
-        val clientAccount = ClientAccountManager.accountOrException()
-
-        val id = id.cast()
+fun marketplaceDeleteItemCommand() = CommandBuilder
+    .begin("delete")
+    .parameter(
+        ParameterBuilder
+            .begin<Int>("id")
+            .verifiedBy(ParameterBuilder.INTEGER_VALIDATOR)
+            .required()
+            .build()
+    )
+    .suspendHandler { command, args ->
+        val id = args[0] as Int
+        
         // Stubbed for native GUI - marketplace operations handled through web interface  
         throw CommandException(regular("Marketplace item deletion requires web interface access"))
     }
+    .build()

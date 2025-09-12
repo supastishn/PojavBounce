@@ -288,7 +288,7 @@ public abstract class MixinGameRenderer {
 
     @ModifyArgs(
             method = "getBasicProjectionMatrix",
-            at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;perspective(FFFF)Lorg/joml/Matrix4f;")
+            at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;perspective(FFFF)Lorg/joml/Matrix4f;", remap = false)
     )
     private void hookBasicProjectionMatrix(Args args) {
         if (ModuleAspect.INSTANCE.getRunning()) {

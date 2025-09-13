@@ -20,13 +20,16 @@
  */
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.features
-import net.ccbluex.liquidbounce.integration.interop.*
 
 import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.config.gson.util.emptyJsonObject
+import io.netty.handler.codec.http.FullHttpResponse
 import net.ccbluex.liquidbounce.features.item.inventoryAsCompound
 import net.ccbluex.liquidbounce.features.itemgroup.ClientItemGroups
 import net.ccbluex.liquidbounce.utils.client.*
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
 import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
@@ -85,7 +88,7 @@ fun postGiveItem(requestObject: RequestObject): FullHttpResponse {
         }
     }
 
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 private fun giveItem(compound: NbtCompound): FullHttpResponse? {
@@ -127,7 +130,7 @@ fun postStoreItem(requestObject: RequestObject): FullHttpResponse {
         val compoundList = inventory.inventoryAsCompound(screenHandler.title)
         compoundList.forEach(ClientItemGroups::storeAsContainerItem)
 
-        httpOk(emptyJsonObject())
+        httpNoContent()
     } else {
         httpForbidden("Not a container")
     }

@@ -43,6 +43,11 @@ class ItemStackListRenderer private constructor(
     private val drawContext: DrawContext,
     private val stacks: List<ItemStack>,
 ) {
+<<<<<<< HEAD
+=======
+    private var title = ""
+    private var titleColor: Int = 0xffffffff.toInt()
+>>>>>>> upstream/nextgen
     private var centerX = 0.0F
     private var centerY = 0.0F
     private var centerZ = 0.0F
@@ -53,6 +58,15 @@ class ItemStackListRenderer private constructor(
     private var useTexture = false
     private var drawStackOverlay = true
 
+<<<<<<< HEAD
+=======
+    @JvmOverloads
+    fun title(title: String, color: Int = this.titleColor) = apply {
+        this.title = title
+        this.titleColor = color
+    }
+
+>>>>>>> upstream/nextgen
     fun centerX(centerX: Float) = apply {
         this.centerX = centerX
     }
@@ -132,8 +146,20 @@ class ItemStackListRenderer private constructor(
 
         val matrices = drawContext.matrices
 
+<<<<<<< HEAD
         val width = size * minOf(stacks.size, rowLength)
         val height = size * (stacks.size / rowLength + if (stacks.size % rowLength != 0) 1 else 0)
+=======
+        var width = size * minOf(stacks.size, rowLength)
+        var height = size * (stacks.size / rowLength + if (stacks.size % rowLength != 0) 1 else 0)
+
+        val textRenderer = mc.textRenderer
+
+        if (title.isNotEmpty()) {
+            width = maxOf(width, textRenderer.getWidth(title))
+            height += textRenderer.fontHeight + 2
+        }
+>>>>>>> upstream/nextgen
 
         matrices.push()
 
@@ -145,6 +171,14 @@ class ItemStackListRenderer private constructor(
             fillBackground(width, height)
         }
 
+<<<<<<< HEAD
+=======
+        if (title.isNotEmpty()) {
+            drawContext.drawCenteredTextWithShadow(textRenderer, title, width / 2, 0, titleColor)
+            matrices.translate(0F, textRenderer.fontHeight + 2F, 0F)
+        }
+
+>>>>>>> upstream/nextgen
         // render stacks
         for ((i, stack) in stacks.withIndex()) {
             val leftX = i % rowLength * size
@@ -159,7 +193,11 @@ class ItemStackListRenderer private constructor(
 
             drawContext.drawItem(stack, leftX + diff, topY + diff)
             if (drawStackOverlay) {
+<<<<<<< HEAD
                 drawContext.drawStackOverlay(mc.textRenderer, stack, leftX + diff, topY + diff, null)
+=======
+                drawContext.drawStackOverlay(textRenderer, stack, leftX + diff, topY + diff, null)
+>>>>>>> upstream/nextgen
             }
         }
 

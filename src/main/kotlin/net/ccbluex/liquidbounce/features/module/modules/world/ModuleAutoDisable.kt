@@ -18,7 +18,13 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.world
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.config.types.NamedChoice
+=======
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.config.types.ValueType
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.event.events.DeathEvent
 import net.ccbluex.liquidbounce.event.events.NotificationEvent
 import net.ccbluex.liquidbounce.event.events.PacketEvent
@@ -42,7 +48,15 @@ import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket
  */
 object ModuleAutoDisable : ClientModule("AutoDisable", Category.WORLD) {
 
+<<<<<<< HEAD
     val listOfModules = arrayListOf(ModuleFly, ModuleSpeed, ModuleNoClip, ModuleKillAura)
+=======
+    val modules: MutableSet<ClientModule> by registryList(
+        "Modules",
+        ReferenceOpenHashSet.of(ModuleFly, ModuleSpeed, ModuleNoClip, ModuleKillAura),
+        ValueType.CLIENT_MODULE
+    )
+>>>>>>> upstream/nextgen
     private val disableOn by multiEnumChoice<DisableOn>("On")
 
     @Suppress("unused")
@@ -58,6 +72,7 @@ object ModuleAutoDisable : ClientModule("AutoDisable", Category.WORLD) {
     }
 
     private fun disableAndNotify(reason: String) {
+<<<<<<< HEAD
         val modules = listOfModules.filter {
             module -> module.running
         }
@@ -66,6 +81,18 @@ object ModuleAutoDisable : ClientModule("AutoDisable", Category.WORLD) {
             for (module in modules) {
                 module.enabled = false
             }
+=======
+        val anyDisabled = modules.any { module ->
+            if (module.enabled) {
+                module.enabled = false
+                true
+            } else {
+                false
+            }
+        }
+
+        if (anyDisabled) {
+>>>>>>> upstream/nextgen
             notification("Notifier", "Disabled modules due to $reason", NotificationEvent.Severity.INFO)
         }
     }

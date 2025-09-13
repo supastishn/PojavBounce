@@ -1,6 +1,10 @@
 package net.ccbluex.liquidbounce.render.engine.font
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.math.Vec2i
+=======
+import org.joml.Vector2i
+>>>>>>> upstream/nextgen
 import java.awt.Dimension
 import java.awt.Point
 
@@ -124,7 +128,11 @@ class DynamicAtlasAllocator(
      * The slice at index 0 is the slice with the given dimension
      */
     private fun tryCutSlice(slice: AtlasSlice, dimension: Dimension): List<AtlasSlice>? {
+<<<<<<< HEAD
         val brotherSlice = Vec2i(slice.width - dimension.width, slice.height - dimension.height)
+=======
+        val brotherSlice = Vector2i(slice.width - dimension.width, slice.height - dimension.height)
+>>>>>>> upstream/nextgen
 
         // All four slices are big enough
         when {

@@ -29,6 +29,7 @@ import net.minecraft.util.math.Vec3d
 import org.joml.Quaternionf
 
 // pixels / (16 + 16)
+<<<<<<< HEAD
 val LIMB = Box(0.0, 0.0, 0.0, 0.125, 0.375, 0.125)
 val BODY = Box(0.0, 0.0, 0.0, 0.25, 0.375, 0.125)
 val HEAD = Box(0.0, 0.0, 0.0, 0.25, 0.25, 0.25)
@@ -41,6 +42,20 @@ val RENDER_RIGHT_ARM: Box = LIMB.offset(BODY.maxX - LIMB.maxX, LIMB.maxY, 0.0)
 val RENDER_HEAD: Box = HEAD.offset(-LIMB.maxX, LIMB.maxY * 2, -HEAD.maxZ * 0.25)
 
 data class WireframePlayer(var pos: Vec3d, var yaw: Float, var pitch: Float) {
+=======
+private val LIMB = Box(0.0, 0.0, 0.0, 0.125, 0.375, 0.125)
+private val BODY = Box(0.0, 0.0, 0.0, 0.25, 0.375, 0.125)
+private val HEAD = Box(0.0, 0.0, 0.0, 0.25, 0.25, 0.25)
+
+private val RENDER_LEFT_LEG: Box = LIMB.offset(-LIMB.maxX, 0.0, 0.0)
+private val RENDER_RIGHT_LEG: Box = LIMB
+private val RENDER_BODY: Box = BODY.offset(-LIMB.maxX, LIMB.maxY, 0.0)
+private val RENDER_LEFT_ARM: Box = LIMB.offset(-2 * LIMB.maxX, LIMB.maxY, 0.0)
+private val RENDER_RIGHT_ARM: Box = LIMB.offset(BODY.maxX - LIMB.maxX, LIMB.maxY, 0.0)
+private val RENDER_HEAD: Box = HEAD.offset(-LIMB.maxX, LIMB.maxY * 2, -HEAD.maxZ * 0.25)
+
+data class WireframePlayer(private var pos: Vec3d, private var yaw: Float, private var pitch: Float) {
+>>>>>>> upstream/nextgen
 
     fun render(event: WorldRenderEvent, color: Color4b, outlineColor: Color4b) {
         renderEnvironmentForWorld(event.matrixStack) {

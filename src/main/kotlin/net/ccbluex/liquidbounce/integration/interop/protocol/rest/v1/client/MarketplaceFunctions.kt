@@ -20,68 +20,159 @@
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
 import com.google.gson.JsonObject
+import kotlinx.coroutines.runBlocking
+import net.ccbluex.liquidbounce.api.models.auth.ClientAccount.Companion.EMPTY_ACCOUNT
+import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemStatus
+import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemType
+import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
+import net.ccbluex.liquidbounce.config.gson.interopGson
+import net.ccbluex.liquidbounce.features.cosmetic.ClientAccountManager
+import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
+import net.ccbluex.liquidbounce.utils.client.logger
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpOk
 
 /**
- * Stubbed marketplace REST API functions for native GUI approach
- * 
- * These functions provide no-op implementations since the native GUI
- * does not require web server integration for marketplace operations.
+ * GET /api/v1/marketplace
+ *
+ * Lists marketplace items with optional filtering
  */
+fun getMarketplaceItems(requestObject: RequestObject) = runBlocking {
+    val page = requestObject.queryParams.getOrDefault("page", "1").toInt()
+    val limit = requestObject.queryParams.getOrDefault("limit", "12").toInt()
+    val query = requestObject.queryParams["query"]
+    val typeStr = requestObject.queryParams["type"]
+    val type = typeStr?.let { MarketplaceItemType.valueOf(it.uppercase()) }
+    val featured = requestObject.queryParams["featured"]?.toBoolean() ?: true
 
-// Stub for RequestObject that doesn't exist in native approach
-data class RequestObject(
-    val queryParams: Map<String, String> = emptyMap(),
-    val params: Map<String, String> = emptyMap()
-)
+    val response = MarketplaceApi.getMarketplaceItems(page, limit, query, type, featured)
 
-// Stub HTTP response functions
-fun httpOk(data: Any): String = "OK"
-fun httpForbidden(message: String): String = "Forbidden: $message"
+    val items = response.items.map { item ->
+        JsonObject().apply {
+            add("item", interopGson.toJsonTree(item))
+            addProperty("isSubscribed", MarketplaceManager.isSubscribed(item.id))
+        }
+    }
 
-/**
- * GET /api/v1/marketplace - Stubbed for native GUI
- */
-fun getMarketplaceItems(requestObject: RequestObject): String {
-    // Stubbed - marketplace operations handled through native GUI
-    return httpOk("Marketplace integration requires web interface")
+    JsonObject().apply {
+        add("items", interopGson.toJsonTree(items))
+        add("pagination", interopGson.toJsonTree(response.pagination))
+    }.let { httpOk(it) }
 }
 
 /**
- * POST /api/v1/marketplace/subscriptions - Stubbed for native GUI
+ * GET /api/v1/marketplace/:id
  */
-fun postMarketplaceSubscription(requestObject: RequestObject): String {
-    // Stubbed - subscription operations handled through native GUI
-    return httpOk("Subscription operations require web interface")
+fun getMarketplaceItem(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+
+    val item = MarketplaceApi.getMarketplaceItem(id)
+    JsonObject().apply {
+        add("item", interopGson.toJsonTree(item))
+        addProperty("isSubscribed", MarketplaceManager.isSubscribed(id))
+        addProperty("hasUpdate", false) // TODO: Implement version check
+    }.let { httpOk(it) }
 }
 
 /**
- * DELETE /api/v1/marketplace/subscriptions/:id - Stubbed for native GUI
+ * GET /api/v1/marketplace/:id/revisions
  */
-fun deleteMarketplaceSubscription(requestObject: RequestObject): String {
-    // Stubbed - subscription operations handled through native GUI
-    return httpOk("Subscription operations require web interface")
+fun getMarketplaceItemRevisions(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+    val page = requestObject.queryParams.getOrDefault("page", "1").toInt()
+    val limit = requestObject.queryParams.getOrDefault("limit", "10").toInt()
+
+    val response = MarketplaceApi.getMarketplaceItemRevisions(id, page, limit)
+    httpOk(interopGson.toJsonTree(response))
 }
 
 /**
- * POST /api/v1/marketplace/items - Stubbed for native GUI
+ * GET /api/v1/marketplace/:id/revisions/:revisionId
  */
-fun postMarketplaceItem(requestObject: RequestObject): String {
-    // Stubbed - item creation handled through native GUI
-    return httpOk("Item creation requires web interface")
+fun getMarketplaceItemRevision(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+    val revisionId = requestObject.params["revisionId"]?.toIntOrNull()
+        ?: return@runBlocking httpForbidden("Invalid revision ID")
+
+    val response = MarketplaceApi.getMarketplaceItemRevision(id, revisionId)
+    httpOk(interopGson.toJsonTree(response))
 }
 
 /**
- * GET /api/v1/marketplace/items/:id - Stubbed for native GUI
+ * POST /api/v1/marketplace/:id/subscribe
  */
-fun getMarketplaceItem(requestObject: RequestObject): String {
-    // Stubbed - item details handled through native GUI
-    return httpOk("Item details require web interface")
+fun subscribeMarketplaceItem(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+
+    try {
+        if (MarketplaceManager.isSubscribed(id)) {
+            return@runBlocking httpForbidden("Already subscribed")
+        }
+
+        // Verify item exists and is active
+        val item = MarketplaceApi.getMarketplaceItem(id)
+        if (item.status != MarketplaceItemStatus.ACTIVE) {
+            return@runBlocking httpForbidden("Item is not active")
+        }
+
+        MarketplaceManager.subscribe(item)
+        httpOk(interopGson.toJsonTree(item))
+    } catch (e: Exception) {
+        logger.error("Failed to subscribe to marketplace item", e)
+        httpForbidden("Failed to subscribe: ${e.message}")
+    }
 }
 
 /**
- * DELETE /api/v1/marketplace/items/:id - Stubbed for native GUI
+ * POST /api/v1/marketplace/:id/unsubscribe
  */
-fun deleteMarketplaceItem(requestObject: RequestObject): String {
-    // Stubbed - item deletion handled through native GUI
-    return httpOk("Item deletion requires web interface")
+fun unsubscribeMarketplaceItem(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+
+    try {
+        if (!MarketplaceManager.isSubscribed(id)) {
+            return@runBlocking httpForbidden("Not subscribed")
+        }
+
+        MarketplaceManager.unsubscribe(id)
+        httpOk(interopGson.toJsonTree(requestObject))
+    } catch (e: Exception) {
+        logger.error("Failed to unsubscribe from marketplace item", e)
+        httpForbidden("Failed to unsubscribe: ${e.message}")
+    }
+}
+
+/**
+ * GET /api/v1/marketplace/:id/reviews
+ */
+fun getMarketplaceItemReviews(requestObject: RequestObject) = runBlocking {
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+    val page = requestObject.queryParams.getOrDefault("page", "1").toInt()
+    val limit = requestObject.queryParams.getOrDefault("limit", "10").toInt()
+
+    val response = MarketplaceApi.getReviews(id, page, limit)
+    httpOk(interopGson.toJsonTree(response))
+}
+
+/**
+ * POST /api/v1/marketplace/:id/reviews
+ */
+fun postMarketplaceItemReview(requestObject: RequestObject) = runBlocking {
+    data class MarketplaceReview(
+        val rating: Int,
+        val comment: String
+    )
+
+    val id = requestObject.params["id"]?.toIntOrNull() ?: return@runBlocking httpForbidden("Invalid ID")
+    val review = requestObject.body.let { interopGson.fromJson(it, MarketplaceReview::class.java) }
+        ?: return@runBlocking httpForbidden("Invalid review data")
+
+    val clientAccount = ClientAccountManager.clientAccount
+    if (clientAccount == EMPTY_ACCOUNT) {
+        return@runBlocking httpForbidden("Not logged in")
+    }
+
+    val response = MarketplaceApi.createReview(clientAccount.takeSession(), id, review.rating, review.comment)
+    httpOk(interopGson.toJsonTree(response))
 }

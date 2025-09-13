@@ -49,7 +49,11 @@ object ModuleProphuntESP : ClientModule("ProphuntESP", Category.RENDER,
         tree(renderer)
     }
 
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         renderer.clearSilently()
     }
 

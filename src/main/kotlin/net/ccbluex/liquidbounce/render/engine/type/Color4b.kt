@@ -23,7 +23,11 @@ import org.lwjgl.opengl.GL20
 import java.awt.Color
 
 @JvmRecord
+<<<<<<< HEAD
 data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
+=======
+data class Color4b @JvmOverloads constructor(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
+>>>>>>> upstream/nextgen
 
     companion object {
 
@@ -60,6 +64,17 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
         @JvmField
         val TRANSPARENT = Color4b(0, 0, 0, 0)
 
+<<<<<<< HEAD
+=======
+        /**
+         * Create a color from a hex string.
+         *
+         * @param hex The hex string. Can be in the format of "#RRGGBB" or "#AARRGGBB". (Prefix '#' is optional)
+         * @return The color.
+         * @throws IllegalArgumentException If the hex string is invalid.
+         */
+        @JvmStatic
+>>>>>>> upstream/nextgen
         @Throws(IllegalArgumentException::class)
         fun fromHex(hex: String): Color4b {
             val cleanHex = hex.removePrefix("#")
@@ -69,12 +84,16 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
 
             return if (hasAlpha) {
                 val rgba = cleanHex.toLong(16)
+<<<<<<< HEAD
                 Color4b(
                     (rgba shr 24).toInt() and 0xFF,
                     (rgba shr 16).toInt() and 0xFF,
                     (rgba shr 8).toInt() and 0xFF,
                     rgba.toInt() and 0xFF
                 )
+=======
+                Color4b(rgba.toInt(), hasAlpha = true)
+>>>>>>> upstream/nextgen
             } else {
                 val rgb = cleanHex.toInt(16)
                 Color4b(
@@ -89,7 +108,17 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
     }
 
     constructor(color: Color) : this(color.red, color.green, color.blue, color.alpha)
+<<<<<<< HEAD
     constructor(hex: Int, hasAlpha: Boolean = false) : this(Color(hex, hasAlpha))
+=======
+    @JvmOverloads
+    constructor(hex: Int, hasAlpha: Boolean = false) : this(
+        r = (hex shr 16) and 0xFF,
+        g = (hex shr 8) and 0xFF,
+        b = hex and 0xFF,
+        a = if (hasAlpha) (hex shr 24) and 0xFF else 255
+    )
+>>>>>>> upstream/nextgen
 
     fun with(
         r: Int = this.r,
@@ -100,7 +129,11 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
         return Color4b(r, g, b, a)
     }
 
+<<<<<<< HEAD
     fun alpha(alpha: Int) = Color4b(this.r, this.g, this.b, alpha)
+=======
+    fun alpha(alpha: Int) = with(a = alpha)
+>>>>>>> upstream/nextgen
 
     fun toARGB() = (a shl 24) or (r shl 16) or (g shl 8) or b
 
@@ -149,10 +182,17 @@ data class Color4b(val r: Int, val g: Int, val b: Int, val a: Int = 255) {
         tB: Double,
         tA: Double
     ): Color4b = Color4b(
+<<<<<<< HEAD
         ((r + (other.r - r) * tR)).toInt().coerceIn(0, 255),
         ((g + (other.g - g) * tG)).toInt().coerceIn(0, 255),
         ((b + (other.b - b) * tB)).toInt().coerceIn(0, 255),
         ((a + (other.a - a) * tA)).toInt().coerceIn(0, 255)
+=======
+        (r + (other.r - r) * tR).toInt().coerceIn(0, 255),
+        (g + (other.g - g) * tG).toInt().coerceIn(0, 255),
+        (b + (other.b - b) * tB).toInt().coerceIn(0, 255),
+        (a + (other.a - a) * tA).toInt().coerceIn(0, 255)
+>>>>>>> upstream/nextgen
     )
 
     /**

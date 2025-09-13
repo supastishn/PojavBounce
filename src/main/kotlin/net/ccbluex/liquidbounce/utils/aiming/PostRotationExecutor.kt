@@ -33,25 +33,51 @@ import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIOR
  */
 object PostRotationExecutor : EventListener {
 
+<<<<<<< HEAD
     /**
      * This should be used by actions that depend on the rotation sent in the tick movement packet.
      */
     private var priorityAction: Pair<ClientModule, () -> Unit>? = null
+=======
+    private class ModuleAction(val module: ClientModule, val action: Runnable) {
+        fun executeIfRunning() {
+            if (module.running) {
+                action.run()
+            }
+        }
+    }
+
+    /**
+     * This should be used by actions that depend on the rotation sent in the tick movement packet.
+     */
+    private var priorityAction: ModuleAction? = null
+>>>>>>> upstream/nextgen
 
     private var priorityActionPostMove = false
 
     /**
      * All other actions that should be executed on post-move.
      */
+<<<<<<< HEAD
     private val postMoveTasks = ArrayDeque<Pair<ClientModule, () -> Unit>>()
+=======
+    private val postMoveTasks = ArrayDeque<ModuleAction>()
+>>>>>>> upstream/nextgen
 
     /**
      * All other actions that should be executed on tick.
      */
+<<<<<<< HEAD
     private val normalTasks = ArrayDeque<Pair<ClientModule, () -> Unit>>()
 
     @Suppress("unused")
     val worldChangeHandler = handler<WorldChangeEvent> {
+=======
+    private val normalTasks = ArrayDeque<ModuleAction>()
+
+    @Suppress("unused")
+    private val worldChangeHandler = handler<WorldChangeEvent> {
+>>>>>>> upstream/nextgen
         postMoveTasks.clear()
         normalTasks.clear()
     }
@@ -62,7 +88,11 @@ object PostRotationExecutor : EventListener {
      * Has [EventPriorityConvention.FIRST_PRIORITY] to run before any other module can send packets.
      */
     @Suppress("unused")
+<<<<<<< HEAD
     val networkMoveHandler = handler<PlayerNetworkMovementTickEvent>(priority = FIRST_PRIORITY) { event ->
+=======
+    private val networkMoveHandler = handler<PlayerNetworkMovementTickEvent>(priority = FIRST_PRIORITY) { event ->
+>>>>>>> upstream/nextgen
         if (event.state != EventState.POST) {
             return@handler
         }
@@ -78,20 +108,28 @@ object PostRotationExecutor : EventListener {
            return@handler
         }
 
+<<<<<<< HEAD
         priorityAction?.let { action ->
             if (action.first.running) {
                 action.second.invoke()
             }
         }
+=======
+        priorityAction?.executeIfRunning()
+>>>>>>> upstream/nextgen
 
         priorityAction = null
 
         // execute all other actions
         while (postMoveTasks.isNotEmpty()) {
+<<<<<<< HEAD
             val next = postMoveTasks.removeFirst()
             if (next.first.running) {
                 next.second.invoke()
             }
+=======
+            postMoveTasks.removeFirst().executeIfRunning()
+>>>>>>> upstream/nextgen
         }
     }
 
@@ -101,6 +139,7 @@ object PostRotationExecutor : EventListener {
      * Has [EventPriorityConvention.FIRST_PRIORITY] to run before any other module can send packets.
      */
     @Suppress("unused")
+<<<<<<< HEAD
     val tickHandler = handler<GameTickEvent>(priority = FIRST_PRIORITY) {
         if (!priorityActionPostMove) {
             // execute the priority action
@@ -110,19 +149,30 @@ object PostRotationExecutor : EventListener {
                 }
             }
 
+=======
+    private val tickHandler = handler<GameTickEvent>(priority = FIRST_PRIORITY) {
+        if (!priorityActionPostMove) {
+            // execute the priority action
+            priorityAction?.executeIfRunning()
+>>>>>>> upstream/nextgen
             priorityAction = null
         }
 
         // if we reach this point, the post-move queue should be empty, if not it gets cleared here
         while (postMoveTasks.isNotEmpty()) {
+<<<<<<< HEAD
             val next = postMoveTasks.removeFirst()
             if (next.first.running) {
                 next.second.invoke()
             }
+=======
+            postMoveTasks.removeFirst().executeIfRunning()
+>>>>>>> upstream/nextgen
         }
 
         // execute all other actions
         while (normalTasks.isNotEmpty()) {
+<<<<<<< HEAD
             val next = normalTasks.removeFirst()
             if (next.first.running) {
                 next.second.invoke()
@@ -138,6 +188,21 @@ object PostRotationExecutor : EventListener {
             postMoveTasks.add(module to task)
         } else {
             normalTasks.add(module to task)
+=======
+            normalTasks.removeFirst().executeIfRunning()
+        }
+    }
+
+    fun addTask(module: ClientModule, postMove: Boolean, priority: Boolean = false, task: Runnable) {
+        val moduleAction = ModuleAction(module, task)
+        if (priority) {
+            priorityAction = moduleAction
+            priorityActionPostMove = postMove
+        } else if (postMove) {
+            postMoveTasks.add(moduleAction)
+        } else {
+            normalTasks.add(moduleAction)
+>>>>>>> upstream/nextgen
         }
     }
 

@@ -66,7 +66,7 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
     }
 
     override fun disable() {
-        PacketQueueManager.flush { snapshot -> snapshot.origin == TransferOrigin.INCOMING }
+        PacketQueueManager.flush(TransferOrigin.INCOMING)
     }
 
     private val Packet<*>.isSelfDamage
@@ -84,18 +84,13 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
             is PlayerInteractEntityC2SPacket, is PlayerInteractBlockC2SPacket ->
                 shouldSkip = true
 
-            is PlayerMoveC2SPacket -> {
-                if (packet.changesPosition() && waitForUpdate) {
-                    event.cancelEvent()
-                }
-            }
+            is PlayerMoveC2SPacket if packet.changesPosition() && waitForUpdate ->
+                event.cancelEvent()
 
-            is CommonPongC2SPacket -> {
-                if (waitForPing) {
-                    waitTicks(1)
-                    waitForUpdate = false
-                    waitForPing = false
-                }
+            is CommonPongC2SPacket if waitForPing -> {
+                waitTicks(1)
+                waitForUpdate = false
+                waitForPing = false
             }
         }
 
@@ -148,7 +143,7 @@ internal object VelocityGrim2371 : VelocityMode("Grim2371") {
         if (hitResult != null) {
             delay = false
 
-            PacketQueueManager.flush { snapshot -> snapshot.origin == TransferOrigin.INCOMING }
+            PacketQueueManager.flush(TransferOrigin.INCOMING)
 
             if (interaction.interactBlock(player, Hand.MAIN_HAND, hitResult).isAccepted) {
                 player.swingHand(Hand.MAIN_HAND)

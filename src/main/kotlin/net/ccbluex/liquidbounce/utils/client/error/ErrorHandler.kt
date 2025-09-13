@@ -22,7 +22,14 @@ package net.ccbluex.liquidbounce.utils.client.error
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.utils.client.browseUrl
 import net.ccbluex.liquidbounce.utils.client.error.errors.ClientError
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.client.mc
+=======
+import net.ccbluex.liquidbounce.utils.client.logger
+import net.ccbluex.liquidbounce.utils.client.mc
+import net.minecraft.util.Util
+import net.minecraft.util.Util.OperatingSystem.WINDOWS
+>>>>>>> upstream/nextgen
 import org.lwjgl.util.tinyfd.TinyFileDialogs
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.div
@@ -31,7 +38,14 @@ import kotlin.system.exitProcess
 
 private typealias CurrentStringBuilder = StringBuilder
 
+<<<<<<< HEAD
 private const val MAX_STACKTRACE_LINES = 3
+=======
+private val MAX_STACKTRACE_LINES = when (Util.getOperatingSystem()) {
+    WINDOWS -> 3
+    else -> 1
+}
+>>>>>>> upstream/nextgen
 
 /**
  * The ErrorHandler class is responsible for handling and reporting errors encountered by the application.
@@ -52,7 +66,10 @@ class ErrorHandler private constructor(
             additionalMessage: String? = null,
         ): Nothing {
             val finalQuickFix = quickFix ?: QuickFix.entries.firstOrNull { it.testError(error) }
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/nextgen
             val finalNeedToReport = if (error is ClientError) {
                 error.needToReport
             } else {
@@ -60,6 +77,11 @@ class ErrorHandler private constructor(
             }
 
             ErrorHandler(error, finalQuickFix, additionalMessage, finalNeedToReport).apply {
+<<<<<<< HEAD
+=======
+                logger.error("An error occurred!", error)
+
+>>>>>>> upstream/nextgen
                 if (buildAndShowMessage()) {
                     browseUrl("https://github.com/CCBlueX/LiquidBounce/issues/new?template=bug_report.yml")
                 }
@@ -176,7 +198,11 @@ class ErrorHandler private constructor(
     fun buildAndShowMessage(): Boolean {
         builder.apply {
             header()
+<<<<<<< HEAD
             appendLine(3)
+=======
+            appendLine(2)
+>>>>>>> upstream/nextgen
 
             if (quickFix != null) {
                 quickFix()

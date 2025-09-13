@@ -12,21 +12,6 @@
 
 LiquidBounce is a free and open-source mixin-based injection hacked client using the Fabric API for Minecraft.
 
-## Mobile minarai support
-
-To use minarai or other deep learning features on Android, the project automatically detects Android environments 
-and uses TensorFlow Lite as the default engine. The PyTorch engine is available for desktop use, but Linux-specific 
-native libraries are excluded to prevent UnsatisfiedLinkError on Android devices.
-
-For Android/PojavLauncher compatibility:
-- TensorFlow Lite engine is used automatically on Android
-- Linux-specific PyTorch native libraries (libdl.so.2) are excluded
-- Native libraries are loaded from appropriate platform directories
-
-Set flag -Dai.djl.default_engine=TFLite in your launcher if needed (automatic on Android detection).
-
-Not required on PC
-
 ## Issues
 
 If you notice any bugs or missing features, you can let us know by opening an
@@ -58,28 +43,14 @@ nor legally binding.
 ## Setting up a Workspace
 
 LiquidBounce uses Gradle, to make sure that it is installed properly you can
-check [Gradle's website](https://gradle.org/install/).
-
-**Note: As of the native GUI migration, Node.js and Python are no longer required**. The project now uses native 
-Minecraft/Fabric GUI components instead of the previous Svelte-based web UI.
+check [Gradle's website](https://gradle.org/install/). It also requires Node.js and Python to be installed for
+our [theme](https://github.com/CCBlueX/LiquidBounce/tree/nextgen/src-theme).
 
 1. Clone the repository using `git clone --recurse-submodules https://github.com/CCBlueX/LiquidBounce`.
 2. CD into the local repository.
 3. Run `./gradlew genSources`.
 4. Open the folder as a Gradle project in your preferred IDE.
 5. Run the client.
-
-## GUI Architecture
-
-LiquidBounce has been migrated from a web-based UI (Svelte + JCEF) to native Minecraft GUI components for better 
-performance and integration:
-
-- **ClickGUI**: Native Kotlin implementation using Minecraft's Screen and widget APIs
-- **HUD Editor**: Drag-and-drop HUD element positioning with native rendering
-- **Menu Screens**: Native screens for alt management, settings, and other functions
-- **Settings Widgets**: Custom widget implementations for boolean, float, and integer settings
-
-The previous Svelte-based theme system in `src-theme/` is deprecated but preserved for reference.
 
 ## Additional libraries
 

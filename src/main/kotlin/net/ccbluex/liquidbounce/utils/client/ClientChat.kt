@@ -179,7 +179,19 @@ data class MessageMetadata(
     val id: String? = null,
     val remove: Boolean = true,
     val count: Int = 1
+<<<<<<< HEAD
 )
+=======
+) {
+    companion object {
+        @JvmStatic
+        fun byModule(module: ClientModule) = MessageMetadata(id = "M${module.name}#info")
+
+        @JvmStatic
+        fun byCommand(command: Command) = MessageMetadata(id = "C${command.name}#info")
+    }
+}
+>>>>>>> upstream/nextgen
 
 fun chat(text: Text, metadata: MessageMetadata = defaultMessageMetadata) {
     val realText = if (metadata.prefix) clientPrefix.copy().append(text) else text
@@ -208,9 +220,15 @@ fun chat(vararg texts: Text, metadata: MessageMetadata = defaultMessageMetadata)
     chat(text, metadata)
 }
 
+<<<<<<< HEAD
 fun chat(text: Text, module: ClientModule) = chat(text, metadata = MessageMetadata(id = "M${module.name}#info"))
 
 fun chat(text: Text, command: Command) = chat(text, metadata = MessageMetadata(id = "C${command.name}#info"))
+=======
+fun chat(text: Text, module: ClientModule) = chat(text, metadata = MessageMetadata.byModule(module))
+
+fun chat(text: Text, command: Command) = chat(text, metadata = MessageMetadata.byCommand(command))
+>>>>>>> upstream/nextgen
 
 fun chat(text: String, module: ClientModule) = chat(text.asText(), module)
 

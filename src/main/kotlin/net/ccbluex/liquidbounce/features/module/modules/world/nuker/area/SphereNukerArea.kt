@@ -19,6 +19,7 @@
 
 package net.ccbluex.liquidbounce.features.module.modules.world.nuker.area
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker
 import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker.wasTarget
 import net.ccbluex.liquidbounce.utils.block.isNotBreakable
@@ -52,6 +53,26 @@ object SphereNukerArea : NukerArea("Sphere") {
                 .map { vec3d -> vec3d.squaredDistanceTo(eyesPos) <= rangeSquared }
                 .getOrDefault(false)
         }.sortedBy { (pos, _) ->
+=======
+import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker.wasTarget
+import net.ccbluex.liquidbounce.utils.block.searchBlocksInCuboid
+import net.ccbluex.liquidbounce.utils.entity.box
+import net.minecraft.block.BlockState
+import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Box
+
+object SphereNukerArea : NukerArea("Sphere") {
+
+    override fun lookupTargets(radius: Float, count: Int?): List<Pair<BlockPos, BlockState>> {
+        val rangeSquared = (radius * radius).toDouble()
+        val eyesPos = player.eyePos
+
+        val positions = eyesPos.searchBlocksInCuboid(radius) { pos, state ->
+            isPositionAvailable(eyesPos, rangeSquared, pos, state)
+        }.toMutableList()
+
+        positions.sortBy { (pos, _) ->
+>>>>>>> upstream/nextgen
             // If there is a last target, sort by distance to it, otherwise go by hardness
             wasTarget?.let { pos.getSquaredDistance(it) } ?: pos.getSquaredDistance(player.blockPos)
         }

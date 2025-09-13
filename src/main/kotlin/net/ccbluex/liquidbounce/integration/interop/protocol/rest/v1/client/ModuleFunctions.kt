@@ -15,41 +15,130 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
+ *
  */
-
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
-import net.ccbluex.liquidbounce.integration.interop.FullHttpResponse
-import net.ccbluex.liquidbounce.integration.interop.RequestObject
-import net.ccbluex.liquidbounce.integration.interop.httpOk
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import io.netty.handler.codec.http.FullHttpResponse
+import io.netty.handler.codec.http.HttpMethod
+import net.ccbluex.liquidbounce.config.AutoConfig
+import net.ccbluex.liquidbounce.config.ConfigSystem
+import net.ccbluex.liquidbounce.config.gson.interopGson
+import net.ccbluex.liquidbounce.features.module.Category
+import net.ccbluex.liquidbounce.features.module.ClientModule
+import net.ccbluex.liquidbounce.features.module.ModuleManager
+import net.ccbluex.liquidbounce.features.module.ModuleManager.modulesConfigurable
+import net.ccbluex.liquidbounce.utils.client.logger
+import net.ccbluex.liquidbounce.utils.client.mc
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 
-/**
- * Stubbed module functions for native GUI approach
- * 
- * All module REST API functions are stubbed since the native GUI
- * handles module operations directly without web interface.
- */
-
-fun getAllModules(requestObject: RequestObject): String {
-    return "Module listing requires web interface access"
+private fun ClientModule.toJsonObject() = JsonObject().apply {
+    addProperty("name", name)
+    addProperty("category", category.choiceName)
+    add("keyBind", interopGson.toJsonTree(bind))
+    addProperty("enabled", enabled)
+    addProperty("description", description.get())
+    addProperty("tag", tag)
+    addProperty("hidden", hidden)
+    add("aliases", interopGson.toJsonTree(aliases))
 }
 
+// GET /api/v1/client/modules
+@Suppress("UNUSED_PARAMETER")
 fun getModules(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Module access requires web interface")
+    val mods = JsonArray()
+    for (module in ModuleManager) {
+        mods.add(module.toJsonObject())
+    }
+    return httpOk(mods)
 }
 
-fun putModules(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Module updates require web interface")
+// GET /api/v1/client/module/:name
+fun getModule(requestObject: RequestObject): FullHttpResponse {
+    val name = requestObject.params["name"] ?: return httpForbidden("Module not found")
+    val module = ModuleManager[name] ?: return httpForbidden("Module not found")
+
+    return httpOk(module.toJsonObject())
 }
 
-fun getAllConfigurables(requestObject: RequestObject): String {
-    return "Configurables listing requires web interface access"
+// PUT /api/v1/client/modules/toggle
+// DELETE /api/v1/client/modules/toggle
+// POST /api/v1/client/modules/toggle
+fun toggleModule(requestObject: RequestObject): FullHttpResponse {
+    return requestObject.asJson<ModuleRequest>().acceptToggle(requestObject.method)
 }
 
-fun getConfigurables(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Configurables access requires web interface")
+// GET /api/v1/client/modules/settings
+fun getSettings(requestObject: RequestObject): FullHttpResponse {
+    return ModuleRequest(requestObject.queryParams["name"] ?: "").acceptGetSettingsRequest()
 }
 
-fun putConfigurables(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Configurables updates require web interface")
+// PUT /api/v1/client/modules/settings
+fun putSettings(requestObject: RequestObject): FullHttpResponse {
+    return ModuleRequest(requestObject.queryParams["name"] ?: "").acceptPutSettingsRequest(requestObject.body)
+}
+
+// POST /api/v1/client/modules/panic
+@Suppress("UNUSED_PARAMETER")
+fun postPanic(requestObject: RequestObject): FullHttpResponse {
+    mc.execute {
+        AutoConfig.withLoading {
+            runCatching {
+                for (module in ModuleManager) {
+                    if (module.category == Category.RENDER || module.category == Category.CLIENT) {
+                        continue
+                    }
+
+                    module.enabled = false
+                }
+
+                ConfigSystem.store(modulesConfigurable)
+            }.onFailure {
+                logger.error("Failed to panic disable modules", it)
+            }
+        }
+    }
+    return httpNoContent()
+}
+
+data class ModuleRequest(val name: String) {
+
+    fun acceptToggle(method: HttpMethod): FullHttpResponse {
+        val module = ModuleManager[name] ?: return httpForbidden("$name not found")
+
+        val supposedNew = method == HttpMethod.PUT || (method == HttpMethod.POST && !module.enabled)
+
+        if (module.enabled == supposedNew) {
+            return httpForbidden("$name already ${if (supposedNew) "enabled" else "disabled"}")
+        }
+
+        mc.execute {
+            runCatching {
+                module.enabled = supposedNew
+
+                ConfigSystem.store(modulesConfigurable)
+            }.onFailure {
+                logger.error("Failed to toggle module $name", it)
+            }
+        }
+        return httpNoContent()
+    }
+
+    fun acceptGetSettingsRequest(): FullHttpResponse {
+        val module = ModuleManager[name] ?: return httpForbidden("$name not found")
+        return httpOk(ConfigSystem.serializeConfigurable(module, gson = interopGson))
+    }
+
+    fun acceptPutSettingsRequest(content: String): FullHttpResponse {
+        val module = ModuleManager[name] ?: return httpForbidden("$name not found")
+        ConfigSystem.deserializeConfigurable(module, content.reader())
+        ConfigSystem.store(modulesConfigurable)
+        return httpNoContent()
+    }
+
 }

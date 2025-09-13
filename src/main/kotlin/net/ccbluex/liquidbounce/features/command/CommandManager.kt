@@ -20,27 +20,12 @@ package net.ccbluex.liquidbounce.features.command
 
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.asCoroutineDispatcher
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
-import net.ccbluex.liquidbounce.event.EventListener
-import net.ccbluex.liquidbounce.event.events.ChatSendEvent
-import net.ccbluex.liquidbounce.event.events.ClientShutdownEvent
-import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.command.CommandManager.getSubCommand
-import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.commands.client.*
 import net.ccbluex.liquidbounce.features.command.commands.client.client.CommandClient
-import net.ccbluex.liquidbounce.features.command.commands.deeplearn.CommandAllowMobileTrain
+import net.ccbluex.liquidbounce.features.command.commands.client.marketplace.CommandMarketplace
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.CommandModels
 import net.ccbluex.liquidbounce.features.command.commands.ingame.*
 import net.ccbluex.liquidbounce.features.command.commands.ingame.creative.*
@@ -57,18 +42,10 @@ import net.ccbluex.liquidbounce.features.command.commands.translate.CommandTrans
 import net.ccbluex.liquidbounce.features.misc.HideAppearance
 import net.ccbluex.liquidbounce.lang.translation
 import net.ccbluex.liquidbounce.script.ScriptApiRequired
-import net.ccbluex.liquidbounce.utils.client.*
-import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
+import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.math.levenshtein
-import net.minecraft.text.MutableText
-import net.minecraft.util.Formatting
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.min
-import kotlin.time.Duration.Companion.seconds
-
-
-
 
 private val commands = mutableListOf<Command>()
 
@@ -148,9 +125,9 @@ object CommandManager : Iterable<Command> by commands {
             CommandTps,
             CommandServerInfo,
             CommandModels,
-            CommandAllowMobileTrain,
             CommandTranslate,
             CommandAutoTranslate,
+            CommandMarketplace
         )
 
         commands.forEach {
@@ -339,7 +316,8 @@ object CommandManager : Iterable<Command> by commands {
         }
 
         @Suppress("UNCHECKED_CAST")
-        command.handler!!(command, parsedParameters as Array<Any>)
+        val ctx = Command.Handler.Context(command, parsedParameters as Array<out Any>)
+        with(command.handler!!) { ctx() }
     }
 
     /**
@@ -351,10 +329,10 @@ object CommandManager : Iterable<Command> by commands {
         }
 
         when (val validationResult = parameter.verifier.verifyAndParse(argument)) {
-            is ParameterValidationResult.Ok -> {
+            is Parameter.Verificator.Result.Ok -> {
                 return validationResult.mappedResult
             }
-            is ParameterValidationResult.Error -> {
+            is Parameter.Verificator.Result.Error -> {
                 throw CommandException(
                     translation(
                         "liquidbounce.commandManager.invalidParameterValue",
@@ -372,6 +350,8 @@ object CommandManager : Iterable<Command> by commands {
      * Tokenizes the [line].
      *
      * For example: `.friend add "Senk Ju"` -> [[`.friend`, `add`, `Senk Ju`]]
+     *
+     * @return A pair of the tokenized command and the starting indices of the tokens
      */
     fun tokenizeCommand(line: String): Pair<List<String>, List<Int>> {
         val output = ArrayList<String>()
@@ -396,27 +376,26 @@ object CommandManager : Iterable<Command> by commands {
                 continue
             }
 
-            // Is the current char an escape char?
-            if (c == '\\') {
-                escaped = true // Enable escape for the next character
-            } else if (c == '"') {
-                quote = !quote
-            } else if (c == ' ' && !quote) {
-                // Is the buffer not empty? Also ignore stuff like .friend   add SenkJu
-                if (stringBuilder.trim().isNotEmpty()) {
-                    output.add(stringBuilder.toString())
+            when (c) {
+                // Is the current char an escape char?
+                '\\' -> escaped = true // Enable escape for the next character
+                '"' -> quote = !quote
+                ' ' if !quote -> {
+                    // Is the buffer not empty? Also ignore stuff like .friend   add SenkJu
+                    if (stringBuilder.isNotBlank()) {
+                        output.add(stringBuilder.toString())
 
-                    // Reset string buffer
-                    stringBuilder.setLength(0)
-                    outputIndices.add(idx)
+                        // Reset string buffer
+                        stringBuilder.setLength(0)
+                        outputIndices.add(idx)
+                    }
                 }
-            } else {
-                stringBuilder.append(c)
+                else -> stringBuilder.append(c)
             }
         }
 
         // Is there something left in the buffer?
-        if (stringBuilder.trim().isNotEmpty()) {
+        if (stringBuilder.isNotBlank()) {
             // If a string was not closed, don't remove the quote
             // e.g. .friend add "SenkJu -> [.friend, add, "SenkJu]
             if (quote) {

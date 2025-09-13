@@ -15,22 +15,28 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
+ *
+ *
  */
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
-import net.ccbluex.liquidbounce.integration.interop.FullHttpResponse
-import net.ccbluex.liquidbounce.integration.interop.RequestObject
-import net.ccbluex.liquidbounce.integration.interop.httpOk
+import io.netty.handler.codec.http.FullHttpResponse
+import net.ccbluex.liquidbounce.config.ConfigSystem
+import net.ccbluex.liquidbounce.config.gson.interopGson
+import net.ccbluex.liquidbounce.features.spoofer.SpooferManager
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 
-/**
- * Stubbed spoofer functions for native GUI approach
- */
-
-fun getClientSpoof(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Client spoofing requires web interface access")
+@Suppress("UNUSED_PARAMETER")
+fun getSpooferConfigurable(request: RequestObject): FullHttpResponse {
+    // Serialize MultiplayerConfigurable to JSON
+    return httpOk(ConfigSystem.serializeConfigurable(SpooferManager, gson = interopGson))
 }
 
-fun putClientSpoof(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Client spoof updates require web interface access")
+fun putSpooferConfigurable(request: RequestObject): FullHttpResponse {
+    ConfigSystem.deserializeConfigurable(SpooferManager, request.body.reader())
+    ConfigSystem.store(SpooferManager)
+    return httpNoContent()
 }

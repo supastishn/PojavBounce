@@ -20,11 +20,14 @@
  */
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game
-import net.ccbluex.liquidbounce.integration.interop.*
 
 import net.ccbluex.liquidbounce.render.ui.ItemImageAtlas
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.world
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpBadRequest
+import net.ccbluex.netty.http.util.httpFileStream
+import net.ccbluex.netty.http.util.httpInternalServerError
 import net.minecraft.client.texture.NativeImageBackedTexture
 import net.minecraft.client.util.DefaultSkinHelper
 import net.minecraft.registry.Registries
@@ -69,7 +72,7 @@ fun getItemTexture(requestObject: RequestObject) = run {
 
     val buffer = okio.Buffer()
     ImageIO.write(image, "PNG", buffer.outputStream())
-    httpFileStream(buffer.inputStream())
+    httpFileStream(buffer.inputStream(), contentLength = buffer.size.toInt(), contentType = "image/png")
 }
 
 // GET /api/v1/client/skin
@@ -83,7 +86,7 @@ fun getSkin(requestObject: RequestObject) = run {
     if (texture is NativeImageBackedTexture) {
         val buffer = okio.Buffer()
         texture.image?.write(buffer) ?: return@run httpInternalServerError("Texture is not cached yet")
-        httpFileStream(buffer.inputStream())
+        httpFileStream(buffer.inputStream(), contentLength = buffer.size.toInt(), contentType = "image/png")
     } else {
         val resource = mc.resourceManager.getResource(skinTextures.texture)
             .getOrNull() ?: return@run httpInternalServerError("Texture not found")

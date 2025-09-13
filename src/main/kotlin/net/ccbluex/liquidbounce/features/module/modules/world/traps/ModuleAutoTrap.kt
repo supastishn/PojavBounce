@@ -34,7 +34,10 @@ import net.ccbluex.liquidbounce.utils.client.SilentHotbar
 import net.ccbluex.liquidbounce.utils.combat.CombatManager
 import net.ccbluex.liquidbounce.utils.combat.TargetTracker
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
+<<<<<<< HEAD
 import net.minecraft.util.Hand
+=======
+>>>>>>> upstream/nextgen
 
 /**
  * Ignite & AutoWeb module
@@ -57,11 +60,19 @@ object ModuleAutoTrap : ClientModule("AutoTrap", Category.WORLD, aliases = array
 
     private var timeout = false
 
+<<<<<<< HEAD
     override fun enable() {
         timeout = false
     }
 
     override fun disable() {
+=======
+    override fun onEnabled() {
+        timeout = false
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         timeout = false
     }
 

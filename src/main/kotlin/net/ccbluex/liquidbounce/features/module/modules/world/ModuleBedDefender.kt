@@ -18,7 +18,13 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.world
 
+<<<<<<< HEAD
 import it.unimi.dsi.fastutil.ints.IntObjectPair
+=======
+import it.unimi.dsi.fastutil.ints.IntLongPair
+import it.unimi.dsi.fastutil.ints.IntObjectPair
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.event.events.RotationUpdateEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
@@ -36,7 +42,10 @@ import net.ccbluex.liquidbounce.utils.item.isFullBlock
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.ccbluex.liquidbounce.utils.kotlin.component1
 import net.ccbluex.liquidbounce.utils.kotlin.component2
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.kotlin.isEmpty
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.block.BedBlock
 import net.minecraft.block.DoubleBlockProperties
 import net.minecraft.client.gui.screen.ingame.HandledScreen
@@ -133,6 +142,7 @@ object ModuleBedDefender : ClientModule("BedDefender", category = Category.WORLD
             (blockPos, _) -> blockPos.getSquaredDistance(eyesPos)
         } ?: return@handler
 
+<<<<<<< HEAD
         val placementPositions = blockPos.searchBedLayer(state, maxLayers).filter { (_, pos) ->
             pos.toCenterPos().squaredDistanceTo(eyesPos) <= rangeSq
         }
@@ -146,22 +156,55 @@ object ModuleBedDefender : ClientModule("BedDefender", category = Category.WORLD
             sortWith(
                 Comparator.comparingInt(IntObjectPair<BlockPos>::keyInt)
                     .thenComparingDouble { -it.value().toCenterPos().squaredDistanceTo(eyesPos) }
+=======
+        val mutable = BlockPos.Mutable()
+        val placementPositions = blockPos.searchBedLayer(state, maxLayers).filter { (_, pos) ->
+            mutable.set(pos).toCenterPos().squaredDistanceTo(eyesPos) <= rangeSq
+        }.toCollection(ObjectArrayList())
+
+        if (placementPositions.isEmpty) {
+            return@handler
+        }
+
+        val updatePositions = placementPositions.apply {
+            // Layer(ASC) Center Distance(DESC)
+            sortWith(
+                Comparator.comparingInt<IntLongPair> { it.leftInt() }
+                    .thenComparingDouble {
+                        -mutable.set(it.rightLong()).getSquaredDistance(eyesPos)
+                    }
+>>>>>>> upstream/nextgen
             )
         }
 
         debugGeometry("PlacementPosition") {
             ModuleDebug.DebugCollection(
                 updatePositions.map { (_, pos) ->
+<<<<<<< HEAD
                     ModuleDebug.DebuggedPoint(pos.toCenterPos(), Color4b.RED.with(a = 100))
+=======
+                    ModuleDebug.DebuggedPoint(mutable.set(pos).toCenterPos(), Color4b.RED.with(a = 100))
+>>>>>>> upstream/nextgen
                 }
             )
         }
 
         // Need ordered set (like TreeSet/LinkedHashSet)
+<<<<<<< HEAD
         placer.update(updatePositions.mapTo(linkedSetOf()) { it.value() })
     }
 
     override fun disable() {
+=======
+        placer.update(
+            updatePositions.mapTo(linkedSetOf()) {
+                BlockPos.fromLong(it.rightLong())
+            }
+        )
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         placer.disable()
     }
 

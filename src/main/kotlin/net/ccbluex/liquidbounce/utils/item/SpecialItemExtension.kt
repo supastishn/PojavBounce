@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.utils.item
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.interfaces.ArmorItemAdditions
 import net.ccbluex.liquidbounce.interfaces.MiningToolItemAddition
 import net.minecraft.item.ArmorItem
@@ -31,3 +32,11 @@ fun ArmorItem.material(): ArmorMaterial = (this as ArmorItemAdditions).`liquid_b
 fun MiningToolItem.material(): ToolMaterial = (this as MiningToolItemAddition).`liquid_bounce$getMaterial`()
 
 fun ArmorItem.type(): EquipmentType = (this as ArmorItemAdditions).`liquid_bounce$getType`()
+=======
+import net.ccbluex.liquidbounce.interfaces.ItemCooldownManagerAdditions
+import net.minecraft.entity.player.ItemCooldownManager
+import net.minecraft.item.ItemStack
+
+fun ItemCooldownManager.getCooldown(stack: ItemStack): ItemCooldownManagerAdditions.Entry? =
+    (this as ItemCooldownManagerAdditions).`liquidBounce$getCooldown`(stack)
+>>>>>>> upstream/nextgen

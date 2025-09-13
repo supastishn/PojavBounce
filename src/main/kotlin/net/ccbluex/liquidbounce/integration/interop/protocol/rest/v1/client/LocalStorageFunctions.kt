@@ -15,35 +15,84 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
+ *
+ *
  */
-
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
-import net.ccbluex.liquidbounce.integration.interop.RequestObject
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import net.ccbluex.liquidbounce.integration.interop.persistant.PersistentLocalStorage
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 
 /**
- * Stubbed local storage functions for native GUI approach
- * 
- * All local storage REST API functions are stubbed since the native GUI
- * handles local storage directly without web interface.
+ * LocalStorage RestAPI
+ *
+ * Allows to persist data across different browser.
+ *
+ * Since we cannot rely on the browser's localStorage
+ * we have to implement our own. This is a simple key-value store.
+ *
+ * Especially because we have not enabled the CEF local storage
  */
 
-fun getAllLocalStorage(requestObject: RequestObject): String {
-    return "Local storage access requires web interface"
+// GET /api/v1/client/localStorage
+fun getLocalStorage(requestObject: RequestObject) = with(requestObject) {
+    val key = queryParams["key"] ?: return@with httpForbidden("No key")
+    val value = PersistentLocalStorage[key] ?: return@with httpForbidden("No value for key $key")
+
+    httpOk(JsonObject().apply {
+        addProperty("value", value)
+    })
 }
 
-fun putAllLocalStorage(requestObject: RequestObject): String {
-    return "Local storage update requires web interface"
+// PUT /api/v1/client/localStorage
+fun putLocalStorage(requestObject: RequestObject) = with(requestObject) {
+    val body = asJson<JsonObject>()
+    val key = body["key"]?.asString ?: return@with httpForbidden("No key")
+    val value = body["value"]?.asString ?: return@with httpForbidden("No value")
+
+    PersistentLocalStorage[key] = value
+    httpNoContent()
 }
 
-fun getLocalStorage(requestObject: RequestObject): String {
-    return "Local storage access requires web interface"
+// DELETE /api/v1/client/localStorage
+fun deleteLocalStorage(requestObject: RequestObject) = with(requestObject) {
+    val key = queryParams["key"] ?: return@with httpForbidden("No key")
+    PersistentLocalStorage.remove(key)
+    httpNoContent()
 }
 
-fun putLocalStorage(requestObject: RequestObject): String {
-    return "Local storage update requires web interface"
+// GET /api/v1/client/localStorage/all
+fun getAllLocalStorage(requestObject: RequestObject) = with(requestObject) {
+    httpOk(JsonObject().apply {
+        val jsonArray = JsonArray()
+
+        PersistentLocalStorage.forEach { (key, value) ->
+            jsonArray.add(JsonObject().apply {
+                addProperty("key", key)
+                addProperty("value", value)
+            })
+        }
+
+        add("items", jsonArray)
+    })
 }
 
-fun deleteLocalStorage(requestObject: RequestObject): String {
-    return "Local storage deletion requires web interface"
+// PUT /api/v1/client/localStorage/all
+fun putAllLocalStorage(requestObject: RequestObject) = with(requestObject) {
+    data class Item(val key: String, val value: String)
+    data class StoragePutRequest(val items: List<Item>)
+
+    val body = asJson<StoragePutRequest>()
+
+    PersistentLocalStorage.clear()
+    body.items.forEach { item ->
+        PersistentLocalStorage[item.key] = item.value
+    }
+
+    httpNoContent()
 }

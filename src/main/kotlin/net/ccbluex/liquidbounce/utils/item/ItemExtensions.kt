@@ -31,7 +31,10 @@ import net.minecraft.command.argument.ItemStackArgument
 import net.minecraft.command.argument.ItemStringReader
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.AttributeModifiersComponent
+<<<<<<< HEAD
 import net.minecraft.component.type.FoodComponent
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.component.type.PotionContentsComponent
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
@@ -42,14 +45,20 @@ import net.minecraft.entity.attribute.EntityAttributeInstance
 import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.item.*
+<<<<<<< HEAD
 import net.minecraft.item.consume.UseAction
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.util.math.BlockPos
 import java.util.*
+<<<<<<< HEAD
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
+=======
+>>>>>>> upstream/nextgen
 
 /**
  * Create item with NBT tags
@@ -73,6 +82,7 @@ fun createSplashPotion(name: String, vararg effects: StatusEffectInstance): Item
     return itemStack
 }
 
+<<<<<<< HEAD
 /**
  * Check if a stack is nothing (means empty slot)
  */
@@ -85,6 +95,8 @@ fun ItemStack?.isNothing(): Boolean {
     return this?.isEmpty == true
 }
 
+=======
+>>>>>>> upstream/nextgen
 fun ItemStack?.getEnchantmentCount(): Int {
     val enchantments = this?.get(DataComponentTypes.ENCHANTMENTS) ?: return 0
 
@@ -97,6 +109,7 @@ fun ItemStack?.getEnchantment(enchantment: RegistryKey<Enchantment>): Int {
     return enchantments.getLevel(enchantment.toRegistryEntry())
 }
 
+<<<<<<< HEAD
 val ItemStack.isConsumable: Boolean
     get() = this.isFood || this.item == Items.POTION || this.item == Items.MILK_BUCKET
 
@@ -139,15 +152,34 @@ val MiningToolItem.type: Int
         is HoeItem -> 3
         else -> error("Unknown tool item $this (WTF?)")
     }
+=======
+/**
+ * @return if this item stack has same [Item] and [net.minecraft.component.ComponentChanges]
+ * with the other item stack
+ */
+fun ItemStack.isMergeable(other: ItemStack): Boolean {
+    return this.item == other.item && this.componentChanges == other.componentChanges
+}
+
+fun ItemStack.canMerge(other: ItemStack): Boolean {
+    return this.isMergeable(other) && this.count + other.count <= this.maxCount
+}
+>>>>>>> upstream/nextgen
 
 fun ItemStack.getAttributeValue(attribute: RegistryEntry<EntityAttribute>) = item.components
     .getOrDefault(
         DataComponentTypes.ATTRIBUTE_MODIFIERS,
         AttributeModifiersComponent.DEFAULT
     )
+<<<<<<< HEAD
     .modifiers()
     .filter { modifier -> modifier.attribute() == attribute }
     .firstNotNullOfOrNull { modifier -> modifier.modifier().value() }
+=======
+    .modifiers
+    .filter { modifier -> modifier.attribute == attribute }
+    .firstNotNullOfOrNull { modifier -> modifier.modifier.value }
+>>>>>>> upstream/nextgen
 
 val ItemStack.attackDamage: Double
     get() {
@@ -180,13 +212,21 @@ fun ItemStack.getSharpnessDamage(level: Int = sharpnessLevel): Double =
         level * 1.25
     }
 
+<<<<<<< HEAD
 val ItemStack.attackSpeed: Float
+=======
+val ItemStack.attackSpeed: Double
+>>>>>>> upstream/nextgen
     get() = item.getAttributeValue(EntityAttributes.ATTACK_SPEED)
 
 val ItemStack.durability
     get() = this.maxDamage - this.damage
 
+<<<<<<< HEAD
 private fun Item.getAttributeValue(attribute: RegistryEntry<EntityAttribute>): Float {
+=======
+private fun Item.getAttributeValue(attribute: RegistryEntry<EntityAttribute>): Double {
+>>>>>>> upstream/nextgen
     val attribInstance = EntityAttributeInstance(attribute) {}
 
     this.components
@@ -199,7 +239,11 @@ private fun Item.getAttributeValue(attribute: RegistryEntry<EntityAttribute>): F
             attribInstance.addTemporaryModifier(modifier)
         }
 
+<<<<<<< HEAD
     return attribInstance.value.toFloat()
+=======
+    return attribInstance.value
+>>>>>>> upstream/nextgen
 }
 
 fun RegistryKey<Enchantment>.toRegistryEntry(): RegistryEntry<Enchantment> {

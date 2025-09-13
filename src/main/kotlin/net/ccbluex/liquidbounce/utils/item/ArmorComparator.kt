@@ -24,7 +24,10 @@ import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.EquipmentSlot
+<<<<<<< HEAD
 import net.minecraft.item.ArmorItem
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKey
 import net.minecraft.util.math.MathHelper
@@ -125,6 +128,7 @@ class ArmorComparator(
     }
 
     private fun getThresholdedDamageReduction(itemStack: ItemStack): Float {
+<<<<<<< HEAD
         val item = itemStack.item as ArmorItem
         val parameters = this.armorKitParametersForSlot.getParametersForSlot(
             itemStack.get(DataComponentTypes.EQUIPPABLE)!!.slot
@@ -135,6 +139,14 @@ class ArmorComparator(
             damage = expectedDamage,
             defensePoints = parameters.defensePoints + material.defense.getOrDefault(item.type(), 0),
             toughness = parameters.toughness + material.toughness
+=======
+        val parameters = this.armorKitParametersForSlot.getParametersForSlot(itemStack.equipmentSlot!!)
+
+        return getDamageFactor(
+            damage = expectedDamage,
+            defensePoints = parameters.defensePoints + itemStack.armorValue!!.toFloat(),
+            toughness = parameters.toughness + itemStack.armorToughness!!.toFloat()
+>>>>>>> upstream/nextgen
         ) * (1 - getThresholdedEnchantmentDamageReduction(itemStack))
     }
 

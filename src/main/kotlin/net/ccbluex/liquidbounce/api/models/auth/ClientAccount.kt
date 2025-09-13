@@ -39,7 +39,11 @@ data class ClientAccount(
     @Exclude
     var cosmetics: Set<Cosmetic>? = null
 ) {
+<<<<<<< HEAD
     private suspend fun takeSession(): OAuthSession = session?.takeIf { !it.accessToken.isExpired() } ?: run {
+=======
+    suspend fun takeSession(): OAuthSession = session?.takeIf { !it.accessToken.isExpired() } ?: run {
+>>>>>>> upstream/nextgen
         renew()
         session ?: error("No session")
     }
@@ -57,7 +61,11 @@ data class ClientAccount(
     }
 
     suspend fun renew() = withContext(Dispatchers.IO) {
+<<<<<<< HEAD
         session = OAuthClient.renewToken(session ?: error("No session")) as? OAuthSession
+=======
+        session = OAuthClient.renewToken(session ?: error("No session"))
+>>>>>>> upstream/nextgen
     }
 
     companion object {

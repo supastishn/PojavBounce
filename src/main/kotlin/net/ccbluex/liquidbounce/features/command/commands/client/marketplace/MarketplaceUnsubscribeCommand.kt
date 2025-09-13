@@ -17,7 +17,6 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
@@ -31,22 +30,22 @@ import net.ccbluex.liquidbounce.utils.client.variable
 /**
  * Unsubscribe from a marketplace item
  */
-object MarketplaceUnsubscribeCommand : CommandFactory {
+object MarketplaceUnsubscribeCommand : Command.Factory {
 
     override fun createCommand() = CommandBuilder.begin("unsubscribe")
         .parameter(
             ParameterBuilder
                 .begin<Int>("id")
                 .verifiedBy(ParameterBuilder.INTEGER_VALIDATOR)
-                .autocompletedWith { begin, args ->
+                .autocompletedFrom {
                     MarketplaceManager.subscribedItems.map { item ->
                         item.id.toString()
-                    }.filter { it.startsWith(begin, ignoreCase = true) }
+                    }
                 }
                 .required()
                 .build()
         )
-        .suspendHandler { command, args ->
+        .suspendHandler {
             val id = args[0] as Int
 
             if (!MarketplaceManager.isSubscribed(id)) {

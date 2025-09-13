@@ -22,6 +22,11 @@ package net.ccbluex.liquidbounce.utils.kotlin
 
 import it.unimi.dsi.fastutil.doubles.DoubleIterable
 import it.unimi.dsi.fastutil.doubles.DoubleIterator
+<<<<<<< HEAD
+=======
+import it.unimi.dsi.fastutil.floats.FloatIterable
+import it.unimi.dsi.fastutil.floats.FloatIterator
+>>>>>>> upstream/nextgen
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntList
@@ -83,6 +88,43 @@ infix fun ClosedRange<Double>.step(step: Double): DoubleIterable {
     }
 }
 
+<<<<<<< HEAD
+=======
+infix fun ClosedRange<Float>.step(step: Float): FloatIterable {
+    require(start.isFinite())
+    require(endInclusive.isFinite())
+    require(step > 0.0f)
+
+    return FloatIterable {
+        object : FloatIterator {
+            private var current = start
+            private var hasNextValue = current <= endInclusive
+
+            override fun hasNext(): Boolean = hasNextValue
+
+            override fun nextFloat(): Float {
+                if (!hasNextValue) {
+                    throw NoSuchElementException()
+                }
+
+                val nextValue = current
+                current += step
+                if (current > endInclusive) {
+                    hasNextValue = false
+                }
+
+                return nextValue
+            }
+
+            override fun remove() {
+                throw UnsupportedOperationException("This iterator is read-only")
+            }
+        }
+    }
+}
+
+
+>>>>>>> upstream/nextgen
 inline fun range(iterable: DoubleIterable, operation: (Double) -> Unit) {
     iterable.doubleIterator().apply {
         while (hasNext()) {
@@ -157,6 +199,7 @@ inline fun <T, C : Collection<T>> C.forEachWithSelf(action: (T, index: Int, self
     }
 }
 
+<<<<<<< HEAD
 inline fun Sequence<*>.isNotEmpty(): Boolean {
     return iterator().hasNext()
 }
@@ -170,6 +213,13 @@ inline fun <reified T : Enum<T>> Array<out T>.toEnumSet(): EnumSet<T> =
 
 inline fun <reified T : Enum<T>> Iterable<T>.toEnumSet(): EnumSet<T> =
     emptyEnumSet<T>().apply { addAll(this@toEnumSet) }
+=======
+inline fun <reified T : Enum<T>> Array<out T>.toEnumSet(): EnumSet<T> =
+    toCollection(emptyEnumSet())
+
+inline fun <reified T : Enum<T>> Iterable<T>.toEnumSet(): EnumSet<T> =
+    toCollection(emptyEnumSet())
+>>>>>>> upstream/nextgen
 
 inline fun <reified T : Enum<T>> emptyEnumSet(): EnumSet<T> =
     EnumSet.noneOf(T::class.java)

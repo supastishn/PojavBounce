@@ -20,13 +20,11 @@
  */
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game
-import net.ccbluex.liquidbounce.integration.interop.*
 
 import com.google.gson.JsonArray
-import com.mojang.blaze3d.systems.RenderSystem
+import io.netty.handler.codec.http.FullHttpResponse
 import net.ccbluex.liquidbounce.config.gson.interopGson
 import net.ccbluex.liquidbounce.config.gson.serializer.minecraft.ResourcePolicy
-import net.ccbluex.liquidbounce.config.gson.util.emptyJsonObject
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.events.ScreenEvent
@@ -36,6 +34,11 @@ import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.Active
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.ActiveServerList.serverList
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.mc
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpInternalServerError
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 import net.minecraft.SharedConstants
 import net.minecraft.client.gui.screen.TitleScreen
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen
@@ -50,6 +53,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Colors
 import net.minecraft.util.Util
 import java.net.UnknownHostException
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Future
 
 // GET /api/v1/client/servers
@@ -85,10 +89,10 @@ fun postConnect(requestObject: RequestObject): FullHttpResponse {
 
     val serverAddress = ServerAddress.parse(serverInfo.address)
 
-    RenderSystem.recordRenderCall {
+    mc.execute {
         ConnectScreen.connect(MultiplayerScreen(TitleScreen()), mc, serverAddress, serverInfo, false, null)
     }
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 // PUT /api/v1/client/servers/add
@@ -109,7 +113,7 @@ fun putAddServer(requestObject: RequestObject): FullHttpResponse {
     serverList.add(serverInfo, false)
     serverList.saveFile()
 
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 // DELETE /api/v1/client/servers/remove
@@ -122,7 +126,7 @@ fun deleteServer(requestObject: RequestObject): FullHttpResponse {
     serverList.remove(serverInfo)
     serverList.saveFile()
 
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 // PUT /api/v1/client/servers/edit
@@ -144,7 +148,7 @@ fun putEditServer(requestObject: RequestObject): FullHttpResponse {
     }
     serverList.saveFile()
 
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 // POST /api/v1/client/servers/swap
@@ -155,7 +159,7 @@ fun postSwapServers(requestObject: RequestObject): FullHttpResponse {
 
     serverList.swapEntries(serverSwapRequest.from, serverSwapRequest.to)
     serverList.saveFile()
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 // POST /api/v1/client/servers/order
@@ -170,7 +174,7 @@ fun postOrderServers(requestObject: RequestObject): FullHttpResponse {
         }
     serverList.saveFile()
 
-    return httpOk(emptyJsonObject())
+    return httpNoContent()
 }
 
 object ActiveServerList : EventListener {
@@ -188,6 +192,7 @@ object ActiveServerList : EventListener {
     private fun cancelTasks() {
         pingTasks.forEach { it.cancel(true) }
         pingTasks.clear()
+        serverListPinger.cancel()
     }
 
     internal fun pingThemAll() {
@@ -211,7 +216,7 @@ object ActiveServerList : EventListener {
         serverEntry.label = ScreenTexts.EMPTY
         serverEntry.playerCountLabel = ScreenTexts.EMPTY
 
-        pingTasks += Util.getDownloadWorkerExecutor().service.submit {
+        pingTasks += CompletableFuture.runAsync({
             try {
                 serverListPinger.add(serverEntry, { mc.execute(serverList::saveFile) }) {
                     serverEntry.status =
@@ -230,7 +235,7 @@ object ActiveServerList : EventListener {
                 serverEntry.label = cannotConnectText
                 logger.error("Failed to ping server ${serverEntry.name}", exception)
             }
-        }
+        }, Util.getDownloadWorkerExecutor())
     }
 
     @Suppress("unused")

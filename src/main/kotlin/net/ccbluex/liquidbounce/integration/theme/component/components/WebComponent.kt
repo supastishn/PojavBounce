@@ -28,12 +28,13 @@ class WebComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
+    tweaks: Array<ComponentTweak> = emptyArray(),
     val values: Array<JsonObject> = emptyArray()
-) : Component(name, enabled, alignment) {
+) : Component(name, enabled, alignment, tweaks) {
 
     override fun initConfigurable() {
         for (value in values) {
-            // TODO: Process JSON values for native GUI - for now just skip
+            json(value)
         }
         registerComponentListen(this)
         super.initConfigurable()

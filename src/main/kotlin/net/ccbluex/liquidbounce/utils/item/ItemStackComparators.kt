@@ -114,7 +114,11 @@ class PreferAverageHardBlocks(private val neutralRange: Boolean) : Comparator<It
 
 }
 
+<<<<<<< HEAD
 class PreferStackSize(val higher: Boolean) : Comparator<ItemStack> {
+=======
+class PreferStackSize private constructor(val higher: Boolean) : Comparator<ItemStack> {
+>>>>>>> upstream/nextgen
     override fun compare(o1: ItemStack, o2: ItemStack): Int {
         val o1Size = o1.count
         val o2Size = o2.count
@@ -126,4 +130,14 @@ class PreferStackSize(val higher: Boolean) : Comparator<ItemStack> {
         }
     }
 
+<<<<<<< HEAD
+=======
+    companion object {
+        @JvmField
+        val MORE = PreferStackSize(true)
+
+        @JvmField
+        val LESS = PreferStackSize(false)
+    }
+>>>>>>> upstream/nextgen
 }

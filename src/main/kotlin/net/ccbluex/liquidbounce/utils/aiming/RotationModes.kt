@@ -26,8 +26,14 @@ import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
 import net.ccbluex.liquidbounce.utils.client.RestrictedSingleUseAction
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket
+<<<<<<< HEAD
 
 abstract class RotationMode(
+=======
+import java.util.function.BooleanSupplier
+
+sealed class RotationMode(
+>>>>>>> upstream/nextgen
     name: String,
     private val configurable: ChoiceConfigurable<RotationMode>,
     val module: ClientModule,
@@ -49,7 +55,11 @@ abstract class RotationMode(
      */
     val instant by boolean("Instant", false)
 
+<<<<<<< HEAD
     abstract fun rotate(rotation: Rotation, isFinished: () -> Boolean, onFinished: () -> Unit)
+=======
+    abstract fun rotate(rotation: Rotation, isFinished: BooleanSupplier, onFinished: Runnable)
+>>>>>>> upstream/nextgen
 
     override val parent: ChoiceConfigurable<*>
         get() = configurable
@@ -69,9 +79,15 @@ class NormalRotationMode(
     val rotations = tree(RotationsConfigurable(this))
     val ignoreOpenInventory by boolean("IgnoreOpenInventory", true)
 
+<<<<<<< HEAD
     override fun rotate(rotation: Rotation, isFinished: () -> Boolean, onFinished: () -> Unit) {
         if (instant && isFinished()) {
             onFinished()
+=======
+    override fun rotate(rotation: Rotation, isFinished: BooleanSupplier, onFinished: Runnable) {
+        if (instant && isFinished.asBoolean) {
+            onFinished.run()
+>>>>>>> upstream/nextgen
             if (aimAfterInstantAction) {
                 mc.execute {
                     RotationManager.setRotationTarget(rotation, !ignoreOpenInventory, rotations, priority, module)
@@ -102,8 +118,13 @@ class NoRotationMode(configurable: ChoiceConfigurable<RotationMode>, module: Cli
 
     val send by boolean("SendRotationPacket", false)
 
+<<<<<<< HEAD
     override fun rotate(rotation: Rotation, isFinished: () -> Boolean, onFinished: () -> Unit) {
         val task = {
+=======
+    override fun rotate(rotation: Rotation, isFinished: BooleanSupplier, onFinished: Runnable) {
+        fun task() {
+>>>>>>> upstream/nextgen
             if (send) {
                 val fixedRotation = rotation.normalize()
                 network.sendPacket(
@@ -114,7 +135,11 @@ class NoRotationMode(configurable: ChoiceConfigurable<RotationMode>, module: Cli
                 )
             }
 
+<<<<<<< HEAD
             onFinished()
+=======
+            onFinished.run()
+>>>>>>> upstream/nextgen
         }
 
         if (instant) {
@@ -122,7 +147,11 @@ class NoRotationMode(configurable: ChoiceConfigurable<RotationMode>, module: Cli
             return
         }
 
+<<<<<<< HEAD
         PostRotationExecutor.addTask(module, postMove, task)
+=======
+        PostRotationExecutor.addTask(module, postMove) { task() }
+>>>>>>> upstream/nextgen
     }
 
 }

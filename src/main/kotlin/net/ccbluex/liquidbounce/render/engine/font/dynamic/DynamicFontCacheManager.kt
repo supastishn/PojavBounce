@@ -19,7 +19,11 @@ class DynamicFontCacheManager(
     /**
      * Available fonts, sorted by priority
      */
+<<<<<<< HEAD
     private val availableFonts: Set<FontManager.FontFace>
+=======
+    private val availableFonts: Collection<FontManager.FontFace>
+>>>>>>> upstream/nextgen
 ) {
     private val glyphPageLock = ReentrantLock()
     private val glyphPageDirtyFlag = AtomicBoolean(false)
@@ -134,6 +138,7 @@ class DynamicFontCacheManager(
 
         val allocationList = createAllocationRequests(requestedChars)
 
+<<<<<<< HEAD
         val unsuccessfullAllocations = this.glyphPageLock.withLock {
             tryAllocations(allocationList)
         }
@@ -147,6 +152,20 @@ class DynamicFontCacheManager(
 
         val stillUnsuccessfulAllocations =
             createAllocationRequests(unsuccessfullAllocations.map { GlyphIdentifier(it.codepoint, it.font.style) })
+=======
+        val unsuccessfulAllocations = this.glyphPageLock.withLock {
+            tryAllocations(allocationList)
+        }
+
+        if (unsuccessfulAllocations.isEmpty()) {
+            return
+        }
+
+        freeSpace()
+
+        val stillUnsuccessfulAllocations =
+            createAllocationRequests(unsuccessfulAllocations.map { GlyphIdentifier(it.codepoint, it.font.style) })
+>>>>>>> upstream/nextgen
 
         // TODO: Optimize the atlas in this situation
         // We weren't able to allocate those chars even after freeing some space. Don't ask us ever again about
@@ -228,6 +247,7 @@ class DynamicFontCacheManager(
     }
 
     private fun findFontForGlyph(ch: GlyphIdentifier): FontManager.FontId? {
+<<<<<<< HEAD
         return this.availableFonts.firstNotNullOfOrNull {
             val fontInStyle = it.styles.get(ch.font)
 
@@ -236,6 +256,10 @@ class DynamicFontCacheManager(
             } else {
                 null
             }
+=======
+        return this.availableFonts.firstNotNullOfOrNull { fontFace ->
+            fontFace.styles[ch.font]?.takeIf { it.awtFont.canDisplay(ch.codepoint) }
+>>>>>>> upstream/nextgen
         }
     }
 
@@ -254,6 +278,10 @@ private class CharCacheData(
     /**
      * Possible values: [UNCACHED], [CACHED] and [BLOCKED]
      */
+<<<<<<< HEAD
     var cacheState: AtomicInteger = AtomicInteger(UNCACHED),
+=======
+    val cacheState: AtomicInteger = AtomicInteger(UNCACHED),
+>>>>>>> upstream/nextgen
     val lastUsage: AtomicLong = AtomicLong(0L)
 )

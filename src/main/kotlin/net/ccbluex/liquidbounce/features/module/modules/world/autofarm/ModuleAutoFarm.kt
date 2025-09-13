@@ -26,12 +26,18 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.player.ModuleBlink
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.aiming.utils.raytraceBlock
+=======
+import net.ccbluex.liquidbounce.utils.aiming.utils.raycast
+import net.ccbluex.liquidbounce.utils.aiming.utils.raytraceBlockRotation
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.aiming.utils.raytraceUpperBlockSide
 import net.ccbluex.liquidbounce.utils.block.*
 import net.ccbluex.liquidbounce.utils.client.SilentHotbar
 import net.ccbluex.liquidbounce.utils.client.notification
 import net.ccbluex.liquidbounce.utils.entity.getNearestPoint
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.inventory.Slots
 import net.ccbluex.liquidbounce.utils.inventory.findClosestSlot
 import net.ccbluex.liquidbounce.utils.inventory.hasInventorySpace
@@ -42,11 +48,29 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.enchantment.Enchantments
 import net.minecraft.item.Items
 import net.minecraft.util.Hand
+=======
+import net.ccbluex.liquidbounce.utils.entity.rotation
+import net.ccbluex.liquidbounce.utils.inventory.Slots
+import net.ccbluex.liquidbounce.utils.inventory.findClosestSlot
+import net.ccbluex.liquidbounce.utils.inventory.hasInventorySpace
+import net.ccbluex.liquidbounce.utils.inventory.hasItem
+import net.ccbluex.liquidbounce.utils.item.getEnchantment
+import net.ccbluex.liquidbounce.utils.kotlin.Priority
+import net.minecraft.block.BlockState
+import net.minecraft.block.FarmlandBlock
+import net.minecraft.block.SoulSandBlock
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+import net.minecraft.enchantment.Enchantments
+import net.minecraft.item.Items
+>>>>>>> upstream/nextgen
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
+<<<<<<< HEAD
 import net.minecraft.world.RaycastContext
+=======
+>>>>>>> upstream/nextgen
 
 /**
  * AutoFarm module
@@ -54,7 +78,11 @@ import net.minecraft.world.RaycastContext
  * Automatically farms stuff for you.
  */
 object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
+<<<<<<< HEAD
     // TODO Fix this entire module-
+=======
+
+>>>>>>> upstream/nextgen
     private val range by float("Range", 5F, 1F..6F)
     private val wallRange by float("WallRange", 0f, 0F..6F).onChange {
         minOf(it, range)
@@ -63,14 +91,18 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
     // The ticks to wait after interacting with something
     private val interactDelay by intRange("InteractDelay", 2..3, 1..15, "ticks")
 
+<<<<<<< HEAD
 //    private val extraSearchRange by float("extraSearchRange", 0F, 0F..3F)
 
+=======
+>>>>>>> upstream/nextgen
     private val disableOnFullInventory by boolean("DisableOnFullInventory", false)
 
     private object AutoPlaceCrops : ToggleableConfigurable(this, "AutoPlace", true) {
         val swapBackDelay by intRange("swapBackDelay", 1..2, 1..20, "ticks")
     }
 
+<<<<<<< HEAD
     private val fortune by boolean("UseFortune", true)
 
     private val autoWalk = tree(AutoFarmAutoWalk)
@@ -93,6 +125,40 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
     var currentTarget: BlockPos? = null
 
     val repeatable = tickHandler {
+=======
+    internal object AutoUseBoneMeal : ToggleableConfigurable(this, "AutoUseBoneMeal", false) {
+        // TODO Use delay, Use filter (wheat/potato/...)
+    }
+
+    private val fortune by boolean("UseFortune", true)
+
+    init {
+        tree(AutoFarmAutoWalk)
+        tree(AutoPlaceCrops)
+        tree(AutoUseBoneMeal)
+        tree(AutoFarmVisualizer)
+    }
+
+    internal val rotations = tree(RotationsConfigurable(this))
+
+    private fun swapToSlotWithFortune() {
+        if (!fortune) {
+            return
+        }
+        // Swap to a fortune item to increase drops
+        Slots.Hotbar.maxByOrNull { it.itemStack.getEnchantment(Enchantments.FORTUNE) }
+            ?.takeIf { it.itemStack.getEnchantment(Enchantments.FORTUNE) >= 1 }
+            ?.let {
+                SilentHotbar.selectSlotSilently(this, it, 2)
+            }
+    }
+
+    var currentTarget: BlockPos? = null
+        private set
+
+    @Suppress("unused")
+    private val tickHandler = tickHandler {
+>>>>>>> upstream/nextgen
         // Return if the user is inside a screen like the inventory
         if (mc.currentScreen is HandledScreen<*>) {
             return@tickHandler
@@ -108,11 +174,16 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         // Disable the module and return if the inventory is full, and the setting for disabling the module is enabled
         if (disableOnFullInventory && !hasInventorySpace()) {
             notification("Inventory is Full", "AutoFarm has been disabled", NotificationEvent.Severity.ERROR)
+<<<<<<< HEAD
             disable()
+=======
+            onDisabled()
+>>>>>>> upstream/nextgen
             enabled = false
             return@tickHandler
         }
 
+<<<<<<< HEAD
         // If there is no currentTarget (a block close enough to be interacted with) walk if wanted
         currentTarget ?: run {
             autoWalk.updateWalkTarget()
@@ -133,12 +204,24 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
             )
         ) ?: return@tickHandler
 
+=======
+        // Return if we don't have a target
+        currentTarget ?: return@tickHandler
+
+        val rayTraceResult = raycast(
+            range = range.toDouble(),
+            start = player.eyePos,
+            direction = (RotationManager.currentRotation ?: player.rotation).directionVector,
+            entity = player,
+        )
+>>>>>>> upstream/nextgen
         if (rayTraceResult.type != HitResult.Type.BLOCK) {
             return@tickHandler
         }
 
         val blockPos = rayTraceResult.blockPos
 
+<<<<<<< HEAD
         var state = blockPos.getState() ?: return@tickHandler
         if (isTargeted(state, blockPos)) {
             if (fortune) {
@@ -155,11 +238,19 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
             if (interaction.updateBlockBreakingProgress(blockPos, direction)) {
                 player.swingHand(Hand.MAIN_HAND)
             }
+=======
+        val state = blockPos.getState() ?: return@tickHandler
+        if (blockPos.readyForHarvest(state)) {
+            swapToSlotWithFortune()
+
+            doBreak(rayTraceResult)
+>>>>>>> upstream/nextgen
 
             if (interaction.blockBreakingProgress == -1) {
                 // Only wait if the block is completely broken
                 waitTicks(interactDelay.random())
             }
+<<<<<<< HEAD
         } else {
             val pos = blockPos.offset(rayTraceResult.side).down()
 
@@ -176,12 +267,30 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
 
                 SilentHotbar.selectSlotSilently(this, item, AutoPlaceCrops.swapBackDelay.random())
                 doPlacement(rayTraceResult)
+=======
+        } else if (AutoUseBoneMeal.enabled && blockPos.canUseBoneMeal(state)) {
+            val boneMealSlot = Slots.OffhandWithHotbar.findClosestSlot(Items.BONE_MEAL) ?: return@tickHandler
+
+            SilentHotbar.selectSlotSilently(this, boneMealSlot, AutoPlaceCrops.swapBackDelay.random())
+            doPlacement(rayTraceResult, hand = boneMealSlot.useHand)
+            waitTicks(interactDelay.random())
+        } else {
+            val pos = blockPos.offset(rayTraceResult.side).down()
+            val blockState = pos.getState() ?: return@tickHandler
+
+            if (isFarmBlockWithAir(blockState, pos)) {
+                val slot = getAvailableSlotForBlock(blockState) ?: return@tickHandler
+
+                SilentHotbar.selectSlotSilently(this, slot, AutoPlaceCrops.swapBackDelay.random())
+                doPlacement(rayTraceResult, hand = slot.useHand)
+>>>>>>> upstream/nextgen
 
                 waitTicks(interactDelay.random())
             }
         }
     }
 
+<<<<<<< HEAD
     // Searches for any blocks within the radius that need to be destroyed, such as crops.
     private fun updateTargetToBreakable(radius: Float, radiusSquared: Float, eyesPos: Vec3d): Boolean {
         val blocksToBreak = eyesPos.searchBlocksInCuboid(radius) { pos, state ->
@@ -191,6 +300,11 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
 
         for ((pos, state) in blocksToBreak) {
             val (rotation, _) = raytraceBlock(
+=======
+    private fun updateTarget(possible: Sequence<Pair<BlockPos, BlockState>>): Boolean {
+        for ((pos, state) in possible) {
+            val (rotation, _) = raytraceBlockRotation(
+>>>>>>> upstream/nextgen
                 player.eyePos,
                 pos,
                 state,
@@ -213,6 +327,7 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         return false
     }
 
+<<<<<<< HEAD
     // Searches for any blocks suitable for placing crops or nether wart on
     // returns ture if it found a target
     private fun updateTargetToPlaceable(radius: Float, radiusSquared: Float, eyesPos: Vec3d): Boolean {
@@ -220,6 +335,25 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
 
         val allowFarmland = hotbarItems.any { it in itemsForFarmland }
         val allowSoulsand = hotbarItems.any { it in itemsForSoulsand }
+=======
+    // Searches for any blocks within the radius that need to be destroyed, such as crops.
+    private fun updateTargetToBreakable(radius: Float, radiusSquared: Float, eyesPos: Vec3d): Boolean {
+        val blocksToBreak = eyesPos.searchBlocksInCuboid(radius) { pos, state ->
+            !state.isAir && pos.readyForHarvest(state) &&
+                    getNearestPoint(eyesPos, Box(pos)).squaredDistanceTo(eyesPos) <= radiusSquared
+        }.sortedBy { it.first.getCenterDistanceSquared() }
+
+        return updateTarget(blocksToBreak)
+    }
+
+    // Searches for any blocks suitable for placing crops or nether wart on
+    // returns ture if it found a target
+    private fun updateTargetToPlaceable(radius: Float, radiusSquared: Float, eyesPos: Vec3d): Boolean {
+        val hotbarItems = Slots.OffhandWithHotbar.items
+
+        val allowFarmland = hotbarItems.any { it in itemsForFarmland }
+        val allowSoulsand = hotbarItems.any { it in itemsForSoulSand }
+>>>>>>> upstream/nextgen
 
         if (!allowFarmland && !allowSoulsand) return false
 
@@ -253,6 +387,22 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         return false
     }
 
+<<<<<<< HEAD
+=======
+    private fun updateTargetToFertilizable(radius: Float, radiusSquared: Float, eyesPos: Vec3d): Boolean {
+        if (!Slots.OffhandWithHotbar.hasItem(Items.BONE_MEAL)) {
+            return false
+        }
+
+        val blocksToFertile = eyesPos.searchBlocksInCuboid(radius) { pos, state ->
+            !state.isAir && pos.canUseBoneMeal(state) &&
+                getNearestPoint(eyesPos, Box(pos)).squaredDistanceTo(eyesPos) <= radiusSquared
+        }.sortedBy { it.first.getCenterDistanceSquared() }
+
+        return updateTarget(blocksToFertile)
+    }
+
+>>>>>>> upstream/nextgen
     // Finds either a breakable target (such as crops, cactus, etc.)
     // or a placeable target (such as a farmblock or soulsand with air above).
     // It will prefer a breakable target
@@ -272,6 +422,7 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         if (AutoPlaceCrops.enabled && updateTargetToPlaceable(radius, radiusSquared, eyesPos)) {
             return
         }
+<<<<<<< HEAD
     }
 
     fun isTargeted(state: BlockState, pos: BlockPos): Boolean {
@@ -286,6 +437,11 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
             is KelpPlantBlock -> isAboveLast<KelpPlantBlock>(pos)
             is BambooBlock -> isAboveLast<BambooBlock>(pos)
             else -> false
+=======
+
+        if (AutoUseBoneMeal.enabled && updateTargetToFertilizable(radius, radiusSquared, eyesPos)) {
+            return
+>>>>>>> upstream/nextgen
         }
     }
 
@@ -298,11 +454,17 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         allowFarmland: Boolean = true,
         allowSoulsand: Boolean = true
     ): Boolean {
+<<<<<<< HEAD
         return isFarmBlock(state, allowFarmland, allowSoulsand) && hasAirAbove(pos)
     }
 
     fun hasAirAbove(pos: BlockPos) = pos.up().getState()?.isAir == true
 
+=======
+        return isFarmBlock(state, allowFarmland, allowSoulsand) && pos.up().getState()?.isAir == true
+    }
+
+>>>>>>> upstream/nextgen
     private fun isFarmBlock(state: BlockState, allowFarmland: Boolean, allowSoulsand: Boolean): Boolean {
         return when (state.block) {
             is FarmlandBlock -> allowFarmland
@@ -311,6 +473,7 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
         }
     }
 
+<<<<<<< HEAD
     private inline fun <reified T : Block> isAboveLast(pos: BlockPos): Boolean {
         return pos.down().getBlock() is T && pos.down(2).getBlock() !is T
     }
@@ -320,6 +483,13 @@ object ModuleAutoFarm : ClientModule("AutoFarm", Category.WORLD) {
     }
 
     override fun disable() {
+=======
+    override fun onEnabled() {
+        ChunkScanner.subscribe(AutoFarmBlockTracker)
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         ChunkScanner.unsubscribe(AutoFarmBlockTracker)
         currentTarget = null
     }

@@ -21,14 +21,53 @@ package net.ccbluex.liquidbounce.features.module.modules.world.nuker.area
 
 import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker.areaMode
 import net.minecraft.block.BlockState
 import net.minecraft.util.math.BlockPos
 
 abstract class NukerArea(name: String) : Choice(name) {
+=======
+import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker
+import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker.areaMode
+import net.ccbluex.liquidbounce.utils.block.isNotBreakable
+import net.minecraft.block.BlockState
+import net.minecraft.block.ShapeContext
+import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3d
+
+sealed class NukerArea(name: String) : Choice(name) {
+>>>>>>> upstream/nextgen
 
     override val parent: ChoiceConfigurable<*>
         get() = areaMode
 
+<<<<<<< HEAD
     abstract fun lookupTargets(radius: Float, count: Int? = null): Sequence<Pair<BlockPos, BlockState>>
+=======
+    abstract fun lookupTargets(radius: Float, count: Int? = null): List<Pair<BlockPos, BlockState>>
+
+    protected fun isPositionAvailable(
+        eyesPos: Vec3d,
+        rangeSquared: Double,
+        pos: BlockPos,
+        state: BlockState,
+    ): Boolean {
+        if (state.isNotBreakable(pos) || !ModuleNuker.isValid(state)) {
+            return false
+        }
+
+        val shape = state.getCollisionShape(world, pos, ShapeContext.of(player))
+
+        if (shape.isEmpty) {
+            return false
+        }
+
+        val vec3d = shape.offset(pos.x.toDouble(), pos.y.toDouble(), pos.z.toDouble())
+            .getClosestPointTo(eyesPos)
+            .orElse(null) ?: return false
+
+        return vec3d.squaredDistanceTo(eyesPos) <= rangeSquared
+    }
+>>>>>>> upstream/nextgen
 }

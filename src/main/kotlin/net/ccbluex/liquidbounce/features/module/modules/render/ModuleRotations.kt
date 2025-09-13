@@ -149,9 +149,16 @@ object ModuleRotations : ClientModule("Rotations", Category.RENDER) {
         return Rotation(interpolatedYaw, interpolatedPitch)
     }
 
+<<<<<<< HEAD
     override fun disable() {
         this.modelRotation = null
         this.prevModelRotation = null
         super.disable()
+=======
+    override fun onDisabled() {
+        this.modelRotation = null
+        this.prevModelRotation = null
+        super.onDisabled()
+>>>>>>> upstream/nextgen
     }
 }

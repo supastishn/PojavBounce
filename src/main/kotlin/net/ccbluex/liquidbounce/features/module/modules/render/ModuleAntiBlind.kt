@@ -21,6 +21,11 @@ package net.ccbluex.liquidbounce.features.module.modules.render
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
+<<<<<<< HEAD
+=======
+import net.minecraft.item.Items
+import net.minecraft.util.Identifier
+>>>>>>> upstream/nextgen
 
 /**
  * AntiBlind module
@@ -29,6 +34,16 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
  */
 @Suppress("MagicNumber")
 object ModuleAntiBlind : ClientModule("AntiBlind", Category.RENDER, aliases = arrayOf("NoRender")) {
+<<<<<<< HEAD
+=======
+    /**
+     * @see Items.CARVED_PUMPKIN
+     * @see net.minecraft.client.gui.hud.InGameHud.renderMiscOverlays
+     */
+    @JvmField
+    val TEXTURE_PUMPKIN_BLUR: Identifier = Identifier.ofVanilla("textures/misc/pumpkinblur.png")
+
+>>>>>>> upstream/nextgen
     private val render = multiEnumChoice("DoRender",
         DoRender.ARMOR,
         DoRender.MOB_IN_SPAWNER,
@@ -48,6 +63,10 @@ object ModuleAntiBlind : ClientModule("AntiBlind", Category.RENDER, aliases = ar
         DoRender.INVISIBLE_ENTITIES,
         DoRender.BOSS_BARS,
         DoRender.EXPLOSION_PARTICLES,
+<<<<<<< HEAD
+=======
+        DoRender.WORLD_BORDER,
+>>>>>>> upstream/nextgen
     ).also { tagBy(it) }
 
     private val fireOpacity by int("FireOpacity", 100, 0..100, suffix = "%")
@@ -90,5 +109,10 @@ enum class DoRender(override val choiceName: String) : NamedChoice {
     SIGN_TEXT("SignText"),
     INVISIBLE_ENTITIES("InvisibleEntities"),
     BOSS_BARS("BossBars"),
+<<<<<<< HEAD
     EXPLOSION_PARTICLES("ExplosionParticles")
+=======
+    EXPLOSION_PARTICLES("ExplosionParticles"),
+    WORLD_BORDER("WorldBorder"),
+>>>>>>> upstream/nextgen
 }

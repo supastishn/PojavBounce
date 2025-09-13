@@ -3,6 +3,10 @@ package net.ccbluex.liquidbounce.render.engine.font
 import net.ccbluex.liquidbounce.render.FontManager
 import net.ccbluex.liquidbounce.render.engine.font.GlyphPage.Companion.CharacterGenerationInfo
 import net.ccbluex.liquidbounce.utils.client.logger
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.render.toNativeImage
+>>>>>>> upstream/nextgen
 import net.minecraft.client.texture.NativeImageBackedTexture
 import java.awt.Dimension
 import java.awt.Point
@@ -18,6 +22,10 @@ class StaticGlyphPage(
     val glyphs: Set<Pair<FontManager.FontId, GlyphRenderInfo>>
 ): GlyphPage() {
     companion object {
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         fun createGlyphPages(chars: List<FontGlyph>): List<StaticGlyphPage> {
             val glyphPages = mutableListOf<StaticGlyphPage>()
 
@@ -37,6 +45,10 @@ class StaticGlyphPage(
         /**
          * Creates a bitmap which contains all [chars].
          */
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         fun createGlyphPageWithFittingCharacters(chars: List<FontGlyph>): Pair<StaticGlyphPage, List<FontGlyph>> {
             val result: Pair<GlyphPlacementResult, List<FontGlyph>>? = tryCharacterPlacementWithShrinking(chars)
 
@@ -54,6 +66,10 @@ class StaticGlyphPage(
          * Tries to fit all characters on a page.
          * If it does not fit, it reduces the list of characters to place by 20% and retries.
          */
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         private fun tryCharacterPlacementWithShrinking(
             chars: List<FontGlyph>
         ): Pair<GlyphPlacementResult, List<FontGlyph>>? {
@@ -72,6 +88,10 @@ class StaticGlyphPage(
             return null
         }
 
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         private fun renderGlyphPage(placementPlan: GlyphPlacementResult): StaticGlyphPage {
             val atlas = createBufferedImageWithDimensions(placementPlan.atlasDimension)
 
@@ -98,6 +118,10 @@ class StaticGlyphPage(
          *
          * @return null if the resulting atlas is bigger than the maximum texture size.
          */
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         private fun tryCharacterPlacement(chars: List<FontGlyph>): GlyphPlacementResult? {
             // Get information about the glyphs and sort them by their height
             val glyphsToRender = chars
@@ -132,6 +156,10 @@ class StaticGlyphPage(
          *
          * @return The height of the resulting texture. Is at least (1, 1)
          */
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         private fun placeCharacters(glyphs: List<CharacterGenerationInfo>, atlasWidth: Int): Dimension {
             var currentX = 0
             var currentY = 0

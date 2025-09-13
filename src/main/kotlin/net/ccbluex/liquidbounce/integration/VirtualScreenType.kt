@@ -21,8 +21,12 @@
 
 package net.ccbluex.liquidbounce.integration
 
+<<<<<<< HEAD
 import com.mojang.blaze3d.systems.RenderCall
 import com.mojang.blaze3d.systems.RenderSystem
+=======
+import com.google.common.base.Predicates
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.openVfpProtocolSelection
 import net.minecraft.client.gui.screen.DisconnectedScreen
@@ -38,7 +42,10 @@ import net.minecraft.client.gui.screen.option.OptionsScreen
 import net.minecraft.client.gui.screen.world.CreateWorldScreen
 import net.minecraft.client.gui.screen.world.SelectWorldScreen
 import net.minecraft.client.realms.gui.screen.RealmsMainScreen
+<<<<<<< HEAD
 import net.minecraft.text.Text
+=======
+>>>>>>> upstream/nextgen
 import java.util.function.Predicate
 
 /**
@@ -51,6 +58,7 @@ private val Screen.isLunar
 
 enum class VirtualScreenType(
     val routeName: String,
+<<<<<<< HEAD
     private val recognizer: Predicate<Screen> = Predicate { false },
     val isInGame: Boolean = false,
     private val open: RenderCall = RenderCall {
@@ -71,6 +79,12 @@ enum class VirtualScreenType(
                 }
             }
         }
+=======
+    private val recognizer: Predicate<Screen> = Predicates.alwaysFalse(),
+    val isInGame: Boolean = false,
+    private val open: Runnable = Runnable {
+        mc.setScreen(VirtualDisplayScreen(byName(routeName)!!))
+>>>>>>> upstream/nextgen
     }
 ) {
 
@@ -140,6 +154,7 @@ enum class VirtualScreenType(
 
     VIAFABRICPLUS_PROTOCOL_SELECTION("viafabricplus_protocol_selection",
         recognizer = { it::class.java.name == "de.florianmichael.viafabricplus.screen.base.ProtocolSelectionScreen" },
+<<<<<<< HEAD
         open = { openVfpProtocolSelection() }
     );
 
@@ -150,6 +165,21 @@ enum class VirtualScreenType(
 
     companion object {
         fun byName(name: String) = entries.find { it.routeName == name }
+=======
+        open = ::openVfpProtocolSelection
+    ),
+
+    BROWSER("browser",
+        recognizer = { it is BrowserScreen }
+    );
+
+    fun open() = mc.execute(open)
+
+    companion object {
+        @JvmStatic
+        fun byName(name: String) = entries.find { it.routeName == name }
+        @JvmStatic
+>>>>>>> upstream/nextgen
         fun recognize(screen: Screen) = entries.find { it.recognizer.test(screen) }
     }
 

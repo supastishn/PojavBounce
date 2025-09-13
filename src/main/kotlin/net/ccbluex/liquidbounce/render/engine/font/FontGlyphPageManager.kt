@@ -14,8 +14,13 @@ import kotlin.math.ceil
 private val BASIC_CHARS = '\u0000'..'\u0200'
 
 class FontGlyphPageManager(
+<<<<<<< HEAD
     baseFonts: Set<FontManager.FontFace>,
     additionalFonts: Set<FontManager.FontFace> = emptySet()
+=======
+    baseFonts: Collection<FontManager.FontFace>,
+    additionalFonts: Collection<FontManager.FontFace> = emptySet()
+>>>>>>> upstream/nextgen
 ): EventListener {
 
     private val staticPage: List<StaticGlyphPage> = StaticGlyphPage.createGlyphPages(baseFonts.flatMap { loadedFont ->
@@ -23,11 +28,22 @@ class FontGlyphPageManager(
     })
     private val dynamicPage: DynamicGlyphPage = DynamicGlyphPage(
         Dimension(1024, 1024),
+<<<<<<< HEAD
         ceil(baseFonts.elementAt(0).styles[0]!!.height * 2.0F).toInt()
     )
     private val dynamicFontManager: DynamicFontCacheManager = DynamicFontCacheManager(
         this.dynamicPage,
         baseFonts + additionalFonts
+=======
+        ceil(baseFonts.first().styles[0]!!.height * 2.0F).toInt()
+    )
+    private val dynamicFontManager: DynamicFontCacheManager = DynamicFontCacheManager(
+        this.dynamicPage,
+        HashSet<FontManager.FontFace>(baseFonts.size + staticPage.size).apply {
+            addAll(baseFonts)
+            addAll(additionalFonts)
+        }
+>>>>>>> upstream/nextgen
     )
 
     private val availableFonts: Map<FontManager.FontFace, FontGlyphRegistry>
@@ -57,7 +73,11 @@ class FontGlyphPageManager(
     }
 
     private fun createGlyphRegistries(
+<<<<<<< HEAD
         baseFonts: Set<FontManager.FontFace>,
+=======
+        baseFonts: Collection<FontManager.FontFace>,
+>>>>>>> upstream/nextgen
         glyphPages: List<StaticGlyphPage>
     ): Map<FontManager.FontFace, FontGlyphRegistry> = baseFonts.associateWith { loadedFont ->
         val array = Array(4) { Char2ObjectOpenHashMap<GlyphDescriptor>(512) }

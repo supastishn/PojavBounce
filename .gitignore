@@ -11,9 +11,4 @@
 /mcef/
 /logs/
 /.kotlin/
-
-# Svelte theme directory (deprecated - using native GUI)
-/src-theme/node_modules/
-/src-theme/dist/
-/src-theme/.svelte-kit/
-.aider*
+.DS_Store

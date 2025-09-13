@@ -33,12 +33,12 @@ object ComponentManager {
     val nativeComponents = listOf(MinimapComponent)
 
     val components: List<Component>
-        get() = nativeComponents + ThemeManager.activeTheme.components
+        get() = nativeComponents + ThemeManager.theme.components
 
     @JvmStatic
     fun isTweakEnabled(tweak: ComponentTweak) = ModuleHud.running && !HideAppearance.isHidingNow &&
         components.any { component ->
-            component.enabled // Remove tweaks check for native GUI approach
+            component.enabled && component.tweaks.contains(tweak)
         }
 
     @JvmStatic
@@ -48,7 +48,7 @@ object ComponentManager {
         }
 
         return components.find { component ->
-            component.enabled // Remove tweaks check for native GUI approach
+            component.enabled && component.tweaks.contains(tweak)
         }
     }
 
@@ -57,18 +57,14 @@ object ComponentManager {
             return components
         }
 
-        // For native GUI, just return active theme's components if ID matches
-        return if (ThemeManager.activeTheme.metadata.id == id) {
-            ThemeManager.activeTheme.components
-        } else {
-            emptyList()
-        }
+        val theme = ThemeManager.themes.find { it.metadata.id == id } ?: return emptyList()
+        return theme.components
     }
 
     fun updateComponents() {
         // Might be necessary later on.
         // EventManager.callEvent(ComponentsUpdate(null, components))
-        EventManager.callEvent(ComponentsUpdate(ThemeManager.activeTheme.components))
+        EventManager.callEvent(ComponentsUpdate(ThemeManager.theme.metadata.id, ThemeManager.theme.components))
     }
 
 }

@@ -20,7 +20,6 @@
 package net.ccbluex.liquidbounce.features.command.dsl
 
 import net.ccbluex.liquidbounce.features.command.Command
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 import net.ccbluex.liquidbounce.features.command.Parameter
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 
@@ -34,10 +33,41 @@ inline fun buildCommand(name: String, block: CommandBuilder.() -> Unit): Command
 inline fun commandFactory(
     name: String,
     crossinline block: CommandBuilder.() -> Unit,
-): CommandFactory {
-    return object : CommandFactory {
-        override fun createCommand(): Command = buildCommand(name, block)
-    }
+): Command.Factory {
+    return Command.Factory { buildCommand(name, block) }
 }
 
-// Context receiver functions removed - using parameter casting via command context instead
+context(context: Command.Handler.Context)
+fun <T : Any> Parameter<T>.cast(): T {
+    requireOwner(context.command)
+    @Suppress("UNCHECKED_CAST")
+    return context.args.getOrNull(index) as T?
+        ?: requireNotNull(this.default) { "Parameter '$name' has no default value." }
+}
+
+context(context: Command.Handler.Context)
+fun <T : Any> Parameter<T>.castVararg(): Array<out T> {
+    requireOwner(context.command)
+    @Suppress("UNCHECKED_CAST")
+    return context.args[index] as Array<T>
+}
+
+context(context: Command.Handler.Context)
+fun <T : Any> Parameter<T>.castNotRequired(): T? {
+    requireOwner(context.command)
+    @Suppress("UNCHECKED_CAST")
+    return context.args.getOrNull(index) as T?
+}
+
+context(context: Command.Handler.Context)
+fun <T : Any> Parameter<T>.castNotRequired(default: T): T {
+    requireOwner(context.command)
+    @Suppress("UNCHECKED_CAST")
+    return context.args.getOrNull(index) as T? ?: default
+}
+
+private fun Parameter<*>.requireOwner(command: Command) {
+    require(command.parameters[index] === this && command === this.command) {
+        "Parameter is not part of command '${command.name}'"
+    }
+}

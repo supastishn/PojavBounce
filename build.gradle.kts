@@ -17,18 +17,19 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-// Note: Node imports removed - no longer needed without Svelte
+// Note: Node imports removed - no longer needed without Svelte/browser backend
 // import com.github.gradle.node.npm.task.NpmTask
 // import com.github.gradle.node.task.NodeTask
 import groovy.json.JsonOutput
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
+import org.gradle.kotlin.dsl.support.listFilesOrdered
 
 plugins {
     id("fabric-loom")
     kotlin("jvm")
-    id("com.gorylenko.gradle-git-properties") version "2.5.2"
+    id("com.gorylenko.gradle-git-properties") version "2.5.3"
     id("io.gitlab.arturbosch.detekt") version "1.23.6"
-    // Note: Node plugin removed - no longer needed without Svelte
+    // Note: Node plugin removed - no longer needed without Svelte/browser backend
     // id("com.github.node-gradle.node") version "7.1.0"
     id("org.jetbrains.dokka") version "1.9.10"
 }
@@ -45,9 +46,10 @@ val fabric_kotlin_version: String by project
 val viafabricplus_version: String by project
 
 base {
-    archivesName = archives_base_name
-    version = mod_version
-    group = maven_group
+    archivesName = project.property("archives_base_name") as String
+    version = project.property("mod_version") as String
+    group = project.property("maven_group") as String
+>>>>>>> upstream/nextgen
 }
 
 /** Includes non-mod dependency recursively in the JAR file */
@@ -56,6 +58,8 @@ val includeDependency: Configuration by configurations.creating
 /** Includes mod in the JAR file */
 val includeModDependency: Configuration by configurations.creating
 
+/** Includes native-only dependency in the JAR file */
+val includeNative: Configuration by configurations.creating
 /**
  * Provided by:
  * - Minecraft
@@ -63,88 +67,13 @@ val includeModDependency: Configuration by configurations.creating
  */
 fun Configuration.excludeProvidedLibs() = apply {
     exclude(group = "org.jetbrains.kotlin", module = "kotlin-stdlib")
-
-    exclude(group = "com.google.code.gson", module = "gson")
-    exclude(group = "net.java.dev.jna", module = "jna")
-    exclude(group = "commons-codec", module = "commons-codec")
-    exclude(group = "commons-io", module = "commons-io")
-    exclude(group = "org.apache.commons", module = "commons-compress")
-    exclude(group = "org.apache.commons", module = "commons-lang3")
-    exclude(group = "org.apache.logging.log4j", module = "log4j-core")
-    exclude(group = "org.apache.logging.log4j", module = "log4j-api")
-    exclude(group = "org.apache.logging.log4j", module = "log4j-slf4j-impl")
-    exclude(group = "org.slf4j", module = "slf4j-api")
-    exclude(group = "com.mojang", module = "authlib")
-
-    // Note: from Netty HTTP Server, not all components are used
-    exclude(group = "io.netty", module = "netty-all")
-
-    exclude(group = "io.netty", module = "netty-buffer")
-    exclude(group = "io.netty", module = "netty-codec")
-    exclude(group = "io.netty", module = "netty-common")
-    exclude(group = "io.netty", module = "netty-handler")
-    exclude(group = "io.netty", module = "netty-resolver")
-    exclude(group = "io.netty", module = "netty-transport")
-    exclude(group = "io.netty", module = "netty-transport-native-unix-common")
-}
-
-includeDependency.excludeProvidedLibs()
-includeModDependency.excludeProvidedLibs()
-
-configurations.include.get().extendsFrom(includeModDependency)
-configurations.modApi.get().extendsFrom(includeModDependency)
-configurations.modCompileOnlyApi.get().extendsFrom(includeModDependency)
-
-repositories {
-    mavenCentral()
-    mavenLocal()
-    maven {
-        name = "CCBlueX"
-        url = uri("https://maven.ccbluex.net/releases")
-    }
-    maven {
-        name = "Fabric"
-        url = uri("https://maven.fabricmc.net/")
-    }
-    maven {
-        name = "Jitpack"
-        url = uri("https://jitpack.io")
-    }
-    maven {
-        name = "TerraformersMC"
-        url = uri("https://maven.terraformersmc.com/")
-    }
-    maven {
-        name = "ViaVersion"
-        url = uri("https://repo.viaversion.com/")
-    }
-    maven {
-        name = "modrinth"
-        url = uri("https://api.modrinth.com/maven")
-    }
-    maven {
-        name = "OpenCollab Snapshots"
-        url = uri("https://repo.opencollab.dev/maven-snapshots/")
-    }
-    maven {
-        name = "Lenni0451"
-        url = uri("https://maven.lenni0451.net/everything")
-    }
-}
-
-loom {
-    accessWidenerPath = file("src/main/resources/liquidbounce.accesswidener")
-}
-
-dependencies {
-    // Minecraft
-    minecraft("com.mojang:minecraft:${minecraft_version}")
+minecraft("com.mojang:minecraft:${project.property("minecraft_version")}")
     mappings("net.fabricmc:yarn:${project.property("yarn_mappings")}:v2")
 
     // Fabric
-    modApi("net.fabricmc:fabric-loader:${loader_version}")
-    modApi("net.fabricmc.fabric-api:fabric-api:${fabric_version}")
-    modApi("net.fabricmc:fabric-language-kotlin:${fabric_kotlin_version}")
+    modApi("net.fabricmc:fabric-loader:${project.property("loader_version")}")
+    modApi("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
+    modApi("net.fabricmc:fabric-language-kotlin:${project.property("fabric_kotlin_version")}")
 
     // Mod menu
     modApi("com.terraformersmc:modmenu:${project.property("mod_menu_version")}")
@@ -154,15 +83,19 @@ dependencies {
     modApi("maven.modrinth:lithium:${project.property("lithium_version")}")
 
     // ViaFabricPlus
-    modApi("com.viaversion:viafabricplus-api:${viafabricplus_version}")
-    modRuntimeOnly("com.viaversion:viafabricplus:${viafabricplus_version}")
+modApi("com.viaversion:viafabricplus-api:${project.property("viafabricplus_version")}")
+    modRuntimeOnly("com.viaversion:viafabricplus:${project.property("viafabricplus_version")}")
 
     // Minecraft Authlib
     includeDependency("com.github.CCBlueX:mc-authlib:${project.property("mc_authlib_version")}")
 
-    // Note: JCEF Support removed - using native GUI instead
+    // Note: JCEF/MCEF Support removed - using native GUI instead of browser backend
     // includeModDependency("com.github.CCBlueX:mcef:${project.property("mcef_version")}")
-    // includeDependency("net.ccbluex:netty-httpserver:2.2.1")
+    // includeDependency("net.ccbluex:netty-httpserver:2.3.2")
+    // MacOS native (Linux native is included in game)
+    // includeDependency("io.netty:netty-transport-classes-kqueue:${project.property("netty_version")}")
+    // includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-aarch_64")
+    // includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-x86_64")
 
     // Discord RPC Support
     includeDependency("com.github.CCBlueX:DiscordIPC:4.0.0")
@@ -178,30 +111,18 @@ dependencies {
 //    includeDependency("org.graalvm.polyglot:ruby-community:${project.property("polyglot_version")}")
 //    includeDependency("org.graalvm.polyglot:llvm-native-community:${project.property("polyglot_version")}")
 
-    // Machine Learning - Mobile/Android compatible setup
-    // Using standard DJL with explicit exclusions to prevent Linux-specific native library issues
+// Machine Learning
     includeDependency("ai.djl:api:${project.property("djl_version")}")
-    // PyTorch engine with explicit exclusion of ALL native libraries (runtime will handle mobile inference)
-    includeDependency("ai.djl.pytorch:pytorch-engine:${project.property("djl_version")}") {
-        exclude(group = "ai.djl.pytorch", module = "pytorch-native-cpu")
-        exclude(group = "ai.djl.pytorch", module = "pytorch-native-cpu-precxx11")
-        exclude(group = "ai.djl.pytorch", module = "pytorch-native-auto")
-    }
-    
-    // Add TensorFlow Lite engine for mobile/Android inference support
-    includeDependency("ai.djl.tflite:tflite-engine:${project.property("djl_tflite_version")}")
-    includeDependency("org.tensorflow:tensorflow-lite:${project.property("tensorflow_lite_version")}")
-    
-    // For PojavLauncher Android compatibility, we'll extract native libraries at runtime
-    // Rather than trying to bundle AAR files into JAR which is complex
+    includeDependency("ai.djl.pytorch:pytorch-engine:${project.property("djl_version")}")
 //    runtimeOnly("ai.djl.mxnet:mxnet-engine:${project.property("djl_version")}")
 //    runtimeOnly("ai.djl.tensorflow:tensorflow-engine:${project.property("djl_version")}")
 
     // HTTP library
-    includeDependency("com.squareup.okhttp3:okhttp:5.1.0")
+includeDependency("com.squareup.okhttp3:okhttp:${project.property("okhttp_version")}")
+    includeDependency("com.squareup.okhttp3:okhttp-coroutines:${project.property("okhttp_version")}")
 
     // SOCKS5 & HTTP Proxy Support
-    includeDependency("io.netty:netty-handler-proxy:4.1.97.Final")
+    includeDependency("io.netty:netty-handler-proxy:${project.property("netty_version")}")
 
     // Update Checker
     includeDependency("com.vdurmont:semver4j:3.1.0")
@@ -210,20 +131,18 @@ dependencies {
     includeDependency("org.ahocorasick:ahocorasick:0.6.3")
 
     // Test libraries
-    testImplementation("org.junit.jupiter:junit-jupiter:5.13.1")
-    testImplementation("org.jetbrains.kotlin:kotlin-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+testImplementation(kotlin("test"))
+//    testImplementation("net.fabricmc:fabric-loader-junit:${project.property("loader_version")}")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
     // Fix nullable annotations
-    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    compileOnlyApi("com.google.code.findbugs:jsr305:3.0.2")
 
     afterEvaluate {
         includeDependency.incoming.resolutionResult.allDependencies.forEach {
-            val compileOnlyApiDependency = dependencies.compileOnlyApi(it.requested.toString()) {
+            val apiDependency = dependencies.api(it.requested.toString()) {
                 isTransitive = false
             }
-            val apiDependency = dependencies.api(compileOnlyApiDependency)!!
 
             dependencies.include(apiDependency)
         }
@@ -231,34 +150,42 @@ dependencies {
 }
 
 tasks.processResources {
-    // Note: bundleTheme dependency removed - using native GUI instead
-    // dependsOn("bundleTheme")
+dependsOn("bundleTheme")
 
-    val contributors = JsonOutput.prettyPrint(
-        JsonOutput.toJson(getContributors("CCBlueX", "LiquidBounce"))
-    )
+    val modVersion = providers.gradleProperty("mod_version")
+    val minecraftVersion = providers.gradleProperty("minecraft_version")
+    val fabricVersion = providers.gradleProperty("fabric_version")
+    val loaderVersion = providers.gradleProperty("loader_version")
+    val minLoaderVersion = providers.gradleProperty("min_loader_version")
+    val fabricKotlinVersion = providers.gradleProperty("fabric_kotlin_version")
+    val viafabricplusVersion = providers.gradleProperty("viafabricplus_version")
 
-    inputs.property("version", mod_version)
+    val contributors = provider {
+        JsonOutput.prettyPrint(
+            JsonOutput.toJson(getContributors("CCBlueX", "LiquidBounce"))
+        )
+    }
 
-    inputs.property("minecraft_version", minecraft_version)
-    inputs.property("fabric_version", fabric_version)
-    inputs.property("loader_version", loader_version)
-    inputs.property("min_loader_version", min_loader_version)
-    inputs.property("fabric_kotlin_version", fabric_kotlin_version)
-    inputs.property("viafabricplus_version", viafabricplus_version)
+    inputs.property("version", modVersion)
+    inputs.property("minecraft_version", minecraftVersion)
+    inputs.property("fabric_version", fabricVersion)
+    inputs.property("loader_version", loaderVersion)
+    inputs.property("min_loader_version", minLoaderVersion)
+    inputs.property("fabric_kotlin_version", fabricKotlinVersion)
+    inputs.property("viafabricplus_version", viafabricplusVersion)
     inputs.property("contributors", contributors)
 
     filesMatching("fabric.mod.json") {
         expand(
             mapOf(
-                "version" to mod_version,
-                "minecraft_version" to minecraft_version,
-                "fabric_version" to fabric_version,
-                "loader_version" to loader_version,
-                "min_loader_version" to min_loader_version,
-                "contributors" to contributors,
-                "fabric_kotlin_version" to fabric_kotlin_version,
-                "viafabricplus_version" to viafabricplus_version,
+"version" to modVersion.get(),
+                "minecraft_version" to minecraftVersion.get(),
+                "fabric_version" to fabricVersion.get(),
+                "loader_version" to loaderVersion.get(),
+                "min_loader_version" to minLoaderVersion.get(),
+                "contributors" to contributors.get(),
+                "fabric_kotlin_version" to fabricKotlinVersion.get(),
+                "viafabricplus_version" to viafabricplusVersion.get()
             )
         )
     }
@@ -268,61 +195,11 @@ tasks.processResources {
 
 // Note: Theme build tasks removed - using native GUI instead
 /*
-tasks.register<NpmTask>("npmInstallTheme") {
-    workingDir = file("src-theme")
-    args.set(listOf("i"))
-    doLast {
-        logger.info("Successfully installed dependencies for theme")
-    }
-    inputs.files("src-theme/package.json", "src-theme/package-lock.json")
-    outputs.dir("src-theme/node_modules")
-}
-
-tasks.register<NpmTask>("buildTheme") {
-    dependsOn("npmInstallTheme")
-    workingDir = file("src-theme")
-    args.set(listOf("run", "build"))
-    doLast {
-        logger.info("Successfully build theme")
-    }
-
-    inputs.files(
-        "src-theme/package.json",
-        "src-theme/package-lock.json",
-        "src-theme/bundle.cjs",
-        "src-theme/rollup.config.js"
-    )
-    inputs.dir("src-theme/src")
-    outputs.dir("src-theme/dist")
-}
-
-tasks.register<NodeTask>("bundleTheme") {
-    dependsOn("buildTheme")
-    workingDir = file("src-theme")
-    script = file("src-theme/bundle.cjs")
-    doLast {
-        logger.info("Successfully attached theme to build")
-    }
-
-    // Incremental stuff
-    inputs.files(
-        "src-theme/package.json",
-        "src-theme/package-lock.json",
-        "src-theme/bundle.cjs",
-        "src-theme/rollup.config.js"
-    )
-    inputs.dir("src-theme/src")
-    inputs.dir("src-theme/public")
-    inputs.dir("src-theme/dist")
-    outputs.files("src-theme/resources/assets/liquidbounce/default_theme.zip")
-}
-*/
 
 sourceSets {
     main {
         resources {
-            // Note: src-theme/resources removed - using native GUI instead
-            // srcDirs("src-theme/resources")
+srcDirs("src-theme/resources")
         }
     }
 }
@@ -378,10 +255,17 @@ tasks.register<CompareJsonKeysTask>("verifyI18nJsonKeys") {
 
     val languageFolder = file("src/main/resources/resources/liquidbounce/lang")
     baselineFile.set(languageFolder.resolve(baselineFileName))
-    files.from(languageFolder.listFiles().filter { it.extension.equals("json", ignoreCase = true) })
+files.from(languageFolder.listFilesOrdered { it.extension.equals("json", ignoreCase = true) })
     consoleOutputCount.set(5)
 }
 
+tasks.register<JavaExec>("liquidInstruction") {
+    group = "other"
+    description = "Run LiquidInstruction class."
+
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("net.ccbluex.liquidbounce.LiquidInstruction")
+}
 java {
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
     // if it is present.
@@ -396,23 +280,39 @@ kotlin {
     compilerOptions {
         suppressWarnings = true
         jvmToolchain(21)
-        freeCompilerArgs.addAll(listOf(
-            "-opt-in=kotlin.ExperimentalStdlibApi",
-            "-opt-in=kotlin.contracts.ExperimentalContracts",
-            "-Xexplicit-backing-fields"
-        ))
+freeCompilerArgs.add("-XXLanguage:+ExplicitBackingFields")
+        freeCompilerArgs.add("-Xcontext-parameters")
     }
 }
 
 tasks.jar {
+val archivesBaseName = providers.gradleProperty("archives_base_name")
+    val modVersion = providers.gradleProperty("mod_version")
+    val mavenGroup = providers.gradleProperty("maven_group")
+    val mappingFiles = provider {
+        rootProject.configurations.mappings.get().map(::zipTree)
+    }
+
+    inputs.property("archives_base_name", archivesBaseName)
+    inputs.property("mod_version", modVersion)
+    inputs.property("maven_group", mavenGroup)
+    inputs.files(mappingFiles).withPropertyName("mappingFiles")
+
+    manifest {
+        attributes["Main-Class"] = "net.ccbluex.liquidbounce.LiquidInstruction"
+        attributes["Implementation-Title"] = archivesBaseName.get()
+        attributes["Implementation-Version"] = modVersion.get()
+        attributes["Implementation-Vendor"] = mavenGroup.get()
+    }
+
     // Rename the project's license file to LICENSE_<project_name> to avoid conflicts
     from("LICENSE") {
         rename {
-            "${it}_${archives_base_name}"
+            "${it}_${archivesBaseName.get()}"
         }
     }
 
-    from(files(project.configurations.mappings.get().map(::zipTree))) {
+    from(files(mappingFiles.get())) {
         include("mappings/mappings.tiny")
     }
 }
@@ -423,15 +323,14 @@ tasks.register<Copy>("copyZipInclude") {
 }
 
 tasks.named("sourcesJar") {
-    // Note: bundleTheme dependency removed - using native GUI instead
-    // dependsOn("bundleTheme")
+dependsOn("bundleTheme")
 }
 
 tasks.named("build") {
     dependsOn("copyZipInclude")
 }
 
-// Custom task to help with mobile engine compatibility
+// Custom task to help with mobile engine compatibility  
 tasks.register("extractMobileNativeLibs") {
     group = "build"
     description = "Extract native libraries for mobile/Android compatibility"

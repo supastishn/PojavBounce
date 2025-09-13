@@ -26,8 +26,12 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Text
 
+<<<<<<< HEAD
 @Suppress("DataClassPrivateConstructor")
 data class Nametag private constructor(
+=======
+class Nametag private constructor(
+>>>>>>> upstream/nextgen
     val entity: Entity,
     /**
      * The text to render as nametag
@@ -36,10 +40,18 @@ data class Nametag private constructor(
     /**
      * The items that should be rendered above the name tag
      */
+<<<<<<< HEAD
     val items: List<ItemStack?>
 ) {
 
     var position: Vec3? = null
+=======
+    val items: List<ItemStack>
+) {
+
+    var position: Vec3? = null
+        private set
+>>>>>>> upstream/nextgen
 
     constructor(entity: Entity) : this(entity, NametagTextFormatter(entity).format(), createItemList(entity))
 
@@ -56,7 +68,11 @@ data class Nametag private constructor(
          * Creates a list of items that should be rendered above the name tag. Currently, it is the item in main hand,
          * the item in off-hand (as long as it exists) and the armor items.
          */
+<<<<<<< HEAD
         private fun createItemList(entity: Entity): List<ItemStack?> {
+=======
+        private fun createItemList(entity: Entity): List<ItemStack> {
+>>>>>>> upstream/nextgen
             if (entity !is LivingEntity) {
                 return emptyList()
             }

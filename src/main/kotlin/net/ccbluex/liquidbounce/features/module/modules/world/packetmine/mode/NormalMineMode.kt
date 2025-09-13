@@ -34,6 +34,7 @@ object NormalMineMode : MineMode("Normal") {
 
     override fun start(mineTarget: MineTarget) {
         EventManager.callEvent(BlockBreakingProgressEvent(mineTarget.targetPos))
+<<<<<<< HEAD
         network.sendPacket(
             PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.START_DESTROY_BLOCK,
@@ -41,11 +42,22 @@ object NormalMineMode : MineMode("Normal") {
                 mineTarget.direction
             )
         )
+=======
+        interaction.sendSequencedPacket(world) { sequence ->
+            PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.START_DESTROY_BLOCK,
+                mineTarget.targetPos,
+                mineTarget.direction,
+                sequence,
+            )
+        }
+>>>>>>> upstream/nextgen
 
         ModulePacketMine.swingMode.swing(Hand.MAIN_HAND)
     }
 
     override fun finish(mineTarget: MineTarget) {
+<<<<<<< HEAD
         network.sendPacket(
             PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
@@ -53,6 +65,16 @@ object NormalMineMode : MineMode("Normal") {
                 mineTarget.direction
             )
         )
+=======
+        interaction.sendSequencedPacket(world) { sequence ->
+            PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
+                mineTarget.targetPos,
+                mineTarget.direction,
+                sequence,
+            )
+        }
+>>>>>>> upstream/nextgen
 
         ModulePacketMine.swingMode.swing(Hand.MAIN_HAND)
 

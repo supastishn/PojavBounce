@@ -28,10 +28,14 @@ import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
 import net.ccbluex.liquidbounce.utils.block.DIRECTIONS_EXCLUDING_UP
 import net.ccbluex.liquidbounce.utils.block.isBlastResistant
 import net.ccbluex.liquidbounce.utils.block.raycast
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.network
 import net.ccbluex.liquidbounce.utils.client.player
 import net.ccbluex.liquidbounce.utils.client.toRadians
+=======
+import net.ccbluex.liquidbounce.utils.client.*
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.math.plus
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
@@ -44,6 +48,10 @@ import net.minecraft.entity.Entity
 import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.TntEntity
+<<<<<<< HEAD
+=======
+import net.minecraft.entity.attribute.EntityAttributes
+>>>>>>> upstream/nextgen
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.decoration.EndCrystalEntity
 import net.minecraft.entity.effect.StatusEffects
@@ -103,6 +111,15 @@ val ClientPlayerEntity.onGroundTicks: Int
 val ClientPlayerEntity.direction: Float
     get() = getMovementDirectionOfInput(DirectionalInput(input))
 
+<<<<<<< HEAD
+=======
+/**
+ * Check if the attack speed is below 1 tick. If so, we have a cooldown.
+ */
+val ClientPlayerEntity.hasCooldown: Boolean
+    get() = !isOlderThanOrEqual1_8 && this.getAttributeValue(EntityAttributes.ATTACK_SPEED) < 20.0
+
+>>>>>>> upstream/nextgen
 fun ClientPlayerEntity.getMovementDirectionOfInput(input: DirectionalInput): Float {
     return getMovementDirectionOfInput(this.yaw, input)
 }
@@ -194,7 +211,10 @@ fun ClientPlayerEntity.canStep(height: Double = 1.0): Boolean {
     }
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/nextgen
 fun getMovementDirectionOfInput(facingYaw: Float, input: DirectionalInput): Float {
     val forwards = input.forwards && !input.backwards
     val backwards = input.backwards && !input.forwards
@@ -310,6 +330,7 @@ fun Entity.interpolateCurrentRotation(tickDelta: Float): Rotation {
 /**
  * Get the nearest point of a box. Very useful to calculate the distance of an enemy.
  */
+<<<<<<< HEAD
 fun getNearestPoint(eyes: Vec3d, box: Box): Vec3d {
     val origin = doubleArrayOf(eyes.x, eyes.y, eyes.z)
     val destMins = doubleArrayOf(box.minX, box.minY, box.minZ)
@@ -325,6 +346,18 @@ fun getNearestPoint(eyes: Vec3d, box: Box): Vec3d {
 
 fun getNearestPointOnSide(eyes: Vec3d, box: Box, side: Direction): Vec3d {
     val nearestPointInBlock = getNearestPoint(eyes, box)
+=======
+fun getNearestPoint(from: Vec3d, box: Box): Vec3d {
+    return Vec3d(
+        from.x.coerceIn(box.minX, box.maxX),
+        from.y.coerceIn(box.minY, box.maxY),
+        from.z.coerceIn(box.minZ, box.maxZ),
+    )
+}
+
+fun getNearestPointOnSide(from: Vec3d, box: Box, side: Direction): Vec3d {
+    val nearestPointInBlock = getNearestPoint(from, box)
+>>>>>>> upstream/nextgen
 
     val x = nearestPointInBlock.x
     val y = nearestPointInBlock.y
@@ -344,6 +377,7 @@ fun getNearestPointOnSide(eyes: Vec3d, box: Box, side: Direction): Vec3d {
 
 }
 
+<<<<<<< HEAD
 fun LivingEntity.wouldBlockHit(source: PlayerEntity): Boolean {
     if (!this.isBlocking) {
         return false
@@ -355,6 +389,8 @@ fun LivingEntity.wouldBlockHit(source: PlayerEntity): Boolean {
     return deltaPos.dotProduct(facingVec) < 0.0
 }
 
+=======
+>>>>>>> upstream/nextgen
 /**
  * Applies armor, enchantments, effects, etc. to the damage and returns the damage
  * that is actually applied. This function is so damn ugly that I turned off code smell analysis for it.
@@ -375,12 +411,17 @@ fun LivingEntity.getEffectiveDamage(source: DamageSource, damage: Float, ignoreS
     var amount = damage
 
     if (this is PlayerEntity) {
+<<<<<<< HEAD
         if (this.abilities.invulnerable && source.type.msgId != mc.world!!.damageSources.outOfWorld().type.msgId)
+=======
+        if (this.abilities.invulnerable && source.type.msgId != world.damageSources.outOfWorld().type.msgId)
+>>>>>>> upstream/nextgen
             return 0.0F
 
         if (source.isScaledWithDifficulty) {
             if (world.difficulty == Difficulty.PEACEFUL) {
                 amount = 0.0f
+<<<<<<< HEAD
             }
 
             if (world.difficulty == Difficulty.EASY) {
@@ -388,6 +429,11 @@ fun LivingEntity.getEffectiveDamage(source: DamageSource, damage: Float, ignoreS
             }
 
             if (world.difficulty == Difficulty.HARD) {
+=======
+            } else if (world.difficulty == Difficulty.EASY) {
+                amount = (amount / 2.0f + 1.0f).coerceAtMost(amount)
+            } else if (world.difficulty == Difficulty.HARD) {
+>>>>>>> upstream/nextgen
                 amount = amount * 3.0f / 2.0f
             }
         }
@@ -396,10 +442,16 @@ fun LivingEntity.getEffectiveDamage(source: DamageSource, damage: Float, ignoreS
     if (amount == 0.0F)
         return 0.0F
 
+<<<<<<< HEAD
     if (source == mc.world!!.damageSources.onFire() && this.hasStatusEffect(StatusEffects.FIRE_RESISTANCE))
         return 0.0F
 
 
+=======
+    if (source == world.damageSources.onFire() && this.hasStatusEffect(StatusEffects.FIRE_RESISTANCE))
+        return 0.0F
+
+>>>>>>> upstream/nextgen
     if (!ignoreShield && blockedByShield(source))
         return 0.0F
 
@@ -493,7 +545,11 @@ fun LivingEntity.getExposureToExplosion(
             isDescending,
             entityBoundingBox1.minY,
             mainHandStack,
+<<<<<<< HEAD
             { state -> canWalkOnFluid(state) },
+=======
+            ::canWalkOnFluid,
+>>>>>>> upstream/nextgen
             this
         )
     } ?: ShapeContext.of(this)
@@ -663,3 +719,10 @@ fun ClientPlayerEntity.getFeetBlockPos(): BlockPos {
         MathHelper.floor(MathHelper.lerp(0.5, bb.minZ, bb.maxZ))
     )
 }
+<<<<<<< HEAD
+=======
+
+val LivingEntity.wouldBlockHit
+    get() = !isOlderThanOrEqual1_8 &&
+        this.blockedByShield(world.damageSources.playerAttack(player))
+>>>>>>> upstream/nextgen

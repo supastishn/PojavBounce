@@ -18,12 +18,19 @@
  */
 package net.ccbluex.liquidbounce.utils.block.hole
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.block.Region
 import net.minecraft.util.math.BlockPos
+=======
+import net.ccbluex.liquidbounce.utils.math.copy
+import net.minecraft.util.math.BlockBox
+import net.minecraft.util.math.Vec3i
+>>>>>>> upstream/nextgen
 
 @JvmRecord
 data class Hole(
     val type: Type,
+<<<<<<< HEAD
     val positions: Region,
     val bedrockOnly: Boolean = false,
     val blockInvalidators: Region = Region(positions.from, positions.to.up(2)),
@@ -32,6 +39,25 @@ data class Hole(
     override fun compareTo(other: Hole): Int = this.positions.from.compareTo(other.positions.from)
 
     operator fun contains(pos: BlockPos): Boolean = pos in positions
+=======
+    val positions: BlockBox,
+    val bedrockOnly: Boolean = false,
+    val blockInvalidators: BlockBox = positions.copy(maxY = positions.maxY + 2),
+) : Comparable<Hole> {
+
+    override fun compareTo(other: Hole): Int {
+        val yDiff = this.positions.maxX - other.positions.maxX
+        val zDiff = this.positions.maxZ - other.positions.maxZ
+        val xDiff = this.positions.minX - other.positions.minX
+        return when {
+            yDiff != 0 -> yDiff
+            zDiff != 0 -> zDiff
+            else -> xDiff
+        }
+    }
+
+    operator fun contains(pos: Vec3i): Boolean = pos in positions
+>>>>>>> upstream/nextgen
 
     enum class Type(val size: Int) {
         ONE_ONE(1),

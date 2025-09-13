@@ -47,7 +47,11 @@ object ModuleCombineMobs : ClientModule("CombineMobs", Category.RENDER) {
     /**
      * As soon we disable the module, we want to clear the tracked entities
      */
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         trackedEntitySinceRender.clear()
     }
 

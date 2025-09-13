@@ -22,6 +22,11 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import it.unimi.dsi.fastutil.longs.LongSet
 import net.minecraft.block.BlockState
 import net.minecraft.util.math.BlockPos
+<<<<<<< HEAD
+=======
+import net.minecraft.util.math.ChunkPos
+import net.minecraft.world.chunk.WorldChunk
+>>>>>>> upstream/nextgen
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -84,7 +89,11 @@ sealed class AbstractBlockLocationTracker<T> : ChunkScanner.BlockChangeSubscribe
         }
     }
 
+<<<<<<< HEAD
     final override fun chunkUpdate(x: Int, z: Int) {
+=======
+    final override fun chunkUpdate(chunk: WorldChunk) {
+>>>>>>> upstream/nextgen
         // NOP
     }
 
@@ -158,6 +167,7 @@ sealed class AbstractBlockLocationTracker<T> : ChunkScanner.BlockChangeSubscribe
             }
         }
 
+<<<<<<< HEAD
         final override fun clearChunk(x: Int, z: Int) {
             val pos = BlockPos.Mutable()
             lock.write {
@@ -165,6 +175,15 @@ sealed class AbstractBlockLocationTracker<T> : ChunkScanner.BlockChangeSubscribe
                     set.removeIf {
                         pos.set(it)
                         pos.x shr 4 == x && pos.z shr 4 == z
+=======
+        final override fun clearChunk(pos: ChunkPos) {
+            val blockPos = BlockPos.Mutable()
+            lock.write {
+                stateAndPositions.values.forEach { set ->
+                    set.removeIf {
+                        blockPos.set(it)
+                        blockPos.x shr 4 == pos.x && blockPos.z shr 4 == pos.z
+>>>>>>> upstream/nextgen
                     }
                 }
             }
@@ -200,8 +219,13 @@ sealed class AbstractBlockLocationTracker<T> : ChunkScanner.BlockChangeSubscribe
             positionAndState.clear()
         }
 
+<<<<<<< HEAD
         final override fun clearChunk(x: Int, z: Int) {
             positionAndState.keys.removeIf { it.x shr 4 == x && it.z shr 4 == z }
+=======
+        final override fun clearChunk(pos: ChunkPos) {
+            positionAndState.keys.removeIf { it.x shr 4 == pos.x && it.z shr 4 == pos.z }
+>>>>>>> upstream/nextgen
         }
     }
 }

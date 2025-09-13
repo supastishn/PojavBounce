@@ -18,12 +18,22 @@
  */
 package net.ccbluex.liquidbounce.script
 
+<<<<<<< HEAD
 import com.mojang.blaze3d.systems.RenderSystem
 import net.ccbluex.liquidbounce.config.ConfigSystem
+=======
+import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemType
+import net.ccbluex.liquidbounce.config.ConfigSystem
+import net.ccbluex.liquidbounce.features.marketplace.MarketplaceManager
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.script.bindings.api.ScriptAsyncUtil
 import net.ccbluex.liquidbounce.script.bindings.api.ScriptContextProvider
 import net.ccbluex.liquidbounce.utils.client.logger
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.client.mc
+>>>>>>> upstream/nextgen
 import org.graalvm.polyglot.Engine
 import org.graalvm.polyglot.Source
 import java.io.File
@@ -71,10 +81,20 @@ object ScriptManager {
      */
     fun loadAll() {
         require(isInitialized) { "Cannot load scripts before the script engine is initialized." }
+<<<<<<< HEAD
 
         root.listFiles { file ->
             Source.findLanguage(file) != null || file.isDirectory
         }?.forEach { file ->
+=======
+        val files = root.listFiles { file ->
+            Source.findLanguage(file) != null || file.isDirectory
+        } + MarketplaceManager.getSubscribedItemsOfType(MarketplaceItemType.SCRIPT).map { item ->
+            item.getInstallationFolder()
+        }
+
+        files.forEach { file ->
+>>>>>>> upstream/nextgen
             if (file.isDirectory) {
                 // If a directory is found, look for a main script file inside it.
                 val mainFile = file.listFiles { dirFile ->
@@ -159,7 +179,12 @@ object ScriptManager {
         scripts.forEach(PolyglotScript::enable)
 
         if (scripts.isNotEmpty()) {
+<<<<<<< HEAD
             // Note: Native ClickGUI doesn't need reloading - module list updates automatically
+=======
+            // Reload the ClickGUI to update the module list.
+            mc.execute(ModuleClickGui::reload)
+>>>>>>> upstream/nextgen
         }
     }
 

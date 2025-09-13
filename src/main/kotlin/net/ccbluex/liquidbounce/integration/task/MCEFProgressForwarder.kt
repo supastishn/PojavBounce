@@ -22,6 +22,7 @@
 package net.ccbluex.liquidbounce.integration.task
 
 import net.ccbluex.liquidbounce.integration.task.type.Task
+<<<<<<< HEAD
 // import net.ccbluex.liquidbounce.mcef.listeners.MCEFProgressListener // Removed: No longer using MCEF
 
 // Stub interface to replace MCEFProgressListener since we no longer use MCEF
@@ -32,6 +33,9 @@ interface MCEFProgressListener {
     fun onFileProgress(taskName: String, bytesRead: Long, contentLength: Long, done: Boolean)
     fun onFileEnd(taskName: String)
 }
+=======
+import net.ccbluex.liquidbounce.mcef.listeners.MCEFProgressListener
+>>>>>>> upstream/nextgen
 
 class MCEFProgressForwarder(val task: Task) : MCEFProgressListener {
 

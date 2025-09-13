@@ -22,7 +22,6 @@ package net.ccbluex.liquidbounce.features.command.commands.deeplearn
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine.modelsFolder
 import net.ccbluex.liquidbounce.deeplearn.ModelHolster
 import net.ccbluex.liquidbounce.deeplearn.ModelHolster.models
@@ -31,7 +30,6 @@ import net.ccbluex.liquidbounce.deeplearn.models.MinaraiModel
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.MinaraiCombatRecorder
@@ -47,7 +45,7 @@ import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-object CommandModels : CommandFactory {
+object CommandModels : Command.Factory {
 
     override fun createCommand(): Command {
         return CommandBuilder
@@ -70,11 +68,18 @@ object CommandModels : CommandFactory {
                     .required()
                     .build()
             )
-            .suspendHandler { command, args ->
+            .suspendHandler {
                 val name = args[0] as String
 
-                validateTrainingAllowed(command)
-                validateModelCreation(command, name)
+                // Check if model exists
+                if (models.choices.any { model -> model.name.equals(name, true) }) {
+                    throw CommandException(command.result("modelExists", name))
+                }
+
+                // Check if the name is a valid name
+                if (name.contains(Regex("[^a-zA-Z0-9-]"))) {
+                    throw CommandException(command.result("invalidName"))
+                }
 
                 chat(command.result("trainingStart", name))
                 withContext(Dispatchers.Default) {
@@ -93,11 +98,10 @@ object CommandModels : CommandFactory {
                     .required()
                     .build()
             )
-            .suspendHandler { command, args ->
+            .suspendHandler {
                 val name = args[0] as String
-
-                validateTrainingAllowed(command)
-                val model = findModelOrThrow(command, name)
+                val model = models.choices.find { model -> model.name.equals(name, true) } ?:
+                    throw CommandException(command.result("modelNotFound", name))
 
                 chat(command.result("trainingStart", name))
                 withContext(Dispatchers.Default) {
@@ -116,7 +120,7 @@ object CommandModels : CommandFactory {
                     .required()
                     .build()
             )
-            .handler { command, args ->
+            .handler {
                 val name = args[0] as String
                 val model = models.choices.find { model -> model.name.equals(name, true) }
 
@@ -136,7 +140,7 @@ object CommandModels : CommandFactory {
     private fun reloadModelCommand(): Command {
         return CommandBuilder
             .begin("reload")
-            .handler { command, _ ->
+            .handler {
                 ModelHolster.reload()
                 chat(command.result("modelsReloaded"))
             }
@@ -146,7 +150,7 @@ object CommandModels : CommandFactory {
     private fun browseModelCommand(): Command {
         return CommandBuilder
             .begin("browse")
-            .handler { command, _ ->
+            .handler {
                 Util.getOperatingSystem().open(modelsFolder)
                 chat(regular("Location: "), clickablePath(modelsFolder))
             }
@@ -170,8 +174,7 @@ object CommandModels : CommandFactory {
 
         chat(command.result("samplesLoaded", samples.size, sampleTime.toString(DurationUnit.SECONDS, decimals = 2)))
 
-        @Suppress("ArrayInDataClass")
-        data class Dataset(val features: Array<FloatArray>, val labels: Array<FloatArray>)
+        class Dataset(val features: Array<FloatArray>, val labels: Array<FloatArray>)
 
         val (dataset, datasetTime) = measureTimedValue {
             Dataset(
@@ -188,35 +191,12 @@ object CommandModels : CommandFactory {
             model.save()
 
             models.setByString(model.name)
-            // ModuleClickGui.reload() - no longer needed with native GUI
+            ModuleClickGui.reload()
         }
 
         chat(command.result("trainingEnd", name, trainingTime.toString(DurationUnit.MINUTES, decimals = 2)))
     }.onFailure { error ->
         chat(markAsError(command.result("trainingFailed", error.localizedMessage)))
-    }
-
-    private fun validateTrainingAllowed(command: Command) {
-        if (!DeepLearningEngine.isTrainingAllowed()) {
-            throw CommandException(command.result("mobileTrainingDisabled"))
-        }
-    }
-
-    private fun validateModelCreation(command: Command, name: String) {
-        // Check if model exists
-        if (models.choices.any { model -> model.name.equals(name, true) }) {
-            throw CommandException(command.result("modelExists", name))
-        }
-
-        // Check if the name is a valid name
-        if (name.contains(Regex("[^a-zA-Z0-9-]"))) {
-            throw CommandException(command.result("invalidName"))
-        }
-    }
-
-    private fun findModelOrThrow(command: Command, name: String): MinaraiModel {
-        return models.choices.find { model -> model.name.equals(name, true) } ?:
-            throw CommandException(command.result("modelNotFound", name))
     }
 
 }

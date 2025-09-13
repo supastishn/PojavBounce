@@ -63,7 +63,11 @@ class BlockPlacementTargetFindingOptions(
 ) {
     companion object {
         val PRIORITIZE_LEAST_BLOCK_DISTANCE: Comparator<Vec3i> = compareByDescending { vec ->
+<<<<<<< HEAD
             Vec3d.of(vec).add(0.5, 0.5, 0.5).squaredDistanceTo(mc.player!!.pos)
+=======
+            player.squaredDistanceTo(vec.x.toDouble(), vec.y.toDouble(), vec.z.toDouble())
+>>>>>>> upstream/nextgen
         }
     }
 }

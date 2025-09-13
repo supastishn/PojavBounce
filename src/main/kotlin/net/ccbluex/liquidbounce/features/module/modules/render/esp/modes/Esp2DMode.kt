@@ -25,7 +25,10 @@ import net.ccbluex.liquidbounce.render.drawHorizontalLine
 import net.ccbluex.liquidbounce.render.drawVerticalLine
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.render.fill
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.render.newDrawContext
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.render.renderEnvironmentForGUI
 import net.ccbluex.liquidbounce.utils.entity.RenderedEntities
 import net.ccbluex.liquidbounce.utils.entity.getActualHealth
@@ -84,8 +87,14 @@ object Esp2DMode : EspMode("2D") {
                 var rectWidth = (maxX - minX)
                 var rectHeight = (maxY - minY)
 
+<<<<<<< HEAD
                 with(newDrawContext()) {
                     with(matrices) {
+=======
+                with(event.context) {
+                    with(matrices) {
+                        push()
+>>>>>>> upstream/nextgen
                         translate(minX, minY, minZ)
 
                         if (fill) {
@@ -129,6 +138,10 @@ object Esp2DMode : EspMode("2D") {
                             }
                             drawVerticalLine(0.5f, rectHeight + 1f, rectHeight - healthHeight + 0.5f, 0.5f, healthColor)
                         }
+<<<<<<< HEAD
+=======
+                        pop()
+>>>>>>> upstream/nextgen
                     }
                 }
             }

@@ -37,6 +37,10 @@ import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.decoration.ArmorStandEntity
 import net.minecraft.item.BowItem
 import net.minecraft.item.Item
+<<<<<<< HEAD
+=======
+import net.minecraft.item.ItemStack
+>>>>>>> upstream/nextgen
 import net.minecraft.network.packet.s2c.play.EntityEquipmentUpdateS2CPacket
 import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket
 import net.minecraft.network.packet.s2c.play.PlayerRespawnS2CPacket
@@ -59,7 +63,11 @@ object ModuleMurderMystery : ClientModule("MurderMystery", Category.RENDER) {
     private val currentMode: MurderMysteryMode
         get() = this.modes.activeChoice as MurderMysteryMode
 
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         this.reset()
     }
 
@@ -115,10 +123,16 @@ object ModuleMurderMystery : ClientModule("MurderMystery", Category.RENDER) {
                 }
                 .forEach {
                     val itemStack = it.second
+<<<<<<< HEAD
                     val item = itemStack.item
                     val entity = world.getEntityById(packet.entityId)
 
                     handleItem(item, entity)
+=======
+                    val entity = world.getEntityById(packet.entityId)
+
+                    handleItem(itemStack, entity)
+>>>>>>> upstream/nextgen
                 }
         }
         if (packetEvent.packet is GameJoinS2CPacket || packetEvent.packet is PlayerRespawnS2CPacket) {
@@ -156,15 +170,24 @@ object ModuleMurderMystery : ClientModule("MurderMystery", Category.RENDER) {
     }
 
     private fun handleItem(
+<<<<<<< HEAD
         item: Item?,
+=======
+        itemStack: ItemStack,
+>>>>>>> upstream/nextgen
         entity: Entity?,
     ) {
         if (entity !is AbstractClientPlayerEntity) {
             return
         }
 
+<<<<<<< HEAD
         val isSword = MurderMysterySwordDetection.isSword(item)
         val isBow = item is BowItem
+=======
+        val isSword = MurderMysterySwordDetection.isSword(itemStack)
+        val isBow = itemStack.item is BowItem
+>>>>>>> upstream/nextgen
 
         val locationSkin = entity.skinTextures.texture
 

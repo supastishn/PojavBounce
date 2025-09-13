@@ -31,12 +31,16 @@ import net.ccbluex.liquidbounce.script.bindings.api.ScriptContextProvider.setupC
 import net.ccbluex.liquidbounce.script.bindings.features.ScriptChoice
 import net.ccbluex.liquidbounce.script.bindings.features.ScriptCommandBuilder
 import net.ccbluex.liquidbounce.script.bindings.features.ScriptModule
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.copyable
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.regular
 import net.ccbluex.liquidbounce.utils.client.underline
 import net.ccbluex.liquidbounce.utils.client.variable
+=======
+import net.ccbluex.liquidbounce.utils.client.*
+>>>>>>> upstream/nextgen
 import net.minecraft.text.HoverEvent
 import org.graalvm.polyglot.Context
 import org.graalvm.polyglot.HostAccess
@@ -46,12 +50,20 @@ import org.graalvm.polyglot.io.IOAccess
 import java.io.File
 import java.net.BindException
 import java.net.ServerSocket
+<<<<<<< HEAD
+=======
+import java.util.function.Consumer
+>>>>>>> upstream/nextgen
 import java.util.function.Function
 
 class PolyglotScript(
     val language: String, val file: File,
     val debugOptions: ScriptDebugOptions = ScriptDebugOptions()
+<<<<<<< HEAD
 ) {
+=======
+) : AutoCloseable {
+>>>>>>> upstream/nextgen
 
     private val context: Context = Context.newBuilder(language)
         .allowHostAccess(HostAccess.ALL) // Allow access to all Java classes
@@ -62,8 +74,19 @@ class PolyglotScript(
         .allowCreateThread(true) // Enable thread creation
         .allowNativeAccess(false) // Disable native access
         .allowExperimentalOptions(true) // Allow experimental options
+<<<<<<< HEAD
         .option("js.nashorn-compat", "true") // Enable Nashorn compatibility
         .option("js.ecmascript-version", "2023") // Enable ECMAScript 2023
+=======
+        .apply {
+            if (language == "js") {
+                option("js.nashorn-compat", "true") // Enable Nashorn compatibility
+                option("js.ecmascript-version", "2023") // Enable ECMAScript 2023
+                option("js.commonjs-require", "true")
+                option("js.commonjs-require-cwd", file.parentFile.absolutePath)
+            }
+        }
+>>>>>>> upstream/nextgen
         .apply {
             if (debugOptions.enabled) {
                 val protocolString = debugOptions.protocol.toString().lowercase()
@@ -80,12 +103,24 @@ class PolyglotScript(
 
                         chat(
                             regular(translation("liquidbounce.scripts.debug.support", variable(file.toString())))
+<<<<<<< HEAD
                                 .append(variable(devtoolURL)
                                     .copyable(copyContent = devtoolURL, hover = HoverEvent(
                                         HoverEvent.Action.SHOW_TEXT,
                                         regular(translation("liquidbounce.scripts.debug.inspect.url"))
                                     ))
                                     .underline(true)
+=======
+                                .append(
+                                    variable(devtoolURL)
+                                        .copyable(
+                                            copyContent = devtoolURL, hover = HoverEvent(
+                                                HoverEvent.Action.SHOW_TEXT,
+                                                regular(translation("liquidbounce.scripts.debug.inspect.url"))
+                                            )
+                                        )
+                                        .underline(true)
+>>>>>>> upstream/nextgen
                                 )
                         )
                     }
@@ -99,10 +134,22 @@ class PolyglotScript(
                         }
 
                         chat(
+<<<<<<< HEAD
                             regular(translation("liquidbounce.scripts.debug.support", variable(file.toString())).append(
                                 translation("liquidbounce.scripts.debug.dap", variable(debugOptions.port.toString()))
                             )
                         ))
+=======
+                            regular(
+                                translation("liquidbounce.scripts.debug.support", variable(file.toString())).append(
+                                    translation(
+                                        "liquidbounce.scripts.debug.dap",
+                                        variable(debugOptions.port.toString())
+                                    )
+                                )
+                            )
+                        )
+>>>>>>> upstream/nextgen
                     }
                 }
             }
@@ -127,7 +174,11 @@ class PolyglotScript(
      */
     private var scriptEnabled = false
 
+<<<<<<< HEAD
     private val globalEvents = mutableMapOf<String, () -> Unit>()
+=======
+    private val globalEvents = hashMapOf<String, Runnable>()
+>>>>>>> upstream/nextgen
 
     /**
      * Tracks client modifications made by the script
@@ -140,6 +191,7 @@ class PolyglotScript(
      * Initialization of scripts
      */
     fun initScript() {
+<<<<<<< HEAD
         // Evaluate script
         context.eval(Source.newBuilder(language, file).build())
 
@@ -156,6 +208,30 @@ class PolyglotScript(
 
     @Suppress("UNCHECKED_CAST")
     inner class RegisterScript : Function<Map<String, Any>, PolyglotScript> {
+=======
+        try {
+            // Evaluate script
+            context.eval(Source.newBuilder(language, file).build())
+
+            // Call load event
+            callGlobalEvent("load")
+
+            if (!::scriptName.isInitialized || !::scriptVersion.isInitialized || !::scriptAuthors.isInitialized) {
+                logger.error("[ScriptAPI] Script '${file.name}' is missing required information!")
+                error("Script '${file.name}' is missing required information!")
+            }
+
+            logger.info("[ScriptAPI] Successfully loaded script '${file.name}'.")
+        } catch (e: Exception) {
+            logger.error("[ScriptAPI] Failed to load script '${file.name}'.", e)
+            context.close()
+            throw e
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private inner class RegisterScript : Function<Map<String, Any>, PolyglotScript> {
+>>>>>>> upstream/nextgen
 
         /**
          * Global function 'registerScript' which is called to register a script.
@@ -187,10 +263,17 @@ class PolyglotScript(
      * @see ScriptModule
      */
     @Suppress("unused")
+<<<<<<< HEAD
     fun registerModule(moduleObject: Map<String, Any>, callback: (ClientModule) -> Unit) {
         val module = ScriptModule(this, moduleObject)
         registeredModules += module
         callback(module)
+=======
+    fun registerModule(moduleObject: Map<String, Any>, callback: Consumer<ClientModule>) {
+        val module = ScriptModule(this, moduleObject)
+        registeredModules += module
+        callback.accept(module)
+>>>>>>> upstream/nextgen
     }
 
     /**
@@ -218,10 +301,17 @@ class PolyglotScript(
     @Suppress("unused")
     fun registerChoice(
         choiceConfigurable: ChoiceConfigurable<Choice>, choiceObject: Map<String, Any>,
+<<<<<<< HEAD
         callback: (Choice) -> Unit
     ) {
         ScriptChoice(choiceObject, choiceConfigurable).apply {
             callback(this)
+=======
+        callback: Consumer<Choice>
+    ) {
+        ScriptChoice(choiceObject, choiceConfigurable).apply {
+            callback.accept(this)
+>>>>>>> upstream/nextgen
             registeredChoices += this
         }
     }
@@ -231,7 +321,11 @@ class PolyglotScript(
      * @param eventName Name of the event.
      * @param handler JavaScript function used to handle the event.
      */
+<<<<<<< HEAD
     fun on(eventName: String, handler: () -> Unit) {
+=======
+    fun on(eventName: String, handler: Runnable) {
+>>>>>>> upstream/nextgen
         globalEvents[eventName] = handler
     }
 
@@ -279,8 +373,12 @@ class PolyglotScript(
     /**
      * Called when the client unloads the script.
      */
+<<<<<<< HEAD
 
     fun close() {
+=======
+    override fun close() {
+>>>>>>> upstream/nextgen
         context.close(true)
     }
 
@@ -290,7 +388,11 @@ class PolyglotScript(
      */
     private fun callGlobalEvent(eventName: String) {
         try {
+<<<<<<< HEAD
             globalEvents[eventName]?.invoke()
+=======
+            globalEvents[eventName]?.run()
+>>>>>>> upstream/nextgen
         } catch (throwable: Throwable) {
             logger.error(
                 "${file.name}::$scriptName -> Event Function $eventName threw an error",

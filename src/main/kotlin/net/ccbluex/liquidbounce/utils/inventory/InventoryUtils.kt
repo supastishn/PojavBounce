@@ -22,8 +22,14 @@
 
 package net.ccbluex.liquidbounce.utils.inventory
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.NamedChoice
+=======
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.config.types.nesting.Configurable
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ScaffoldBlockItemSelection
 import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.client.*
@@ -32,13 +38,23 @@ import net.ccbluex.liquidbounce.utils.item.isNothing
 import net.ccbluex.liquidbounce.utils.kotlin.emptyEnumSet
 import net.ccbluex.liquidbounce.utils.network.OpenInventorySilentlyPacket
 import net.ccbluex.liquidbounce.utils.network.sendPacket
+<<<<<<< HEAD
 import net.minecraft.block.Blocks
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
+=======
+import net.minecraft.block.Block
+import net.minecraft.block.Blocks
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+>>>>>>> upstream/nextgen
 import net.minecraft.component.type.DyedColorComponent
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket
 import net.minecraft.registry.Registries
 import net.minecraft.registry.tag.ItemTags
+<<<<<<< HEAD
+=======
+import net.minecraft.util.ActionResult
+>>>>>>> upstream/nextgen
 import net.minecraft.util.Hand
 import java.util.*
 
@@ -88,7 +104,11 @@ internal enum class InventoryRequirements(
     val testRequirement: (action: InventoryAction) -> Boolean
 ) : NamedChoice {
     NO_MOVEMENT("NoMovement", { _ ->
+<<<<<<< HEAD
         player.input.movementForward == 0.0f && player.input.movementSideways == 0.0f
+=======
+        player.input.movementForward == 0.0f && player.input.movementSideways == 0.0f && !player.jumping
+>>>>>>> upstream/nextgen
     }),
 
     NO_ROTATION("NoRotation", { _ ->
@@ -147,6 +167,7 @@ fun closeInventorySilently() {
     network.sendPacket(CloseHandledScreenC2SPacket(0))
 }
 
+<<<<<<< HEAD
 fun getSlotsInContainer(screen: GenericContainerScreen) =
     screen.screenHandler.slots
         .filter { it.inventory === screen.screenHandler.inventory }
@@ -157,12 +178,29 @@ fun findItemsInContainer(screen: GenericContainerScreen) =
         .filter { !it.stack.isNothing() && it.inventory === screen.screenHandler.inventory }
         .map { ContainerItemSlot(it.id) }
 
+=======
+fun HandledScreen<*>.getSlotsInContainer() =
+    this.screenHandler.slots
+        .filter { it.inventory !== player.inventory }
+        .map { ContainerItemSlot(it.id) }
+
+fun HandledScreen<*>.findItemsInContainer() =
+    this.screenHandler.slots
+        .filter { !it.stack.isNothing() && it.inventory !== player.inventory }
+        .map { ContainerItemSlot(it.id) }
+
+@JvmOverloads
+>>>>>>> upstream/nextgen
 fun useHotbarSlotOrOffhand(
     item: HotbarItemSlot,
     ticksUntilReset: Int = 1,
     yaw: Float = RotationManager.currentRotation?.yaw ?: player.yaw,
     pitch: Float = RotationManager.currentRotation?.yaw ?: player.pitch,
+<<<<<<< HEAD
 ) = when (item) {
+=======
+): ActionResult = when (item) {
+>>>>>>> upstream/nextgen
     OffHandSlot -> interactItem(Hand.OFF_HAND, yaw, pitch)
     else -> {
         SilentHotbar.selectSlotSilently(null, item, ticksUntilReset)
@@ -170,22 +208,45 @@ fun useHotbarSlotOrOffhand(
     }
 }
 
+<<<<<<< HEAD
+=======
+@JvmOverloads
+>>>>>>> upstream/nextgen
 fun interactItem(
     hand: Hand,
     yaw: Float = RotationManager.currentRotation?.yaw ?: player.yaw,
     pitch: Float = RotationManager.currentRotation?.yaw ?: player.pitch,
+<<<<<<< HEAD
 ) {
     interaction.interactItem(player, hand, yaw, pitch).takeIf { it.isAccepted }?.let {
         if (it.shouldSwingHand()) {
+=======
+): ActionResult {
+    val result = interaction.interactItem(player, hand, yaw, pitch)
+
+    if (result.isAccepted) {
+        if (result.shouldSwingHand()) {
+>>>>>>> upstream/nextgen
             player.swingHand(hand)
         }
 
         mc.gameRenderer.firstPersonRenderer.resetEquipProgress(hand)
     }
+<<<<<<< HEAD
 }
 
 fun findBlocksEndingWith(vararg targets: String) =
     Registries.BLOCK.filter { block -> targets.any { Registries.BLOCK.getId(block).path.endsWith(it.lowercase()) } }
+=======
+
+    return result
+}
+
+internal fun findBlocksEndingWith(vararg targets: String): MutableSet<Block> =
+    Registries.BLOCK.filterTo(ReferenceOpenHashSet()) { block ->
+        targets.any { Registries.BLOCK.getId(block).path.endsWith(it.lowercase()) }
+    }
+>>>>>>> upstream/nextgen
 
 /**
  * Get the color of the armor on the player

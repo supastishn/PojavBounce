@@ -43,7 +43,11 @@ import net.minecraft.util.math.BlockPos
  */
 @Suppress("unused")
 abstract class MineToolMode(
+<<<<<<< HEAD
     override val choiceName: String,
+=======
+    choiceName: String,
+>>>>>>> upstream/nextgen
     val syncOnStart: Boolean = false,
     private val switchesNever: Boolean = false
 ) : Choice(choiceName), MinecraftShortcuts {

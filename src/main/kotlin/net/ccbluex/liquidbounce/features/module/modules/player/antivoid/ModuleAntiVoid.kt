@@ -62,9 +62,15 @@ object ModuleAntiVoid : ClientModule("AntiVoid", Category.PLAYER) {
     // How many future ticks to simulate to ensure safety.
     private const val SAFE_TICKS_THRESHOLD = 10
 
+<<<<<<< HEAD
     override fun enable() {
         isLikelyFalling = false
         super.disable()
+=======
+    override fun onEnabled() {
+        isLikelyFalling = false
+        super.onDisabled()
+>>>>>>> upstream/nextgen
     }
 
     /**

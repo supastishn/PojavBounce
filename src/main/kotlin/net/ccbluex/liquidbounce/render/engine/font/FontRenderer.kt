@@ -74,7 +74,11 @@ class FontRenderer(
     private val cache = FontRendererCache()
     override val height: Float = font.styles.firstNotNullOf { it?.height }
     val ascent: Float = font.styles.firstNotNullOf { it?.ascent }
+<<<<<<< HEAD
 
+=======
+    private val positionCache = Vector3f()
+>>>>>>> upstream/nextgen
 
     override fun begin() {
         if (this.cache.renderedGlyphs.isNotEmpty() || this.cache.lines.isNotEmpty()) {
@@ -105,13 +109,21 @@ class FontRenderer(
         if (shadow) {
             len = drawInternal(
                 text,
+<<<<<<< HEAD
                 pos = Vector3f(x0 + 2.0f * scale, y0 + 2.0f * scale, z),
+=======
+                pos = positionCache.set(x0 + 2.0f * scale, y0 + 2.0f * scale, z),
+>>>>>>> upstream/nextgen
                 scale,
                 overrideColor = Color4b(0, 0, 0, 150)
             )
         }
 
+<<<<<<< HEAD
         return max(len, drawInternal(text, Vector3f(x0, y0, z * 2.0F), scale))
+=======
+        return max(len, drawInternal(text, positionCache.set(x0, y0, z * 2.0F), scale))
+>>>>>>> upstream/nextgen
     }
 
     /**
@@ -132,8 +144,14 @@ class FontRenderer(
             return pos.x
         }
 
+<<<<<<< HEAD
         val underlineStack = ArrayList<IntRange>(text.underlines.asReversed())
         val strikethroughStack = ArrayList<IntRange>(text.strikeThroughs.asReversed())
+=======
+        // remove from front
+        val underlineStack = ArrayDeque(text.underlines)
+        val strikethroughStack = ArrayDeque(text.strikeThroughs)
+>>>>>>> upstream/nextgen
 
         var x = pos.x
         var y = pos.y + this.ascent * scale
@@ -148,10 +166,17 @@ class FontRenderer(
                 ?: fallbackGlyph
             val color = overrideColor ?: processedChar.color
 
+<<<<<<< HEAD
             if (underlineStack.lastOrNull()?.start == charIdx) {
                 underlineStartX = x
             }
             if (strikethroughStack.lastOrNull()?.start == charIdx) {
+=======
+            if (underlineStack.firstOrNull()?.start == charIdx) {
+                underlineStartX = x
+            }
+            if (strikethroughStack.firstOrNull()?.start == charIdx) {
+>>>>>>> upstream/nextgen
                 strikeThroughStartX = x
             }
 
@@ -181,6 +206,7 @@ class FontRenderer(
             x += layoutInfo.advanceX * scale
             y += layoutInfo.advanceY * scale
 
+<<<<<<< HEAD
             if (underlineStack.lastOrNull()?.endInclusive == charIdx) {
                 underlineStack.removeLast()
 
@@ -188,6 +214,15 @@ class FontRenderer(
             }
             if (strikethroughStack.lastOrNull()?.endInclusive == charIdx) {
                 strikethroughStack.removeLast()
+=======
+            if (underlineStack.firstOrNull()?.endInclusive == charIdx) {
+                underlineStack.removeFirst()
+
+                drawLine(underlineStartX!!, x, y, pos.z, color, false)
+            }
+            if (strikethroughStack.firstOrNull()?.endInclusive == charIdx) {
+                strikethroughStack.removeFirst()
+>>>>>>> upstream/nextgen
 
                 drawLine(strikeThroughStartX!!, x, y, pos.z, color, true)
             }
@@ -303,8 +338,13 @@ class FontRendererBuffers {
     val textBuffers = HashMap<GlyphPage, RenderBufferBuilder<VertexInputType.PosTexColor>>()
 
     fun getTextBufferForGlyphPage(glyphPage: GlyphPage): RenderBufferBuilder<VertexInputType.PosTexColor> {
+<<<<<<< HEAD
         return this.textBuffers.computeIfAbsent(glyphPage) {
             val tessellator = getTesselatorForGlyphPage(glyphPage)
+=======
+        return this.textBuffers.computeIfAbsent(glyphPage) { key ->
+            val tessellator = getTesselatorForGlyphPage(key)
+>>>>>>> upstream/nextgen
 
             RenderBufferBuilder(VertexFormat.DrawMode.QUADS, VertexInputType.PosTexColor, tessellator)
         }
@@ -328,7 +368,11 @@ class FontRendererBuffers {
     }
 
     fun reset() {
+<<<<<<< HEAD
         this.textBuffers.forEach { (_, bufferBuilder) ->
+=======
+        this.textBuffers.values.forEach { bufferBuilder ->
+>>>>>>> upstream/nextgen
             bufferBuilder.reset()
         }
 

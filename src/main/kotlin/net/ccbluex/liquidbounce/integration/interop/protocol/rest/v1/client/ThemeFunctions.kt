@@ -15,22 +15,62 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
+ *
  */
-
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.client
 
-import net.ccbluex.liquidbounce.integration.interop.FullHttpResponse
-import net.ccbluex.liquidbounce.integration.interop.RequestObject
-import net.ccbluex.liquidbounce.integration.interop.httpOk
+import com.google.gson.JsonArray
+import com.google.gson.JsonObject
+import io.netty.handler.codec.http.FullHttpResponse
+import net.ccbluex.liquidbounce.config.ConfigSystem
+import net.ccbluex.liquidbounce.config.gson.accessibleInteropGson
+import net.ccbluex.liquidbounce.integration.theme.ThemeManager
+import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.*
 
-/**
- * Stubbed theme functions for native GUI approach
- */
+// GET /api/v1/client/theme/:id
+@Suppress("UNUSED_PARAMETER")
+fun getTheme(requestObject: RequestObject): FullHttpResponse {
+    val id = requestObject.params["id"]
+    val theme = if (id != null) {
+        ThemeManager.themes.find { it.metadata.id == id } ?: return httpNotFound(id, "Theme not found")
+    } else {
+        ThemeManager.theme
+    }
 
-fun getThemeInfo(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Theme info requires web interface access")
+    return httpOk(accessibleInteropGson.toJsonTree(theme))
 }
 
+// GET /api/v1/client/shader
+@Suppress("UNUSED_PARAMETER")
+fun getToggleShaderInfo(requestObject: RequestObject): FullHttpResponse = httpOk(JsonObject().apply {
+    addProperty("shaderEnabled", ThemeManager.shaderEnabled)
+})
+
+// POST /api/v1/client/shader
+@Suppress("UNUSED_PARAMETER")
 fun postToggleShader(requestObject: RequestObject): FullHttpResponse {
-    return httpOk("Shader toggle requires web interface access")
+    ThemeManager.shaderEnabled = !ThemeManager.shaderEnabled
+    ConfigSystem.store(ThemeManager)
+    return httpNoContent()
+}
+
+
+// GET /api/v1/client/fonts
+@Suppress("UNUSED_PARAMETER")
+fun getFonts(requestObject: RequestObject): FullHttpResponse = httpOk(JsonArray().apply {
+    FontManager.fontFaces.forEach { (name, _) ->
+        add(name)
+    }
+})
+
+// GET /api/v1/client/fonts/:name
+@Suppress("UNUSED_PARAMETER")
+fun getFont(requestObject: RequestObject): FullHttpResponse {
+    val name = requestObject.params["name"] ?: return httpBadRequest("Missing font name")
+    val font = FontManager.fontFace(name) ?: return httpNotFound(name, "Font not found")
+    val file = font.file ?: return httpNoContent()
+
+    return httpFile(file)
 }

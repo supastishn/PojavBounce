@@ -29,7 +29,7 @@ import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.lang.translation
 import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
-import kotlinx.coroutines.asCoroutineDispatcher
+import net.ccbluex.liquidbounce.utils.kotlin.MinecraftDispatcher
 import net.minecraft.util.Formatting
 import okio.appendingSink
 import okio.buffer
@@ -56,16 +56,16 @@ object CommandExecutor : EventListener {
      */
     fun CommandBuilder.suspendHandler(
         allowParallel: Boolean = false,
-        handler: suspend (command: Command, args: Array<Any>) -> Unit,
+        handler: Command.Handler.Suspend,
     ) = if (allowParallel) {
-        this.handler { command, args ->
+        this.handler {
             commandCoroutineScope.launch(CoroutineName(command.name)) {
-                handler(command, args)
+                with(handler) { this@handler() }
             }
         }
     } else {
         val running = AtomicBoolean(false)
-        this.handler { command, args ->
+        this.handler {
             if (!running.compareAndSet(false, true)) {
                 chat(
                     markAsError(
@@ -100,7 +100,7 @@ object CommandExecutor : EventListener {
 
             // Handler job
             commandCoroutineScope.launch(CoroutineName(command.name)) {
-                handler(command, args)
+                with(handler) { this@handler() }
             }.invokeOnCompletion {
                 running.set(false)
                 progressJob.cancel()
@@ -124,7 +124,7 @@ object CommandExecutor : EventListener {
      * Render thread scope
      */
     private val commandCoroutineScope = CoroutineScope(
-        mc.asCoroutineDispatcher() + SupervisorJob() + coroutineExceptionHandler
+        MinecraftDispatcher + SupervisorJob() + coroutineExceptionHandler
     )
 
     private fun handleExceptions(e: Throwable) {

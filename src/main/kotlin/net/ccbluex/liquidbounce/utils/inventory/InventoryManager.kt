@@ -21,6 +21,10 @@
 
 package net.ccbluex.liquidbounce.utils.inventory
 
+<<<<<<< HEAD
+=======
+import it.unimi.dsi.fastutil.objects.ObjectArrayList
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.PacketEvent
@@ -29,6 +33,7 @@ import net.ccbluex.liquidbounce.event.events.ScreenEvent
 import net.ccbluex.liquidbounce.event.events.WorldChangeEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.event.tickHandler
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
@@ -36,10 +41,21 @@ import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
 import net.minecraft.client.gui.screen.ingame.InventoryScreen
 import net.minecraft.item.ItemStack
+=======
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
+import net.ccbluex.liquidbounce.utils.client.*
+import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+import net.minecraft.client.gui.screen.ingame.InventoryScreen
+>>>>>>> upstream/nextgen
 import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket
 import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket
 import net.minecraft.network.packet.s2c.play.CloseScreenS2CPacket
 import net.minecraft.network.packet.s2c.play.OpenScreenS2CPacket
+<<<<<<< HEAD
+=======
+import net.minecraft.registry.Registries
+>>>>>>> upstream/nextgen
 import net.minecraft.screen.slot.SlotActionType
 import kotlin.math.max
 import kotlin.random.Random
@@ -64,8 +80,13 @@ object InventoryManager : EventListener {
             field = value
         }
 
+<<<<<<< HEAD
     var lastClickedSlot: Int = 0
         private set
+=======
+    var lastClickedSlot: Int = -1
+        internal set
+>>>>>>> upstream/nextgen
 
     private var recentInventoryOpen = false
 
@@ -86,8 +107,13 @@ object InventoryManager : EventListener {
             return@tickHandler
         }
 
+<<<<<<< HEAD
         ModuleDebug.debugParameter(this, "Inventory Open", isInventoryOpen)
         ModuleDebug.debugParameter(this, "Inventory Open Server Side", isInventoryOpenServerSide)
+=======
+        debugParameter(this, "Inventory Open", isInventoryOpen)
+        debugParameter(this, "Inventory Open Server Side", isInventoryOpenServerSide)
+>>>>>>> upstream/nextgen
 
         var maximumCloseDelay = 0
 
@@ -104,11 +130,24 @@ object InventoryManager : EventListener {
             requiresUpdate = false
 
             val event = EventManager.callEvent(ScheduleInventoryActionEvent())
+<<<<<<< HEAD
+=======
+            val schedule = event.schedule
+                .filterTo(ObjectArrayList()) { actionChain ->
+                    actionChain.canPerformAction() && actionChain.actions.isNotEmpty()
+                }
+
+            // If the schedule is empty, we can break the loop
+            if (schedule.isEmpty) {
+                break
+            }
+>>>>>>> upstream/nextgen
 
             // Schedule of actions that have to be executed
             // The schedule is sorted by
             // 1. With Non-inventory open required actions
             // 2. With inventory open required actions
+<<<<<<< HEAD
             val schedule = event.schedule
                 .filter { actionChain -> actionChain.canPerformAction() && actionChain.actions.isNotEmpty() }
                 .groupBy(InventoryActionChain::requiresInventoryOpen)
@@ -126,6 +165,14 @@ object InventoryManager : EventListener {
 
             // Handle non-inventory open actions first
             for (chained in schedule) {
+=======
+            schedule.sortWith(COMPARATOR_ACTION_CHAIN)
+
+            debugParameter(this, "Schedule Size", schedule.size)
+
+            // Handle non-inventory open actions first
+            for ((scheduleIndex, chained) in schedule.withIndex()) {
+>>>>>>> upstream/nextgen
                 // Do not continue if we need to update the schedule
                 if (requiresUpdate) {
                     break
@@ -133,7 +180,14 @@ object InventoryManager : EventListener {
 
                 // These are chained actions that have to be executed in order
                 // We cannot interrupt them
+<<<<<<< HEAD
                 for ((index, action) in chained.actions.withIndex()) {
+=======
+                debugParameter("Schedule Index") { scheduleIndex }
+                debugParameter("Action Size") { chained.actions.size }
+                for ((index, action) in chained.actions.withIndex()) {
+                    debugParameter("Action Index") { index }
+>>>>>>> upstream/nextgen
                     val constraints = chained.inventoryConstraints
 
                     // Update close delay maximum
@@ -172,7 +226,11 @@ object InventoryManager : EventListener {
                     // Check if this is the first action in the chain, which allows us to simulate a miss click
                     // This is only possible for container-type slots and also does not make much sense when
                     // the action is a throw action (you cannot miss-click really when throwing)
+<<<<<<< HEAD
                     if (index == 0 && action is ClickInventoryAction
+=======
+                    if (index == 0 && action is InventoryAction.Click
+>>>>>>> upstream/nextgen
                         && constraints.missChance.random() > Random.nextInt(100)
                         && action.actionType != SlotActionType.THROW) {
                         // Simulate a miss click (this is only possible for container-type slots)
@@ -183,12 +241,20 @@ object InventoryManager : EventListener {
                         }
                     }
 
+<<<<<<< HEAD
                     if (action is CloseContainerAction) {
+=======
+                    if (action is InventoryAction.CloseScreen) {
+>>>>>>> upstream/nextgen
                         waitTicks(constraints.closeDelay.random())
                         cycles = 0
                     }
                     if (action.performAction()) {
+<<<<<<< HEAD
                         if (action !is CloseContainerAction) {
+=======
+                        if (action !is InventoryAction.CloseScreen) {
+>>>>>>> upstream/nextgen
                             waitTicks(constraints.clickDelay.random())
                             cycles = 0
                         }
@@ -203,7 +269,11 @@ object InventoryManager : EventListener {
             closeInventorySilently()
         }
 
+<<<<<<< HEAD
         lastClickedSlot = 0
+=======
+        lastClickedSlot = -1
+>>>>>>> upstream/nextgen
     }
 
     /**
@@ -227,7 +297,12 @@ object InventoryManager : EventListener {
      * Listener for packets that are related to the inventory
      * to keep track of the inventory state and timings
      */
+<<<<<<< HEAD
     val packetHandler = handler<PacketEvent>(priority = EventPriorityConvention.READ_FINAL_STATE) { event ->
+=======
+    @Suppress("unused")
+    private val packetHandler = handler<PacketEvent>(priority = EventPriorityConvention.READ_FINAL_STATE) { event ->
+>>>>>>> upstream/nextgen
         val packet = event.packet
 
         if (event.isCancelled) {
@@ -260,11 +335,30 @@ object InventoryManager : EventListener {
     ) { event ->
         val screen = event.screen
 
+<<<<<<< HEAD
+=======
+        debugParameter("Screen") { screen }
+
+>>>>>>> upstream/nextgen
         if (event.isCancelled) {
             return@handler
         }
 
+<<<<<<< HEAD
         if (screen is InventoryScreen || screen is GenericContainerScreen) {
+=======
+        if (screen is HandledScreen<*>) {
+            debugParameter("Screen Handler Type") {
+                val type = runCatching { screen.screenHandler.type }.getOrNull()
+                type?.let {
+                    Registries.SCREEN_HANDLER.getId(it)
+                }
+            }
+            debugParameter("Screen Slot count") {
+                val slots = screen.screenHandler.slots
+                "${slots.size} (${slots.count { it.inventory !== player.inventory }})"
+            }
+>>>>>>> upstream/nextgen
             // ViaFabricPlus injects into [tutorialManager.onInventoryOpened()] but we take
             // the easy way and just listen for the screen event.
             if (screen is InventoryScreen && isOlderThanOrEqual1_11_1) {
@@ -280,6 +374,7 @@ object InventoryManager : EventListener {
         isInventoryOpenServerSide = false
     }
 
+<<<<<<< HEAD
 }
 
 interface InventoryAction {
@@ -494,4 +589,13 @@ data class InventoryActionChain(
 
     fun requiresInventoryOpen() = actions.filterIsInstance<ClickInventoryAction>().any { it.screen == null }
 
+=======
+    private val COMPARATOR_ACTION_CHAIN: Comparator<InventoryAction.Chain> =
+        compareBy<InventoryAction.Chain> {
+            it.requiresInventoryOpen()
+        }.thenByDescending {
+            it.priority
+        }
+
+>>>>>>> upstream/nextgen
 }

@@ -22,9 +22,10 @@
 @file:Suppress("LongMethod")
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game
-import net.ccbluex.liquidbounce.integration.interop.*
 
+import com.google.common.base.CaseFormat
 import com.google.gson.JsonObject
+import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.integration.interop.ClientInteropServer
 import net.ccbluex.liquidbounce.utils.client.convertToString
 import net.ccbluex.liquidbounce.utils.client.logger
@@ -32,6 +33,9 @@ import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.toName
 import net.ccbluex.liquidbounce.utils.item.isNothing
 import net.ccbluex.liquidbounce.utils.network.packetRegistry
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpForbidden
+import net.ccbluex.netty.http.util.httpOk
 import net.minecraft.item.BlockItem
 import net.minecraft.item.Items
 import net.minecraft.network.NetworkSide
@@ -237,6 +241,36 @@ fun getRegistry(requestObject: RequestObject) = httpOk(JsonObject().apply {
                 add(packetId.toString(), JsonObject().apply {
                     addProperty("name", packetId.toName())
                     addProperty("icon", iconUrl(iconId))
+                })
+            }
+        }
+
+        "entity_type" -> {
+            Registries.ENTITY_TYPE.forEach { entityType ->
+                val id = Registries.ENTITY_TYPE.getId(entityType)
+                add(id.toString(), JsonObject().apply {
+                    addProperty("name", entityType.name.convertToString())
+                    addProperty("icon", iconUrl(id)) // TODO: fix icon
+                })
+            }
+        }
+
+        "screen_handler" -> {
+            val iconId = Registries.ITEM.getId(Items.CHEST)
+            val converter = CaseFormat.LOWER_UNDERSCORE.converterTo(CaseFormat.UPPER_CAMEL)
+            Registries.SCREEN_HANDLER.forEach { screenHandlerType ->
+                val id = Registries.SCREEN_HANDLER.getId(screenHandlerType) ?: return@forEach
+                add(id.toString(), JsonObject().apply {
+                    addProperty("name", converter.convert(id.toName()))
+                    addProperty("icon", iconUrl(iconId)) // TODO: better icon?
+                })
+            }
+        }
+
+        "client_module" -> {
+            ModuleManager.forEach { module ->
+                add(module.name, JsonObject().apply {
+                    addProperty("name", module.name)
                 })
             }
         }

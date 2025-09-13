@@ -18,7 +18,10 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
+<<<<<<< HEAD
 import com.mojang.blaze3d.systems.RenderSystem
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.*
@@ -27,12 +30,19 @@ import net.ccbluex.liquidbounce.event.sequenceHandler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.integration.IntegrationListener
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.ClickGuiScreen
 import net.ccbluex.liquidbounce.integration.VirtualDisplayScreen
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
 // import net.ccbluex.liquidbounce.integration.backend.browser.Browser // Removed: Using native GUI
 // import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.isTyping
 // Removed: No longer using HTTP interop
+=======
+import net.ccbluex.liquidbounce.integration.VirtualDisplayScreen
+import net.ccbluex.liquidbounce.integration.VirtualScreenType
+import net.ccbluex.liquidbounce.integration.backend.browser.Browser
+import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.isTyping
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.inGame
@@ -50,7 +60,11 @@ import org.lwjgl.glfw.GLFW
 object ModuleClickGui :
     ClientModule("ClickGUI", Category.RENDER, bind = GLFW.GLFW_KEY_RIGHT_SHIFT, disableActivation = true) {
 
+<<<<<<< HEAD
     override val running = true
+=======
+    override val running get() = true
+>>>>>>> upstream/nextgen
 
     @Suppress("UnusedPrivateProperty")
     private val scale by float("Scale", 1f, 0.5f..2f).onChanged {
@@ -60,6 +74,7 @@ object ModuleClickGui :
 
     @Suppress("UnusedPrivateProperty")
     private val cache by boolean("Cache", true).onChanged { cache ->
+<<<<<<< HEAD
         // Note: Cache setting no longer needed with native GUI
         // RenderSystem.recordRenderCall {
         //     if (cache) {
@@ -72,6 +87,19 @@ object ModuleClickGui :
         //         enable()
         //     }
         // }
+=======
+        mc.execute {
+            if (cache) {
+                open()
+            } else {
+                close()
+            }
+
+            if (mc.currentScreen is VirtualDisplayScreen || mc.currentScreen is ClickScreen) {
+                onEnabled()
+            }
+        }
+>>>>>>> upstream/nextgen
     }
 
     @Suppress("UnusedPrivateProperty")
@@ -80,8 +108,12 @@ object ModuleClickGui :
     }
 
     val isInSearchBar: Boolean
+<<<<<<< HEAD
         get() = mc.currentScreen is ClickGuiScreen 
         // Note: Removed isTyping reference - native GUI handles this internally
+=======
+        get() = (mc.currentScreen is VirtualDisplayScreen || mc.currentScreen is ClickScreen) && isTyping
+>>>>>>> upstream/nextgen
 
     object Snapping : ToggleableConfigurable(this, "Snapping", true) {
 
@@ -97,19 +129,29 @@ object ModuleClickGui :
         }
     }
 
+<<<<<<< HEAD
     // Note: Browser variable removed - no longer needed with native GUI
     // private var clickGuiBrowser: Browser? = null
+=======
+    private var clickGuiBrowser: Browser? = null
+    private const val WORLD_CHANGE_SECONDS_UNTIL_RELOAD = 5
+>>>>>>> upstream/nextgen
 
     init {
         tree(Snapping)
     }
 
+<<<<<<< HEAD
     override fun enable() {
+=======
+    override fun onEnabled() {
+>>>>>>> upstream/nextgen
         // Pretty sure we are not in a game, so we can't open the clickgui
         if (!inGame) {
             return
         }
 
+<<<<<<< HEAD
         // Use native ClickGUI implementation instead of JCEF
         mc.setScreen(ClickGuiScreen())
         super.enable()
@@ -117,6 +159,18 @@ object ModuleClickGui :
 
     // Note: JCEF browser methods no longer needed with native GUI
     /*
+=======
+        mc.setScreen(
+            if (clickGuiBrowser == null) {
+                VirtualDisplayScreen(VirtualScreenType.CLICK_GUI)
+            } else {
+                ClickScreen()
+            }
+        )
+        super.onEnabled()
+    }
+
+>>>>>>> upstream/nextgen
     private fun open() {
         if (clickGuiBrowser != null) {
             return
@@ -133,8 +187,15 @@ object ModuleClickGui :
     }
 
     private fun close() {
+<<<<<<< HEAD
         clickGuiBrowser?.close()
         clickGuiBrowser = null
+=======
+        clickGuiBrowser?.let {
+            it.close()
+            clickGuiBrowser = null
+        }
+>>>>>>> upstream/nextgen
     }
 
     fun reload(restart: Boolean = false) {
@@ -146,10 +207,14 @@ object ModuleClickGui :
 
         clickGuiBrowser?.reload()
     }
+<<<<<<< HEAD
     */
 
     // Note: Event handlers related to JCEF browser no longer needed
     /*
+=======
+
+>>>>>>> upstream/nextgen
     @Suppress("unused")
     private val gameRenderHandler = handler<GameRenderEvent>(priority = OBJECTION_AGAINST_EVERYTHING) {
         clickGuiBrowser?.visible = mc.currentScreen is ClickScreen
@@ -157,7 +222,11 @@ object ModuleClickGui :
 
     @Suppress("unused")
     private val browserReadyHandler = handler<BrowserReadyEvent>(priority = READ_FINAL_STATE) {
+<<<<<<< HEAD
         tree(IntegrationListener.browserSettings!!)
+=======
+        tree(IntegrationListener.browserSettings)
+>>>>>>> upstream/nextgen
         open()
     }
 
@@ -181,13 +250,23 @@ object ModuleClickGui :
             reload()
         }
     }
+<<<<<<< HEAD
     */
+=======
+>>>>>>> upstream/nextgen
 
     /**
      * An empty screen that acts as a hint when to draw the clickgui
      */
     class ClickScreen : Screen("ClickGUI".asText()) {
 
+<<<<<<< HEAD
+=======
+        override fun init() {
+            super.init()
+        }
+
+>>>>>>> upstream/nextgen
         override fun close() {
             mc.mouse.lockCursor()
             super.close()

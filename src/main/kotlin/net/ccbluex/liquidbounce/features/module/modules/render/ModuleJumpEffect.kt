@@ -39,7 +39,11 @@ object ModuleJumpEffect : ClientModule("JumpEffect", Category.RENDER) {
     private val innerColor by color("InnerColor", Color4b(0, 255, 4, 0))
     private val outerColor by color("OuterColor", Color4b(0, 255, 4, 89))
 
+<<<<<<< HEAD
     private val animCurve by curve("AnimCurve", Easing.QUAD_OUT)
+=======
+    private val animCurve by easing("AnimCurve", Easing.QUAD_OUT)
+>>>>>>> upstream/nextgen
 
     private val hueOffsetAnim by int("HueOffsetAnim", 63, -360..360)
 
@@ -47,7 +51,11 @@ object ModuleJumpEffect : ClientModule("JumpEffect", Category.RENDER) {
 
     private val circles = ExpiringList<Vec3d>()
 
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         circles.clear()
     }
 

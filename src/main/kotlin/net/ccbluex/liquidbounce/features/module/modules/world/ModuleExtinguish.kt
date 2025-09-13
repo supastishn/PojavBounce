@@ -71,7 +71,11 @@ object ModuleExtinguish: ClientModule("Extinguish", Category.WORLD) {
     private var lastExtinguishPos: BlockPos? = null
     private val lastAttemptTimer = Chronometer()
 
+<<<<<<< HEAD
     override fun enable() {
+=======
+    override fun onEnabled() {
+>>>>>>> upstream/nextgen
         currentTarget = null
     }
 

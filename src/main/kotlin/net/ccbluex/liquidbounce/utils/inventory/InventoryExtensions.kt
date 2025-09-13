@@ -22,6 +22,10 @@ package net.ccbluex.liquidbounce.utils.inventory
 
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen
+<<<<<<< HEAD
+=======
+import net.minecraft.client.gui.screen.ingame.HandledScreen
+>>>>>>> upstream/nextgen
 import net.minecraft.client.gui.screen.ingame.InventoryScreen
 import net.minecraft.screen.ScreenHandler
 
@@ -38,5 +42,9 @@ val canCloseMainInventory
     get() = !isInInventoryScreen && mc.player?.currentScreenHandler?.isPlayerInventory == true
         && InventoryManager.isInventoryOpen
 
+<<<<<<< HEAD
 val GenericContainerScreen?.syncId
+=======
+val HandledScreen<*>?.syncId
+>>>>>>> upstream/nextgen
     get() = this?.screenHandler?.syncId ?: 0

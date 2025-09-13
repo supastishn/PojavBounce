@@ -45,6 +45,10 @@
     "minecraft.entity.MixinEntity",
     "minecraft.entity.MixinEntityRenderer",
     "minecraft.entity.MixinHeadFeatureRenderer",
+<<<<<<< HEAD
+=======
+    "minecraft.entity.MixinItemCooldownManager",
+>>>>>>> upstream/nextgen
     "minecraft.entity.MixinLivingEntity",
     "minecraft.entity.MixinLivingEntityCompatibility",
     "minecraft.entity.MixinMobSpawnerBlockEntityRenderer",
@@ -63,6 +67,10 @@
     "minecraft.gui.MixinDrawContextAccessor",
     "minecraft.gui.MixinHandledScreen",
     "minecraft.gui.MixinInGameHud",
+<<<<<<< HEAD
+=======
+    "minecraft.gui.MixinInGameHudAccessor",
+>>>>>>> upstream/nextgen
     "minecraft.gui.MixinPlayerListHud",
     "minecraft.gui.MixinScoreboard",
     "minecraft.gui.MixinScreen",
@@ -72,11 +80,17 @@
     "minecraft.gui.custom.MixinDisconnectedScreen",
     "minecraft.gui.custom.MixinDownloadingTerrainScreen",
     "minecraft.gui.widget.MixinEntryListWidget",
+<<<<<<< HEAD
     "minecraft.item.MixinArmorItem",
     "minecraft.item.MixinHeldItemRenderer",
     "minecraft.item.MixinItem",
     "minecraft.item.MixinItemStack",
     "minecraft.item.MixinMiningToolItem",
+=======
+    "minecraft.item.MixinHeldItemRenderer",
+    "minecraft.item.MixinItem",
+    "minecraft.item.MixinItemStack",
+>>>>>>> upstream/nextgen
     "minecraft.network.MixinAllowedAddressResolver",
     "minecraft.network.MixinClientConnection",
     "minecraft.network.MixinClientLoginNetworkHandlerMixin",
@@ -114,6 +128,10 @@
     "minecraft.render.MixinSignText",
     "minecraft.render.MixinTextRenderer",
     "minecraft.render.MixinWeatherRendering",
+<<<<<<< HEAD
+=======
+    "minecraft.client.MixinWorldBorderRendering",
+>>>>>>> upstream/nextgen
     "minecraft.render.MixinWorldRenderer",
     "minecraft.render.entity.MixinEntityRenderState",
     "minecraft.render.entity.feature.MixinDeadmau5FeatureRenderer",
@@ -123,13 +141,23 @@
     "minecraft.text.MixinMutableTextAccessor",
     "minecraft.text.MixinTextColor",
     "minecraft.text.MixinTranslatableTextContent",
+<<<<<<< HEAD
+=======
+    "minecraft.util.MixinVec3i",
+>>>>>>> upstream/nextgen
     "minecraft.world.chuck.MixinChunkSkyLightProvider",
     "sodium.MixinSodiumBlockOcclusionCache",
     "sodium.MixinSodiumLightDataAccessMixin",
     "truffle.MixinHostClassDesc",
     "truffle.MixinHostClassLoader",
     "truffle.MixinHostContext",
+<<<<<<< HEAD
     "truffle.MixinTruffleLanguage"
+=======
+    "truffle.MixinTruffleLanguage",
+    "truffle.MixinCommonJSRequireBuiltin",
+    "truffle.MixinNpmCompatibleESModuleLoader"
+>>>>>>> upstream/nextgen
   ],
   "server": [],
   "injectors": {

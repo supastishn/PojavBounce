@@ -18,8 +18,13 @@
  */
 package net.ccbluex.liquidbounce.utils.render
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.NamedChoice
+=======
+import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.config.types.nesting.Configurable
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.render.engine.font.BoundingBox2f
 import net.ccbluex.liquidbounce.utils.client.mc
 
@@ -31,6 +36,10 @@ class Alignment(
 ) : Configurable("Alignment") {
 
     companion object {
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         fun center() = Alignment(ScreenAxisX.CENTER, 0, ScreenAxisY.CENTER, 0)
     }
 
@@ -46,6 +55,7 @@ class Alignment(
         val screenWidth = mc.window.scaledWidth.toFloat()
         val screenHeight = mc.window.scaledHeight.toFloat()
 
+<<<<<<< HEAD
         val x =
             when (horizontalAlignment) {
                 ScreenAxisX.LEFT -> horizontalOffset.toFloat()
@@ -61,6 +71,21 @@ class Alignment(
                 ScreenAxisY.BOTTOM -> screenHeight - height - verticalOffset.toFloat()
                 ScreenAxisY.CENTER -> screenWidth / 2f - height / 2f + verticalOffset.toFloat()
             }
+=======
+        val x = when (horizontalAlignment) {
+            ScreenAxisX.LEFT -> horizontalOffset.toFloat()
+            ScreenAxisX.CENTER_TRANSLATED -> screenWidth / 2f - width / 2f + horizontalOffset.toFloat()
+            ScreenAxisX.RIGHT -> screenWidth - width - horizontalOffset.toFloat()
+            ScreenAxisX.CENTER -> screenWidth / 2f - width / 2f + horizontalOffset.toFloat()
+        }
+
+        val y = when (verticalAlignment) {
+            ScreenAxisY.TOP -> verticalOffset.toFloat()
+            ScreenAxisY.CENTER_TRANSLATED -> screenHeight / 2f - height / 2f + verticalOffset.toFloat()
+            ScreenAxisY.BOTTOM -> screenHeight - height - verticalOffset.toFloat()
+            ScreenAxisY.CENTER -> screenWidth / 2f - height / 2f + verticalOffset.toFloat()
+        }
+>>>>>>> upstream/nextgen
 
         return BoundingBox2f(x, y, x + width, y + height)
     }
@@ -79,6 +104,7 @@ class Alignment(
         BOTTOM("Bottom"),
     }
 
+<<<<<<< HEAD
     /**
      * Converts the alignement configurable to style (CSS)
      */
@@ -102,4 +128,6 @@ class Alignment(
         );
     """.trimIndent().replace("\n", "")
 
+=======
+>>>>>>> upstream/nextgen
 }

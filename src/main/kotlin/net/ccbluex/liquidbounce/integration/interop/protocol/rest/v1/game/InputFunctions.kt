@@ -20,12 +20,16 @@
  */
 
 package net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game
-import net.ccbluex.liquidbounce.integration.interop.*
 
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
+import io.netty.handler.codec.http.FullHttpResponse
 import net.ccbluex.liquidbounce.utils.client.convertToString
 import net.ccbluex.liquidbounce.utils.client.mc
+import net.ccbluex.netty.http.model.RequestObject
+import net.ccbluex.netty.http.util.httpBadRequest
+import net.ccbluex.netty.http.util.httpNoContent
+import net.ccbluex.netty.http.util.httpOk
 import net.minecraft.client.util.InputUtil
 
 // GET /api/v1/client/input

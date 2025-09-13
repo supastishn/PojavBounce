@@ -18,7 +18,10 @@
  */
 package net.ccbluex.liquidbounce.utils.client
 
+<<<<<<< HEAD
 import com.mojang.blaze3d.systems.RenderSystem
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.api.thirdparty.IpInfoApi
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.event.EventListener
@@ -26,7 +29,13 @@ import net.ccbluex.liquidbounce.event.events.DisconnectEvent
 import net.ccbluex.liquidbounce.event.events.PacketEvent
 import net.ccbluex.liquidbounce.event.events.ServerConnectEvent
 import net.ccbluex.liquidbounce.event.handler
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAntiCheatDetect
+=======
+import net.ccbluex.liquidbounce.event.waitMatchesWithTimeout
+import net.ccbluex.liquidbounce.features.module.modules.misc.ModuleAntiCheatDetect
+import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
+>>>>>>> upstream/nextgen
 import net.minecraft.client.gui.screen.TitleScreen
 import net.minecraft.client.gui.screen.multiplayer.ConnectScreen
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen
@@ -46,6 +55,11 @@ import net.minecraft.util.Identifier
 import java.net.InetAddress
 import java.util.TreeSet
 import kotlin.collections.ArrayDeque
+<<<<<<< HEAD
+=======
+import kotlin.random.Random
+import kotlin.time.Duration
+>>>>>>> upstream/nextgen
 
 object ServerObserver : EventListener {
 
@@ -95,8 +109,12 @@ object ServerObserver : EventListener {
     var hostingInformation: IpInfoApi.IpData? = null
         private set
 
+<<<<<<< HEAD
     private var isCapturingCommandSuggestions = false
     var plugins: TreeSet<String>? = null
+=======
+    var plugins: Set<String>? = null
+>>>>>>> upstream/nextgen
         private set
 
     val formattedPluginList: List<Text>?
@@ -124,7 +142,11 @@ object ServerObserver : EventListener {
         val serverInfo = serverInfo ?: error("no known last server")
         val serverAddress = ServerAddress.parse(serverInfo.address)
 
+<<<<<<< HEAD
         RenderSystem.recordRenderCall {
+=======
+        mc.execute {
+>>>>>>> upstream/nextgen
             ConnectScreen.connect(
                 MultiplayerScreen(TitleScreen()),
                 mc,
@@ -146,10 +168,37 @@ object ServerObserver : EventListener {
      * @see [net.minecraft.network.packet.s2c.play.CommandSuggestionsS2CPacket]
      * @see [net.ccbluex.liquidbounce.features.module.modules.exploit.ModulePlugins]
      */
+<<<<<<< HEAD
     fun captureCommandSuggestions() {
         this.isCapturingCommandSuggestions = true
         this.plugins = null
         network.sendPacket(RequestCommandCompletionsC2SPacket(0, "/"))
+=======
+    suspend fun captureCommandSuggestions(timeout: Duration): Boolean {
+        this.plugins = null
+        val completionId = Random.nextInt(0, 32767)
+        network.sendPacket(RequestCommandCompletionsC2SPacket(completionId, "/"))
+        /**
+         * Server sends a command suggestions packet with a list of commands.
+         * These commands are usually prefixed with the plugin name and a colon.
+         */
+        val packet = waitMatchesWithTimeout<PacketEvent>(timeout, priority = FIRST_PRIORITY) {
+            it.packet is CommandSuggestionsS2CPacket && it.packet.id == completionId
+        }?.packet ?: return false
+
+        packet as CommandSuggestionsS2CPacket
+
+        this.plugins = packet.suggestions.list.mapNotNullTo(sortedSetOf()) { cmd ->
+            val command = cmd.text.split(":")
+
+            if (command.size > 1) {
+                command[0].replace("/", "")
+            } else {
+                null
+            }
+        }
+        return !this.plugins.isNullOrEmpty()
+>>>>>>> upstream/nextgen
     }
 
     suspend fun requestHostingInformation() {
@@ -170,14 +219,22 @@ object ServerObserver : EventListener {
 
     @Suppress("unused")
     private val packetObserver = handler<PacketEvent> { event ->
+<<<<<<< HEAD
         val packet = event.packet
 
         when {
+=======
+        when (val packet = event.packet) {
+>>>>>>> upstream/nextgen
             /**
              * The world time update packet should be sent once every second.
              * This allows us to calculate the TPS (ticks per second) of the server.
              */
+<<<<<<< HEAD
             packet is WorldTimeUpdateS2CPacket -> {
+=======
+            is WorldTimeUpdateS2CPacket -> {
+>>>>>>> upstream/nextgen
                 if (wasDisconnected && intervals.isEmpty()) {
                     wasDisconnected = false
                     chronometer.reset()
@@ -194,7 +251,11 @@ object ServerObserver : EventListener {
                 }
 
                 val averageInterval = intervals.average()
+<<<<<<< HEAD
                 mc.renderTaskQueue.add {
+=======
+                mc.execute {
+>>>>>>> upstream/nextgen
                     tps = if (averageInterval > 0 && !averageInterval.isNaN()) {
                         (20.0 / (averageInterval / 1000.0)).coerceIn(0.0..20.0)
                     } else {
@@ -210,7 +271,11 @@ object ServerObserver : EventListener {
              *
              * @author nekosarekawaii
              */
+<<<<<<< HEAD
             packet is SelectKnownPacksS2CPacket -> {
+=======
+            is SelectKnownPacksS2CPacket -> {
+>>>>>>> upstream/nextgen
                 for (knownPack in packet.knownPacks()) {
                     if (knownPack.isVanilla && knownPack.id() == "core") { // Works for 1.20.5+ servers
                         this.serverVersion = knownPack.version()
@@ -223,7 +288,11 @@ object ServerObserver : EventListener {
              * Server sents a hello packet with the server id and public key,
              * as well as if the server is cracked or not.
              */
+<<<<<<< HEAD
             packet is LoginHelloS2CPacket -> {
+=======
+            is LoginHelloS2CPacket -> {
+>>>>>>> upstream/nextgen
                 // The Server ID is not often present and likely reserved for official servers.
                 if (packet.serverId.isNotEmpty()) {
                     this.serverId = packet.serverId
@@ -236,6 +305,7 @@ object ServerObserver : EventListener {
             }
 
             /**
+<<<<<<< HEAD
              * Server sends a command suggestions packet with a list of commands.
              * These commands are usually prefixed with the plugin name and a colon.
              */
@@ -256,11 +326,20 @@ object ServerObserver : EventListener {
              * Watches for the payload channels that are being used by the server.
              */
             packet is CustomPayloadS2CPacket -> {
+=======
+             * Watches for the payload channels that are being used by the server.
+             */
+            is CustomPayloadS2CPacket -> {
+>>>>>>> upstream/nextgen
                 val payload = packet.payload
                 payloadChannels.add(payload.id.id)
             }
 
+<<<<<<< HEAD
             packet is CommonPingS2CPacket -> if (isCapturingTransactions) {
+=======
+            is CommonPingS2CPacket -> if (isCapturingTransactions) {
+>>>>>>> upstream/nextgen
                 transactions.add(packet.parameter)
                 if (transactions.size >= 5) {
                     ModuleAntiCheatDetect.completed()
@@ -268,7 +347,11 @@ object ServerObserver : EventListener {
                 }
             }
 
+<<<<<<< HEAD
             packet is GameJoinS2CPacket -> {
+=======
+            is GameJoinS2CPacket -> {
+>>>>>>> upstream/nextgen
                 transactions.clear()
                 isCapturingTransactions = true
             }
@@ -292,8 +375,11 @@ object ServerObserver : EventListener {
         this.serverType = null
         this.payloadChannels.clear()
         this.transactions.clear()
+<<<<<<< HEAD
         this.isCapturingCommandSuggestions = false
         this.isCapturingCommandSuggestions = false
+=======
+>>>>>>> upstream/nextgen
     }
 
     /**

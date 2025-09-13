@@ -19,6 +19,11 @@
 package net.ccbluex.liquidbounce.utils.input
 
 import com.mojang.brigadier.StringReader
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.features.module.ClientModule
+import net.ccbluex.liquidbounce.features.module.ModuleManager
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.minecraft.block.Block
 import net.minecraft.client.util.InputUtil
@@ -28,6 +33,10 @@ import net.minecraft.registry.Registries
 import net.minecraft.sound.SoundEvent
 import net.minecraft.util.Identifier
 import java.awt.Color
+<<<<<<< HEAD
+=======
+import java.io.File
+>>>>>>> upstream/nextgen
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
@@ -85,11 +94,23 @@ object HumanInputDeserializer {
         requireNotNull(effect) { "Unknown status effect '$it'" }
     }
 
+<<<<<<< HEAD
     val keyDeserializer: StringDeserializer<InputUtil.Key> = StringDeserializer(::inputByName)
 
     val pathDeserializer: StringDeserializer<java.nio.file.Path> = StringDeserializer { str ->
         java.nio.file.Paths.get(str)
     }
+=======
+    val clientModuleDeserializer: StringDeserializer<ClientModule> = StringDeserializer {
+        val module = ModuleManager[it]
+
+        requireNotNull(module) { "Unknown module '$it'" }
+    }
+
+    val keyDeserializer: StringDeserializer<InputUtil.Key> = StringDeserializer(::inputByName)
+
+    val fileDeserializer: StringDeserializer<File> = StringDeserializer(::File)
+>>>>>>> upstream/nextgen
 
     fun <T> parseArray(str: String, componentDeserializer: StringDeserializer<T>): MutableList<T> {
         return str.split(",").mapTo(ArrayList(), componentDeserializer::deserializeThrowing)

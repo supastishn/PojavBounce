@@ -76,7 +76,11 @@ object PacketQueueManager : EventListener {
         }
 
         if (fireEvent(null, TransferOrigin.OUTGOING) == Action.FLUSH) {
+<<<<<<< HEAD
             flush { snapshot -> snapshot.origin == TransferOrigin.OUTGOING }
+=======
+            flush(TransferOrigin.OUTGOING)
+>>>>>>> upstream/nextgen
         }
     }
 
@@ -88,7 +92,11 @@ object PacketQueueManager : EventListener {
         }
 
         if (fireEvent(null, TransferOrigin.INCOMING) == Action.FLUSH) {
+<<<<<<< HEAD
             flush { snapshot -> snapshot.origin == TransferOrigin.INCOMING }
+=======
+            flush(TransferOrigin.INCOMING)
+>>>>>>> upstream/nextgen
         }
     }
 
@@ -105,7 +113,11 @@ object PacketQueueManager : EventListener {
         // If we shouldn't lag, don't do anything
         val lagResult = fireEvent(packet, origin)
         if (lagResult == Action.FLUSH) {
+<<<<<<< HEAD
             flush { snapshot -> snapshot.origin == origin }
+=======
+            flush(origin)
+>>>>>>> upstream/nextgen
             return@handler
         }
 
@@ -126,11 +138,16 @@ object PacketQueueManager : EventListener {
 
             // Flush on teleport or disconnect
             is PlayerPositionLookS2CPacket, is DisconnectS2CPacket -> {
+<<<<<<< HEAD
                 flush { snapshot -> snapshot.origin == origin }
+=======
+                flush(origin)
+>>>>>>> upstream/nextgen
                 return@handler
             }
 
             // Ignore own hurt sounds
+<<<<<<< HEAD
             is PlaySoundS2CPacket -> {
                 if (packet.sound.value() == SoundEvents.ENTITY_PLAYER_HURT) {
                     return@handler
@@ -143,6 +160,16 @@ object PacketQueueManager : EventListener {
                     flush { snapshot -> snapshot.origin == origin }
                     return@handler
                 }
+=======
+            is PlaySoundS2CPacket if packet.sound.value() == SoundEvents.ENTITY_PLAYER_HURT -> {
+                return@handler
+            }
+
+            // Flush on own death
+            is HealthUpdateS2CPacket if packet.health <= 0 -> {
+                flush(origin)
+                return@handler
+>>>>>>> upstream/nextgen
             }
 
         }
@@ -197,10 +224,18 @@ object PacketQueueManager : EventListener {
         }
     }
 
+<<<<<<< HEAD
+=======
+    fun flush(origin: TransferOrigin) {
+        flush { it.origin == origin }
+    }
+
+>>>>>>> upstream/nextgen
     fun flush(count: Int) {
         // Take all packets until the counter of move packets reaches count and send them
         var counter = 0
 
+<<<<<<< HEAD
         for (snapshot in packetQueue.iterator()) {
             val packet = snapshot.packet
 
@@ -213,6 +248,23 @@ object PacketQueueManager : EventListener {
 
             if (counter >= count) {
                 break
+=======
+        with(packetQueue.iterator()) {
+            while (hasNext()) {
+                val snapshot = next()
+                val packet = snapshot.packet
+
+                if (packet is PlayerMoveC2SPacket && packet.changePosition) {
+                    counter += 1
+                }
+
+                flushSnapshot(snapshot)
+                remove()
+
+                if (counter >= count) {
+                    break
+                }
+>>>>>>> upstream/nextgen
             }
         }
     }
@@ -252,10 +304,17 @@ object PacketQueueManager : EventListener {
     private fun fireEvent(packet: Packet<*>?, origin: TransferOrigin) =
         EventManager.callEvent(QueuePacketEvent(packet, origin)).action
 
+<<<<<<< HEAD
     enum class Action {
         QUEUE,
         PASS,
         FLUSH,
+=======
+    enum class Action(val priority: Int) {
+        FLUSH(0),
+        PASS(1),
+        QUEUE(2)
+>>>>>>> upstream/nextgen
     }
 
 }

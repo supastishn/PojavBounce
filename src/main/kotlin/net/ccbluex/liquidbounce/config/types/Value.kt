@@ -26,7 +26,6 @@ import kotlinx.coroutines.flow.StateFlow
 import net.ccbluex.liquidbounce.config.gson.stategies.Exclude
 import net.ccbluex.liquidbounce.config.gson.stategies.ProtocolExclude
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
-import net.ccbluex.liquidbounce.config.util.AutoCompletionProvider
 import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.ValueChangedEvent
 import net.ccbluex.liquidbounce.lang.translation
@@ -37,27 +36,29 @@ import net.ccbluex.liquidbounce.script.asIntArray
 import net.ccbluex.liquidbounce.utils.client.convertToString
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.toLowerCamelCase
-import net.ccbluex.liquidbounce.utils.input.HumanInputDeserializer
-import net.ccbluex.liquidbounce.utils.input.InputBind
 import net.ccbluex.liquidbounce.utils.input.inputByName
-import net.ccbluex.liquidbounce.utils.kotlin.mapArray
 import net.minecraft.client.util.InputUtil
+import java.util.function.Consumer
 import java.util.function.Supplier
 import kotlin.reflect.KProperty
 import org.graalvm.polyglot.Value as PolyglotValue
 
 typealias ValueListener<T> = (T) -> T
-
 typealias ValueChangedListener<T> = (T) -> Unit
+
+/**
+ * Order by name of [Value] (ignoreCase)
+ */
+val VALUE_NAME_ORDER: Comparator<in Value<*>> = compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }
 
 /**
  * Value based on generics and support for readable names and descriptions.
  */
 @Suppress("TooManyFunctions")
 open class Value<T : Any>(
-    @SerializedName("name") open val name: String,
-    @Exclude val aliases: Array<out String> = emptyArray(),
-    @Exclude private var defaultValue: T,
+    @SerializedName("name") val name: String,
+    @Exclude @ProtocolExclude val aliases: Array<out String> = emptyArray(),
+    @Exclude @ProtocolExclude private var defaultValue: T,
     @Exclude val valueType: ValueType,
 
     /**
@@ -222,7 +223,7 @@ open class Value<T : Any>(
         set(t) { inner = it }
     }
 
-    fun set(t: T, apply: (T) -> Unit) {
+    fun set(t: T, apply: Consumer<T>) {
         var currT = t
         runCatching {
             listeners.forEach {
@@ -233,8 +234,7 @@ open class Value<T : Any>(
                 return
             }
         }.onSuccess {
-            apply(currT)
-            inner = currT
+            apply.accept(currT)
             EventManager.callEvent(ValueChangedEvent(this))
             changedListeners.forEach { it(currT) }
             stateFlow.value = currT
@@ -311,19 +311,8 @@ open class Value<T : Any>(
         set(deserializer.deserializeThrowing(string) as T)
     }
 
+    override fun toString(): String {
+        return "${javaClass.simpleName}(name=$name, type=${valueType})"
+    }
+
 }
-
-/**
- * Order by name of [Value] (ignoreCase)
- */
-val VALUE_NAME_ORDER: Comparator<in Value<*>> = compareBy(String.CASE_INSENSITIVE_ORDER) { it.name }
-
-
-
-
-
-
-
-
-
-

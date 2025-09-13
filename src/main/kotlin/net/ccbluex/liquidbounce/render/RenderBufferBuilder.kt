@@ -36,6 +36,11 @@ import net.minecraft.util.math.Vec3d
  * A utility class for drawing shapes in batches.
  *
  * Not sync, not send. Not thread-safe at all.
+<<<<<<< HEAD
+=======
+ *
+ * This should only be used on render thread.
+>>>>>>> upstream/nextgen
  */
 class RenderBufferBuilder<I : VertexInputType>(
     private val drawMode: DrawMode,
@@ -50,6 +55,11 @@ class RenderBufferBuilder<I : VertexInputType>(
      *
      * @param box The bounding box of the box.
      */
+<<<<<<< HEAD
+=======
+    @Suppress("CognitiveComplexMethod")
+    @JvmOverloads
+>>>>>>> upstream/nextgen
     fun drawBox(
         env: RenderEnvironment,
         box: Box,
@@ -59,6 +69,7 @@ class RenderBufferBuilder<I : VertexInputType>(
     ) {
         val matrix = env.currentMvpMatrix
 
+<<<<<<< HEAD
         val vertexPositions = if (useOutlineVertices) {
             box.outlineVertexPositions()
         } else {
@@ -78,6 +89,34 @@ class RenderBufferBuilder<I : VertexInputType>(
 
             if (color != null) {
                 bb.color(color.toARGB())
+=======
+        val check = verticesToUse != -1
+
+        // Draw the vertices of the box
+        if (useOutlineVertices) {
+            box.forEachOutlineVertex { i, x, y, z ->
+                if (check && (verticesToUse and (1 shl i)) != 0) {
+                    return@forEachOutlineVertex
+                }
+
+                val bb = buffer.vertex(matrix, x.toFloat(), y.toFloat(), z.toFloat())
+
+                if (color != null) {
+                    bb.color(color.toARGB())
+                }
+            }
+        } else {
+            box.forEachVertex { i, x, y, z ->
+                if (check && (verticesToUse and (1 shl i)) != 0) {
+                    return@forEachVertex
+                }
+
+                val bb = buffer.vertex(matrix, x.toFloat(), y.toFloat(), z.toFloat())
+
+                if (color != null) {
+                    bb.color(color.toARGB())
+                }
+>>>>>>> upstream/nextgen
             }
         }
     }
@@ -96,7 +135,13 @@ class RenderBufferBuilder<I : VertexInputType>(
     }
 
     companion object {
+<<<<<<< HEAD
         val TESSELATOR_A: Tessellator = Tessellator(0x200000)
+=======
+        @JvmField
+        val TESSELATOR_A: Tessellator = Tessellator(0x200000)
+        @JvmField
+>>>>>>> upstream/nextgen
         val TESSELATOR_B: Tessellator = Tessellator(0x200000)
     }
 }
@@ -117,6 +162,10 @@ class BoxRenderer private constructor(private val env: WorldRenderEnvironment) {
         /**
          * Draws colored boxes. Renders automatically
          */
+<<<<<<< HEAD
+=======
+        @JvmStatic
+>>>>>>> upstream/nextgen
         fun drawWith(env: WorldRenderEnvironment, fn: BoxRenderer.() -> Unit) {
             val renderer = BoxRenderer(env)
 
@@ -149,6 +198,7 @@ class BoxRenderer private constructor(private val env: WorldRenderEnvironment) {
 
 }
 
+<<<<<<< HEAD
 fun Box.vertexPositions(): Array<Vec3> {
     return arrayOf(
         // down
@@ -239,14 +289,117 @@ fun Box.outlineVertexPositions(): Array<Vec3> {
         Vec3(minX, maxY, maxZ),
         Vec3(minX, maxY, minZ)
     )
+=======
+private inline fun Box.forEachVertex(fn: (index: Int, x: Double, y: Double, z: Double) -> Unit) {
+    var i = 0
+    // down
+    fn(i++, minX, minY, minZ)
+    fn(i++, maxX, minY, minZ)
+    fn(i++, maxX, minY, maxZ)
+    fn(i++, minX, minY, maxZ)
+
+    // up
+    fn(i++, minX, maxY, minZ)
+    fn(i++, minX, maxY, maxZ)
+    fn(i++, maxX, maxY, maxZ)
+    fn(i++, maxX, maxY, minZ)
+
+    // north
+    fn(i++, minX, minY, minZ)
+    fn(i++, minX, maxY, minZ)
+    fn(i++, maxX, maxY, minZ)
+    fn(i++, maxX, minY, minZ)
+
+    // east
+    fn(i++, maxX, minY, minZ)
+    fn(i++, maxX, maxY, minZ)
+    fn(i++, maxX, maxY, maxZ)
+    fn(i++, maxX, minY, maxZ)
+
+    // south
+    fn(i++, minX, minY, maxZ)
+    fn(i++, maxX, minY, maxZ)
+    fn(i++, maxX, maxY, maxZ)
+    fn(i++, minX, maxY, maxZ)
+
+    // west
+    fn(i++, minX, minY, minZ)
+    fn(i++, minX, minY, maxZ)
+    fn(i++, minX, maxY, maxZ)
+    fn(i++, minX, maxY, minZ)
+
+    // i == 24
+}
+
+private inline fun Box.forEachOutlineVertex(fn: (index: Int, x: Double, y: Double, z: Double) -> Unit) {
+    var i = 0
+    // down north
+    fn(i++, minX, minY, minZ)
+    fn(i++, maxX, minY, minZ)
+
+    // down east
+    fn(i++, maxX, minY, minZ)
+    fn(i++, maxX, minY, maxZ)
+
+    // down south
+    fn(i++, maxX, minY, maxZ)
+    fn(i++, minX, minY, maxZ)
+
+    // down west
+    fn(i++, minX, minY, maxZ)
+    fn(i++, minX, minY, minZ)
+
+    // north west
+    fn(i++, minX, minY, minZ)
+    fn(i++, minX, maxY, minZ)
+
+    // north east
+    fn(i++, maxX, minY, minZ)
+    fn(i++, maxX, maxY, minZ)
+
+    // south east
+    fn(i++, maxX, minY, maxZ)
+    fn(i++, maxX, maxY, maxZ)
+
+    // south west
+    fn(i++, minX, minY, maxZ)
+    fn(i++, minX, maxY, maxZ)
+
+    // up north
+    fn(i++, minX, maxY, minZ)
+    fn(i++, maxX, maxY, minZ)
+
+    // up east
+    fn(i++, maxX, maxY, minZ)
+    fn(i++, maxX, maxY, maxZ)
+
+    // up south
+    fn(i++, maxX, maxY, maxZ)
+    fn(i++, minX, maxY, maxZ)
+
+    // up west
+    fn(i++, minX, maxY, maxZ)
+    fn(i++, minX, maxY, minZ)
+
+    // i == 24
+>>>>>>> upstream/nextgen
 }
 
 fun RenderEnvironment.drawSolidBox(consumer: VertexConsumer, box: Box, color: Color4b) {
     val matrix = currentMvpMatrix
+<<<<<<< HEAD
 
     // Draw the vertices of the box
     box.vertexPositions().forEach { (x, y, z) ->
         consumer.vertex(matrix, x, y, z).color(color.toARGB())
+=======
+    val argb = color.toARGB()
+
+    // Draw the vertices of the box
+    box.forEachVertex { _, x, y, z ->
+        consumer.vertex(matrix, x.toFloat(), y.toFloat(), z.toFloat())
+            .color(argb)
+>>>>>>> upstream/nextgen
     }
 }
 
@@ -331,25 +484,41 @@ fun RenderBufferBuilder<VertexInputType.PosColor>.drawLine(
     }
 }
 
+<<<<<<< HEAD
 sealed class VertexInputType {
     abstract val vertexFormat: VertexFormat
     abstract val shaderProgram: ShaderProgramKey
 
     object Pos : VertexInputType() {
+=======
+sealed interface VertexInputType {
+    val vertexFormat: VertexFormat
+    val shaderProgram: ShaderProgramKey
+
+    object Pos : VertexInputType {
+>>>>>>> upstream/nextgen
         override val vertexFormat: VertexFormat
             get() = VertexFormats.POSITION
         override val shaderProgram: ShaderProgramKey
             get() = ShaderProgramKeys.POSITION
     }
 
+<<<<<<< HEAD
     object PosColor : VertexInputType() {
+=======
+    object PosColor : VertexInputType {
+>>>>>>> upstream/nextgen
         override val vertexFormat: VertexFormat
             get() = VertexFormats.POSITION_COLOR
         override val shaderProgram: ShaderProgramKey
             get() = ShaderProgramKeys.POSITION_COLOR
     }
 
+<<<<<<< HEAD
     object PosTexColor : VertexInputType() {
+=======
+    object PosTexColor : VertexInputType {
+>>>>>>> upstream/nextgen
         override val vertexFormat: VertexFormat
             get() = VertexFormats.POSITION_TEXTURE_COLOR
         override val shaderProgram: ShaderProgramKey

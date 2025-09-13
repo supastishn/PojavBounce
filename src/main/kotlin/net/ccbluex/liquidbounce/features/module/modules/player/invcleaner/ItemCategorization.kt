@@ -101,8 +101,15 @@ enum class ItemSortChoice(
     WEAPON("Weapon", ItemCategory(ItemType.WEAPON, 0)),
     BOW("Bow", ItemCategory(ItemType.BOW, 0)),
     CROSSBOW("Crossbow", ItemCategory(ItemType.CROSSBOW, 0)),
+<<<<<<< HEAD
     AXE("Axe", ItemCategory(ItemType.TOOL, 0)),
     PICKAXE("Pickaxe", ItemCategory(ItemType.TOOL, 1)),
+=======
+    AXE("Axe", ItemCategory(ItemType.TOOL, MiningToolItemFacet.MASK_AXE), { it.isAxe }),
+    PICKAXE("Pickaxe", ItemCategory(ItemType.TOOL, MiningToolItemFacet.MASK_PICKAXE), { it.isPickaxe }),
+    SHOVEL("Shovel", ItemCategory(ItemType.TOOL, MiningToolItemFacet.MASK_SHOVEL), { it.isShovel }),
+    HOE("Hoe", ItemCategory(ItemType.TOOL, MiningToolItemFacet.MASK_HOE), { it.isHoe }),
+>>>>>>> upstream/nextgen
     ROD("Rod", ItemCategory(ItemType.ROD, 0)),
     SHIELD("Shield", ItemCategory(ItemType.SHIELD, 0)),
     WATER("Water", ItemCategory(ItemType.BUCKET, 0)),
@@ -112,7 +119,11 @@ enum class ItemSortChoice(
     GAPPLE(
         "Gapple",
         ItemCategory(ItemType.GAPPLE, 0),
+<<<<<<< HEAD
         { it.item == Items.GOLDEN_APPLE || it.item == Items.ENCHANTED_GOLDEN_APPLE },
+=======
+        Predicate { it.item == Items.GOLDEN_APPLE || it.item == Items.ENCHANTED_GOLDEN_APPLE },
+>>>>>>> upstream/nextgen
     ),
     FOOD("Food", ItemCategory(ItemType.FOOD, 0), { it.foodComponent != null }),
     POTION("Potion", ItemCategory(ItemType.POTION, 0)),
@@ -131,7 +142,11 @@ class ItemCategorization(
     companion object {
         @JvmStatic
         private fun constructArmorPiece(item: Item, id: Int): ArmorPiece {
+<<<<<<< HEAD
             return ArmorPiece(VirtualItemSlot(ItemStack(item, 1), ItemSlotType.ARMOR, id))
+=======
+            return ArmorPiece(VirtualItemSlot(item.defaultStack, ItemSlotType.ARMOR, id))
+>>>>>>> upstream/nextgen
         }
 
         /**
@@ -174,6 +189,7 @@ class ItemCategorization(
      * - (SANDSTONE_BLOCK, 64) => `[Block(SANDSTONE_BLOCK, 64)]`
      * - (DIAMOND_AXE, 1) => `[Axe(DIAMOND_AXE, 1), Tool(DIAMOND_AXE, 1)]`
      */
+<<<<<<< HEAD
     @Suppress("CyclomaticComplexMethod", "LongMethod")
     fun getItemFacets(slot: ItemSlot): Array<ItemFacet> {
         if (slot.itemStack.isNothing()) {
@@ -244,5 +260,84 @@ class ItemCategorization(
 
         // Everything could be a weapon (i.e. a stick with Knochback II should be considered a weapon)
         return specificItemFacets + WeaponItemFacet(slot)
+=======
+    @Suppress("CyclomaticComplexMethod", "CognitiveComplexMethod", "LongMethod")
+    fun getItemFacets(slot: ItemSlot): List<ItemFacet> {
+        val itemStack = slot.itemStack
+        if (itemStack.isEmpty) {
+            return emptyList()
+        }
+
+        return buildList {
+            // Everything could be a weapon (i.e. a stick with Knochback II should be considered a weapon)
+            add(WeaponItemFacet(slot))
+
+            when (val item = itemStack.item) {
+                // Treat animal armor as a normal item
+                is AnimalArmorItem -> add(ItemFacet(slot))
+                is BowItem -> add(BowItemFacet(slot))
+                is CrossbowItem -> add(CrossbowItemFacet(slot))
+                is ArrowItem -> add(ArrowItemFacet(slot))
+                is FishingRodItem -> add(RodItemFacet(slot))
+                is ShieldItem -> add(ShieldItemFacet(slot))
+                is BlockItem -> {
+                    if (ScaffoldBlockItemSelection.isValidBlock(itemStack)
+                        && !ScaffoldBlockItemSelection.isBlockUnfavourable(itemStack)
+                    ) {
+                        add(BlockItemFacet(slot))
+                    } else {
+                        add(ItemFacet(slot))
+                    }
+                }
+
+                Items.MILK_BUCKET -> add(PrimitiveItemFacet(slot, ItemCategory(ItemType.BUCKET, 2)))
+                is BucketItem -> {
+                    when (item.fluid) {
+                        is WaterFluid -> add(PrimitiveItemFacet(slot, ItemCategory(ItemType.BUCKET, 0)))
+                        is LavaFluid -> add(PrimitiveItemFacet(slot, ItemCategory(ItemType.BUCKET, 1)))
+                        else -> add(PrimitiveItemFacet(slot, ItemCategory(ItemType.BUCKET, 3)))
+                    }
+                }
+                is PotionItem -> {
+                    val areAllEffectsGood =
+                        itemStack.getPotionEffects()
+                            .all { it.effectType in PotionItemFacet.GOOD_STATUS_EFFECTS }
+
+                    if (areAllEffectsGood) {
+                        add(PotionItemFacet(slot))
+                    } else {
+                        add(ItemFacet(slot))
+                    }
+                }
+
+                is EnderPearlItem -> add(PrimitiveItemFacet(slot, ItemCategory(ItemType.PEARL, 0)))
+
+                Items.GOLDEN_APPLE -> {
+                    add(FoodItemFacet(slot))
+                    add(PrimitiveItemFacet(slot, ItemCategory(ItemType.GAPPLE, 0)))
+                }
+
+                Items.ENCHANTED_GOLDEN_APPLE -> {
+                    add(FoodItemFacet(slot))
+                    add(PrimitiveItemFacet(slot, ItemCategory(ItemType.GAPPLE, 0), 1))
+                }
+
+                Items.SNOWBALL, Items.EGG, Items.WIND_CHARGE -> add(ThrowableItemFacet(slot))
+
+                else -> when {
+                    itemStack.isPlayerArmor -> add(ArmorItemFacet(slot, futureArmorToKeep, armorComparator))
+
+                    itemStack.isSword -> add(SwordItemFacet(slot))
+
+                    itemStack.isMiningTool -> add(MiningToolItemFacet(slot))
+
+                    itemStack.isFood -> add(FoodItemFacet(slot))
+
+                    else -> add(ItemFacet(slot))
+                }
+            }
+
+        }
+>>>>>>> upstream/nextgen
     }
 }

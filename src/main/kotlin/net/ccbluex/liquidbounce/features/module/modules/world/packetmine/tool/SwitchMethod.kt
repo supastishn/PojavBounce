@@ -25,7 +25,11 @@ import net.ccbluex.liquidbounce.features.module.modules.world.ModuleAutoTool
 import net.ccbluex.liquidbounce.features.module.modules.world.packetmine.MineTarget
 import net.ccbluex.liquidbounce.features.module.modules.world.packetmine.ModulePacketMine
 import net.ccbluex.liquidbounce.utils.client.*
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.inventory.ClickInventoryAction
+=======
+import net.ccbluex.liquidbounce.utils.inventory.InventoryAction
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.inventory.Slots
 import net.ccbluex.liquidbounce.utils.network.PickFromInventoryPacket
 import net.ccbluex.liquidbounce.utils.network.sendPacket
@@ -62,7 +66,11 @@ enum class SwitchMethod(override val choiceName: String, val shouldSync: Boolean
 
 
             exchanged = desiredSlot
+<<<<<<< HEAD
             ClickInventoryAction.performSwap(
+=======
+            InventoryAction.Click.performSwap(
+>>>>>>> upstream/nextgen
                 from = Slots.Hotbar[desiredSlot],
                 to = Slots.Hotbar[selectedSlot]
             ).performAction()
@@ -72,7 +80,11 @@ enum class SwitchMethod(override val choiceName: String, val shouldSync: Boolean
             val desiredSlot = exchanged ?: return
             val selectedSlot = SilentHotbar.serversideSlot
             exchanged = null
+<<<<<<< HEAD
             ClickInventoryAction.performSwap(
+=======
+            InventoryAction.Click.performSwap(
+>>>>>>> upstream/nextgen
                 from = Slots.Hotbar[desiredSlot],
                 to = Slots.Hotbar[selectedSlot]
             ).performAction()
@@ -89,7 +101,11 @@ enum class SwitchMethod(override val choiceName: String, val shouldSync: Boolean
         override fun switch(slot: IntObjectImmutablePair<ItemStack>, mineTarget: MineTarget) {
             if (!usesViaFabricPlus) {
                 chat(warning(ModulePacketMine.message("noVfp")))
+<<<<<<< HEAD
                 ModulePacketMine.disable()
+=======
+                ModulePacketMine.onDisabled()
+>>>>>>> upstream/nextgen
                 return
             }
 

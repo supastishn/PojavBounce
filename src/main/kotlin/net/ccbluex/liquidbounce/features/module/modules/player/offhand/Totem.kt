@@ -23,7 +23,11 @@ import net.ccbluex.liquidbounce.features.module.modules.player.nofall.ModuleNoFa
 import net.ccbluex.liquidbounce.utils.block.*
 import net.ccbluex.liquidbounce.utils.client.Chronometer
 import net.ccbluex.liquidbounce.utils.entity.*
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.inventory.ClickInventoryAction
+=======
+import net.ccbluex.liquidbounce.utils.inventory.InventoryAction
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager
 import net.ccbluex.liquidbounce.utils.inventory.Slots
 import net.ccbluex.liquidbounce.utils.math.toVec3d
@@ -267,7 +271,11 @@ object Totem : ToggleableConfigurable(ModuleOffhand, "Totem", true) {
     /**
      * @return `true` if the [actions] got performed.
      */
+<<<<<<< HEAD
     fun send(actions: List<ClickInventoryAction>): Boolean {
+=======
+    fun send(actions: List<InventoryAction.Click>): Boolean {
+>>>>>>> upstream/nextgen
         if (!sendDirectly) {
             return false
         }

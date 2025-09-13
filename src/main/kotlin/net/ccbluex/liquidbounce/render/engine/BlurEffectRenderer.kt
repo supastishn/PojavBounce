@@ -25,7 +25,10 @@ import net.ccbluex.liquidbounce.event.EventManager.callEvent
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.features.module.MinecraftShortcuts
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud.isBlurEffectActive
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.render.gui.ModuleSettingsScreen
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.render.shader.BlitShader
 import net.ccbluex.liquidbounce.render.shader.UniformProvider
 import net.ccbluex.liquidbounce.render.ui.ItemImageAtlas
@@ -110,24 +113,36 @@ object BlurEffectRenderer : MinecraftShortcuts {
         wasScreenOpen = isScreenOpen
 
         return if (isScreenOpen) {
+<<<<<<< HEAD
             easeFunction(
                 (lastTimeScreenOpened.elapsed.toFloat() / 500.0F + 0.1F).coerceIn(0.0F..1.0F)
             )
+=======
+            easeFunction((lastTimeScreenOpened.elapsed.toFloat() / 500.0F + 0.1F).coerceIn(0.0F..1.0F))
+>>>>>>> upstream/nextgen
         } else {
             1.0F
         }
     }
 
     private fun getBlurRadius(): Float {
+<<<<<<< HEAD
         return (this.getBlurRadiusFactor() * 20.0F).coerceIn(2.0F..20.0F)
+=======
+        return (this.getBlurRadiusFactor() * 20.0F).coerceIn(5.0F..20.0F)
+>>>>>>> upstream/nextgen
     }
 
     fun startOverlayDrawing(context: DrawContext, tickDelta: Float) {
         ItemImageAtlas.updateAtlas(context)
 
+<<<<<<< HEAD
         // Skip blur effect when ModuleSettingsScreen is active
         val isSettingsScreenActive = mc.currentScreen is ModuleSettingsScreen
         if (isBlurEffectActive && !isSettingsScreenActive) {
+=======
+        if (isBlurEffectActive) {
+>>>>>>> upstream/nextgen
             this.isDrawingHudFramebuffer = true
 
             this.overlayFramebuffer.clear()

@@ -36,6 +36,10 @@ import net.ccbluex.liquidbounce.utils.aiming.RotationManager
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
 import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
 import net.ccbluex.liquidbounce.utils.aiming.utils.raytraceBlock
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.aiming.utils.raytraceBlockRotation
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.block.SwingMode
 import net.ccbluex.liquidbounce.utils.block.getState
 import net.ccbluex.liquidbounce.utils.block.outlineBox
@@ -125,17 +129,30 @@ object ModulePacketMine : ClientModule("PacketMine", Category.WORLD) {
     init {
         mode.onChanged {
             if (mc.world != null && mc.player != null) {
+<<<<<<< HEAD
                 disable()
                 enable()
+=======
+                onDisabled()
+                onEnabled()
+>>>>>>> upstream/nextgen
             }
         }
     }
 
+<<<<<<< HEAD
     override fun enable() {
         interaction.cancelBlockBreaking()
     }
 
     override fun disable() {
+=======
+    override fun onEnabled() {
+        interaction.cancelBlockBreaking()
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         targetRenderer.clearSilently()
         _target = null
     }
@@ -162,7 +179,11 @@ object ModulePacketMine : ClientModule("PacketMine", Category.WORLD) {
     private fun rotate(mineTarget: MineTarget) {
         val rotate = rotationMode.shouldRotate(mineTarget)
 
+<<<<<<< HEAD
         val raytrace = raytraceBlock(
+=======
+        val raytrace = raytraceBlockRotation(
+>>>>>>> upstream/nextgen
             player.eyePos,
             mineTarget.targetPos,
             mineTarget.blockState,

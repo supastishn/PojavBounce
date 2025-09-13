@@ -20,7 +20,10 @@ package net.ccbluex.liquidbounce.features.module.modules.world.scaffold.features
 
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug
 import net.ccbluex.liquidbounce.features.module.modules.world.scaffold.ModuleScaffold
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
 import net.ccbluex.liquidbounce.utils.block.targetfinding.BlockPlacementTarget
 import net.ccbluex.liquidbounce.utils.client.player
@@ -46,7 +49,11 @@ fun ledge(
     extension: ScaffoldLedgeExtension? = null
 ): LedgeAction {
     if (player.isCloseToEdge(DirectionalInput(player.input))) {
+<<<<<<< HEAD
         val ticks = RotationsConfigurable(ModuleScaffold).calculateTicks(rotation)
+=======
+        val ticks = ModuleScaffold.ScaffoldRotationConfigurable.calculateTicks(rotation)
+>>>>>>> upstream/nextgen
 
         ModuleDebug.debugParameter(ModuleScaffold, "TicksUntilDestination", ticks)
 

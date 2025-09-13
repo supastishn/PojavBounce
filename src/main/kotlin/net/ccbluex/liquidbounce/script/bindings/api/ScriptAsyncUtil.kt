@@ -19,6 +19,10 @@
 package net.ccbluex.liquidbounce.script.bindings.api
 
 import net.ccbluex.liquidbounce.api.core.HttpClient
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.api.core.HttpClient.sendAsync
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.event.handler
@@ -26,6 +30,10 @@ import net.ccbluex.liquidbounce.script.ScriptApiRequired
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
 import net.minecraft.util.Util
+<<<<<<< HEAD
+=======
+import okhttp3.Request
+>>>>>>> upstream/nextgen
 import org.graalvm.polyglot.Value
 import org.graalvm.polyglot.proxy.ProxyExecutable
 import java.util.concurrent.CompletableFuture
@@ -173,10 +181,17 @@ class ScriptAsyncUtil(
      */
     @ScriptApiRequired
     fun request(
+<<<<<<< HEAD
         block: Consumer<okhttp3.Request.Builder>
     ): Value = launch(Util.getDownloadWorkerExecutor()) {
         val request = okhttp3.Request.Builder().apply(block::accept).build()
         HttpClient.client.newCall(request).execute()
+=======
+        block: Consumer<Request.Builder>
+    ): Value {
+        val request = Request.Builder().apply(block::accept).build()
+        return HttpClient.client.newCall(request).sendAsync().toPromise()
+>>>>>>> upstream/nextgen
     }
 
     /**

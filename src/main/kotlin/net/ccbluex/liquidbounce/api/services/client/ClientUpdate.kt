@@ -19,6 +19,7 @@
 package net.ccbluex.liquidbounce.api.services.client
 
 import com.vdurmont.semver4j.Semver
+<<<<<<< HEAD
 import kotlinx.datetime.toKotlinLocalDateTime
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.api.core.AsyncLazy
@@ -40,6 +41,17 @@ object ClientUpdate {
         }
     }
 
+=======
+import net.ccbluex.liquidbounce.LiquidBounce
+import net.ccbluex.liquidbounce.api.core.AsyncLazy
+import net.ccbluex.liquidbounce.utils.client.GitInfo
+import net.ccbluex.liquidbounce.utils.client.logger
+import java.time.OffsetDateTime
+import java.time.format.DateTimeFormatter
+
+object ClientUpdate {
+
+>>>>>>> upstream/nextgen
     val update by AsyncLazy {
         runCatching {
             val newestBuild = runCatching {
@@ -56,7 +68,11 @@ object ClientUpdate {
             val isNewer = if (LiquidBounce.IN_DEVELOPMENT) { // check if new build is newer than current build
                 val newestVersionDate = newestBuild.date
                 val currentVersionDate = OffsetDateTime.parse(
+<<<<<<< HEAD
                     gitInfo["git.commit.time"].toString(),
+=======
+                    GitInfo.get("git.commit.time"),
+>>>>>>> upstream/nextgen
                     DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ")
                 )
 

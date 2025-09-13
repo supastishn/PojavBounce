@@ -17,7 +17,6 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace.revisions
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 
 import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemStatus
 import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
@@ -32,7 +31,7 @@ import net.ccbluex.liquidbounce.utils.client.variable
 /**
  * List marketplace item revisions
  */
-object MarketplaceListRevisionsCommand : CommandFactory {
+object MarketplaceListRevisionsCommand : Command.Factory {
 
     override fun createCommand() = CommandBuilder.begin("list")
         .parameter(
@@ -42,7 +41,7 @@ object MarketplaceListRevisionsCommand : CommandFactory {
                 .required()
                 .build()
         )
-        .suspendHandler { command, args ->
+        .suspendHandler {
             val id = args[0] as Int
 
             val response = MarketplaceApi.getMarketplaceItemRevisions(id)

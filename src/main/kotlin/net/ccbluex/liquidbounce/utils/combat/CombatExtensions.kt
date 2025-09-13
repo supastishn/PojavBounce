@@ -25,12 +25,21 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.AttackEntityEvent
 import net.ccbluex.liquidbounce.features.module.modules.client.ModuleTargets
 import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeCam
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleFreeLook
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.block.SwingMode
 import net.ccbluex.liquidbounce.utils.client.*
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.kotlin.component1
 import net.ccbluex.liquidbounce.utils.kotlin.component2
 import net.ccbluex.liquidbounce.utils.kotlin.toDouble
+<<<<<<< HEAD
+=======
+import net.minecraft.client.option.Perspective
+>>>>>>> upstream/nextgen
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
@@ -74,6 +83,10 @@ enum class EntityTargetClassification {
  * Configurable to configure which entities and their state (like being dead) should be considered as a target
  */
 enum class Targets(override val choiceName: String) : NamedChoice {
+<<<<<<< HEAD
+=======
+    SELF("Self"),
+>>>>>>> upstream/nextgen
     PLAYERS("Players"),
     HOSTILE("Hostile"),
     ANGERABLE("Angerable"),
@@ -96,6 +109,14 @@ fun EnumSet<Targets>.shouldAttack(entity: Entity): Boolean {
 }
 
 fun EnumSet<Targets>.shouldShow(entity: Entity): Boolean {
+<<<<<<< HEAD
+=======
+    if (entity === player) {
+        return Targets.SELF in this &&
+            (mc.options.perspective !== Perspective.FIRST_PERSON || ModuleFreeCam.enabled || ModuleFreeLook.enabled)
+    }
+
+>>>>>>> upstream/nextgen
     val info = EntityTaggingManager.getTag(entity).targetingInfo
 
     return when {
@@ -123,7 +144,11 @@ private fun EnumSet<Targets>.isInteresting(suspect: Entity): Boolean {
     // Check if enemy is a player and should be considered as a target
     return when (suspect) {
         is PlayerEntity -> when {
+<<<<<<< HEAD
             suspect == mc.player -> false
+=======
+            suspect === mc.player -> false
+>>>>>>> upstream/nextgen
             // Check if enemy is sleeping (or ignore being sleeping)
             suspect.isSleeping && Targets.SLEEPING !in this -> false
             else -> Targets.PLAYERS in this
@@ -190,11 +215,15 @@ fun Entity.attack(swing: Boolean, keepSprint: Boolean = false) {
 
 @Suppress("CognitiveComplexMethod", "NestedBlockDepth", "MagicNumber")
 fun Entity.attack(swing: SwingMode, keepSprint: Boolean = false) {
+<<<<<<< HEAD
     if (EventManager.callEvent(AttackEntityEvent(this) {
         attack(swing, keepSprint)
     }).isCancelled) {
         return
     }
+=======
+    EventManager.callEvent(AttackEntityEvent(this))
+>>>>>>> upstream/nextgen
 
     with(player) {
         // Swing before attacking (on 1.8)
@@ -202,6 +231,10 @@ fun Entity.attack(swing: SwingMode, keepSprint: Boolean = false) {
             swing.swing(Hand.MAIN_HAND)
         }
 
+<<<<<<< HEAD
+=======
+        interaction.syncSelectedSlot()
+>>>>>>> upstream/nextgen
         network.sendPacket(PlayerInteractEntityC2SPacket.attack(this@attack, isSneaking))
 
         if (keepSprint) {

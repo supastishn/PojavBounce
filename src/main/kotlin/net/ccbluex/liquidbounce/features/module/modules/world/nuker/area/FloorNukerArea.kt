@@ -19,6 +19,7 @@
 
 package net.ccbluex.liquidbounce.features.module.modules.world.nuker.area
 
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.features.module.modules.world.nuker.ModuleNuker
 import net.ccbluex.liquidbounce.utils.block.getState
 import net.ccbluex.liquidbounce.utils.block.isNotBreakable
@@ -27,13 +28,24 @@ import net.ccbluex.liquidbounce.utils.kotlin.isNotEmpty
 import net.ccbluex.liquidbounce.utils.math.component1
 import net.ccbluex.liquidbounce.utils.math.component2
 import net.ccbluex.liquidbounce.utils.math.component3
+=======
+import net.ccbluex.liquidbounce.utils.block.getState
+import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
+import net.ccbluex.liquidbounce.utils.math.component1
+import net.ccbluex.liquidbounce.utils.math.component2
+import net.ccbluex.liquidbounce.utils.math.component3
+import net.ccbluex.liquidbounce.utils.math.iterate
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.math.rangeTo
 import net.minecraft.block.BlockState
 import net.minecraft.block.ShapeContext
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3i
+<<<<<<< HEAD
 import kotlin.jvm.optionals.getOrDefault
+=======
+>>>>>>> upstream/nextgen
 
 object FloorNukerArea : NukerArea("Floor") {
 
@@ -45,6 +57,7 @@ object FloorNukerArea : NukerArea("Floor") {
     private val topToBottom by boolean("TopToBottom", true)
 
     @Suppress("detekt:CognitiveComplexMethod")
+<<<<<<< HEAD
     override fun lookupTargets(radius: Float, count: Int?): Sequence<Pair<BlockPos, BlockState>> {
         val (startX, startY, startZ) = if (relativeToPlayer) startPosition.add(player.blockPos) else startPosition
         val (endX, endY, endZ) = if (relativeToPlayer) endPosition.add(player.blockPos) else endPosition
@@ -60,6 +73,23 @@ object FloorNukerArea : NukerArea("Floor") {
         if (box.squaredBoxedDistanceTo(eyesPos) > rangeSquared) {
             // Return empty list if not
             return emptySequence()
+=======
+    override fun lookupTargets(radius: Float, count: Int?): List<Pair<BlockPos, BlockState>> {
+        val (startX, startY, startZ) = if (relativeToPlayer) startPosition.add(player.blockPos) else startPosition
+        val (endX, endY, endZ) = if (relativeToPlayer) endPosition.add(player.blockPos) else endPosition
+
+        val start = BlockPos.Mutable(startX, startY, startZ)
+        val end = BlockPos.Mutable(endX, endY, endZ)
+
+        val box = Box.enclosing(start, end)
+
+        // Check if the box is within the radius
+        val eyesPos = player.eyePos
+        val rangeSquared = (radius * radius).toDouble()
+        if (box.squaredBoxedDistanceTo(eyesPos) > rangeSquared) {
+            // Return empty list if not
+            return emptyList()
+>>>>>>> upstream/nextgen
         }
 
         // Create ranges from start position to end position, they might be flipped, so we need to use min/max
@@ -71,13 +101,19 @@ object FloorNukerArea : NukerArea("Floor") {
         // we can skip the rest
         // From top to bottom
 
+<<<<<<< HEAD
         val start = BlockPos.Mutable(xRange.first, 0, zRange.first)
         val end = BlockPos.Mutable(xRange.last, 0, zRange.last)
+=======
+        start.set(xRange.first, 0, zRange.first)
+        end.set(xRange.last, 0, zRange.last)
+>>>>>>> upstream/nextgen
 
         // Check if [topToBottom] is enabled, if so reverse the range
         for (y in yRange.let { if (topToBottom) it.reversed() else it }) {
             start.y = y
             end.y = y
+<<<<<<< HEAD
             val m = sequence {
                 for (pos in start..end) {
                     val state = pos.getState() ?: continue
@@ -95,6 +131,14 @@ object FloorNukerArea : NukerArea("Floor") {
                             .getOrDefault(false)) {
                         yield(pos.toImmutable() to state)
                     }
+=======
+            val m = (start..end).iterate().mapNotNull { pos ->
+                val state = pos.getState() ?: return@mapNotNull null
+                if (isPositionAvailable(eyesPos, rangeSquared, pos, state)) {
+                    pos.toImmutable() to state
+                } else {
+                    null
+>>>>>>> upstream/nextgen
                 }
             }
 
@@ -108,7 +152,11 @@ object FloorNukerArea : NukerArea("Floor") {
             }
         }
 
+<<<<<<< HEAD
         return emptySequence()
+=======
+        return emptyList()
+>>>>>>> upstream/nextgen
     }
 
 }

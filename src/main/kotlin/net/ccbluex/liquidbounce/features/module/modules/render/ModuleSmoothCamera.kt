@@ -21,10 +21,16 @@ package net.ccbluex.liquidbounce.features.module.modules.render
 
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
+<<<<<<< HEAD
 // Removed isLikelyZero import - will use Vec3d comparison directly
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import kotlin.math.abs
+=======
+import net.ccbluex.liquidbounce.utils.math.isLikelyZero
+import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.Vec3d
+>>>>>>> upstream/nextgen
 
 /**
  * SmoothCamera module
@@ -42,7 +48,11 @@ object ModuleSmoothCamera : ClientModule("SmoothCamera", Category.RENDER) {
     var smoothPitch = 0f
         private set
 
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         smoothPos = Vec3d.ZERO
         smoothYaw = 0f
         smoothPitch = 0f
@@ -52,7 +62,11 @@ object ModuleSmoothCamera : ClientModule("SmoothCamera", Category.RENDER) {
     fun cameraUpdate(yaw: Float, pitch: Float, pos: Vec3d) {
         if (!running) return
 
+<<<<<<< HEAD
         if (smoothPos == Vec3d.ZERO || (abs(smoothPos.x) < 1e-6 && abs(smoothPos.y) < 1e-6 && abs(smoothPos.z) < 1e-6)) {
+=======
+        if (smoothPos.isLikelyZero) {
+>>>>>>> upstream/nextgen
             smoothPos = pos
             smoothYaw = yaw
             smoothPitch = pitch

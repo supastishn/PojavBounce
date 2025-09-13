@@ -43,9 +43,15 @@ object Gapple : HealthBasedBuff("Gapple") {
         forceUseKey = false
     }
 
+<<<<<<< HEAD
     override fun disable() {
         forceUseKey = false
         super.disable()
+=======
+    override fun onDisabled() {
+        forceUseKey = false
+        super.onDisabled()
+>>>>>>> upstream/nextgen
     }
 
     @Suppress("unused")

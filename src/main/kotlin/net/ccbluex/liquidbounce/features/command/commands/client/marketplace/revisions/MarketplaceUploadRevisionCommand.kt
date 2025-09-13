@@ -17,7 +17,6 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace.revisions
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 
 import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
 import net.ccbluex.liquidbounce.features.command.Command
@@ -37,7 +36,7 @@ import java.io.File
 /**
  * Upload marketplace item revision
  */
-object MarketplaceUploadRevisionCommand : CommandFactory {
+object MarketplaceUploadRevisionCommand : Command.Factory {
 
     @Suppress("LongMethod")
     override fun createCommand() = CommandBuilder
@@ -78,7 +77,7 @@ object MarketplaceUploadRevisionCommand : CommandFactory {
                 .optional()
                 .build()
         )
-        .suspendHandler { command, args ->
+        .suspendHandler {
             val clientAccount = ClientAccountManager.accountOrException()
 
             val id = args[0] as Int
@@ -94,7 +93,7 @@ object MarketplaceUploadRevisionCommand : CommandFactory {
 
             try {
                 MarketplaceApi.createMarketplaceItemRevision(
-                    run { throw CommandException(regular("Marketplace operations require web interface access")) },
+                    clientAccount.takeSession(),
                     id,
                     file,
                     version,

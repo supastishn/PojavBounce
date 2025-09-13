@@ -36,7 +36,7 @@ public abstract class MixinItemCooldownManager implements ItemCooldownManagerAdd
 
     @Shadow
     @Final
-    private Map<Identifier, ?> entries;
+    private Map<Identifier, ItemCooldownManager.Entry> entries;
 
     @Shadow
     private int tick;
@@ -48,17 +48,7 @@ public abstract class MixinItemCooldownManager implements ItemCooldownManagerAdd
     public @Nullable Entry liquidBounce$getCooldown(@NotNull ItemStack stack) {
         var entry = this.entries.get(this.getGroup(stack));
         if (entry != null) {
-            try {
-                // Use reflection to access the private Entry methods
-                var startTickMethod = entry.getClass().getMethod("startTick");
-                var endTickMethod = entry.getClass().getMethod("endTick");
-                int startTick = (Integer) startTickMethod.invoke(entry);
-                int endTick = (Integer) endTickMethod.invoke(entry);
-                return new Entry(this.tick, startTick, endTick);
-            } catch (Exception e) {
-                // Fallback in case reflection fails
-                return null;
-            }
+            return new Entry(this.tick, entry.startTick(), entry.endTick());
         } else {
             return null;
         }

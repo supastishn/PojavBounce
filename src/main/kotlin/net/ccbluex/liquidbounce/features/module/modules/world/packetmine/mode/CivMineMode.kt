@@ -42,11 +42,22 @@ object CivMineMode : MineMode("Civ", stopOnStateChange = false) {
 
     override fun onCannotLookAtTarget(mineTarget: MineTarget) {
         // send always a packet to keep the target
+<<<<<<< HEAD
         network.sendPacket(PlayerActionC2SPacket(
             PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
             mineTarget.targetPos,
             Direction.DOWN
         ))
+=======
+        interaction.sendSequencedPacket(world) { sequence ->
+            PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
+                mineTarget.targetPos,
+                Direction.DOWN,
+                sequence
+            )
+        }
+>>>>>>> upstream/nextgen
     }
 
     override fun shouldTarget(blockPos: BlockPos, state: BlockState): Boolean {
@@ -58,6 +69,7 @@ object CivMineMode : MineMode("Civ", stopOnStateChange = false) {
     }
 
     override fun finish(mineTarget: MineTarget) {
+<<<<<<< HEAD
         network.sendPacket(
             PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
@@ -65,6 +77,16 @@ object CivMineMode : MineMode("Civ", stopOnStateChange = false) {
                 mineTarget.direction
             )
         )
+=======
+        interaction.sendSequencedPacket(world) { sequence ->
+            PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
+                mineTarget.targetPos,
+                mineTarget.direction,
+                sequence,
+            )
+        }
+>>>>>>> upstream/nextgen
 
         ModulePacketMine.swingMode.swing(Hand.MAIN_HAND)
 
@@ -94,6 +116,7 @@ object CivMineMode : MineMode("Civ", stopOnStateChange = false) {
 
         // Alright, for some reason when we spam STOP_DESTROY_BLOCK
         // server accepts us to destroy the same block instantly over and over.
+<<<<<<< HEAD
         network.sendPacket(
             PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
@@ -101,6 +124,16 @@ object CivMineMode : MineMode("Civ", stopOnStateChange = false) {
                 mineTarget.direction
             )
         )
+=======
+        interaction.sendSequencedPacket(world) { sequence ->
+            PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
+                mineTarget.targetPos,
+                mineTarget.direction,
+                sequence,
+            )
+        }
+>>>>>>> upstream/nextgen
 
         if (shouldSwitch) {
             network.sendPacket(UpdateSelectedSlotC2SPacket(oldSlot))

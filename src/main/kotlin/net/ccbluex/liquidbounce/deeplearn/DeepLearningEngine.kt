@@ -26,7 +26,6 @@ import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.ConfigSystem.rootFolder
 import net.ccbluex.liquidbounce.integration.task.type.Task
 import net.ccbluex.liquidbounce.utils.client.logger
-import java.io.File
 import java.util.*
 
 object DeepLearningEngine {
@@ -34,196 +33,35 @@ object DeepLearningEngine {
     var isInitialized = false
         private set
 
-    /**
-     * Detect if we're running on Android (likely via PojavLauncher)
-     */
-    private val isAndroid: Boolean = try {
-        System.getProperty("java.vm.name")?.contains("Android", ignoreCase = true) == true ||
-        System.getProperty("java.runtime.name")?.contains("Android", ignoreCase = true) == true ||
-        File("/system/build.prop").exists()
-    } catch (e: Exception) {
-        // Log Android detection failures instead of swallowing
-        System.err.println("Android detection failed: ${e.message}")
-        false
+    private val deepLearningFolder = rootFolder.resolve("deeplearning").apply {
+        mkdirs()
     }
 
-    /**
-     * Detect if we're running under FCL (Fold Craft Launcher)
-     */
-    private val isFCL: Boolean = try {
-        isAndroid && File("/data/data/com.tungsten.fcl").exists()
-    } catch (e: Exception) {
-        // Log FCL detection failures instead of swallowing
-        System.err.println("FCL detection failed: ${e.message}")
-        false
+    val djlCacheFolder = deepLearningFolder.resolve("djl").apply {
+        mkdirs()
     }
 
-    /**
-     * Get the FCL runtime directory path if available
-     */
-    private val fclRuntimePath: File? = try {
-        if (isFCL) {
-            File("/data/data/com.tungsten.fcl/app_runtime").takeIf { it.exists() || it.mkdirs() }
-        } else {
-            null
-        }
-    } catch (_: Exception) {
-        null
+    val enginesCacheFolder = deepLearningFolder.resolve("engines").apply {
+        mkdirs()
     }
 
-    /**
-     * Controls whether training is allowed on mobile devices
-     */
-    var isMobileTrainingAllowed: Boolean = false
-
-    /**
-     * Check if we're currently running on Android
-     */
-    val runningOnAndroid: Boolean get() = isAndroid
-
-    /**
-     * Check if we're running under FCL (Fold Craft Launcher)
-     */
-    val runningOnFCL: Boolean get() = isFCL
-
-    /**
-     * Check if training is allowed in the current environment
-     */
-    fun isTrainingAllowed(): Boolean {
-        return if (isAndroid) isMobileTrainingAllowed else true
-    }
-
-    /**
-     * Check if DJL can be initialized based on platform and available paths
-     */
-    fun canInitializeDJL(): Boolean {
-        return if (isAndroid) {
-            // On Android, require FCL runtime path to be available
-            fclRuntimePath != null
-        } else {
-            true
-        }
-    }
-
-    private val deepLearningFolder by lazy {
-        try {
-            // In test environment, use a simple temp directory approach
-            if (isInTestEnvironment()) {
-                File(
-                    System.getProperty("java.io.tmpdir", "."), 
-                    "liquidbounce-test/deeplearning"
-                ).apply { mkdirs() }
-            } else {
-                when {
-                    fclRuntimePath != null -> {
-                        // On FCL, use the runtime directory for better compatibility and storage access
-                        fclRuntimePath.resolve("deeplearning").apply { mkdirs() }
-                    }
-                    isAndroid -> {
-                        // On Android without FCL, use external files directory
-                        val externalDir = System.getProperty("user.home") ?: "/storage/emulated/0"
-                        File(externalDir, "Android/data/deeplearning").apply { mkdirs() }
-                    }
-                    else -> {
-                        // For non-Android environments, use the normal rootFolder
-                        try {
-                            rootFolder.resolve("deeplearning").apply { mkdirs() }
-                        } catch (e: Exception) {
-                            // Fallback if rootFolder is not available
-                            System.err.println("rootFolder access failed: ${e.message}")
-                            File(
-                                System.getProperty("java.io.tmpdir", "."), 
-                                "liquidbounce/deeplearning"
-                            ).apply { mkdirs() }
-                        }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            // Fallback for any initialization issues - log the error
-            System.err.println("DeepLearning initialization warning: ${e.message}")
-            File(
-                System.getProperty("java.io.tmpdir", "."), 
-                "liquidbounce-test/deeplearning"
-            ).apply { mkdirs() }
-        }
-    }
-
-    val djlCacheFolder by lazy {
-        deepLearningFolder.resolve("djl").apply { mkdirs() }
-    }
-
-    val enginesCacheFolder by lazy {
-        deepLearningFolder.resolve("engines").apply { mkdirs() }
-    }
-
-    val modelsFolder by lazy {
-        deepLearningFolder.resolve("models").apply { mkdirs() }
+    val modelsFolder = deepLearningFolder.resolve("models").apply {
+        mkdirs()
     }
 
     init {
-        // Don't initialize anything in test environment to avoid dependency issues
-        if (isInTestEnvironment()) {
-            // Just set basic properties for test environment
-            try {
-                System.setProperty("OPT_OUT_TRACKING", "true")
-            } catch (_: Exception) {
-                // Ignore any failures in test environment
-            }
-        } else {
-            try {
-                // Set Android-friendly cache directories
-                System.setProperty("DJL_CACHE_DIR", djlCacheFolder.absolutePath)
-                System.setProperty("ENGINE_CACHE_DIR", enginesCacheFolder.absolutePath)
+        System.setProperty("DJL_CACHE_DIR", djlCacheFolder.absolutePath)
+        System.setProperty("ENGINE_CACHE_DIR", enginesCacheFolder.absolutePath)
 
-                // Disable tracking of DJL
-                System.setProperty("OPT_OUT_TRACKING", "true")
-                
-                // For mobile/Android compatibility, prefer TensorFlow Lite for inference
-                if (isAndroid) {
-                    System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlowLite")
-                    // Limit to CPU for better mobile compatibility
-                    System.setProperty("ai.djl.tflite.cpu", "true")
-                    
-                    if (isFCL) {
-                        logger.info(
-                            "[DeepLearning] FCL (Fold Craft Launcher) environment detected, " +
-                            "using runtime directory for DJL cache"
-                        )
-                    } else {
-                        logger.info(
-                            "[DeepLearning] Android environment detected without FCL, " +
-                            "using external storage for DJL cache"
-                        )
-                    }
-                }
+        // Disable tracking of DJL
+        System.setProperty("OPT_OUT_TRACKING", "true")
 
-                // Initialize ModelHolster
-                ModelHolster
-            } catch (e: Exception) {
-                logger.warn("[DeepLearning] Initialization warning: ${e.message}")
-            }
-        }
-    }
+        // Set the default engine to PyTorch
+        System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
+        // Enforce CPU pytorch flavor (CUDA often conflicts with NVIDIA CUDA and is too large for our use case)
+        System.setProperty("PYTORCH_FLAVOR", "cpu")
 
-    /**
-     * Check if we're running in a test environment
-     */
-    private fun isInTestEnvironment(): Boolean {
-        return try {
-            // Check for JUnit or test-related system properties
-            System.getProperty("junit.version") != null ||
-            System.getProperty("gradle.test.worker") != null ||
-            Thread.currentThread().stackTrace.any { 
-                it.className.contains("junit", ignoreCase = true) || 
-                it.className.contains("Test", ignoreCase = true) ||
-                it.className.contains("gradle", ignoreCase = true)
-            }
-        } catch (e: Exception) {
-            // Log test environment detection failure
-            System.err.println("Test environment detection failed: ${e.message}")
-            false
-        }
+        ModelHolster
     }
 
     @JvmStatic
@@ -240,17 +78,7 @@ object DeepLearningEngine {
     suspend fun init(task: Task) {
         this.task = task
 
-        // Check if DJL can be initialized on this platform
-        if (!canInitializeDJL()) {
-            logger.warn(
-                "[DeepLearning] Cannot initialize DJL: Platform requirements not met " +
-                "(Android requires FCL runtime directory)"
-            )
-            this.task = null
-            return
-        }
-
-        logger.info("[DeepLearning] Initializing engine (Android: $isAndroid, FCL: $isFCL)...")
+        logger.info("[DeepLearning] Initializing engine...")
         val engine = withContext(Dispatchers.IO) {
             Engine.getInstance()
         }

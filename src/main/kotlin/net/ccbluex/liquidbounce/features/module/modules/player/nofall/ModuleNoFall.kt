@@ -48,7 +48,12 @@ object ModuleNoFall : ClientModule("NoFall", Category.PLAYER) {
             NoFallBlink,
             NoFallHypixelPacket,
             NoFallHypixel,
+<<<<<<< HEAD
             NoFallBlocksMC
+=======
+            NoFallBlocksMC,
+            NoFallGrim2371
+>>>>>>> upstream/nextgen
         )
     ).apply(::tagBy)
 

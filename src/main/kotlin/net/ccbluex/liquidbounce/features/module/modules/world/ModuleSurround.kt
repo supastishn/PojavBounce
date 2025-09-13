@@ -218,7 +218,11 @@ object ModuleSurround : ClientModule("Surround", Category.WORLD, disableOnQuit =
         placer.support.blocks.addAll(DEFAULT_BLOCKS)
     }
 
+<<<<<<< HEAD
     override fun enable() {
+=======
+    override fun onEnabled() {
+>>>>>>> upstream/nextgen
         if (Features.CENTER in features) {
             CommandCenter.state = CenterHandlerState.APPLY_ON_NEXT_EVENT
         }
@@ -228,7 +232,11 @@ object ModuleSurround : ClientModule("Surround", Category.WORLD, disableOnQuit =
         centerPos = Vector2d(centerBlockPos.x, centerBlockPos.z)
     }
 
+<<<<<<< HEAD
     override fun disable() {
+=======
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         placer.disable()
         addExtraLayerBlocks = false
     }

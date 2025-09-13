@@ -80,6 +80,10 @@ object ModuleMobOwners : ClientModule("MobOwners", Category.RENDER) {
     @Suppress("SwallowedException")
     private fun getFromMojangApi(ownerId: UUID): OrderedText {
         return uuidNameCache.putIfAbsent(ownerId, LOADING_TEXT) ?: run {
+<<<<<<< HEAD
+=======
+            // The job will still run even if the module is disabled
+>>>>>>> upstream/nextgen
             withScope {
                 uuidNameCache[ownerId] = try {
                     val uuidAsString = ownerId.toString().replace("-", "")

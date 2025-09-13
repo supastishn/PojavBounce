@@ -22,7 +22,11 @@ abstract class MurderMysteryGenericMode(name: String) : Choice(name), MurderMyst
             currentPlayerType = player.handItems.firstNotNullOfOrNull {
                 when {
                     it.item is BowItem || it.item == Items.ARROW -> MurderMysteryMode.PlayerType.DETECTIVE_LIKE
+<<<<<<< HEAD
                     MurderMysterySwordDetection.isSword(it.item) -> MurderMysteryMode.PlayerType.MURDERER
+=======
+                    MurderMysterySwordDetection.isSword(it) -> MurderMysteryMode.PlayerType.MURDERER
+>>>>>>> upstream/nextgen
                     else -> null
                 }
             } ?: MurderMysteryMode.PlayerType.NEUTRAL

@@ -4,9 +4,15 @@ import it.unimi.dsi.fastutil.doubles.DoubleDoublePair
 import net.ccbluex.liquidbounce.utils.kotlin.component1
 import net.ccbluex.liquidbounce.utils.kotlin.component2
 import net.ccbluex.liquidbounce.utils.kotlin.step
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.math.plus
 import net.ccbluex.liquidbounce.utils.math.times
 import net.minecraft.util.math.MathHelper
+=======
+import net.ccbluex.liquidbounce.utils.math.isLikelyZero
+import net.ccbluex.liquidbounce.utils.math.plus
+import net.ccbluex.liquidbounce.utils.math.times
+>>>>>>> upstream/nextgen
 import net.minecraft.util.math.Vec3d
 import kotlin.math.sqrt
 
@@ -31,8 +37,13 @@ class PlaneSection(
     fun getFairStepSide(nPoints: Int): DoubleDoublePair {
         val aspectRatio = this.dirVec2.length() / this.dirVec1.length()
 
+<<<<<<< HEAD
         val vec1zero = MathHelper.approximatelyEquals(this.dirVec1.length(), 0.0)
         val vec2zero = MathHelper.approximatelyEquals(this.dirVec2.length(), 0.0)
+=======
+        val vec1zero = this.dirVec1.isLikelyZero
+        val vec2zero = this.dirVec2.isLikelyZero
+>>>>>>> upstream/nextgen
 
         return when {
             !vec1zero && !vec2zero -> {

@@ -20,13 +20,19 @@ package net.ccbluex.liquidbounce.utils.block
 
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet
 import kotlinx.coroutines.*
+<<<<<<< HEAD
 import kotlinx.coroutines.flow.MutableSharedFlow
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.*
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.MinecraftShortcuts
 import net.ccbluex.liquidbounce.utils.client.logger
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.kotlin.getValue
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.block.BlockState
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.ChunkPos
@@ -47,7 +53,11 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
     private val chunkLoadHandler = handler<ChunkLoadEvent> { event ->
         val chunk = world.getChunk(event.x, event.z)
 
+<<<<<<< HEAD
         ChunkScannerThread.enqueueChunkUpdate(ChunkScannerThread.UpdateRequest.ChunkUpdateRequest(chunk))
+=======
+        ChunkScannerThread.process(UpdateRequest.ChunkUpdate(chunk))
+>>>>>>> upstream/nextgen
 
         this.loadedChunks.add(ChunkPos.toLong(event.x, event.z))
     }
@@ -55,20 +65,35 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
     @Suppress("unused")
     private val chunkDeltaUpdateHandler = handler<ChunkDeltaUpdateEvent> { event ->
         val chunk = world.getChunk(event.x, event.z)
+<<<<<<< HEAD
         ChunkScannerThread.enqueueChunkUpdate(ChunkScannerThread.UpdateRequest.ChunkUpdateRequest(chunk))
+=======
+        ChunkScannerThread.process(UpdateRequest.ChunkUpdate(chunk))
+>>>>>>> upstream/nextgen
     }
 
     @Suppress("unused")
     private val chunkUnloadHandler = handler<ChunkUnloadEvent> { event ->
+<<<<<<< HEAD
         ChunkScannerThread.enqueueChunkUpdate(ChunkScannerThread.UpdateRequest.ChunkUnloadRequest(event.x, event.z))
 
         this.loadedChunks.remove(ChunkPos.toLong(event.x, event.z))
+=======
+        ChunkScannerThread.process(UpdateRequest.ChunkUnload(event.pos))
+
+        this.loadedChunks.remove(event.pos.toLong())
+>>>>>>> upstream/nextgen
     }
 
     @Suppress("unused")
     private val blockChangeEvent = handler<BlockChangeEvent> { event ->
+<<<<<<< HEAD
         ChunkScannerThread.enqueueChunkUpdate(
             ChunkScannerThread.UpdateRequest.BlockUpdateEvent(
+=======
+        ChunkScannerThread.process(
+            UpdateRequest.BlockUpdate(
+>>>>>>> upstream/nextgen
                 event.blockPos,
                 event.newState
             )
@@ -83,12 +108,19 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
     }
 
     fun subscribe(newSubscriber: BlockChangeSubscriber) {
+<<<<<<< HEAD
         check(newSubscriber !in this.subscribers) {
             "Subscriber ${newSubscriber.javaClass.simpleName} already registered"
         }
 
         subscribers.add(newSubscriber)
 
+=======
+        if (!this.subscribers.addIfAbsent(newSubscriber)) {
+            error("Subscriber ${newSubscriber.javaClass.simpleName} already registered")
+        }
+
+>>>>>>> upstream/nextgen
         val world = mc.world ?: return
 
         logger.debug("Scanning ${this.loadedChunks.size} chunks for ${newSubscriber.javaClass.simpleName}")
@@ -96,8 +128,13 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
         with(this.loadedChunks.longIterator()) {
             while (hasNext()) {
                 val longChunkPos = nextLong()
+<<<<<<< HEAD
                 ChunkScannerThread.enqueueChunkUpdate(
                     ChunkScannerThread.UpdateRequest.ChunkUpdateRequest(
+=======
+                ChunkScannerThread.process(
+                    UpdateRequest.ChunkUpdate(
+>>>>>>> upstream/nextgen
                         world.getChunk(
                             ChunkPos.getPackedX(longChunkPos),
                             ChunkPos.getPackedZ(longChunkPos)
@@ -129,13 +166,22 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
          */
         private val worldJob = SupervisorJob()
 
+<<<<<<< HEAD
         private val scope = CoroutineScope(dispatcher + worldJob)
 
         private val eventFlow = MutableSharedFlow<UpdateRequest>()
+=======
+        private val scope = CoroutineScope(dispatcher + worldJob + CoroutineExceptionHandler { context, throwable ->
+            if (throwable !is CancellationException) {
+                logger.warn("Chunk update error", throwable)
+            }
+        })
+>>>>>>> upstream/nextgen
 
         /**
          * Shared cache for [scope]
          */
+<<<<<<< HEAD
         private val mutable by ThreadLocal.withInitial(BlockPos::Mutable)
 
         /**
@@ -165,17 +211,36 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
                         }
                     } catch (e: Throwable) {
                         logger.warn("Chunk update error", e)
+=======
+        private val mutable = ThreadLocal.withInitial(BlockPos::Mutable)
+
+        fun process(chunkUpdate: UpdateRequest) {
+            scope.launch {
+                // Process the update request
+                when (chunkUpdate) {
+                    is UpdateRequest.ChunkUpdate -> scanChunk(chunkUpdate)
+
+                    is UpdateRequest.ChunkUnload -> subscribers.forEach {
+                        it.clearChunk(chunkUpdate.pos)
+                    }
+
+                    is UpdateRequest.BlockUpdate -> subscribers.forEach {
+                        it.recordBlock(chunkUpdate.blockPos, chunkUpdate.newState, cleared = false)
+>>>>>>> upstream/nextgen
                     }
                 }
             }
         }
 
+<<<<<<< HEAD
         fun enqueueChunkUpdate(request: UpdateRequest) {
             scope.launch {
                 eventFlow.emit(request)
             }
         }
 
+=======
+>>>>>>> upstream/nextgen
         /**
          * Cancel all existing enqueue(emit) jobs and scanner jobs
          */
@@ -186,7 +251,11 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
         /**
          * Scans the chunks for a block
          */
+<<<<<<< HEAD
         private suspend fun scanChunk(request: UpdateRequest.ChunkUpdateRequest) {
+=======
+        private suspend fun CoroutineScope.scanChunk(request: UpdateRequest.ChunkUpdate) {
+>>>>>>> upstream/nextgen
             val chunk = request.chunk
 
             if (chunk.isEmpty) {
@@ -199,9 +268,15 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
 
             when (currentSubscriber.size) {
                 0 -> return
+<<<<<<< HEAD
                 1 -> currentSubscriber.first().chunkUpdate(chunk.pos.x, chunk.pos.z)
                 else -> currentSubscriber.map {
                     scope.launch { it.chunkUpdate(chunk.pos.x, chunk.pos.z) }
+=======
+                1 -> currentSubscriber.first().chunkUpdate(chunk)
+                else -> currentSubscriber.map {
+                    launch { it.chunkUpdate(chunk) }
+>>>>>>> upstream/nextgen
                 }.joinAll()
             }
 
@@ -214,22 +289,38 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
                 return
             }
 
+<<<<<<< HEAD
             val startX = chunk.pos.startX
             val startZ = chunk.pos.startZ
 
+=======
+>>>>>>> upstream/nextgen
             /**
              * @see WorldChunk.getBlockState
              */
             (0..chunk.highestNonEmptySection).map { sectionIndex ->
+<<<<<<< HEAD
                 scope.launch {
                     val section = chunk.getSection(sectionIndex)
+=======
+                launch {
+                    val startX = chunk.pos.startX
+                    val startZ = chunk.pos.startZ
+                    val blockPos = mutable.get()
+                    val section = chunk.getSection(sectionIndex)
+
+>>>>>>> upstream/nextgen
                     for (sectionY in 0..15) {
                         // index == (y >> 4) - (bottomY >> 4)
                         val y = (sectionIndex + (chunk.bottomY shr 4)) shl 4 or sectionY
                         for (x in 0..15) {
                             for (z in 0..15) {
                                 val blockState = section.getBlockState(x, sectionY, z)
+<<<<<<< HEAD
                                 val pos = mutable.set(startX or x, y, startZ or z)
+=======
+                                val pos = blockPos.set(startX or x, y, startZ or z)
+>>>>>>> upstream/nextgen
                                 subscribersForRecordBlock.forEach { it.recordBlock(pos, blockState, cleared = true) }
                             }
                         }
@@ -242,6 +333,7 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
 
         fun stopThread() {
             worldJob.cancel()
+<<<<<<< HEAD
             collectorJob.cancel()
             logger.info("Stopped Chunk Scanner Thread!")
         }
@@ -254,6 +346,19 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
 
             class BlockUpdateEvent(val blockPos: BlockPos, val newState: BlockState) : UpdateRequest
         }
+=======
+            logger.info("Stopped Chunk Scanner Thread!")
+        }
+    }
+
+    sealed interface UpdateRequest {
+        class ChunkUpdate(val chunk: WorldChunk, val singleSubscriber: BlockChangeSubscriber? = null) :
+            UpdateRequest
+
+        class ChunkUnload(val pos: ChunkPos) : UpdateRequest
+
+        class BlockUpdate(val blockPos: BlockPos, val newState: BlockState) : UpdateRequest
+>>>>>>> upstream/nextgen
     }
 
     interface BlockChangeSubscriber {
@@ -276,8 +381,13 @@ object ChunkScanner : EventListener, MinecraftShortcuts {
         /**
          * Is called when a chunk is initially loaded or entirely updated.
          */
+<<<<<<< HEAD
         fun chunkUpdate(x: Int, z: Int)
         fun clearChunk(x: Int, z: Int)
+=======
+        fun chunkUpdate(chunk: WorldChunk)
+        fun clearChunk(pos: ChunkPos)
+>>>>>>> upstream/nextgen
         fun clearAllChunks()
     }
 

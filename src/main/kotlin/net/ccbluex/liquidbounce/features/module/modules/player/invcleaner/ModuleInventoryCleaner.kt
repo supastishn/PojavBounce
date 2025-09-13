@@ -28,7 +28,10 @@ import net.ccbluex.liquidbounce.utils.inventory.*
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.ccbluex.liquidbounce.utils.kotlin.component1
 import net.ccbluex.liquidbounce.utils.kotlin.component2
+<<<<<<< HEAD
 import net.minecraft.screen.slot.SlotActionType
+=======
+>>>>>>> upstream/nextgen
 
 /**
  * InventoryCleaner module
@@ -38,7 +41,11 @@ import net.minecraft.screen.slot.SlotActionType
 object ModuleInventoryCleaner : ClientModule("InventoryCleaner", Category.PLAYER,
     aliases = arrayOf("InventoryManager")
 ) {
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> upstream/nextgen
     private val inventoryConstraints = tree(PlayerInventoryConstraints())
 
     private val maxBlocks by int("MaximumBlocks", 512, 0..2500)
@@ -114,6 +121,7 @@ object ModuleInventoryCleaner : ClientModule("InventoryCleaner", Category.PLAYER
 
     @Suppress("unused")
     private val handleInventorySchedule = handler<ScheduleInventoryActionEvent> { event ->
+<<<<<<< HEAD
         val cleanupPlan = CleanupPlanGenerator(cleanupTemplateFromSettings, findNonEmptySlotsInInventory())
             .generatePlan()
 
@@ -162,6 +170,79 @@ object ModuleInventoryCleaner : ClientModule("InventoryCleaner", Category.PLAYER
         cleanupPlan: InventoryCleanupPlan,
         itemsInInv: List<ItemSlot>,
     ) = itemsInInv.filter { it !in cleanupPlan.usefulItems }
+=======
+        val currentInventorySlots = findNonEmptySlotsInInventory()
+        val cleanupPlan = CleanupPlanGenerator(cleanupTemplateFromSettings, currentInventorySlots)
+            .generatePlan()
+
+        // Process inventory actions in priority order
+        when {
+            // Step 1: Prioritize hotbar swaps
+            processHotbarSwaps(event, cleanupPlan) -> return@handler
+            // Step 2: Merge stackable items to optimize space
+            processStackMerging(event, cleanupPlan) -> return@handler
+            // Step 3: Remove unwanted items (lowest priority)
+            processItemDisposal(event, cleanupPlan, currentInventorySlots) -> return@handler
+        }
+    }
+
+    /**
+     * Handles swapping items to correct hotbar positions
+     * @return true if a swap was scheduled, false otherwise
+     */
+    private fun processHotbarSwaps(event: ScheduleInventoryActionEvent, cleanupPlan: InventoryCleanupPlan): Boolean {
+        val hotbarSwap = cleanupPlan.swaps.firstOrNull() ?: return false
+
+        require(hotbarSwap.to is HotbarItemSlot) {
+            "Invalid swap target: ${hotbarSwap.to}. Only hotbar slots are supported."
+        }
+
+        event.schedule(
+            inventoryConstraints,
+            InventoryAction.Click.performSwap(null, hotbarSwap.from, hotbarSwap.to)
+        )
+
+        return true
+    }
+
+    /**
+     * Handles merging stackable items to optimize inventory space
+     * @return true if a merge was scheduled, false otherwise
+     */
+    private fun processStackMerging(event: ScheduleInventoryActionEvent, cleanupPlan: InventoryCleanupPlan): Boolean {
+        val stacksToMerge = cleanupPlan.findSlotsToMerge()
+        val slotToMerge = stacksToMerge.firstOrNull() ?: return false
+
+        // pickup -> pickup all -> pickup to handle remaining items
+        event.schedule(
+            inventoryConstraints,
+            InventoryAction.Click.performMergeStack(slot = slotToMerge),
+        )
+
+        return true
+    }
+
+    /**
+     * Handles disposal of unwanted items
+     * @return true if an item was scheduled for disposal, false otherwise
+     */
+    private fun processItemDisposal(
+        event: ScheduleInventoryActionEvent,
+        cleanupPlan: InventoryCleanupPlan,
+        currentInventorySlots: List<ItemSlot>
+    ): Boolean {
+        val itemsToDispose = cleanupPlan.findItemsToThrowOut(currentInventorySlots)
+        val itemToThrow = itemsToDispose.firstOrNull() ?: return false
+
+        event.schedule(
+            inventoryConstraints,
+            InventoryAction.Click.performThrow(screen = null, itemToThrow),
+            Priority.NOT_IMPORTANT
+        )
+
+        return true
+    }
+>>>>>>> upstream/nextgen
 
     private class AmountConstraintProvider(
         val desiredItemsPerCategory: Map<ItemCategory, Int>,

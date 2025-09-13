@@ -17,7 +17,6 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 package net.ccbluex.liquidbounce.features.command.commands.client.marketplace
-import net.ccbluex.liquidbounce.features.command.CommandFactory
 
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
@@ -29,18 +28,18 @@ import net.ccbluex.liquidbounce.features.command.commands.client.marketplace.rev
  *
  * Allows interacting with the LiquidBounce Marketplace
  */
-object CommandMarketplace : CommandFactory {
+object CommandMarketplace : Command.Factory {
 
     override fun createCommand() = CommandBuilder.begin("marketplace")
         .hub()
         .subcommand(marketplaceListCommand())
-        .subcommand(MarketplaceSearchCommand.createCommand())
-        .subcommand(MarketplaceSubscribeCommand.createCommand())
-        .subcommand(MarketplaceUnsubscribeCommand.createCommand())
-        .subcommand(MarketplaceUpdateCommand.createCommand())
-        .subcommand(MarketplaceRevisionsCommand.createCommand())
+        .subcommand(MarketplaceSearchCommand)
+        .subcommand(MarketplaceSubscribeCommand)
+        .subcommand(MarketplaceUnsubscribeCommand)
+        .subcommand(MarketplaceUpdateCommand)
+        .subcommand(MarketplaceRevisionsCommand)
         // Editing items is disabled until proven stable
-        // .subcommand(MarketplaceItemCommand.createCommand())
+        // .subcommand(MarketplaceItemCommand)
         .build()
 
 }

@@ -21,6 +21,10 @@ package net.ccbluex.liquidbounce.utils.block
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongImmutableList
 import it.unimi.dsi.fastutil.longs.LongList
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.block.CachedBlockPosSpheres.RADIUS
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.math.sq
 import net.minecraft.util.math.BlockPos
 
@@ -45,8 +49,18 @@ internal object CachedBlockPosSpheres {
                 }
             }
         }
+<<<<<<< HEAD
         indices = IntArray(size) { i ->
             if (i == 0) 0 else temp[i - 1].size
+=======
+        // Prefix sum
+        indices = IntArray(size + 1)
+        indices[0] = 0
+        var cumulativeLength = 0
+        for (i in 1 until size + 1) {
+            cumulativeLength += temp[i - 1].size
+            indices[i] = cumulativeLength
+>>>>>>> upstream/nextgen
         }
         table = LongArray(temp.sumOf { it.size })
         // Flat temp into table
@@ -70,14 +84,22 @@ internal object CachedBlockPosSpheres {
      * @throws IndexOutOfBoundsException if [fromRadius] or [toRadius] is out of range.
      */
     fun rangeLong(fromRadius: Int = 0, toRadius: Int = RADIUS): LongList {
+<<<<<<< HEAD
         if (fromRadius < 0 || toRadius < fromRadius || toRadius >= RADIUS) {
+=======
+        if (fromRadius !in 0..toRadius || toRadius > RADIUS) {
+>>>>>>> upstream/nextgen
             throw IndexOutOfBoundsException("fromRadius=$fromRadius toRadius=$toRadius")
         }
 
         return LongImmutableList(
             table,
             indices[fromRadius.sq()],
+<<<<<<< HEAD
             indices[toRadius.sq()] - indices[fromRadius.sq()],
+=======
+            indices[toRadius.sq() + 1] - indices[fromRadius.sq()],
+>>>>>>> upstream/nextgen
         )
     }
 

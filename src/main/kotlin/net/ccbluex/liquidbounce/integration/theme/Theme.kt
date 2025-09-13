@@ -17,11 +17,7 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package net.ccbluex.liquidbounce.integration.theme
-
-import kotlin.ExperimentalStdlibApi
 
 import net.ccbluex.liquidbounce.api.core.BaseApi
 import net.ccbluex.liquidbounce.config.types.NamedChoice
@@ -32,6 +28,7 @@ import net.ccbluex.liquidbounce.integration.theme.component.Component
 import net.ccbluex.liquidbounce.integration.theme.component.ComponentFactory.JsonComponentFactory
 import net.ccbluex.liquidbounce.render.FontManager
 import net.ccbluex.liquidbounce.render.shader.CanvasShader
+import net.ccbluex.liquidbounce.utils.client.capitalize
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.io.resourceToString
@@ -57,10 +54,10 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
         REMOTE("remote")
     }
 
-    private var _metadata: ThemeMetadata? = null
     var metadata: ThemeMetadata
-        private set(value) { _metadata = value }
-        get() = requireNotNull(_metadata) { "metadata not loaded" }
+        field: ThemeMetadata? = null
+        private set
+        get() = requireNotNull(field) { "metadata not loaded" }
 
     private suspend fun loadMetadata() {
         try {
@@ -71,15 +68,15 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
         }
     }
 
-    private var _components: MutableList<Component>? = null
     var components: MutableList<Component>
-        private set(value) { _components = value }
-        get() = requireNotNull(_components) { "components not loaded" }
+        field: MutableList<Component>? = null
+        private set
+        get() = requireNotNull(field) { "components not loaded" }
 
-    private var _settings: Configurable? = null
     var settings: Configurable
-        private set(value) { _settings = value }
-        get() = requireNotNull(_settings) { "settings not loaded" }
+        field: Configurable? = null
+        private set
+        get() = requireNotNull(field) { "settings not loaded" }
 
     private suspend fun loadComponents() {
         components = metadata.components.mapNotNullTo(mutableListOf()) { name ->
@@ -101,11 +98,10 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
             check(count == 1) { "Found duplicated component name '$name'" }
         }
 
-        settings = Configurable(metadata.id.replaceFirstChar { it.uppercase() }).apply {
+        settings = Configurable(metadata.id.capitalize()).apply {
             metadata.values?.let { values ->
                 for (value in values) {
-                    // Stubbed for native GUI - JSON configuration not needed
-                    // json(value)
+                    json(value)
                 }
             }
 
@@ -119,8 +115,7 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
         for (font in metadata.fonts) {
             runCatching {
                 get<InputStream>("/fonts/$font").use { stream ->
-                    // Stubbed for native GUI - font queuing not needed
-                    // FontManager.queueFontFromStream(stream)
+                    FontManager.queueFontFromStream(stream)
                 }
 
                 logger.info("Loaded font $font for theme ${metadata.name}")
@@ -141,13 +136,52 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
     var themeBackgroundTexture: ThemeBackground? = null
         private set
 
-    fun compileShader(): Boolean {
-        // Stub implementation for native GUI - shaders not used
+    suspend fun compileShader(): Boolean {
+        if (themeBackgroundShader != null) {
+            return true
+        }
+
+        // todo: allow multiple backgrounds later on
+        val background = metadata.backgrounds.firstOrNull() ?: return false
+        if ("frag" !in background.types) {
+            // not supported
+            return false
+        }
+
+        val vertexShader = resourceToString("/resources/liquidbounce/shaders/vertex.vert")
+        val fragmentShader = runCatching {
+            get<String>("/backgrounds/${background.name.lowercase(Locale.US)}.frag")
+        }.getOrNull() ?: return false
+
+        themeBackgroundShader = ThemeBackground.shader(CanvasShader(
+            vertexShader,
+            fragmentShader,
+        ))
+        logger.info("Compiled shader background for theme ${metadata.name}")
         return true
     }
 
-    fun loadBackgroundImage(): Boolean {
-        // Stub implementation for native GUI - background images not used
+    suspend fun loadBackgroundImage(): Boolean {
+        if (themeBackgroundTexture != null) {
+            return true
+        }
+
+        // todo: allow multiple backgrounds later on
+        val background = metadata.backgrounds.firstOrNull() ?: return false
+        if ("png" !in background.types) {
+            // not supported
+            return false
+        }
+
+        val image = runCatching {
+            get<NativeImageBackedTexture>("/backgrounds/${background.name}.png")
+        }.getOrNull() ?: return false
+
+        val id = Identifier.of("liquidbounce",
+            "theme-bg-${metadata.name.lowercase(Locale.US)}")
+        themeBackgroundTexture = ThemeBackground.image(id)
+        mc.textureManager.registerTexture(id, image)
+        logger.info("Loaded background image for theme ${metadata.name}")
         return true
     }
 
@@ -167,16 +201,6 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
     fun isScreenSupported(name: String?) = name != null && metadata.screens.contains(name)
 
     fun isOverlaySupported(name: String?) = name != null && metadata.overlays.contains(name)
-    
-    // Properties needed by ThemeManager
-    val name: String get() = metadata.name
-    val exists: Boolean get() = true // Stub - always exists for native GUI
-    
-    // Stubbed methods for native GUI compatibility
-    fun doesSupport(name: String?) = false // Stub - no web support needed
-    fun doesOverlay(name: String?) = false // Stub - no web overlay needed
-    fun getUrl() = baseUrl // Stub implementation
-    fun draw() {} // Stub - no drawing needed for native GUI
 
     override fun close() {
         themeBackgroundShader?.close()
@@ -188,24 +212,6 @@ class Theme private constructor(val origin: Origin, url: String): BaseApi(url.re
     companion object {
         @JvmStatic
         suspend fun load(url: String) = Theme(Origin.REMOTE, url).loadAll()
-        
-        @JvmStatic
-        fun defaults(): Theme = Theme(Origin.LOCAL, "").apply {
-            // Minimal default theme for native GUI - initialize required fields
-            _metadata = ThemeMetadata(
-                id = "default",
-                name = "Default",
-                version = "1.0.0",
-                authors = listOf("LiquidBounce"),
-                screens = emptyList(),
-                overlays = emptyList(),
-                components = emptyList(),
-                fonts = emptyList(),
-                backgrounds = emptyList()
-            )
-            _components = mutableListOf()
-            _settings = Configurable("Default")
-        }
 
         @JvmStatic
         suspend fun load(origin: Origin, file: File) = Theme(

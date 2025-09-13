@@ -19,6 +19,10 @@
 package net.ccbluex.liquidbounce.script.bindings.features
 
 import net.ccbluex.liquidbounce.config.types.*
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.config.types.NamedChoice.Companion.asNamedChoice
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.deeplearn.ModelHolster.list
 import net.ccbluex.liquidbounce.script.asArray
 import net.ccbluex.liquidbounce.script.asDoubleArray
@@ -132,11 +136,15 @@ object ScriptSetting {
     @JvmName("choose")
     fun choose(value: PolyglotValue): ChooseListValue<NamedChoice> {
         val name = value.getMember("name").asString()
+<<<<<<< HEAD
         val choices = value.getMember("choices").asArray<String>().map {
             object : NamedChoice {
                 override val choiceName = it
             }
         }.toTypedArray<NamedChoice>()
+=======
+        val choices = value.getMember("choices").asArray<String>().toNamedChoices(::LinkedHashSet)
+>>>>>>> upstream/nextgen
         val defaultStr = value.getMember("default").asString()
 
         val default = choices.find { it.choiceName == defaultStr }
@@ -150,6 +158,7 @@ object ScriptSetting {
     }
 
     @JvmName("multiChoose")
+<<<<<<< HEAD
     fun multiChoose(value: PolyglotValue): MultiChooseStringListValue {
         val name = value.getMember("name").asString()
         val choices = value.getMember("choices").asArray<String>().toSet()
@@ -158,6 +167,16 @@ object ScriptSetting {
         val canBeNone = value.getMember("canBeNone")?.asBoolean() ?: true
 
         return MultiChooseStringListValue(
+=======
+    fun multiChoose(value: PolyglotValue): MultiChooseListValue<NamedChoice> {
+        val name = value.getMember("name").asString()
+        val choices = value.getMember("choices").asArray<String>().toNamedChoices(::LinkedHashSet)
+        val default = value.getMember("default")?.asArray<String>().toNamedChoices(::HashSet)
+
+        val canBeNone = value.getMember("canBeNone")?.asBoolean() ?: true
+
+        return MultiChooseListValue(
+>>>>>>> upstream/nextgen
             name,
             value = default,
             choices = choices,
@@ -177,4 +196,9 @@ object ScriptSetting {
     ) =
         RangedValue(name, defaultValue = default, range = range, suffix = suffix, valueType = valueType)
 
+<<<<<<< HEAD
+=======
+    private inline fun Array<String>?.toNamedChoices(toSet: (Int) -> MutableSet<NamedChoice>) =
+        this?.mapTo(toSet(size)) { it.asNamedChoice() } ?: toSet(0)
+>>>>>>> upstream/nextgen
 }

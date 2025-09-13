@@ -18,7 +18,11 @@
  */
 package net.ccbluex.liquidbounce.utils.math.geometry
 
+<<<<<<< HEAD
 import net.minecraft.util.math.MathHelper
+=======
+import net.ccbluex.liquidbounce.utils.math.isLikelyZero
+>>>>>>> upstream/nextgen
 import net.minecraft.util.math.Vec3d
 
 class LineSegment(position: Vec3d, direction: Vec3d, val phiRange: ClosedFloatingPointRange<Double>) :
@@ -30,7 +34,11 @@ class LineSegment(position: Vec3d, direction: Vec3d, val phiRange: ClosedFloatin
         get() = Pair(getPosition(phiRange.start), getPosition(phiRange.endInclusive))
 
     init {
+<<<<<<< HEAD
         require(!MathHelper.approximatelyEquals(direction.lengthSquared(), 0.0)) {
+=======
+        require(!direction.isLikelyZero) {
+>>>>>>> upstream/nextgen
             "Direction must not be zero"
         }
     }

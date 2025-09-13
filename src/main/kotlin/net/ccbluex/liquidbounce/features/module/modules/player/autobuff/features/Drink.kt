@@ -76,9 +76,15 @@ object Drink : Buff("Drink") {
         }
     }
 
+<<<<<<< HEAD
     override fun disable() {
         forceUseKey = false
         super.disable()
+=======
+    override fun onDisabled() {
+        forceUseKey = false
+        super.onDisabled()
+>>>>>>> upstream/nextgen
     }
 
     override fun isValidItem(stack: ItemStack, forUse: Boolean): Boolean {

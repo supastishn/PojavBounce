@@ -99,7 +99,7 @@ object MarketplaceManager : Configurable("marketplace"), EventListener {
         val item = SubscribedItem(item)
         subscribedItems.add(item)
         item.install(item.getNewestRevisionId() ?: return)
-        ConfigSystem.storeConfigurable(this)
+        ConfigSystem.store(this)
     }
 
     suspend fun unsubscribe(itemId: Int) {
@@ -108,7 +108,7 @@ object MarketplaceManager : Configurable("marketplace"), EventListener {
         check(!item.itemDir.exists() || item.itemDir.deleteRecursively()) { "Failed to delete item directory" }
 
         subscribedItems.remove(item)
-        ConfigSystem.storeConfigurable(this)
+        ConfigSystem.store(this)
 
         // Reload the item type's manager.
         item.type.reload()

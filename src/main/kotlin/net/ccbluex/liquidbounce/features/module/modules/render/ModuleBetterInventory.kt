@@ -29,6 +29,10 @@ import net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinInGameHudAcc
 import net.ccbluex.liquidbounce.render.ItemStackListRenderer.Companion.drawItemStackList
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.item.getCooldown
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.math.toFixed
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderLayer
@@ -124,6 +128,7 @@ object ModuleBetterInventory : ClientModule("BetterInventory", Category.RENDER) 
             val text = when (TextCooldownProgress.mode) {
                 CooldownProgressMode.PERCENTAGE -> "${(progress * 100f).toInt()}%"
                 CooldownProgressMode.DURATION_TICKS -> {
+<<<<<<< HEAD
                     // Simplified - estimate ticks based on progress
                     val estimatedTicks = (progress * 20).toInt() // Rough estimate
                     estimatedTicks.toString()
@@ -131,6 +136,15 @@ object ModuleBetterInventory : ClientModule("BetterInventory", Category.RENDER) 
                 CooldownProgressMode.DURATION_SECONDS -> {
                     // Simplified - estimate seconds based on progress
                     val seconds = progress * 1.0f // Rough estimate
+=======
+                    val entry = player.itemCooldownManager.getCooldown(stack)!!
+                    val ticks = entry.endTick - entry.currentTick
+                    ticks.toString()
+                }
+                CooldownProgressMode.DURATION_SECONDS -> {
+                    val entry = player.itemCooldownManager.getCooldown(stack)!!
+                    val seconds = (entry.endTick - entry.currentTick) * 0.05f
+>>>>>>> upstream/nextgen
                     if (seconds > 1) "${seconds.toInt()}s" else "${seconds.toFixed(1)}s"
                 }
             }

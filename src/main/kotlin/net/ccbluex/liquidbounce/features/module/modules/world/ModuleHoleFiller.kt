@@ -25,7 +25,10 @@ import net.ccbluex.liquidbounce.event.events.RotationUpdateEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.block.Region
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.block.hole.Hole
 import net.ccbluex.liquidbounce.utils.block.hole.HoleManager
 import net.ccbluex.liquidbounce.utils.block.hole.HoleManagerSubscriber
@@ -37,9 +40,19 @@ import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.inventory.Slots
 import net.ccbluex.liquidbounce.utils.item.getBlock
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.math.sq
 import net.minecraft.block.Blocks
 import net.minecraft.entity.Entity
+=======
+import net.ccbluex.liquidbounce.utils.math.expendToBlockBox
+import net.ccbluex.liquidbounce.utils.math.from
+import net.ccbluex.liquidbounce.utils.math.iterate
+import net.ccbluex.liquidbounce.utils.math.sq
+import net.minecraft.block.Blocks
+import net.minecraft.entity.Entity
+import net.minecraft.util.math.BlockBox
+>>>>>>> upstream/nextgen
 import net.minecraft.util.math.BlockPos
 import org.joml.Vector2d
 import kotlin.math.acos
@@ -92,11 +105,19 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
     override fun horizontalDistance(): Int = range
     override fun verticalDistance(): Int = range
 
+<<<<<<< HEAD
     override fun enable() {
         HoleManager.subscribe(this)
     }
 
     override fun disable() {
+=======
+    override fun onEnabled() {
+        HoleManager.subscribe(this)
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         HoleManager.unsubscribe(this)
         placer.disable()
     }
@@ -112,7 +133,11 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
             return@handler
         }
 
+<<<<<<< HEAD
         val selfRegion = Region.quadAround(blockPos, fillArea, fillArea)
+=======
+        val selfRegion = blockPos.expendToBlockBox(fillArea, fillArea, fillArea)
+>>>>>>> upstream/nextgen
 
         val blocks = linkedSetOf<BlockPos>()
         val holeContext = HoleContext(holes, selfInHole, selfRegion, blocks)
@@ -154,7 +179,11 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
                 || holeContext.selfInHole
                 || !hole.positions.intersects(holeContext.selfRegion)
             ) {
+<<<<<<< HEAD
                 hole.positions.mapTo(holeContext.blocks) { it.toImmutable() }
+=======
+                hole.positions.iterate().mapTo(holeContext.blocks) { it.toImmutable() }
+>>>>>>> upstream/nextgen
             }
         }
     }
@@ -193,7 +222,11 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
         found: MutableSet<DoubleLongPair>
     ): Int {
         var remainingItems1 = remainingItems
+<<<<<<< HEAD
         val region = Region.quadAround(entity.blockPos, fillArea, fillArea)
+=======
+        val region = entity.blockPos.expendToBlockBox(fillArea, fillArea, fillArea)
+>>>>>>> upstream/nextgen
 
         holeContext.holes.forEach { hole ->
             if (hole in checkedHoles) {
@@ -213,7 +246,11 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
             }
 
             checkedHoles += hole
+<<<<<<< HEAD
             hole.positions.mapTo(found) {
+=======
+            hole.positions.iterate().mapTo(found) {
+>>>>>>> upstream/nextgen
                 DoubleLongPair.of(valid.rightDouble(), it.asLong())
             }
 
@@ -228,9 +265,15 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
     private fun isValidHole(
         hole: Hole,
         entity: Entity,
+<<<<<<< HEAD
         region: Region,
         selfInHole: Boolean,
         selfRegion: Region
+=======
+        region: BlockBox,
+        selfInHole: Boolean,
+        selfRegion: BlockBox
+>>>>>>> upstream/nextgen
     ) : BooleanDoubleImmutablePair {
         val y = hole.positions.from.y + 1.0
         val movingTowardsHole = isMovingTowardsHole(hole, entity)
@@ -262,10 +305,18 @@ object ModuleHoleFiller : ClientModule("HoleFiller", Category.WORLD), HoleManage
         return BooleanDoubleImmutablePair(angle >= 0.866, angle)
     }
 
+<<<<<<< HEAD
     data class HoleContext(
         val holes: List<Hole>,
         val selfInHole: Boolean,
         val selfRegion: Region,
+=======
+    @JvmRecord
+    private data class HoleContext(
+        val holes: List<Hole>,
+        val selfInHole: Boolean,
+        val selfRegion: BlockBox,
+>>>>>>> upstream/nextgen
         val blocks: MutableSet<BlockPos>
     )
 

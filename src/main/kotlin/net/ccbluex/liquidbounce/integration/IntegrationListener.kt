@@ -28,8 +28,13 @@ import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
 import net.ccbluex.liquidbounce.integration.backend.browser.Browser
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.integration.backend.browser.BrowserSettings
 import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
+=======
+import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
+import net.ccbluex.liquidbounce.integration.backend.browser.IntegrationBrowserSettings
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.integration.task.TaskProgressScreen
 import net.ccbluex.liquidbounce.integration.theme.Theme
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
@@ -41,6 +46,10 @@ import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIOR
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.screen.TitleScreen
 import org.lwjgl.glfw.GLFW
+<<<<<<< HEAD
+=======
+import kotlin.math.min
+>>>>>>> upstream/nextgen
 
 object IntegrationListener : EventListener {
 
@@ -53,13 +62,21 @@ object IntegrationListener : EventListener {
      */
     lateinit var browser: Browser
         private set
+<<<<<<< HEAD
     lateinit var browserSettings: BrowserSettings
+=======
+    lateinit var browserSettings: IntegrationBrowserSettings
+>>>>>>> upstream/nextgen
         private set
 
     var momentaryVirtualScreen: VirtualScreen? = null
         private set
 
+<<<<<<< HEAD
     var runningTheme = ThemeManager.activeTheme
+=======
+    var theme: Theme? = null
+>>>>>>> upstream/nextgen
         private set
 
     /**
@@ -105,7 +122,11 @@ object IntegrationListener : EventListener {
         logger.info("Browser is ready.")
 
         // Fires up the client tab
+<<<<<<< HEAD
         browserSettings = BrowserSettings(0, ::restart)
+=======
+        browserSettings = IntegrationBrowserSettings(0, ::restart)
+>>>>>>> upstream/nextgen
         browser = ThemeManager.openInputAwareImmediate(settings = browserSettings)
         browserIsReady = true
     }
@@ -116,14 +137,23 @@ object IntegrationListener : EventListener {
         virtualOpen(type = type)
     }
 
+<<<<<<< HEAD
     fun virtualOpen(theme: Theme = ThemeManager.activeTheme, type: VirtualScreenType) {
+=======
+    fun virtualOpen(theme: Theme = ThemeManager.theme, type: VirtualScreenType) {
+>>>>>>> upstream/nextgen
         // Check if the virtual screen is already open
         if (momentaryVirtualScreen?.type == type) {
             return
         }
 
+<<<<<<< HEAD
         if (runningTheme != theme) {
             runningTheme = theme
+=======
+        if (this.theme != theme) {
+            this.theme = theme
+>>>>>>> upstream/nextgen
             ThemeManager.updateImmediate(browser, type)
         }
 
@@ -131,8 +161,13 @@ object IntegrationListener : EventListener {
         acknowledgement.reset()
         EventManager.callEvent(
             VirtualScreenEvent(
+<<<<<<< HEAD
                 virtualScreen.type.routeName,
                 VirtualScreenEvent.Action.OPEN
+=======
+                virtualScreen.type,
+                action = VirtualScreenEvent.Action.OPEN
+>>>>>>> upstream/nextgen
             )
         )
     }
@@ -144,8 +179,13 @@ object IntegrationListener : EventListener {
         acknowledgement.reset()
         EventManager.callEvent(
             VirtualScreenEvent(
+<<<<<<< HEAD
                 virtualScreen.type.routeName,
                 VirtualScreenEvent.Action.CLOSE
+=======
+                virtualScreen.type,
+                action = VirtualScreenEvent.Action.CLOSE
+>>>>>>> upstream/nextgen
             )
         )
     }
@@ -163,14 +203,22 @@ object IntegrationListener : EventListener {
         }
 
         try {
+<<<<<<< HEAD
             // ModuleClickGui.reload(true) - no longer needed with native GUI
             logger.info("ClickGUI browser integration restarted -> native GUI (no-op)")
+=======
+            ModuleClickGui.reload(true)
+>>>>>>> upstream/nextgen
         } catch (e: Exception) {
             logger.error("Failed to restart ClickGUI browser integration.", e)
         }
 
         try {
+<<<<<<< HEAD
             // ModuleHud.reopen() - method no longer exists in this fork
+=======
+            ModuleHud.reopen()
+>>>>>>> upstream/nextgen
         } catch (e: Exception) {
             logger.error("Failed to restart HUD browser integration.", e)
         }
@@ -183,7 +231,11 @@ object IntegrationListener : EventListener {
 
         logger.info(
             "Reloading integration browser ${browser.javaClass.simpleName} " +
+<<<<<<< HEAD
                 "to ${ThemeManager.route()}"
+=======
+                "to ${ThemeManager.getScreenLocation()}"
+>>>>>>> upstream/nextgen
         )
         ThemeManager.updateImmediate(browser, momentaryVirtualScreen?.type)
     }
@@ -224,6 +276,18 @@ object IntegrationListener : EventListener {
     }
 
     @Suppress("unused")
+<<<<<<< HEAD
+=======
+    private val fpsLimitHandler = handler<FpsLimitEvent> { event ->
+        if (!browserIsReady || !browserSettings.syncGameFps || !isClientScreen(mc.currentScreen)) {
+            return@handler
+        }
+
+        event.fps = min(event.fps, browserSettings.currentFps)
+    }
+
+    @Suppress("unused")
+>>>>>>> upstream/nextgen
     private val keyHandler = handler<KeyboardKeyEvent> { event ->
         val keyCode = event.keyCode
         val modifier = event.mods
@@ -280,7 +344,11 @@ object IntegrationListener : EventListener {
 
         val name = virtualScreenType.routeName
         val route = runCatching {
+<<<<<<< HEAD
             ThemeManager.route(virtualScreenType, false)
+=======
+            ThemeManager.getScreenLocation(virtualScreenType, false)
+>>>>>>> upstream/nextgen
         }.getOrNull()
 
         if (route == null) {
@@ -291,12 +359,20 @@ object IntegrationListener : EventListener {
         val theme = route.theme
 
         return when {
+<<<<<<< HEAD
             false -> { // Stubbed - doesSupport functionality not needed for native GUI
+=======
+            theme.isScreenSupported(name) -> {
+>>>>>>> upstream/nextgen
                 mc.setScreen(VirtualDisplayScreen(virtualScreenType, theme, originalScreen = virtScreen))
 
                 true
             }
+<<<<<<< HEAD
             false -> { // Stubbed - doesOverlay functionality not needed for native GUI
+=======
+            theme.isOverlaySupported(name) -> {
+>>>>>>> upstream/nextgen
                 virtualOpen(theme, virtualScreenType)
 
                 false
@@ -309,4 +385,14 @@ object IntegrationListener : EventListener {
         }
     }
 
+<<<<<<< HEAD
+=======
+    /**
+     * Checks if the given screen is an active client screen.
+     */
+    @JvmStatic
+    fun isClientScreen(screen: Screen?) = screen is VirtualDisplayScreen || screen is ModuleClickGui.ClickScreen ||
+        screen is BrowserScreen
+
+>>>>>>> upstream/nextgen
 }

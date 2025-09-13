@@ -22,8 +22,13 @@ import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.inventory.HotbarItemSlot
 import net.ccbluex.liquidbounce.utils.block.placer.BlockPlacer
+=======
+import net.ccbluex.liquidbounce.utils.block.placer.BlockPlacer
+import net.ccbluex.liquidbounce.utils.inventory.HotbarItemSlot
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 
 /**
@@ -40,11 +45,19 @@ object ModuleAutoBuild : ClientModule("AutoBuild", Category.WORLD, aliases = arr
         mode.onChanged { enabled = false }
     }
 
+<<<<<<< HEAD
     override fun enable() {
         mode.activeChoice.enabled()
     }
 
     override fun disable() {
+=======
+    override fun onEnabled() {
+        mode.activeChoice.enabled()
+    }
+
+    override fun onDisabled() {
+>>>>>>> upstream/nextgen
         placer.disable()
         mode.activeChoice.disabled()
     }

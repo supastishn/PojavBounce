@@ -30,20 +30,30 @@ import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.modules.combat.crystalaura.ModuleCrystalAura
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
+<<<<<<< HEAD
 import net.ccbluex.liquidbounce.utils.inventory.HotbarItemSlot
 import net.ccbluex.liquidbounce.utils.inventory.ItemSlot
 import net.ccbluex.liquidbounce.utils.inventory.OffHandSlot
+=======
+>>>>>>> upstream/nextgen
 import net.ccbluex.liquidbounce.utils.client.Chronometer
 import net.ccbluex.liquidbounce.utils.client.isNewerThanOrEquals1_16
 import net.ccbluex.liquidbounce.utils.client.usesViaFabricPlus
 import net.ccbluex.liquidbounce.utils.inventory.*
+<<<<<<< HEAD
+=======
+import net.ccbluex.liquidbounce.utils.item.isSword
+>>>>>>> upstream/nextgen
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.PotionContentsComponent
 import net.minecraft.entity.effect.StatusEffects
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
+<<<<<<< HEAD
 import net.minecraft.item.SwordItem
+=======
+>>>>>>> upstream/nextgen
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket
 import net.minecraft.util.math.BlockPos
@@ -111,7 +121,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
     override val tag: String
         get() = activeMode.modeName
 
+<<<<<<< HEAD
     override fun enable() {
+=======
+    override fun onEnabled() {
+>>>>>>> upstream/nextgen
         staticMode = when {
             Crystal.enabled && Mode.CRYSTAL.canCycleTo() -> Mode.CRYSTAL
             Gapple.enabled -> Mode.GAPPLE
@@ -208,8 +222,13 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
         chronometer.reset()
     }
 
+<<<<<<< HEAD
     fun performSwitch(from: ItemSlot, smart: Boolean): List<ClickInventoryAction> {
         val actions = ArrayList<ClickInventoryAction>(3)
+=======
+    fun performSwitch(from: ItemSlot, smart: Boolean): List<InventoryAction.Click> {
+        val actions = ArrayList<InventoryAction.Click>(3)
+>>>>>>> upstream/nextgen
 
         if (smart && from is HotbarItemSlot) {
             val selectedSlot = player.inventory.selectedSlot
@@ -228,10 +247,17 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
                 network.sendPacket(UpdateSelectedSlotC2SPacket(selectedSlot))
             }
         } else {
+<<<<<<< HEAD
             actions += ClickInventoryAction.performPickup(slot = from)
             actions += ClickInventoryAction.performPickup(slot = OffHandSlot)
             if (!OffHandSlot.itemStack.isEmpty) {
                 actions += ClickInventoryAction.performPickup(slot = from)
+=======
+            actions += InventoryAction.Click.performPickup(slot = from)
+            actions += InventoryAction.Click.performPickup(slot = OffHandSlot)
+            if (!OffHandSlot.itemStack.isEmpty) {
+                actions += InventoryAction.Click.performPickup(slot = from)
+>>>>>>> upstream/nextgen
             }
         }
 
@@ -281,7 +307,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
                     return false
                 }
 
+<<<<<<< HEAD
                 return player.mainHandStack.item is SwordItem || !Strength.onlyWhileHoldingSword
+=======
+                return player.mainHandStack.isSword || !Strength.onlyWhileHoldingSword
+>>>>>>> upstream/nextgen
             }
 
             override fun getSlot(): ItemSlot? {
@@ -298,7 +328,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
                     return false
                 }
 
+<<<<<<< HEAD
                 if (player.mainHandStack.item is SwordItem && Gapple.WhileHoldingSword.enabled) {
+=======
+                if (player.mainHandStack.isSword && Gapple.WhileHoldingSword.enabled) {
+>>>>>>> upstream/nextgen
                     return if (Gapple.WhileHoldingSword.onlyWhileKa) {
                         ModuleKillAura.running
                     } else {
@@ -396,7 +430,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
          */
         SWITCH("Switch") {
             override fun performSwitch(from: ItemSlot) = listOf(
+<<<<<<< HEAD
                 ClickInventoryAction.performSwap(
+=======
+                InventoryAction.Click.performSwap(
+>>>>>>> upstream/nextgen
                     from = from,
                     to = OffHandSlot
                 )
@@ -415,7 +453,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
          * Chooses the switch action based on the version. Only works if vfp is installed.
          */
         AUTOMATIC("Automatic") {
+<<<<<<< HEAD
             override fun performSwitch(from: ItemSlot): List<ClickInventoryAction> {
+=======
+            override fun performSwitch(from: ItemSlot): List<InventoryAction.Click> {
+>>>>>>> upstream/nextgen
                 return if (isNewerThanOrEquals1_16) {
                     SWITCH.performSwitch(from)
                 } else {
@@ -424,7 +466,11 @@ object ModuleOffhand : ClientModule("Offhand", Category.PLAYER, aliases = arrayO
             }
         };
 
+<<<<<<< HEAD
         abstract fun performSwitch(from: ItemSlot): List<ClickInventoryAction>
+=======
+        abstract fun performSwitch(from: ItemSlot): List<InventoryAction.Click>
+>>>>>>> upstream/nextgen
     }
 
 }

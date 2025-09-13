@@ -49,7 +49,6 @@ base {
     archivesName = project.property("archives_base_name") as String
     version = project.property("mod_version") as String
     group = project.property("maven_group") as String
->>>>>>> upstream/nextgen
 }
 
 /** Includes non-mod dependency recursively in the JAR file */
@@ -255,7 +254,7 @@ tasks.register<CompareJsonKeysTask>("verifyI18nJsonKeys") {
 
     val languageFolder = file("src/main/resources/resources/liquidbounce/lang")
     baselineFile.set(languageFolder.resolve(baselineFileName))
-files.from(languageFolder.listFilesOrdered { it.extension.equals("json", ignoreCase = true) })
+    files.from(languageFolder.listFilesOrdered { it.extension.equals("json", ignoreCase = true) })
     consoleOutputCount.set(5)
 }
 

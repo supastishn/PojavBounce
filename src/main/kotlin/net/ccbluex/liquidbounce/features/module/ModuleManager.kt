@@ -258,6 +258,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleVomit,
 
             // Misc
+            ModuleGUICloser,
             ModuleBookBot,
             ModuleAntiBot,
             ModuleBetterTab,

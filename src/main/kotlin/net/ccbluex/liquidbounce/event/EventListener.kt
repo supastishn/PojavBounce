@@ -19,7 +19,8 @@
 package net.ccbluex.liquidbounce.event
 
 import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import net.ccbluex.liquidbounce.event.events.GameTickEvent
 import net.ccbluex.liquidbounce.features.misc.DebuggedOwner
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.isDestructed
@@ -112,24 +113,26 @@ inline fun <reified T : Event> EventListener.sequenceHandler(
     dispatcher: CoroutineDispatcher? = null,
     onCancellation: Runnable? = null,
     crossinline eventHandler: SuspendableEventHandler<T>,
-) = handler<T>(priority) { event -> launchSequence(dispatcher, onCancellation) { eventHandler(event) } }
+) = suspendHandler<T>(
+    context = wrapContinuationInterceptor(dispatcher),
+    priority = priority,
+    behavior = SuspendHandlerBehavior.Parallel(CoroutineStart.UNDISPATCHED, onCancellation),
+) {
+    eventHandler(it)
+}
 
 /**
  * Registers a repeatable sequence which repeats the execution of code on GameTickEvent.
  */
-fun EventListener.tickHandler(
+inline fun EventListener.tickHandler(
     dispatcher: CoroutineDispatcher? = null,
     onCancellation: Runnable? = null,
-    eventHandler: SuspendableHandler,
-): EventHook<GameTickEvent> {
-    var sequence: Job? = null
-
-    return handler<GameTickEvent> {
-        // Check if the sequence is already running (completed or null)
-        if (sequence == null || !sequence!!.isActive) {
-            sequence = launchSequence(dispatcher, onCancellation, eventHandler)
-        }
-    }
+    crossinline eventHandler: suspend CoroutineScope.() -> Unit,
+) = suspendHandler<GameTickEvent>(
+    context = wrapContinuationInterceptor(dispatcher),
+    behavior = SuspendHandlerBehavior.DiscardLatest(onCancellation)
+) {
+    eventHandler()
 }
 
 /**

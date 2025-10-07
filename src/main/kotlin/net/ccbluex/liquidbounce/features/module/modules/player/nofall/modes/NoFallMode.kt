@@ -16,25 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
+
 package net.ccbluex.liquidbounce.features.module.modules.player.nofall.modes
 
-import net.ccbluex.liquidbounce.event.tickHandler
-import net.ccbluex.liquidbounce.event.waitTicks
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket
+import net.ccbluex.liquidbounce.config.types.nesting.Choice
+import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
+import net.ccbluex.liquidbounce.features.module.modules.player.nofall.ModuleNoFall
+import net.minecraft.entity.attribute.EntityAttributes
 
-/**
- * @anticheat Spartan
- * @anticheatVersion phase 524
- * @testedOn minecraft.vagdedes.com
- * @note it gives you 6 flags for 50 blocks, which isn't enough to get kicked
- */
-internal object NoFallSpartan524Flag : NoFallMode("Spartan524Flag") {
+sealed class NoFallMode(name: String) : Choice(name) {
+    final override val parent: ChoiceConfigurable<*>
+        get() = ModuleNoFall.modes
 
-    val repeatable = tickHandler {
-        if (player.fallDistance > 2f) {
-            network.sendPacket(PlayerMoveC2SPacket.OnGroundOnly(true, player.horizontalCollision))
-            waitTicks(1)
-        }
-    }
-
+    protected val playerSafeFallDistance get() = player.getAttributeValue(EntityAttributes.SAFE_FALL_DISTANCE)
 }

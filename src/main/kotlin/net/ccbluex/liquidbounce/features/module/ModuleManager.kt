@@ -305,7 +305,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
             ModuleLongJump,
             ModuleNoClip,
             ModuleNoJumpDelay,
-            ModuleNoSwim,
+            ModuleNoPose,
             ModuleNoPush,
             ModuleNoSlow,
             ModuleNoWeb,

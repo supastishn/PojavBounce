@@ -27,7 +27,6 @@ enum class VertexInputType(
     val vertexFormat: VertexFormat,
     val shaderProgram: ShaderProgramKey,
 ) {
-    Pos(VertexFormats.POSITION, ShaderProgramKeys.POSITION),
     PosColor(VertexFormats.POSITION_COLOR, ShaderProgramKeys.POSITION_COLOR),
     PosTexColor(VertexFormats.POSITION_TEXTURE_COLOR, ShaderProgramKeys.POSITION_TEX_COLOR),
 }

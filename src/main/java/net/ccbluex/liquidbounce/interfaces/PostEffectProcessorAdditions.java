@@ -17,20 +17,26 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.ccbluex.liquidbounce.config.gson.serializer.minecraft
+package net.ccbluex.liquidbounce.interfaces;
 
-import com.google.gson.JsonElement
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import net.ccbluex.liquidbounce.utils.client.mc
-import net.ccbluex.liquidbounce.utils.client.processContent
-import net.minecraft.registry.DynamicRegistryManager
-import net.minecraft.text.Text
-import java.lang.reflect.Type
+import com.mojang.blaze3d.systems.RenderPass;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.util.ObjectAllocator;
+import net.minecraft.util.Identifier;
+import org.jetbrains.annotations.Nullable;
 
-object TextSerializer : JsonSerializer<Text> {
-    override fun serialize(src: Text?, typeOfSrc: Type, context: JsonSerializationContext): JsonElement =
-        Text.Serialization.toJson(
-            src?.processContent(), mc.world?.registryManager ?: DynamicRegistryManager.EMPTY
-        )
+import java.util.Map;
+import java.util.function.Consumer;
+
+public interface PostEffectProcessorAdditions {
+
+    /**
+     * Used for rendering the ui blur as it requires a 3-way merge.
+     */
+    void liquid_bounce$renderWithAdditionalExternalTargets(
+            Framebuffer framebuffer,
+            ObjectAllocator objectAllocator,
+            @Nullable Consumer<RenderPass> additionalUniformsSetter,
+            Map<Identifier, Framebuffer> additionalExternalFramebuffers
+    );
 }

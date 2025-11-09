@@ -15,23 +15,20 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
-package net.ccbluex.liquidbounce.injection.mixins.minecraft.entity;
 
-import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleEntityControl;
-import net.minecraft.entity.passive.AbstractHorseEntity;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
+@file:Suppress("FunctionName", "NOTHING_TO_INLINE")
 
-@Mixin(AbstractHorseEntity.class)
-public class MixinAbstractHorseEntity {
+package net.ccbluex.liquidbounce.additions
 
-    @ModifyReturnValue(method = "isSaddled", at = @At("RETURN"))
-    private boolean isSaddled(boolean original) {
-        return ModuleEntityControl.getEnforceSaddled() || original;
-    }
+import net.minecraft.entity.player.PlayerInventory
 
+interface PlayerInventoryAddition {
+    /**
+     * @return the actual selected slot without any modification by [net.ccbluex.liquidbounce.utils.client.SilentHotbar]
+     */
+    fun `liquid_bounce$getRealSelectedSlot`(): Int
 }
+
+inline val PlayerInventory.realSelectedSlot: Int
+    get() = (this as PlayerInventoryAddition).`liquid_bounce$getRealSelectedSlot`()

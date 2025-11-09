@@ -15,29 +15,25 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
-package net.ccbluex.liquidbounce.injection.mixins.minecraft.text;
+package net.ccbluex.liquidbounce.utils.client;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextContent;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Invoker;
+import net.minecraft.text.ClickEvent;
 
-import java.util.List;
-
-@Mixin(MutableText.class)
-public interface MixinMutableTextAccessor {
-
-    /**
-     * @param siblings should be mutable list, unless you are sure it will not be modified!
-     */
-    @Invoker("<init>")
-    static MutableText create(TextContent content, List<Text> siblings, Style style) {
-        throw new AssertionError();
+/**
+ * Allows {@link net.minecraft.text.MutableText} to execute anything on click.
+ * <p>
+ * Known issue: This type cannot be resolved with {@link ClickEvent#CODEC}.
+ */
+public record RunnableClickEvent(Runnable action) implements ClickEvent, Runnable {
+    @Override
+    public ClickEvent.Action getAction() {
+        return null;
     }
 
+    @Override
+    public void run() {
+        action.run();
+    }
 }

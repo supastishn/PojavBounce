@@ -16,23 +16,25 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.render.shader.shaders
 
-import net.ccbluex.liquidbounce.render.engine.type.Color4b
-import net.ccbluex.liquidbounce.render.shader.BlitShader
-import net.ccbluex.liquidbounce.render.shader.UniformProvider
-import net.ccbluex.liquidbounce.utils.io.resourceToString
-import org.lwjgl.opengl.GL20
+package net.ccbluex.liquidbounce.utils.kotlin
 
-object BlendShaderData {
-    var color = Color4b.WHITE
+/**
+ * Used for mixin interfaces (i.e. [net.ccbluex.liquidbounce.interfaces.LightmapTextureManagerAddition])
+ */
+inline fun <reified B> mixinInterfaceCast(a: Any): B {
+    check(a is B) { "${a.javaClass.name} does not implement the mixin interface ${B::class.java}?!" }
+
+    return a
 }
 
-object BlendShader : BlitShader(
-    resourceToString("/resources/liquidbounce/shaders/position_tex.vert"),
-    resourceToString("/resources/liquidbounce/shaders/blend.frag"),
-    arrayOf(
-        UniformProvider("texture0") { pointer -> GL20.glUniform1i(pointer, 0) },
-        UniformProvider("mixColor") { pointer -> BlendShaderData.color.putToUniform(pointer) }
-    )
-)
+/**
+ * See [mixinInterfaceCast]
+ */
+inline fun <reified B> mixinInterfaceCastNullable(a: Any?): B? {
+    if (a == null) {
+        return null
+    }
+
+    return mixinInterfaceCast(a)
+}

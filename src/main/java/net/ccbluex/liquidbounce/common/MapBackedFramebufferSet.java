@@ -16,18 +16,31 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
-package net.ccbluex.liquidbounce.utils.client
 
-import net.minecraft.text.ClickEvent
-import net.minecraft.text.MutableText
+package net.ccbluex.liquidbounce.common;
+
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.PostEffectProcessor;
+import net.minecraft.client.util.Handle;
+import net.minecraft.util.Identifier;
+
+import javax.annotation.Nullable;
+import java.util.HashMap;
 
 /**
- * Allows [MutableText] to execute anything on click.
+ * Stupid class, but Minecraft needed one more abstraction...
  */
-class RunnableClickEvent(private val action: Runnable) : ClickEvent(null, "run") {
+public record MapBackedFramebufferSet(
+        HashMap<Identifier, Handle<Framebuffer>> backingMap
+) implements PostEffectProcessor.FramebufferSet {
 
-    fun run() {
-        action.run()
+    @Override
+    public void set(Identifier id, Handle<Framebuffer> framebuffer) {
+        this.backingMap.put(id, framebuffer);
     }
 
+    @Override
+    public @Nullable Handle<Framebuffer> get(Identifier id) {
+        return this.backingMap.get(id);
+    }
 }

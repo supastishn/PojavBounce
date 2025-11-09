@@ -21,6 +21,7 @@ package net.ccbluex.liquidbounce.features.module.modules.misc.antibot.modes
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import net.ccbluex.fastutil.forEachInt
+import net.ccbluex.liquidbounce.config.types.MultiChooseListValue
 import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.NamedChoice
@@ -32,7 +33,9 @@ import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot
 import net.ccbluex.liquidbounce.features.module.modules.misc.antibot.ModuleAntiBot.isADuplicate
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.CRITICAL_MODIFICATION
+import net.ccbluex.liquidbounce.utils.kotlin.enumMapOf
 import net.ccbluex.liquidbounce.utils.math.sq
+import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.*
 import net.minecraft.item.equipment.ArmorMaterials
@@ -155,16 +158,17 @@ object CustomAntiBotMode : Choice("Custom"), ModuleAntiBot.IAntiBotMode {
             ArmorPredicate.NETHERITE, ArmorPredicate.ELYTRA,
         )
 
-        private val values = arrayOf(
-            multiEnumChoice("Helmet", EnumSet.of(ArmorPredicate.NOTHING), HELMET),
-            multiEnumChoice("Chestplate", EnumSet.of(ArmorPredicate.NOTHING), CHESTPLATE),
-            multiEnumChoice("Leggings", EnumSet.of(ArmorPredicate.NOTHING), BASE),
-            multiEnumChoice("Boots", EnumSet.of(ArmorPredicate.NOTHING), BASE),
-        )
+        private val values = enumMapOf<EquipmentSlot, MultiChooseListValue<ArmorPredicate>> {
+            this[EquipmentSlot.HEAD] = multiEnumChoice("Helmet", EnumSet.of(ArmorPredicate.NOTHING), HELMET)
+            this[EquipmentSlot.CHEST] = multiEnumChoice("Chestplate", EnumSet.of(ArmorPredicate.NOTHING), CHESTPLATE)
+            this[EquipmentSlot.LEGS] = multiEnumChoice("Leggings", EnumSet.of(ArmorPredicate.NOTHING), BASE)
+            this[EquipmentSlot.FEET] = multiEnumChoice("Boots", EnumSet.of(ArmorPredicate.NOTHING), BASE)
+        }
 
         fun isValid(entity: PlayerEntity): Boolean {
-            return entity.armorItems.withIndex().all { (index, armor) ->
-                val predicates = values[values.lastIndex - index].get()
+            return values.all { (slot, value) ->
+                val predicates = value.get()
+                val armor = entity.getEquippedStack(slot)
                 // Nothing selected = skip this part
                 predicates.isEmpty() || predicates.any {
                     it.predicate.test(armor)
@@ -229,7 +233,7 @@ object CustomAntiBotMode : Choice("Custom"), ModuleAntiBot.IAntiBotMode {
                 val entity = packet.getEntity(world) ?: return@handler
                 val id = entity.id
                 val currentValue = flyingSet.getOrDefault(id, 0)
-                if (entity.isOnGround && entity.prevY != entity.y) {
+                if (entity.isOnGround && entity.lastY != entity.y) {
                     flyingSet.put(id, currentValue + 1)
                 } else if (!entity.isOnGround && currentValue > 0) {
                     val newVL = currentValue / 2

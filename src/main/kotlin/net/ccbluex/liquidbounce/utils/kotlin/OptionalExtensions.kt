@@ -17,16 +17,19 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.ccbluex.liquidbounce.render
+package net.ccbluex.liquidbounce.utils.kotlin
 
-import net.minecraft.client.gl.ShaderProgramKey
-import net.minecraft.client.gl.ShaderProgramKeys
-import net.minecraft.client.render.*
+import java.util.Optional
+import java.util.OptionalDouble
+import java.util.OptionalInt
+import java.util.OptionalLong
 
-enum class VertexInputType(
-    val vertexFormat: VertexFormat,
-    val shaderProgram: ShaderProgramKey,
-) {
-    PosColor(VertexFormats.POSITION_COLOR, ShaderProgramKeys.POSITION_COLOR),
-    PosTexColor(VertexFormats.POSITION_TEXTURE_COLOR, ShaderProgramKeys.POSITION_TEX_COLOR),
-}
+inline fun <T : Any> optional(value: T?) = Optional.ofNullable(value)
+
+inline fun <T : Any> optional(block: () -> T?) = Optional.ofNullable(block())
+
+inline fun optional(value: Int): OptionalInt = OptionalInt.of(value)
+
+inline fun optional(value: Long): OptionalLong = OptionalLong.of(value)
+
+inline fun optional(value: Double): OptionalDouble = OptionalDouble.of(value)

@@ -57,7 +57,9 @@ enum class VirtualScreenType(
 ) {
 
     HUD("hud", isInGame = true),
-    CLICK_GUI("clickgui"),
+    CLICK_GUI("clickgui",
+        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen }
+    ),
     ALT_MANAGER("altmanager"),
     PROXY_MANAGER("proxymanager"),
 

@@ -29,7 +29,7 @@ import net.ccbluex.liquidbounce.api.models.marketplace.MarketplaceItemType
 import net.ccbluex.liquidbounce.api.services.marketplace.MarketplaceApi
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.integration.task.type.ResourceTask
-import net.ccbluex.liquidbounce.mcef.listeners.OkHttpProgressInterceptor
+import net.ccbluex.liquidbounce.utils.http.OkHttpProgressInterceptor
 import net.ccbluex.liquidbounce.utils.io.extractZip
 import net.ccbluex.liquidbounce.utils.kotlin.MinecraftDispatcher
 import java.io.File
@@ -134,8 +134,10 @@ data class SubscribedItem(val name: String, val id: Int, val type: MarketplaceIt
 
         try {
             val taskProgressUpdater = subTask?.let { subTask ->
-                OkHttpProgressInterceptor.ProgressListener { bytesRead, contentLength, _ ->
-                    subTask.update(bytesRead, contentLength)
+                object : OkHttpProgressInterceptor.ProgressListener {
+                    override fun update(bytesRead: Long, contentLength: Long, done: Boolean) {
+                        subTask.update(bytesRead, contentLength)
+                    }
                 }
             }
 

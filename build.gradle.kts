@@ -128,13 +128,14 @@ dependencies {
     // Minecraft Authlib
     includeDependency("com.github.CCBlueX:mc-authlib:${project.property("mc_authlib_version")}")
 
-    // JCEF Support
+    // JCEF Support - kept for compilation but native GUI screens used instead
     includeModDependency("com.github.CCBlueX:mcef:${project.property("mcef_version")}")
     includeDependency("net.ccbluex:netty-httpserver:2.4.2")
     // MacOS native (Linux native is included in game)
     includeDependency("io.netty:netty-transport-classes-kqueue:${project.property("netty_version")}")
     includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-aarch_64")
     includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-x86_64")
+
 
     // Discord RPC Support
     includeDependency("com.github.CCBlueX:DiscordIPC:4.0.0")

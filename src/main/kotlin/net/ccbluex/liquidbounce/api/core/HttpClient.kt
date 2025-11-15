@@ -28,7 +28,8 @@ import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.gson.accessibleInteropGson
 import net.ccbluex.liquidbounce.config.gson.util.readJson
-import net.ccbluex.liquidbounce.mcef.listeners.OkHttpProgressInterceptor
+// import net.ccbluex.liquidbounce.mcef.listeners.OkHttpProgressInterceptor
+import net.ccbluex.liquidbounce.utils.http.OkHttpProgressInterceptor
 import net.ccbluex.liquidbounce.utils.client.error.ErrorHandler
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.kotlin.Minecraft
@@ -52,7 +53,8 @@ import java.io.Reader
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import net.ccbluex.liquidbounce.mcef.utils.FileUtils as McefFileUtils
+// import net.ccbluex.liquidbounce.mcef.utils.FileUtils as McefFileUtils
+// MCEF FileUtils is no longer used
 
 val renderScope = CoroutineScope(
     Dispatchers.Minecraft + SupervisorJob() + CoroutineExceptionHandler { _, throwable ->
@@ -123,7 +125,8 @@ object HttpClient {
                 throw e
             }
         }
-        .build().also(McefFileUtils::setOkHttpClient)
+        .build()
+        // .also(McefFileUtils::setOkHttpClient) // MCEF no longer used
 
     @Suppress("LongParameterList")
     suspend fun request(

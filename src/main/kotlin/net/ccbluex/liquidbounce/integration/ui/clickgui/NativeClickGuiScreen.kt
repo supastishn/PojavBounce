@@ -127,7 +127,14 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private var dragOffsetX = 0.0
         private var dragOffsetY = 0.0
 
-        fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float, textRenderer: net.minecraft.client.font.TextRenderer) {
+        @Suppress("UnusedParameter")
+        fun render(
+            context: DrawContext,
+            mouseX: Int,
+            mouseY: Int,
+            delta: Float,
+            textRenderer: net.minecraft.client.font.TextRenderer
+        ) {
             val height = if (expanded) {
                 PANEL_HEADER_HEIGHT + (modules.size * MODULE_HEIGHT)
             } else {
@@ -202,12 +209,13 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             )
 
             // Bind indicator
-            if (module.bind.key != -1) {
-                val bindText = "[${module.bind.key}]"
+            val bindText = module.bind.keyName
+            if (bindText.isNotEmpty() && bindText != "key.keyboard.unknown") {
+                val displayText = "[$bindText]"
                 context.drawText(
                     textRenderer,
-                    bindText,
-                    x + width - textRenderer.getWidth(bindText) - 6,
+                    displayText,
+                    x + width - textRenderer.getWidth(displayText) - 6,
                     moduleY + 3,
                     0x888888,
                     false
@@ -217,43 +225,73 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
             // Check if clicking on header
-            if (mouseX >= x && mouseX < x + width && mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT) {
-                if (button == 0) {
-                    // Left click - start dragging
-                    dragging = true
-                    dragOffsetX = mouseX - x
-                    dragOffsetY = mouseY - y
-                    return true
-                } else if (button == 1) {
-                    // Right click - toggle expansion
-                    expanded = !expanded
-                    return true
-                }
+            if (isMouseInHeader(mouseX, mouseY)) {
+                return handleHeaderClick(mouseX, mouseY, button)
             }
 
             // Check if clicking on a module
             if (expanded) {
-                var moduleY = y + PANEL_HEADER_HEIGHT
-                for (module in modules) {
-                    if (mouseX >= x && mouseX < x + width && mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT) {
-                        if (button == 0) {
-                            // Left click - toggle module
-                            module.enabled = !module.enabled
-                            return true
-                        } else if (button == 1) {
-                            // Right click - expand module settings (future implementation)
-                            selectedModule = module
-                            return true
-                        }
-                    }
-                    moduleY += MODULE_HEIGHT
-                }
+                return handleModuleClick(mouseX, mouseY, button)
             }
 
             return false
         }
 
-        fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+        private fun isMouseInHeader(mouseX: Double, mouseY: Double): Boolean {
+            return mouseX >= x && mouseX < x + width && 
+                mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT
+        }
+
+        private fun handleHeaderClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
+            when (button) {
+                0 -> {
+                    // Left click - start dragging
+                    dragging = true
+                    dragOffsetX = mouseX - x
+                    dragOffsetY = mouseY - y
+                    return true
+                }
+                1 -> {
+                    // Right click - toggle expansion
+                    expanded = !expanded
+                    return true
+                }
+            }
+            return false
+        }
+
+        private fun handleModuleClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
+            var moduleY = y + PANEL_HEADER_HEIGHT
+            for (module in modules) {
+                val isModuleHit = mouseX >= x && mouseX < x + width && 
+                    mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT
+                if (isModuleHit) {
+                    when (button) {
+                        0 -> {
+                            // Left click - toggle module
+                            module.enabled = !module.enabled
+                            return true
+                        }
+                        1 -> {
+                            // Right click - expand module settings (future implementation)
+                            selectedModule = module
+                            return true
+                        }
+                    }
+                }
+                moduleY += MODULE_HEIGHT
+            }
+            return false
+        }
+
+        @Suppress("UnusedParameter")
+        fun mouseDragged(
+            mouseX: Double,
+            mouseY: Double,
+            button: Int,
+            deltaX: Double,
+            deltaY: Double
+        ): Boolean {
             if (dragging && button == 0) {
                 x = (mouseX - dragOffsetX).toInt()
                 y = (mouseY - dragOffsetY).toInt()

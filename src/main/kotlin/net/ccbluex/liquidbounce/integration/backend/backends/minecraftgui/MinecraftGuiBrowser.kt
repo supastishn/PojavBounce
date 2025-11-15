@@ -31,6 +31,7 @@ import net.ccbluex.liquidbounce.utils.client.logger
  * Pure Minecraft GUI browser implementation that replaces CEF browser.
  * This is a stub implementation that provides the browser interface without web rendering.
  */
+@Suppress("TooManyFunctions")
 class MinecraftGuiBrowser(
     private val backend: MinecraftGuiBrowserBackend,
     url: String,
@@ -106,7 +107,8 @@ class MinecraftGuiBrowser(
         // No-op for pure Minecraft GUI
     }
 
-    override fun toString() = "MinecraftGuiBrowser(url='$url', viewport=$viewport, visible=$visible, priority=$priority)"
+    override fun toString() = "MinecraftGuiBrowser(" +
+        "url='$url', viewport=$viewport, visible=$visible, priority=$priority)"
 
     // Input handling - pass through to input listener
     override fun mouseClicked(mouseX: Double, mouseY: Double, mouseButton: Int) {

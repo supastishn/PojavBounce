@@ -19,7 +19,7 @@
 package net.ccbluex.liquidbounce.integration.ui.hud
 
 import net.ccbluex.liquidbounce.event.EventListener
-import net.ccbluex.liquidbounce.event.events.GameRenderEvent
+import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.mc
@@ -36,12 +36,12 @@ object NativeHudRenderer : EventListener {
     private const val MODULE_SPACING = 2
 
     @Suppress("unused")
-    private val renderHandler = handler<GameRenderEvent> { event ->
+    private val renderHandler = handler<OverlayRenderEvent> { event ->
         if (mc.options.hudHidden) {
             return@handler
         }
 
-        val context = event.drawContext
+        val context = event.context
         renderArrayList(context)
         renderWatermark(context)
         renderCoordinates(context)
@@ -118,8 +118,8 @@ object NativeHudRenderer : EventListener {
      */
     private fun renderCoordinates(context: DrawContext) {
         val player = mc.player ?: return
-        val coordText = String.format(
-            "XYZ: %.1f, %.1f, %.1f",
+        val coordText = "XYZ: %.1f, %.1f, %.1f".format(
+            java.util.Locale.US,
             player.x,
             player.y,
             player.z

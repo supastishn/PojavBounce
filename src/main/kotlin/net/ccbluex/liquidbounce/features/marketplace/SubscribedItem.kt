@@ -134,8 +134,10 @@ data class SubscribedItem(val name: String, val id: Int, val type: MarketplaceIt
 
         try {
             val taskProgressUpdater = subTask?.let { subTask ->
-                OkHttpProgressInterceptor.ProgressListener { bytesRead, contentLength, _ ->
-                    subTask.update(bytesRead, contentLength)
+                object : OkHttpProgressInterceptor.ProgressListener {
+                    override fun update(bytesRead: Long, contentLength: Long, done: Boolean) {
+                        subTask.update(bytesRead, contentLength)
+                    }
                 }
             }
 

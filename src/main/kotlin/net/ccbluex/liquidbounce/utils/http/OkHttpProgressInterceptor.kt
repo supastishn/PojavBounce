@@ -40,9 +40,14 @@ class OkHttpProgressInterceptor(private val progressListener: ProgressListener) 
     @Throws(IOException::class)
     override fun intercept(chain: Interceptor.Chain): Response {
         val originalResponse = chain.proceed(chain.request())
-        return originalResponse.newBuilder()
-            .body(originalResponse.body?.let { ProgressResponseBody(it, progressListener) })
-            .build()
+        val originalBody = originalResponse.body
+        return if (originalBody != null) {
+            originalResponse.newBuilder()
+                .body(ProgressResponseBody(originalBody, progressListener))
+                .build()
+        } else {
+            originalResponse
+        }
     }
 
     private class ProgressResponseBody(

@@ -60,8 +60,14 @@ enum class VirtualScreenType(
     CLICK_GUI("clickgui",
         recognizer = { it is net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen }
     ),
-    ALT_MANAGER("altmanager"),
-    PROXY_MANAGER("proxymanager"),
+    ALT_MANAGER("altmanager",
+        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen },
+        open = { mc.setScreen(net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen(IntegrationListener.parent)) }
+    ),
+    PROXY_MANAGER("proxymanager",
+        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen },
+        open = { mc.setScreen(net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(IntegrationListener.parent)) }
+    ),
 
     TITLE(
         "title",

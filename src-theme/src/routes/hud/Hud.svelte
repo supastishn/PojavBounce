@@ -67,7 +67,7 @@
                 {:else if c.name === "Hotbar"}
                     <HotBar/>
                 {:else if c.name === "Scoreboard"}
-                    <Scoreboard/>
+                    <Scoreboard settings={c.settings}/>
                 {:else if c.name === "ArmorItems"}
                     <GenericPlayerInventory
                             rowLength={1}

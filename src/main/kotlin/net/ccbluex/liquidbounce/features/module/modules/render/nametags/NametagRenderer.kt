@@ -30,8 +30,8 @@ import net.minecraft.entity.LivingEntity
 private const val NAMETAG_PADDING: Int = 15
 
 internal fun DrawContext.drawNametag(nametag: Nametag, posX: Float, posY: Float) {
-    if (NametagShowOptions.ITEMS.isShowing()) {
-        val currentItemStackRenderer = if (NametagShowOptions.ITEM_INFO.isShowing()) {
+    if (nametag.items.any { !it.isEmpty }) {
+        val currentItemStackRenderer = if (NametagEquipment.showInfo) {
             if (nametag.entity === player) {
                 ItemStackListRenderer.SingleItemStackRenderer.All
             } else {
@@ -74,7 +74,7 @@ internal fun DrawContext.drawNametag(nametag: Nametag, posX: Float, posY: Float)
     drawQuad(
         x1, y1, x2, y2,
         fillColor = Color4b(Int.MIN_VALUE, hasAlpha = true),
-        outlineColor = Color4b.BLACK.takeIf { NametagShowOptions.BORDER.isShowing() },
+        outlineColor = Color4b.BLACK.takeIf { ModuleNametags.border },
     )
 
     // Text
@@ -85,7 +85,7 @@ internal fun DrawContext.drawNametag(nametag: Nametag, posX: Float, posY: Float)
     )
 
     // Draw enchantments directly for the entity (regardless of whether items are shown)
-    if (NametagShowOptions.ENCHANTMENTS.isShowing() && nametag.entity is LivingEntity) {
+    if (NametagEnchantmentRenderer.running && nametag.entity is LivingEntity) {
         val entityPos = nametag.entity.pos
         val worldX = entityPos.x.toFloat()
         val worldY = (entityPos.y + nametag.entity.height + 0.5f).toFloat()

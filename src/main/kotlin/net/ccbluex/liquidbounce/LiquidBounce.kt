@@ -21,7 +21,6 @@ package net.ccbluex.liquidbounce
 
 import com.mojang.blaze3d.systems.RenderSystem
 import kotlinx.coroutines.*
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.future
 import net.ccbluex.liquidbounce.LiquidBounce.CLIENT_NAME
 import net.ccbluex.liquidbounce.api.core.ApiConfig
@@ -61,7 +60,6 @@ import net.ccbluex.liquidbounce.integration.task.TaskManager
 import net.ccbluex.liquidbounce.integration.task.TaskProgressScreen
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.lang.LanguageManager
-import net.ccbluex.liquidbounce.render.ClientRenderPipelines
 import net.ccbluex.liquidbounce.render.ClientShaders
 import net.ccbluex.liquidbounce.render.FontManager
 import net.ccbluex.liquidbounce.render.HAS_AMD_VEGA_APU
@@ -144,7 +142,7 @@ object LiquidBounce : EventListener {
      *
      * TODO: Replace this approach with full semantic versioning.
      */
-    const val IN_DEVELOPMENT = true
+    const val IN_DEVELOPMENT = false
 
     /**
      * Client logger to print out console messages

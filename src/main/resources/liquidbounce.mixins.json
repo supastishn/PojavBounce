@@ -8,6 +8,7 @@
   "client": [
     "authlib.MixinMinecraftClient",
     "authlib.MixinYggdrasilMinecraftSessionService",
+    "authlib.MixinYggdrasilMinecraftSessionServiceAccessor",
     "djl.MixinUtils",
     "lithium.MixinChunkAwareBlockCollisionSweeper",
     "minecraft.block.MixinBlock",

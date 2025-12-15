@@ -128,7 +128,7 @@ class ChatClient {
 
         val bootstrap = Bootstrap()
 
-        bootstrap.clientChannelAndGroup(tryToUseEpoll = true)
+        bootstrap.clientChannelAndGroup(true)
             .handler(object : ChannelInitializer<SocketChannel>() {
 
                 /**
@@ -242,7 +242,11 @@ class ChatClient {
                 runCatching {
                     val sessionHash = packet.sessionHash
 
-                    mc.sessionService.joinServer(mc.session.uuidOrNull, mc.session.accessToken, sessionHash)
+                    mc.apiServices.sessionService.joinServer(
+                        mc.session.uuidOrNull,
+                        mc.session.accessToken,
+                        sessionHash
+                    )
                     sendPacket(
                         ServerLoginMojangPacket(
                             mc.session.username,

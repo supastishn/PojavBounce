@@ -74,7 +74,7 @@ object ScaffoldMovementPlanner {
         }
 
         // We try to make the player run on this line
-        val optimalLine = Line(Vec3d(lineBaseBlock.x + 0.5, player.pos.y, lineBaseBlock.z + 0.5), direction)
+        val optimalLine = Line(Vec3d(lineBaseBlock.x + 0.5, player.entityPos.y, lineBaseBlock.z + 0.5), direction)
 
         // Debug optimal line
         ModuleScaffold.debugGeometry("optimalLine") {
@@ -134,7 +134,7 @@ object ScaffoldMovementPlanner {
 
         for (xOffset in offsetsToTry) {
             for (zOffset in offsetsToTry) {
-                val playerPos = player.pos.toBlockPos(xOffset, -1.0, zOffset)
+                val playerPos = player.entityPos.toBlockPos(xOffset, -1.0, zOffset)
 
                 val isEmpty = playerPos.getState()?.getCollisionShape(world, playerPos)?.isEmpty ?: true
 

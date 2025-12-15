@@ -91,7 +91,7 @@ internal fun DrawContext.drawNametag(nametag: Nametag, posX: Float, posY: Float)
 
     // Draw enchantments directly for the entity (regardless of whether items are shown)
     if (NametagEnchantmentRenderer.running && nametag.entity is LivingEntity) {
-        val entityPos = nametag.entity.pos
+        val entityPos = nametag.entity.entityPos
         val worldX = entityPos.x.toFloat()
         val worldY = (entityPos.y + nametag.entity.height + 0.5f).toFloat()
 

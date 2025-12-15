@@ -34,12 +34,14 @@ import net.ccbluex.liquidbounce.render.renderEnvironmentForWorld
 import net.ccbluex.liquidbounce.render.withPositionRelativeToCamera
 import net.ccbluex.liquidbounce.utils.client.Chronometer
 import net.ccbluex.liquidbounce.utils.client.PacketSnapshot
+import net.ccbluex.liquidbounce.utils.client.floorToInt
 import net.ccbluex.liquidbounce.utils.combat.findEnemy
 import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.boxedDistanceTo
 import net.ccbluex.liquidbounce.utils.entity.squareBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.render.WireframePlayer
+import net.minecraft.client.render.LightmapTextureManager
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.TrackedPosition
@@ -49,7 +51,6 @@ import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket
 import net.minecraft.network.packet.s2c.play.*
 import net.minecraft.sound.SoundEvents
-import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec3d
 
@@ -207,23 +208,32 @@ object ModuleBacktrack : ClientModule("Backtrack", Category.COMBAT) {
         private val renderHandler = handler<WorldRenderEvent> { event ->
             val (entity, pos) = getEntityPosition() ?: return@handler
 
-            val light = world.getLightLevel(BlockPos.ORIGIN)
-            val reducedLight = (light * lightAmount.toDouble()).toInt()
+            val entityRenderer = mc.entityRenderDispatcher.getRenderer(entity)
 
-            renderEnvironmentForWorld(event.matrixStack) {
-                withPositionRelativeToCamera(pos) {
-                    mc.entityRenderDispatcher.render(
-                        entity,
-                        0.0,
-                        0.0,
-                        0.0,
-                        1f,
-                        event.matrixStack,
-                        mc.bufferBuilders.entityVertexConsumers,
-                        reducedLight
-                    )
-                }
-            }
+            val rs = entityRenderer.getAndUpdateRenderState(entity, event.partialTicks)
+
+            val originalBlockLight = LightmapTextureManager.getBlockLightCoordinates(rs.light)
+            val originalSkyLight = LightmapTextureManager.getSkyLightCoordinates(rs.light)
+            rs.light = LightmapTextureManager.pack(
+                (originalBlockLight * lightAmount).floorToInt(),
+                (originalSkyLight * lightAmount).floorToInt(),
+            )
+            rs.x = pos.x
+            rs.y = pos.y
+            rs.z = pos.z
+            val cameraState = mc.gameRenderer.entityRenderStates.cameraRenderState
+            rs.squaredDistanceToCamera = pos.squaredDistanceTo(cameraState.pos)
+
+            // TODO(1.21.10-port): position & light incorrect
+            mc.entityRenderDispatcher.render(
+                rs,
+                cameraState,
+                rs.x - cameraState.pos.x,
+                rs.y - cameraState.pos.y,
+                rs.z - cameraState.pos.z,
+                event.matrixStack,
+                mc.gameRenderer.entityRenderCommandQueue,
+            )
         }
     }
 

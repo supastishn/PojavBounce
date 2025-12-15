@@ -22,7 +22,6 @@
 package net.ccbluex.liquidbounce.render
 
 import com.mojang.blaze3d.pipeline.RenderPipeline
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.textures.GpuTextureView
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap
 import net.ccbluex.fastutil.fastIterator
@@ -36,6 +35,7 @@ import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.math.Position
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.Vec3i
+import org.joml.Vector3fc
 
 /**
  * Context representing the rendering environment.
@@ -44,9 +44,8 @@ import net.minecraft.util.math.Vec3i
  */
 sealed class RenderEnvironment(val framebuffer: Framebuffer) {
 
-    val shaderTextures = arrayOfNulls<GpuTextureView>(RenderSystem.TEXTURE_COUNT)
+    val shaderTextures = arrayOfNulls<GpuTextureView>(TEXTURE_COUNT)
     var shaderColor = Color4b.WHITE
-    var shaderLineWidth = 1.0F
 
     var isBatchMode: Boolean = false
         private set
@@ -79,6 +78,8 @@ sealed class RenderEnvironment(val framebuffer: Framebuffer) {
     }
 
     companion object {
+        const val TEXTURE_COUNT = 12
+
         @JvmStatic
         private val batchBuffer = Reference2ReferenceOpenHashMap<RenderPipeline, BufferBuilder>()
     }
@@ -89,15 +90,33 @@ class WorldRenderEnvironment(
     val matrixStack: MatrixStack,
     val camera: Camera,
 ) : RenderEnvironment(framebuffer) {
-    fun relativeToCamera(pos: Vec3): Vec3d {
-        return Vec3d(pos.x.toDouble() - camera.pos.x, pos.y.toDouble() - camera.pos.y, pos.z.toDouble() - camera.pos.z)
-    }
+    fun relativeToCamera(pos: Vec3): Vec3d = pos.relativeTo(camera)
 
-    fun relativeToCamera(pos: Position): Vec3d {
-        return Vec3d(pos.x - camera.pos.x, pos.y - camera.pos.y, pos.z - camera.pos.z)
-    }
+    fun relativeToCamera(pos: Position): Vec3d = pos.relativeTo(camera)
 
-    fun relativeToCamera(pos: Vec3i): Vec3d {
-        return Vec3d(pos.x.toDouble() - camera.pos.x, pos.y.toDouble() - camera.pos.y, pos.z.toDouble() - camera.pos.z)
-    }
+    fun relativeToCamera(pos: Vec3i): Vec3d = pos.relativeTo(camera)
 }
+
+fun Vec3.relativeTo(camera: Camera): Vec3d = Vec3d(
+    x - camera.cameraPos.x,
+    y - camera.cameraPos.y,
+    z - camera.cameraPos.z,
+)
+
+fun Position.relativeTo(camera: Camera): Vec3d = Vec3d(
+    x - camera.cameraPos.x,
+    y - camera.cameraPos.y,
+    z - camera.cameraPos.z,
+)
+
+fun Vec3i.relativeTo(camera: Camera): Vec3d = Vec3d(
+    x.toDouble() - camera.cameraPos.x,
+    y.toDouble() - camera.cameraPos.y,
+    z.toDouble() - camera.cameraPos.z,
+)
+
+fun Vector3fc.relativeTo(camera: Camera): Vec3d = Vec3d(
+    x() - camera.cameraPos.x,
+    y() - camera.cameraPos.y,
+    z() - camera.cameraPos.z,
+)

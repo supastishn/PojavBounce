@@ -174,7 +174,7 @@ data class InputBind(
         /**
          * Check if any one modifier key is pressed.
          */
-        val isAnyPressed: Boolean get() = this.keyCodes.any { InputUtil.isKeyPressed(mc.window.handle, it) }
+        val isAnyPressed: Boolean get() = this.keyCodes.any { InputUtil.isKeyPressed(mc.window, it) }
 
         /**
          * Performs the platform (OS) specified render name of a modifier.
@@ -199,8 +199,8 @@ data class InputBind(
             @JvmStatic
             private val LOOKUP_TABLE = NamedChoice.makeLookupTable<Modifier>()
 
-            @JvmField
-            internal val KEY_CODE_LOOKUP: Int2ReferenceMap<Modifier> = run {
+            @JvmStatic
+            private val KEY_CODE_LOOKUP: Int2ReferenceMap<Modifier> = run {
                 val map = Int2ReferenceOpenHashMap<Modifier>()
                 for (modifier in Modifier.entries) {
                     for (keyCode in modifier.keyCodes) {
@@ -212,6 +212,9 @@ data class InputBind(
 
             @JvmStatic
             fun of(string: String?): Modifier? = LOOKUP_TABLE[string]
+
+            @JvmStatic
+            fun of(keyCode: Int): Modifier? = KEY_CODE_LOOKUP[keyCode]
 
             @JvmStatic
             fun fromRawValue(modifiers: Int) = entries.filterTo(emptyEnumSet()) {

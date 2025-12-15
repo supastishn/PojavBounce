@@ -17,26 +17,20 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-package net.ccbluex.liquidbounce.interfaces;
+package net.ccbluex.liquidbounce.injection.mixins.minecraft.entity;
 
-import com.mojang.blaze3d.systems.RenderPass;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.util.ObjectAllocator;
-import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import net.ccbluex.liquidbounce.features.module.modules.movement.ModuleSprint;
+import net.minecraft.entity.player.HungerManager;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
 
-import java.util.Map;
-import java.util.function.Consumer;
+@Mixin(HungerManager.class)
+public abstract class MixinHungerManager {
 
-public interface PostEffectProcessorAdditions {
+    @ModifyReturnValue(method = "canSprint", at = @At("RETURN"))
+    private boolean canSprint(boolean original) {
+        return original || ModuleSprint.INSTANCE.getShouldIgnoreHunger();
+    }
 
-    /**
-     * Used for rendering the ui blur as it requires a 3-way merge.
-     */
-    void liquid_bounce$renderWithAdditionalExternalTargets(
-            Framebuffer framebuffer,
-            ObjectAllocator objectAllocator,
-            @Nullable Consumer<RenderPass> additionalUniformsSetter,
-            Map<Identifier, Framebuffer> additionalExternalFramebuffers
-    );
 }

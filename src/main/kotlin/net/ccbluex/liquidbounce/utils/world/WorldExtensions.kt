@@ -15,24 +15,22 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
-package net.ccbluex.liquidbounce.injection.mixins.minecraft.entity;
 
-import net.minecraft.entity.data.TrackedData;
-import net.minecraft.entity.player.PlayerEntity;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.gen.Accessor;
+package net.ccbluex.liquidbounce.utils.world
 
-@Mixin(PlayerEntity.class)
-public interface MixinPlayerEntityAccessor {
+import net.minecraft.world.World
+import net.minecraft.world.attribute.BedRule
+import net.minecraft.world.attribute.EnvironmentAttributes
 
-    /*
-        * Used to get the TrackedData of the arm
-     */
-    @Accessor("MAIN_ARM")
-    static TrackedData<Byte> getTrackedMainArm() {
-        throw new AssertionError();
-    }
+/**
+ * @return if water and ice evaporates in this world (e.g. nether)
+ */
+val World.waterEvaporates: Boolean
+    get() = this.environmentAttributes.getAttributeValue(EnvironmentAttributes.WATER_EVAPORATES_GAMEPLAY)
 
-}
+val World.bedRule: BedRule
+    get() = this.environmentAttributes.getAttributeValue(EnvironmentAttributes.BED_RULE_GAMEPLAY)
+
+val World.respawnAnchorWorks: Boolean
+    get() = this.environmentAttributes.getAttributeValue(EnvironmentAttributes.RESPAWN_ANCHOR_WORKS_GAMEPLAY)

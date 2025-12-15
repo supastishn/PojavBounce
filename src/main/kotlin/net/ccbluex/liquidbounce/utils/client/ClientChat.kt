@@ -118,7 +118,7 @@ fun gradientText(text: String, startColor: Color4b, endColor: Color4b): MutableT
         val color = startColor.interpolateTo(endColor, factor)
 
         newText.append(
-            char.toString().asText().withColor(color.toARGB())
+            char.toString().asPlainText(Style.EMPTY + color)
         )
     }
 }
@@ -154,8 +154,8 @@ fun MutableText.bypassNameProtection(): MutableText = styled {
  * Open a [ChatScreen] with given text,
  * or set the text of current [ChatScreen]
  */
-fun MinecraftClient.openChat(text: String) = send {
-    (currentScreen as? MixinChatScreenAccessor)?.chatField?.setText(text) ?: setScreen(ChatScreen(text))
+fun MinecraftClient.openChat(text: String, draft: Boolean = false) = send {
+    (currentScreen as? MixinChatScreenAccessor)?.chatField?.setText(text) ?: setScreen(ChatScreen(text, draft))
 }
 
 private val defaultMessageMetadata = MessageMetadata()

@@ -127,7 +127,7 @@ object ModuleAutoFish : ClientModule("AutoFish", Category.PLAYER) {
 
         if (packet is PlaySoundS2CPacket && packet.sound.value() in sounds) {
             if (PullTriggerSoundDistance.running) {
-                val hookToSoundSq = fishHook.pos.squaredDistanceTo(packet.x, packet.y, packet.z)
+                val hookToSoundSq = fishHook.entityPos.squaredDistanceTo(packet.x, packet.y, packet.z)
                 debugParameter("HookToSoundSq") { hookToSoundSq }
 
                 // From my testing, we should see distances around 0.04 - 0.08 (Paper version 1.21.1-132)

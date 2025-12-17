@@ -21,17 +21,13 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.render;
 
 import net.ccbluex.liquidbounce.features.module.modules.render.DoRender;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAntiBlind;
-import net.ccbluex.liquidbounce.utils.client.SignTranslationFixKt;
-import net.minecraft.world.level.block.entity.SignText;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.network.chat.Component;
-import org.spongepowered.asm.mixin.Final;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.level.block.entity.SignText;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
@@ -39,10 +35,6 @@ import java.util.function.Function;
 
 @Mixin(SignText.class)
 public class MixinSignText {
-
-    @Shadow
-    @Final
-    private Component[] messages;
 
     @Unique
     private static final FormattedCharSequence[] LIQUIDBOUNCE$EMPTY = new FormattedCharSequence[4];
@@ -55,25 +47,6 @@ public class MixinSignText {
     private void injectNoSignRender(boolean filtered, Function<Component, FormattedCharSequence> messageOrderer, CallbackInfoReturnable<FormattedCharSequence[]> cir) {
         if (!ModuleAntiBlind.canRender(DoRender.SIGN_TEXT)) {
             cir.setReturnValue(LIQUIDBOUNCE$EMPTY);
-        }
-    }
-
-    /**
-     * Fixes a vulnerability where the server can find out about the installed mods via translated text.
-     * <p>
-     * This is not the same fix as by https://modrinth.com/mod/moddetectionpreventer/ even if it fixes the same issue.
-     * In order to prevent further issues, we completely disallow creating a sign text with unknown translatable.
-     */
-    @Inject(method = "<init>([Lnet/minecraft/network/chat/Component;[Lnet/minecraft/network/chat/Component;Lnet/minecraft/world/item/DyeColor;Z)V", at = @At("RETURN"))
-    private void injectSignVulnerabilityFix(CallbackInfo ci) {
-        for (int i = 0; i < this.messages.length; i++) {
-            var msg = this.messages[i];
-
-            if (msg == null) {
-                continue;
-            }
-
-            this.messages[i] = SignTranslationFixKt.filterNonVanillaText(msg);
         }
     }
 

@@ -19,7 +19,6 @@
     "minecraft.block.MixinWebBlock",
     "minecraft.client.MinecraftAccessor",
     "minecraft.client.MixinClientInput",
-    "minecraft.client.MixinClientLanguage",
     "minecraft.client.MixinClientLevel",
     "minecraft.client.MixinClientWorldProperties",
     "minecraft.client.MixinGameNarrator",

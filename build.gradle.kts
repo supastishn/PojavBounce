@@ -91,6 +91,10 @@ allprojects {
             name = "Lenni0451"
             url = uri("https://maven.lenni0451.net/everything")
         }
+        maven {
+            name = "NikOverflow"
+            url = uri("https://reposilite.nikoverflow.com/releases")
+        }
     }
 }
 
@@ -118,6 +122,10 @@ dependencies {
     // ViaFabricPlus
     modApi("com.viaversion:viafabricplus-api:${project.property("viafabricplus_version")}")
     modRuntimeOnly("com.viaversion:viafabricplus:${project.property("viafabricplus_version")}")
+
+    // Exploit Preventer
+    modApi("com.nikoverflow:ExploitPreventer-API:${project.property("exploit_preventer_api_version")}")
+    modRuntimeOnly("maven.modrinth:exploitpreventer:${project.property("exploit_preventer_mod_version")}")
 
     // Minecraft Authlib
     includeDependency("net.ccbluex:mc-authlib:${project.property("mc_authlib_version")}")

@@ -23,7 +23,6 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.ccbluex.liquidbounce.event.EventManager;
 import net.ccbluex.liquidbounce.event.events.KeybindChangeEvent;
 import net.ccbluex.liquidbounce.event.events.KeybindIsPressedEvent;
-import net.ccbluex.liquidbounce.utils.client.VanillaTranslationRecognizer;
 import net.minecraft.client.KeyMapping;
 import com.mojang.blaze3d.platform.InputConstants;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,11 +32,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(KeyMapping.class)
 public class MixinKeyMapping {
-
-    @Inject(method = "<init>(Ljava/lang/String;Lcom/mojang/blaze3d/platform/InputConstants$Type;ILnet/minecraft/client/KeyMapping$Category;)V", at = @At("RETURN"), require = 1)
-    private void injectVanillaKeybindRegistering(String id, InputConstants.Type type, int code, KeyMapping.Category category, CallbackInfo ci) {
-        VanillaTranslationRecognizer.INSTANCE.registerKey(id);
-    }
 
     @Inject(method = "setKey", at = @At("RETURN"))
     private void hookSetBoundKey(InputConstants.Key boundKey, CallbackInfo ci) {

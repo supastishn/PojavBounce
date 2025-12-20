@@ -539,6 +539,8 @@ enum class SwingMode(
     }
 }
 
+val BlockHitResult.targetBlockPos: BlockPos get() = this.blockPos.relative(this.direction)
+
 fun doPlacement(
     rayTraceResult: BlockHitResult,
     hand: InteractionHand = InteractionHand.MAIN_HAND,
@@ -575,6 +577,7 @@ fun doPlacement(
  * Swings item, resets equip progress and hand swing progress
  *
  * @param wasStackUsed was an item consumed in order to place the block
+ * @param onPlacementSuccess if result of the lambda is true, swing hand with [swingMode]
  */
 private inline fun handleActionsOnAccept(
     hand: InteractionHand,

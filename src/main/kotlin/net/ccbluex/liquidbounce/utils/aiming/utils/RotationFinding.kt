@@ -41,7 +41,6 @@ import net.ccbluex.liquidbounce.utils.math.forEach3D
 import net.ccbluex.liquidbounce.utils.math.isHitByLine
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.math.plus
-import net.ccbluex.liquidbounce.utils.math.size
 import net.ccbluex.liquidbounce.utils.math.sq
 import net.ccbluex.liquidbounce.utils.math.times
 import net.ccbluex.liquidbounce.utils.math.toVec3d
@@ -267,7 +266,6 @@ fun raytraceBlockSide(
             range(0.05..0.95 step 0.1, 0.05..0.95 step 0.1) { a, b ->
                 val spot = pointOnBlockSide(side, a, b, box) + pos.toVec3d()
 
-                ModuleDebug.debugGeometry(ModuleAutoFarm, "deddee", ModuleDebug.DebuggedPoint(spot, Color4b.RED))
                 bestRotationTracker.considerSpot(
                     spot,
                     box,
@@ -475,18 +473,18 @@ fun raytraceUpperBlockSide(
     wallsRange: Double,
     expectedTarget: BlockPos,
     rotationPreference: RotationPreference = LeastDifferencePreference.LEAST_DISTANCE_TO_CURRENT_ROTATION,
-    rotationsNotToMatch: List<Rotation>? = null
+    rotationsNotToMatch: Collection<Rotation>? = null
 ): RotationWithVector? {
     val rangeSquared = range * range
     val wallsRangeSquared = wallsRange * wallsRange
 
-    val vec3d = Vec3.atLowerCornerOf(expectedTarget).add(0.0, 0.9, 0.0)
+    val vec3d = Vec3.atLowerCornerOf(expectedTarget)
 
     val bestRotationTracker = BestRotationTracker(rotationPreference)
 
     val stepSize = rotationsNotToMatch?.let { 0.05 } ?: 0.1
     range(0.1..0.9 step stepSize, 0.1..0.9 step stepSize) { x, z ->
-        val vec3 = vec3d.add(x, 0.0, z)
+        val vec3 = vec3d.add(x, 0.9, z)
 
         // skip because of out of range
         val distance = eyes.distanceToSqr(vec3)

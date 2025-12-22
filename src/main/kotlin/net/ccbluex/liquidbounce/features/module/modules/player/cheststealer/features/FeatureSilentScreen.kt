@@ -42,12 +42,11 @@ import net.minecraft.core.BlockPos
 import net.minecraft.world.phys.Vec3
 
 /**
- * @see net.ccbluex.liquidbounce.injection.mixins.minecraft.client.MixinMinecraftClient
- * @see net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinHandledScreen
+ * @see net.ccbluex.liquidbounce.injection.mixins.minecraft.client.MixinMinecraft
+ * @see net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinAbstractContainerScreen
  */
 object FeatureSilentScreen : ToggleableConfigurable(ModuleChestStealer, "SilentScreen", false) {
 
-    @get:JvmStatic
     val unlockCursor by boolean("UnlockCursor", false)
 
     private val drawInventoryTag = object : ToggleableConfigurable(this, "DrawInventoryTag", enabled = true) {
@@ -101,17 +100,19 @@ object FeatureSilentScreen : ToggleableConfigurable(ModuleChestStealer, "SilentS
         tree(drawInventoryTag)
     }
 
-    @get:JvmStatic
     var shouldHide = false
+        private set
 
-    val screenHandler = handler<ScreenEvent> { event ->
+    @Suppress("unused")
+    private val screenHandler = handler<ScreenEvent> { event ->
         shouldHide = event.screen?.canBeStolen() == true
     }
 
     @Volatile
     private var lastInteractedBlock: BlockPos? = null
 
-    val packetHandler = handler<PacketEvent> { event ->
+    @Suppress("unused")
+    private val packetHandler = handler<PacketEvent> { event ->
         val packet = event.packet
         // TODO: handle other interactions
         if (packet is ServerboundUseItemOnPacket && packet.hitResult.type === HitResult.Type.BLOCK) {

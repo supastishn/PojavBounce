@@ -3,10 +3,10 @@ package net.ccbluex.liquidbounce.integration.ui
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
 import net.ccbluex.liquidbounce.integration.ThemeManager
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.text.LiteralText
-import net.minecraft.client.gui.widget.ButtonWidget
+import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screen.TitleScreen
 
 class IntegrationMenuScreen : Screen(LiteralText("Integration Menu")) {

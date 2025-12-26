@@ -235,7 +235,7 @@ object ClientRenderPipelines {
      * Precompile
      */
     fun precompile() {
-        JCEF
+        // Removed JCEF reference - using BROWSER instead
         GUI
 
         renderPipelines.fastIterator().forEach { (_, pipeline) ->

@@ -24,6 +24,10 @@ import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
+/**
+ * Taco HUD component - a fun decorative element.
+ * Note: Uses text instead of emoji due to Minecraft font renderer limitations with Unicode emojis.
+ */
 class TacoComponent(
     name: String,
     enabled: Boolean,

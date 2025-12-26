@@ -43,6 +43,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val MODULE_HEIGHT = 14
         private const val PANEL_SPACING = 10
         private const val PANEL_MARGIN = 10
+        private const val UNBOUND_KEY_NAME = "None"
     }
 
     override fun init() {
@@ -210,7 +211,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             // Bind indicator
             val bindText = module.bind.keyName
-            if (bindText.isNotEmpty() && bindText != "None") {
+            if (bindText.isNotEmpty() && bindText != UNBOUND_KEY_NAME) {
                 val displayText = "[$bindText]"
                 context.drawString(
                     textRenderer,

@@ -18,32 +18,30 @@
  */
 package net.ccbluex.liquidbounce.integration.ui
 
+import net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen
+import net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen
+import net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
 
 /**
  * Tests for native UI screens
  *
- * Note: These tests require Minecraft runtime context and cannot be run in unit test mode.
- * They are kept as placeholders for integration testing.
+ * Note: These tests verify that the classes are accessible without requiring
+ * Minecraft runtime context for instantiation.
  */
 class NativeUiScreensTest {
 
     @Test
     fun `Native UI screen classes exist and are accessible`() {
-        // Verify the classes are accessible without instantiation
+        // Verify the classes are accessible using class references
         // (actual instantiation requires Minecraft runtime)
-        val clickGuiClass = Class.forName(
-            "net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen"
-        )
-        val altManagerClass = Class.forName(
-            "net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen"
-        )
-        val proxyManagerClass = Class.forName(
-            "net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen"
-        )
+        val clickGuiClass = NativeClickGuiScreen::class.java
+        val altManagerClass = NativeAltManagerScreen::class.java
+        val proxyManagerClass = NativeProxyManagerScreen::class.java
 
-        assert(clickGuiClass != null) { "NativeClickGuiScreen class should exist" }
-        assert(altManagerClass != null) { "NativeAltManagerScreen class should exist" }
-        assert(proxyManagerClass != null) { "NativeProxyManagerScreen class should exist" }
+        assertNotNull(clickGuiClass, "NativeClickGuiScreen class should exist")
+        assertNotNull(altManagerClass, "NativeAltManagerScreen class should exist")
+        assertNotNull(proxyManagerClass, "NativeProxyManagerScreen class should exist")
     }
 }

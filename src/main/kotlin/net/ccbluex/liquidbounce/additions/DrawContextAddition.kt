@@ -66,3 +66,13 @@ fun GuiGraphics.drawBorder(x: Int, y: Int, width: Int, height: Int, color: Int) 
     fill(x, y + 1, x + 1, y + height - 1, color)
     fill(x + width - 1, y + 1, x + width, y + height - 1, color)
 }
+
+// Compatibility extensions for older API
+inline fun GuiGraphics.drawTextWithShadow(font: Font, text: String, x: Int, y: Int, color: Int) =
+    drawString(font, text, x, y, color, true)
+
+inline fun GuiGraphics.drawText(font: Font, text: String, x: Int, y: Int, color: Int) =
+    drawString(font, text, x, y, color, false)
+
+inline fun GuiGraphics.drawCenteredTextWithShadow(font: Font, text: String, x: Int, y: Int, color: Int) =
+    drawString(font, text, x - font.width(text) / 2, y, color, true)

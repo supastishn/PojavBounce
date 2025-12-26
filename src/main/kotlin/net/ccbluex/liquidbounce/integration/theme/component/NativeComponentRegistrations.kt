@@ -80,7 +80,5 @@ fun registerNativeComponents() {
 
 }
 
-// Ensure registration happens on load
-init {
-    registerNativeComponents()
-}
+// Ensure registration happens on load - use private val to execute at module load time
+private val _initialization = registerNativeComponents()

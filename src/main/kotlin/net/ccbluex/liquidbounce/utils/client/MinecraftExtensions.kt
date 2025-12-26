@@ -52,6 +52,10 @@ val interaction: MultiPlayerGameMode
 val gpuDevice: GpuDevice
     inline get() = RenderSystem.getDevice()
 
+// Compatibility property for textRenderer -> font migration
+val Minecraft.textRenderer
+    inline get() = this.font
+
 fun Services.with(
     sessionService: MinecraftSessionService = this.sessionService,
     servicesKeySet: ServicesKeySet = this.servicesKeySet,

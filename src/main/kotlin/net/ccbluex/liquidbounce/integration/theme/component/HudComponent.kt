@@ -25,7 +25,7 @@ import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.utils.render.Alignment
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import java.util.*
 
 /**
@@ -56,7 +56,7 @@ abstract class HudComponent(
     /**
      * Called when the HUD overlay is rendered. Native components should override this.
      */
-    open fun render(context: DrawContext) {
+    open fun render(context: GuiGraphics) {
         // Default no-op
     }
 

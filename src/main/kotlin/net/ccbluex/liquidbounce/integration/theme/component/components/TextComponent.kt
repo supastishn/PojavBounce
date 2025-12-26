@@ -1,10 +1,10 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.integration.theme.component.Component
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class TextComponent(
@@ -13,9 +13,9 @@ class TextComponent(
     alignment: Alignment,
     tweaks: Array<ComponentTweak>,
     val values: Array<JsonObject>
-) : NativeComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphics) {
         val textValue = values.find { it["name"]?.asString == "Text" }?.get("value")?.asString ?: return
         val colorValue = values.find { it["name"]?.asString == "Color" }?.get("value")?.asLong ?: 0xFFFFFFFF
 

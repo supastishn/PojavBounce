@@ -1,10 +1,10 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.Component
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class ArrayListComponent(
@@ -12,12 +12,12 @@ class ArrayListComponent(
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<ComponentTweak>
-) : NativeComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
     private val MARGIN = 4
     private val MODULE_SPACING = 2
 
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphics) {
         val enabledModules = ModuleManager
             .filter { it.enabled && !it.hidden }
             .sortedByDescending { mc.textRenderer.getWidth(getModuleDisplayText(it)) }

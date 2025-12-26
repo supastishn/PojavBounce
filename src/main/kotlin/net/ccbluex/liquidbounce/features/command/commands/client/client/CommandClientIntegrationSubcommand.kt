@@ -36,7 +36,7 @@ object CommandClientIntegrationSubcommand {
 
     private fun resetSubcommand() = CommandBuilder.begin("reset")
         .handler {
-            chat(regular("Resetting client JCEF browser..."))
+            chat(regular("Resetting client integration UI..."))
             IntegrationListener.update()
         }.build()
 

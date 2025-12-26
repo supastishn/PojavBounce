@@ -42,128 +42,14 @@ object NativeHudRenderer : EventListener {
         }
 
         val context = event.context
-        renderArrayList(context)
-        renderWatermark(context)
-        renderCoordinates(context)
-    }
 
-    /**
-     * Renders the module arraylist (enabled modules on the right side)
-     */
-    private fun renderArrayList(context: DrawContext) {
-        val enabledModules = ModuleManager
-            .filter { it.enabled && !it.hidden }
-            .sortedByDescending { mc.textRenderer.getWidth(getModuleDisplayText(it)) }
-
-        var yOffset = MARGIN
-        val screenWidth = mc.window.scaledWidth
-
-        for (module in enabledModules) {
-            val displayText = getModuleDisplayText(module)
-            val textWidth = mc.textRenderer.getWidth(displayText)
-            val xPos = screenWidth - textWidth - MARGIN
-
-            // Background
-            context.fill(
-                xPos - 2,
-                yOffset,
-                screenWidth - MARGIN + 2,
-                yOffset + mc.textRenderer.fontHeight + 2,
-                ColorHelper.getArgb(120, 0, 0, 0)
-            )
-
-            // Module text
-            context.drawText(
-                mc.textRenderer,
-                displayText,
-                xPos,
-                yOffset + 1,
-                getRainbowColor(yOffset),
-                true
-            )
-
-            yOffset += mc.textRenderer.fontHeight + MODULE_SPACING
+        // Render all components (native + theme-defined components). Each component
+        // provides its own render method operated by the Theme component system.
+        for (component in net.ccbluex.liquidbounce.integration.theme.component.ComponentManager.components) {
+            if (component.enabled) {
+                component.render(context)
+            }
         }
     }
 
-    /**
-     * Renders the watermark (client name and version)
-     */
-    private fun renderWatermark(context: DrawContext) {
-        val watermarkText = "LiquidBounce ${net.ccbluex.liquidbounce.LiquidBounce.clientVersion}"
-        val textWidth = mc.textRenderer.getWidth(watermarkText)
-
-        // Background
-        context.fill(
-            MARGIN - 2,
-            MARGIN,
-            MARGIN + textWidth + 2,
-            MARGIN + mc.textRenderer.fontHeight + 2,
-            ColorHelper.getArgb(120, 0, 0, 0)
-        )
-
-        // Text
-        context.drawText(
-            mc.textRenderer,
-            watermarkText,
-            MARGIN,
-            MARGIN + 1,
-            getRainbowColor(0),
-            true
-        )
-    }
-
-    /**
-     * Renders player coordinates
-     */
-    private fun renderCoordinates(context: DrawContext) {
-        val player = mc.player ?: return
-        val coordText = "XYZ: %.1f, %.1f, %.1f".format(
-            java.util.Locale.US,
-            player.x,
-            player.y,
-            player.z
-        )
-        val textWidth = mc.textRenderer.getWidth(coordText)
-        val yPos = mc.window.scaledHeight - mc.textRenderer.fontHeight - MARGIN
-
-        // Background
-        context.fill(
-            MARGIN - 2,
-            yPos - 1,
-            MARGIN + textWidth + 2,
-            yPos + mc.textRenderer.fontHeight + 1,
-            ColorHelper.getArgb(120, 0, 0, 0)
-        )
-
-        // Text
-        context.drawText(
-            mc.textRenderer,
-            coordText,
-            MARGIN,
-            yPos,
-            0xFFFFFF,
-            true
-        )
-    }
-
-    /**
-     * Gets the display text for a module (name + tag if available)
-     */
-    private fun getModuleDisplayText(module: net.ccbluex.liquidbounce.features.module.ClientModule): String {
-        return if (module.tag != null) {
-            "${module.name} §7${module.tag}"
-        } else {
-            module.name
-        }
-    }
-
-    /**
-     * Generates a rainbow color based on offset
-     */
-    private fun getRainbowColor(offset: Int): Int {
-        val time = System.currentTimeMillis()
-        val hue = ((time + offset * 100) % 3600) / 3600.0f
-        return java.awt.Color.HSBtoRGB(hue, 0.8f, 1.0f)
-    }
 }

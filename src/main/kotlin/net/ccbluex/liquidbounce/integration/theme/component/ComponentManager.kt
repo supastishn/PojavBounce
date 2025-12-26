@@ -30,6 +30,11 @@ import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.M
 
 object ComponentManager {
 
+    init {
+        // Ensure all native components are registered before themes are parsed.
+        registerNativeComponents()
+    }
+
     val nativeComponents = listOf(MinimapComponent)
 
     val components: List<Component>

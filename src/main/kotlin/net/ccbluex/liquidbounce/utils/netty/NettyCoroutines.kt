@@ -30,6 +30,22 @@ suspend fun <T> Future<T>.awaitSuspend(): T = suspendCancellableCoroutine { cont
 
 suspend fun <T> Future<T>.syncSuspend(): T = awaitSuspend()
 
+/**
+ * Awaits a ChannelFuture and returns the Channel
+ */
+suspend fun ChannelFuture.awaitChannel(): Channel = suspendCancellableCoroutine { continuation ->
+    addListener {
+        if (it.isSuccess) {
+            continuation.resume(this.channel())
+        } else {
+            continuation.resumeWithException(it.cause() ?: RuntimeException("Future failed"))
+        }
+    }
+    continuation.invokeOnCancellation {
+        cancel(true)
+    }
+}
+
 fun ServerBootstrap.setup(useNativeTransport: Boolean = false): Pair<EventLoopGroup, EventLoopGroup> {
     val bossGroup: EventLoopGroup
     val workerGroup: EventLoopGroup

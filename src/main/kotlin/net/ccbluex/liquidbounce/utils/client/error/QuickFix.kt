@@ -20,7 +20,7 @@
 
 package net.ccbluex.liquidbounce.utils.client.error
 
-import net.ccbluex.liquidbounce.utils.client.error.errors.JcefIsntCompatible
+import net.ccbluex.liquidbounce.utils.client.error.errors.BrowserIsntCompatible
 
 class Instructions(
     val showStepIndex: Boolean,
@@ -33,9 +33,9 @@ enum class QuickFix (
     val whatYouNeed: Instructions? = null,
     val whatToDo: Instructions? = null
 ) {
-    JCEF_ISNT_COMPATIBLE_WITH_THAT_SYSTEM(
-        description = "Your system isn't compatible with JCEF",
-        testError = { it is JcefIsntCompatible },
+    BROWSER_ISNT_COMPATIBLE_WITH_THAT_SYSTEM(
+        description = "Your system isn't compatible with the integration browser",
+        testError = { it is BrowserIsntCompatible },
         whatYouNeed = Instructions(false) { _ ->
             arrayOf(
                 "A 64-bit computer",
@@ -48,8 +48,8 @@ enum class QuickFix (
             )
         }
     ),
-    DOWNLOAD_JCEF_FAILED(
-        description = "A fatal error occurred while loading libraries required for JCEF to work",
+    DOWNLOAD_BROWSER_FAILED(
+        description = "A fatal error occurred while loading libraries required for the integration browser to work",
         whatYouNeed = Instructions(true) { _ ->
             arrayOf(
                 "Stable internet connection",

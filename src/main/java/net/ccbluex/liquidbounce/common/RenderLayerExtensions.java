@@ -43,7 +43,7 @@ public class RenderLayerExtensions {
                     RenderLayer.of(
                             "smooth_textured",
                             786432,
-                            ClientRenderPipelines.JCEF.SMOOTH_TEXTURE,
+                            ClientRenderPipelines.BROWSER.SMOOTH_TEXTURE,
                             RenderLayer.MultiPhaseParameters.builder()
                                     .texture(new RenderPhase.Texture(textureId, TriState.DEFAULT, false))
                                     .build(false)
@@ -57,7 +57,7 @@ public class RenderLayerExtensions {
                     RenderLayer.of(
                             "blurred_ui_layer",
                             786432,
-                            ClientRenderPipelines.JCEF.BLURRED_TEXTURE,
+                            ClientRenderPipelines.BROWSER.BLURRED_TEXTURE,
                             RenderLayer.MultiPhaseParameters.builder()
                                     .texture(new Texture(textureId, TriState.FALSE, false))
                                     .build(false)
@@ -71,7 +71,7 @@ public class RenderLayerExtensions {
                     RenderLayer.of(
                             "bgra_texture_layer",
                             786432,
-                            ClientRenderPipelines.JCEF.BGRA_TEXTURE,
+                            ClientRenderPipelines.BROWSER.BGRA_TEXTURE,
                             RenderLayer.MultiPhaseParameters.builder()
                                     .texture(new Texture(textureId, TriState.FALSE, false))
                                     .build(false)
@@ -85,7 +85,7 @@ public class RenderLayerExtensions {
                     RenderLayer.of(
                             "bgra_blurred_texture_layer",
                             786432,
-                            ClientRenderPipelines.JCEF.BGRA_BLURRED_TEXTURE,
+                            ClientRenderPipelines.BROWSER.BGRA_BLURRED_TEXTURE,
                             RenderLayer.MultiPhaseParameters.builder()
                                     .texture(new Texture(textureId, TriState.FALSE, false))
                                     .build(false)

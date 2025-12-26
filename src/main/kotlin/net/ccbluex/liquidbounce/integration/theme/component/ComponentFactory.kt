@@ -48,13 +48,23 @@ abstract class ComponentFactory {
         private val values: Array<JsonObject>?
     ) : ComponentFactory() {
 
-        override fun createComponent(): WebComponent = WebComponent(
-            name,
-            enabled,
-            accessibleInteropGson.fromJson(alignment, Alignment::class.java),
-            tweaks ?: emptyArray(),
-            values ?: emptyArray()
-        )
+        override fun createComponent(): Component {
+            val aligned = accessibleInteropGson.fromJson(alignment, Alignment::class.java)
+            val tweakArray = tweaks ?: emptyArray()
+            val valuesArray = values ?: emptyArray()
+
+            // Check if a native implementation is registered for this component name.
+            NativeComponentRegistry.create(name, enabled, aligned, tweakArray, valuesArray)?.let { return it }
+
+            // Fallback to the default web component if no native implementation is registered.
+            return WebComponent(
+                name,
+                enabled,
+                aligned,
+                tweakArray,
+                valuesArray
+            )
+        }
 
     }
 

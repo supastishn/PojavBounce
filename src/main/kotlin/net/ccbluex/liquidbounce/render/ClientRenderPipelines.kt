@@ -87,17 +87,19 @@ object ClientRenderPipelines {
         withBlend(COVERING_BLEND)
     }
 
+    // BROWSER pipelines - Disabled for native-only builds (no JCEF)
+    // These use withSnippet(RenderPipeline.Snippet.positionTexColor()) which doesn't exist in newer Minecraft
     object BROWSER {
         @JvmField
         val SMOOTH_TEXTURE = newPipeline("browser/smooth_texture") {
-            withSnippet(RenderPipeline.Snippet.positionTexColor())
+            withSnippet(RenderPipelines.GUI_TEXTURED_SNIPPET)
             withBlend(BlendFunction.TRANSLUCENT)
             withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         }
 
         @JvmField
         val BLURRED_TEXTURE = newPipeline("browser/blurred_texture") {
-            withSnippet(RenderPipeline.Snippet.positionTexColor())
+            withSnippet(RenderPipelines.GUI_TEXTURED_SNIPPET)
             withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         }

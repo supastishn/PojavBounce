@@ -38,7 +38,7 @@ import net.ccbluex.liquidbounce.api.models.auth.ClientAccount
 import net.ccbluex.liquidbounce.api.models.auth.OAuthSession
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.utils.client.logger
-import net.ccbluex.liquidbounce.utils.netty.awaitSuspend
+import net.ccbluex.liquidbounce.utils.netty.awaitChannel
 import net.ccbluex.liquidbounce.utils.netty.setup
 import java.net.InetSocketAddress
 import java.util.*
@@ -97,7 +97,7 @@ object OAuthClient : EventListener {
         val (bossGroup, workerGroup) = bootstrap.setup(useNativeTransport = true)
         bootstrap.childHandler(NettyChannelInitializer())
 
-        val channel = bootstrap.bind(0).awaitSuspend().channel()
+        val channel = bootstrap.bind(0).awaitChannel()
         val localPort = (channel.localAddress() as InetSocketAddress).port
 
         channel.closeFuture().addListener {

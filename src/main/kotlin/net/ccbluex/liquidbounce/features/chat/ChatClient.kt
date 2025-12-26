@@ -65,6 +65,7 @@ import net.ccbluex.liquidbounce.features.chat.packet.ServerUnbanUserPacket
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.io.clientChannelAndGroup
+import net.ccbluex.liquidbounce.utils.netty.awaitChannel
 import net.ccbluex.liquidbounce.utils.netty.syncSuspend
 import java.net.URI
 import java.util.*
@@ -169,7 +170,7 @@ class ChatClient {
 
             })
 
-        channel = bootstrap.connect(uri.host, uri.port).syncSuspend().channel()!!
+        channel = bootstrap.connect(uri.host, uri.port).awaitChannel()
         handler.handshakeFuture.syncSuspend()
     }.onFailure {
         EventManager.callEvent(ClientChatErrorEvent(it.localizedMessage ?: it.message ?: it.javaClass.name))

@@ -19,10 +19,10 @@
 package net.ccbluex.liquidbounce.integration.ui.altmanager
 
 import net.ccbluex.liquidbounce.utils.client.asPlainText
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.components.Button
-import net.minecraft.util.math.ColorHelper
+import net.minecraft.client.gui.screens.Screen
 
 /**
  * Native Alt Manager screen - replaces browser-based alt manager
@@ -33,17 +33,17 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
         super.init()
 
         // Add account button
-        addDrawableChild(
-            Button.builder("Add Account".asPlainText()) { button ->
+        addRenderableWidget(
+            Button.builder("Add Account".asPlainText()) {
                 // TODO: Open add account dialog
-            }.dimensions(width / 2 - 100, height - 30, 200, 20).build()
+            }.bounds(width / 2 - 100, height - 30, 200, 20).build()
         )
 
         // Close button
-        addDrawableChild(
-            Button.builder("Close".asPlainText()) { button ->
-                close()
-            }.dimensions(width / 2 - 100, height - 55, 200, 20).build()
+        addRenderableWidget(
+            Button.builder("Close".asPlainText()) {
+                onClose()
+            }.bounds(width / 2 - 100, height - 55, 200, 20).build()
         )
     }
 
@@ -51,8 +51,8 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
         renderBackground(context, mouseX, mouseY, delta)
 
         // Title
-        context.drawCenteredTextWithShadow(
-            textRenderer,
+        context.drawCenteredString(
+            font,
             title,
             width / 2,
             20,
@@ -60,20 +60,20 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
         )
 
         // Placeholder text
-        context.drawCenteredTextWithShadow(
-            textRenderer,
+        context.drawCenteredString(
+            font,
             "Alt Manager - Native GUI Implementation".asPlainText(),
             width / 2,
             height / 2 - 10,
-            ColorHelper.getArgb(255, 150, 150, 150)
+            0x969696
         )
 
         super.render(context, mouseX, mouseY, delta)
     }
 
-    override fun close() {
-        client?.setScreen(parent)
+    override fun onClose() {
+        mc.setScreen(parent)
     }
 
-    override fun shouldPause() = true
+    override fun isPauseScreen() = true
 }

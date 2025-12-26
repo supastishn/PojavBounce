@@ -34,14 +34,14 @@ class NativeProxyManagerScreen(private val parent: Screen?) : Screen("Proxy Mana
 
         // Add proxy button
         addDrawableChild(
-            ButtonWidget.builder("Add Proxy".asPlainText()) { button ->
+            Button.builder("Add Proxy".asPlainText()) { button ->
                 // TODO: Open add proxy dialog
             }.dimensions(width / 2 - 100, height - 30, 200, 20).build()
         )
 
         // Close button
         addDrawableChild(
-            ButtonWidget.builder("Close".asPlainText()) { button ->
+            Button.builder("Close".asPlainText()) { button ->
                 close()
             }.dimensions(width / 2 - 100, height - 55, 200, 20).build()
         )

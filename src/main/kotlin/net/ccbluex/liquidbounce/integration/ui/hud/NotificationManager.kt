@@ -13,7 +13,9 @@ object NotificationManager : EventListener {
 
     data class Notification(val title: String, val message: String, val severity: NotificationEvent.Severity)
 
-    private val notificationHandler = handler<NotificationEvent>(priority = EventPriorityConvention.READ_FINAL_STATE) { event ->
+    private val notificationHandler = handler<NotificationEvent>(
+        priority = EventPriorityConvention.READ_FINAL_STATE
+    ) { event ->
         notifications.add(0, Notification(event.title, event.message, event.severity))
         while (notifications.size > MAX_NOTIFICATIONS) {
             notifications.removeAt(notifications.size - 1)

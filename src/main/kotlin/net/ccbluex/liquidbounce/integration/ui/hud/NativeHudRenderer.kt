@@ -21,10 +21,8 @@ package net.ccbluex.liquidbounce.integration.ui.hud
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.features.module.ModuleManager
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentManager
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.util.math.ColorHelper
 
 /**
  * Native HUD renderer - replaces browser-based HUD with pure Minecraft rendering
@@ -32,12 +30,15 @@ import net.minecraft.util.math.ColorHelper
  */
 object NativeHudRenderer : EventListener {
 
-    private const val MARGIN = 4
-    private const val MODULE_SPACING = 2
+    @Suppress("unused")
+    private val margin = 4
+
+    @Suppress("unused")
+    private val moduleSpacing = 2
 
     @Suppress("unused")
     private val renderHandler = handler<OverlayRenderEvent> { event ->
-        if (mc.options.hudHidden) {
+        if (mc.options.hideGui) {
             return@handler
         }
 
@@ -45,7 +46,7 @@ object NativeHudRenderer : EventListener {
 
         // Render all components (native + theme-defined components). Each component
         // provides its own render method operated by the Theme component system.
-        for (component in net.ccbluex.liquidbounce.integration.theme.component.ComponentManager.components) {
+        for (component in HudComponentManager.components) {
             if (component.enabled) {
                 component.render(context)
             }

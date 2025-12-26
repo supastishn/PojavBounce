@@ -22,9 +22,11 @@ import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.asPlainText
+import net.ccbluex.liquidbounce.utils.client.mc
+import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
-import net.minecraft.util.math.ColorHelper
+import net.minecraft.client.input.MouseButtonEvent
 
 /**
  * Native Minecraft GUI implementation of ClickGUI
@@ -76,39 +78,39 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         // Render all panels
         for (panel in panels) {
-            panel.render(context, mouseX, mouseY, delta, textRenderer)
+            panel.render(context, mouseX, mouseY, delta, mc.font)
         }
 
         super.render(context, mouseX, mouseY, delta)
     }
 
-    override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
         for (panel in panels) {
-            if (panel.mouseClicked(mouseX, mouseY, button)) {
+            if (panel.mouseClicked(click.x, click.y, click.button())) {
                 return true
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button)
+        return super.mouseClicked(click, doubled)
     }
 
-    override fun mouseDragged(mouseX: Double, mouseY: Double, button: Int, deltaX: Double, deltaY: Double): Boolean {
+    override fun mouseDragged(click: MouseButtonEvent, offsetX: Double, offsetY: Double): Boolean {
         for (panel in panels) {
-            if (panel.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)) {
+            if (panel.mouseDragged(click.x, click.y, click.button(), offsetX, offsetY)) {
                 return true
             }
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY)
+        return super.mouseDragged(click, offsetX, offsetY)
     }
 
-    override fun mouseReleased(mouseX: Double, mouseY: Double, button: Int): Boolean {
+    override fun mouseReleased(click: MouseButtonEvent): Boolean {
         // Stop dragging all panels
         for (panel in panels) {
             panel.dragging = false
         }
-        return super.mouseReleased(mouseX, mouseY, button)
+        return super.mouseReleased(click)
     }
 
-    override fun shouldPause() = false
+    override fun isPauseScreen() = false
 
     override fun shouldCloseOnEsc() = true
 
@@ -120,7 +122,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private val modules: List<ClientModule>,
         private var x: Int,
         private var y: Int,
-        private val width: Int
+        private val panelWidth: Int
     ) {
         var expanded = true
         var dragging = false
@@ -129,11 +131,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         @Suppress("UnusedParameter")
         fun render(
-            context: DrawContext,
+            context: GuiGraphics,
             mouseX: Int,
             mouseY: Int,
             delta: Float,
-            textRenderer: net.minecraft.client.font.TextRenderer
+            textRenderer: Font
         ) {
             val height = if (expanded) {
                 PANEL_HEADER_HEIGHT + (modules.size * MODULE_HEIGHT)
@@ -141,33 +143,31 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 PANEL_HEADER_HEIGHT
             }
 
-            // Panel background
-            context.fill(x, y, x + width, y + height, ColorHelper.getArgb(180, 30, 30, 30))
+            // Panel background - argb(180, 30, 30, 30)
+            context.fill(x, y, x + panelWidth, y + height, 0xB41E1E1E.toInt())
 
-            // Panel header
-            val headerColor = ColorHelper.getArgb(200, 50, 50, 50)
-            context.fill(x, y, x + width, y + PANEL_HEADER_HEIGHT, headerColor)
+            // Panel header - argb(200, 50, 50, 50)
+            val headerColor = 0xC8323232.toInt()
+            context.fill(x, y, x + panelWidth, y + PANEL_HEADER_HEIGHT, headerColor)
 
             // Category name
             val categoryName = category.choiceName
-            context.drawText(
+            context.drawString(
                 textRenderer,
                 categoryName,
                 x + 4,
                 y + 4,
-                0xFFFFFF,
-                true
+                0xFFFFFF
             )
 
             // Expand/collapse indicator
-            val indicator = if (expanded) "▼" else "▶"
-            context.drawText(
+            val indicator = if (expanded) "v" else ">"
+            context.drawString(
                 textRenderer,
                 indicator,
-                x + width - 12,
+                x + panelWidth - 12,
                 y + 4,
-                0xFFFFFF,
-                false
+                0xFFFFFF
             )
 
             // Render modules if expanded
@@ -181,44 +181,43 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
 
         private fun renderModule(
-            context: DrawContext,
+            context: GuiGraphics,
             module: ClientModule,
             moduleY: Int,
             mouseX: Int,
             mouseY: Int,
-            textRenderer: net.minecraft.client.font.TextRenderer
+            textRenderer: Font
         ) {
             // Module background (highlight if enabled or hovered)
-            val isHovered = mouseX >= x && mouseX < x + width && mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT
+            val isHovered = mouseX >= x && mouseX < x + panelWidth &&
+                mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT
             val backgroundColor = when {
-                module.enabled -> ColorHelper.getArgb(150, 70, 70, 200)
-                isHovered -> ColorHelper.getArgb(100, 80, 80, 80)
-                else -> ColorHelper.getArgb(80, 40, 40, 40)
+                module.enabled -> 0x964646C8.toInt() // argb(150, 70, 70, 200)
+                isHovered -> 0x64505050.toInt() // argb(100, 80, 80, 80)
+                else -> 0x50282828.toInt() // argb(80, 40, 40, 40)
             }
-            context.fill(x + 2, moduleY, x + width - 2, moduleY + MODULE_HEIGHT, backgroundColor)
+            context.fill(x + 2, moduleY, x + panelWidth - 2, moduleY + MODULE_HEIGHT, backgroundColor)
 
             // Module name
             val color = if (module.enabled) 0x00FF00 else 0xFFFFFF
-            context.drawText(
+            context.drawString(
                 textRenderer,
                 module.name,
                 x + 6,
                 moduleY + 3,
-                color,
-                false
+                color
             )
 
             // Bind indicator
             val bindText = module.bind.keyName
-            if (bindText.isNotEmpty() && bindText != "key.keyboard.unknown") {
+            if (bindText.isNotEmpty() && bindText != "None") {
                 val displayText = "[$bindText]"
-                context.drawText(
+                context.drawString(
                     textRenderer,
                     displayText,
-                    x + width - textRenderer.getWidth(displayText) - 6,
+                    x + panelWidth - textRenderer.width(displayText) - 6,
                     moduleY + 3,
-                    0x888888,
-                    false
+                    0x888888
                 )
             }
         }
@@ -238,7 +237,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
 
         private fun isMouseInHeader(mouseX: Double, mouseY: Double): Boolean {
-            return mouseX >= x && mouseX < x + width && 
+            return mouseX >= x && mouseX < x + panelWidth && 
                 mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT
         }
 
@@ -263,7 +262,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private fun handleModuleClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
             var moduleY = y + PANEL_HEADER_HEIGHT
             for (module in modules) {
-                val isModuleHit = mouseX >= x && mouseX < x + width && 
+                val isModuleHit = mouseX >= x && mouseX < x + panelWidth && 
                     mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT
                 if (isModuleHit) {
                     when (button) {

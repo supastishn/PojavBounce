@@ -94,7 +94,7 @@ public class MixinLoadingOverlay {
 
         // TODO: Draw as SVG instead of PNG
         context.blit(
-            ClientRenderPipelines.JCEF.SMOOTH_TEXTURE,
+            ClientRenderPipelines.BROWSER.SMOOTH_TEXTURE,
                 ClientLogoTexture.CLIENT_LOGO,
                 x,
                 y,

@@ -1,5 +1,4 @@
 /*
-import net.ccbluex.liquidbounce.additions.*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
  * Copyright (c) 2015 - 2025 CCBlueX

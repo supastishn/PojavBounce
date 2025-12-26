@@ -1,4 +1,5 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
+import net.ccbluex.liquidbounce.additions.*
 
 import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponent

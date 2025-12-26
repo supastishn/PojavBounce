@@ -124,7 +124,7 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
     }
 
     /**
-     * Draws a blit using a custom JCEF-compatible blending pipeline.
+     * Draws a blit using the browser-compatible blending pipeline.
      * Replaces the call to `overlayFramebuffer.drawBlit(mc.framebuffer.colorAttachment)`.
      */
     private fun drawOverlayBlit() {
@@ -136,7 +136,7 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
             mc.framebuffer.colorAttachment,
             OptionalInt.empty()
         ).use { renderPass ->
-            renderPass.setPipeline(ClientRenderPipelines.JCEF.Blit)
+            renderPass.setPipeline(ClientRenderPipelines.BROWSER.Blit)
             renderPass.setVertexBuffer(0, vertexBuffer)
             renderPass.setIndexBuffer(indexBuffer, shapeIndexBuffer.indexType)
             renderPass.bindSampler("InSampler", overlayFramebuffer.colorAttachment)

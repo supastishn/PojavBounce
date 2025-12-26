@@ -20,9 +20,9 @@
 
 package net.ccbluex.liquidbounce.utils.client.error.errors
 
-object JcefIsntCompatible : ClientError(
-    message = "JCEF Isn't compatible",
+object BrowserIsntCompatible : ClientError(
+    message = "Browser isn't compatible",
     needToReport = false
 ) {
-    fun readResolve(): Any = JcefIsntCompatible
+    fun readResolve(): Any = BrowserIsntCompatible
 }

@@ -41,9 +41,9 @@ object ClientRenderPipelines : SynchronousResourceReloader {
     private val renderPipelines = Object2ObjectOpenHashMap<Identifier, RenderPipeline>()
 
     /**
-     * Blend mode for JCEF compatible blending.
+     * Blend mode for browser-compatible blending.
      */
-    private val JCEF_COMPATIBLE_BLEND = BlendFunction(SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA)
+    private val BROWSER_COMPATIBLE_BLEND = BlendFunction(SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA)
 
     private val COVERING_BLEND = BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA)
 
@@ -82,42 +82,42 @@ object ClientRenderPipelines : SynchronousResourceReloader {
         withBlend(COVERING_BLEND)
     }
 
-    object JCEF {
+    object BROWSER {
         @JvmField
-        val SMOOTH_TEXTURE = newPipeline("jcef/smooth_texture") {
+        val SMOOTH_TEXTURE = newPipeline("browser/smooth_texture") {
             withSnippet(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
             withBlend(BlendFunction.TRANSLUCENT)
             withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         }
 
         @JvmField
-        val BLURRED_TEXTURE = newPipeline("jcef/blurred_texture") {
+        val BLURRED_TEXTURE = newPipeline("browser/blurred_texture") {
             withSnippet(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
-            withBlend(JCEF_COMPATIBLE_BLEND)
+            withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         }
 
         @JvmField
-        val BGRA_TEXTURE = newPipeline("jcef/bgra_texture") {
+        val BGRA_TEXTURE = newPipeline("browser/bgra_texture") {
             bgraPosTexColorQuads()
-            withBlend(JCEF_COMPATIBLE_BLEND)
+            withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         }
 
         @JvmField
-        val BGRA_BLURRED_TEXTURE = newPipeline("jcef/bgra_blurred_texture") {
+        val BGRA_BLURRED_TEXTURE = newPipeline("browser/bgra_blurred_texture") {
             bgraPosTexColorQuads()
-            withBlend(JCEF_COMPATIBLE_BLEND)
+            withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         }
 
         @JvmField
-        val Blit = newPipeline("jcef_blit") {
+        val Blit = newPipeline("browser_blit") {
             withLocation("pipeline/entity_outline_blit")
             withVertexShader("core/blit_screen")
             withFragmentShader("core/blit_screen")
             withSampler("InSampler")
-            withBlend(JCEF_COMPATIBLE_BLEND)
+            withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthWrite(false)
             withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
             withColorWrite(true, false)

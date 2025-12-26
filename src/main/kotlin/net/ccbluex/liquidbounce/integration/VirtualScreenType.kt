@@ -151,7 +151,8 @@ enum class VirtualScreenType(
     ),
 
     BROWSER("browser",
-        recognizer = { it is BrowserScreen }
+        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen },
+        open = { mc.setScreen(net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen()) }
     );
 
     fun open() = mc.execute(open)

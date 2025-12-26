@@ -90,45 +90,27 @@ jobs:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew build -x test -x detekt
-      - name: Upload artifact
-        env:
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          LB_VERSION: ${{ needs.extract-versions.outputs.lb_version }}
-          MINECRAFT_VERSION: ${{ needs.extract-versions.outputs.minecraft_version }}
-          LOADER_VERSION: ${{ needs.extract-versions.outputs.loader_version }}
-          FABRICAPI_VERSION: ${{ needs.extract-versions.outputs.fabricapi_version }}
-          KOTLIN_VERSION: ${{ needs.extract-versions.outputs.kotlin_version }}
-          FABRIC_KOTLIN_VERSION: ${{ needs.extract-versions.outputs.fabric_kotlin_version }}
+      - name: Create artifact
         run: |
           set -euo pipefail
-          
+
           cd build/libs
           JAR=$(find . -regex '.*liquidbounce-[0-9.]*\.jar')
           if [ -z "$JAR" ]; then
             echo "[ERROR] built jar not found in build/libs" >&2
             exit 1
           fi
-          
+
           cp $JAR zip/liquidbounce.jar
           cd zip
           zip -r liquidbounce.zip *
           md5sum liquidbounce.zip
-          
-          curl --connect-timeout 30 -m 300 -X POST -F "artifact=@liquidbounce.zip" \
-            -H "Authorization: ${{ secrets.NIGHTLY_PASS }}" \
-            -F "gh_id=${{ github.event.head_commit.id }}" \
-            -F "gh_ref=${{ github.ref }}" \
-            -F "gh_message=${COMMIT_MESSAGE}" \
-            -F "gh_timestamp=${{ github.event.head_commit.timestamp }}" \
-            -F "lb_version=$LB_VERSION" \
-            -F "mc_version=$MINECRAFT_VERSION" \
-            -F "subsystem=fabric" \
-            -F "jre_version=21" \
-            -F "fabric_loader_version=$LOADER_VERSION" \
-            -F "fabric_api_version=$FABRICAPI_VERSION" \
-            -F "kotlin_version=$KOTLIN_VERSION" \
-            -F "fabric_kotlin_version=$FABRIC_KOTLIN_VERSION" \
-            https://api.liquidbounce.net/api/v1/version/new
+      - name: Upload artifact to GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: liquidbounce-${{ needs.extract-versions.outputs.lb_version }}
+          path: build/libs/zip/liquidbounce.zip
+          retention-days: 30
 
   verify-pr:
     runs-on: ubuntu-latest

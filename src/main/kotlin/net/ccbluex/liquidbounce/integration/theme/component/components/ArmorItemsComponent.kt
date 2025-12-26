@@ -12,6 +12,9 @@ class ArmorItemsComponent(
     tweaks: Array<ComponentTweak>
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
     override fun render(context: GuiGraphics) {
+        // TODO: Fix armor access for Minecraft 1.21
+        // The inventory.armor API has changed
+        /*
         val player = mc.player ?: return
         val armor = player.inventory.armor
         var y = 10
@@ -21,5 +24,6 @@ class ArmorItemsComponent(
             context.drawItem(stack, x, y)
             y += 16
         }
+        */
     }
 }

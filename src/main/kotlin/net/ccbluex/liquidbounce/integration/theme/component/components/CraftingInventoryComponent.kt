@@ -1,4 +1,5 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
+import net.ccbluex.liquidbounce.additions.*
 
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc

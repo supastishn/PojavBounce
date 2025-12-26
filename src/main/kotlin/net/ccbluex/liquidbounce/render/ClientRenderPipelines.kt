@@ -90,14 +90,14 @@ object ClientRenderPipelines {
     object BROWSER {
         @JvmField
         val SMOOTH_TEXTURE = newPipeline("browser/smooth_texture") {
-            withSnippet(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
+            withSnippet(RenderPipeline.Snippet.positionTexColor())
             withBlend(BlendFunction.TRANSLUCENT)
             withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
         }
 
         @JvmField
         val BLURRED_TEXTURE = newPipeline("browser/blurred_texture") {
-            withSnippet(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
+            withSnippet(RenderPipeline.Snippet.positionTexColor())
             withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthTestFunction(DepthTestFunction.LEQUAL_DEPTH_TEST)
         }

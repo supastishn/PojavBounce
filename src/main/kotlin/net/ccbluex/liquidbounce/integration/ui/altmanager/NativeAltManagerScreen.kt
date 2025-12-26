@@ -34,14 +34,14 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
 
         // Add account button
         addDrawableChild(
-            ButtonWidget.builder("Add Account".asPlainText()) { button ->
+            Button.builder("Add Account".asPlainText()) { button ->
                 // TODO: Open add account dialog
             }.dimensions(width / 2 - 100, height - 30, 200, 20).build()
         )
 
         // Close button
         addDrawableChild(
-            ButtonWidget.builder("Close".asPlainText()) { button ->
+            Button.builder("Close".asPlainText()) { button ->
                 close()
             }.dimensions(width / 2 - 100, height - 55, 200, 20).build()
         )

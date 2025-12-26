@@ -118,6 +118,11 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
      * @see net.minecraft.client.gl.Framebuffer.drawBlit
      */
     private fun drawOverlayBlit() {
+        // TODO: Fix for Minecraft 1.21 rendering API
+        // The vertex/index buffer API has changed in Minecraft 1.21
+        // This code needs to be updated to use the new rendering pipeline
+
+        /*
         mc.mainRenderTarget.colorTextureView!!.createRenderPass(
             { "GUI blur overlay blit pass" },
         ).use { renderPass ->
@@ -127,6 +132,7 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
             renderPass.bindSampler("InSampler", overlayFramebuffer.colorAttachment)
             renderPass.drawIndexed(0, 6)
         }
+        */
     }
 
     private fun getBlurRadiusFactor(): Float {

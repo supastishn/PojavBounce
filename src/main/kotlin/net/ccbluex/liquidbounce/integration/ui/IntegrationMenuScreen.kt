@@ -21,7 +21,7 @@ class IntegrationMenuScreen : Screen(LiteralText("Integration Menu")) {
             val name = type.routeName.replaceFirstChar { it.uppercase() }
             val route = ThemeManager.getScreenLocation(type, markAsStatic = true)
             if (route.url != "") {
-                val button = ButtonWidget.builder(LiteralText(name), this::onOpen).dimensions(20, y, width - 40, 20).build()
+                val button = Button.builder(LiteralText(name), this::onOpen).dimensions(20, y, width - 40, 20).build()
                 buttons.add(button)
                 this.addButton(button)
                 y += 24

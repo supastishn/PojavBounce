@@ -23,7 +23,7 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.utils.client.asPlainText
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.screen.Screen
+import net.minecraft.client.gui.screens.Screen
 import net.minecraft.util.math.ColorHelper
 
 /**

@@ -20,8 +20,8 @@ package net.ccbluex.liquidbounce.integration.ui.proxymanager
 
 import net.ccbluex.liquidbounce.utils.client.asPlainText
 import net.minecraft.client.gui.GuiGraphics
-import net.minecraft.client.gui.screen.Screen
-import net.minecraft.client.gui.widget.ButtonWidget
+import net.minecraft.client.gui.screens.Screen
+import net.minecraft.client.gui.components.Button
 import net.minecraft.util.math.ColorHelper
 
 /**

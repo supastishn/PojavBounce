@@ -65,7 +65,7 @@ import net.ccbluex.liquidbounce.features.chat.packet.ServerUnbanUserPacket
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.io.clientChannelAndGroup
-import net.ccbluex.netty.http.coroutines.syncSuspend
+import net.ccbluex.liquidbounce.utils.netty.syncSuspend
 import java.net.URI
 import java.util.*
 

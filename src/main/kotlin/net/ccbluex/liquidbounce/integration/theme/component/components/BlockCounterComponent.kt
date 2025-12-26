@@ -1,4 +1,5 @@
 // TODO: Fix for Minecraft 1.21 - API changes required
+import net.ccbluex.liquidbounce.additions.*
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak

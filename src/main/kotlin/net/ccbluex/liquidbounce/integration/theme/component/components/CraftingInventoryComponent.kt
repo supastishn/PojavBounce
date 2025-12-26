@@ -1,8 +1,8 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class CraftingInventoryComponent(
@@ -10,8 +10,8 @@ class CraftingInventoryComponent(
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<ComponentTweak>
-) : NativeComponent(name, enabled, alignment, tweaks) {
-    override fun render(context: DrawContext) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
+    override fun render(context: GuiGraphics) {
         val player = mc.player ?: return
         // Render a small 3x3 grid of crafting area on screen
         val x = mc.window.scaledWidth / 2 - 40

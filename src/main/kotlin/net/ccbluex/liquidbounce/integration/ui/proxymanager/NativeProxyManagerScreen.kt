@@ -19,7 +19,7 @@
 package net.ccbluex.liquidbounce.integration.ui.proxymanager
 
 import net.ccbluex.liquidbounce.utils.client.asPlainText
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.gui.widget.ButtonWidget
 import net.minecraft.util.math.ColorHelper
@@ -47,7 +47,7 @@ class NativeProxyManagerScreen(private val parent: Screen?) : Screen("Proxy Mana
         )
     }
 
-    override fun render(context: DrawContext, mouseX: Int, mouseY: Int, delta: Float) {
+    override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         renderBackground(context, mouseX, mouseY, delta)
 
         // Title

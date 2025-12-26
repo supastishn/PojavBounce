@@ -1,10 +1,10 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
 import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.integration.theme.component.Component
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class ImageComponent(
@@ -13,9 +13,9 @@ class ImageComponent(
     alignment: Alignment,
     tweaks: Array<ComponentTweak>,
     val values: Array<JsonObject>
-) : NativeComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphics) {
         // Simple static image rendering for theme images. We'll parse the 'value' key for image path
         val imageUrl = values.find { it["name"]?.asString == "Image" }?.get("value")?.asString ?: return
         // TODO: Load the image from the theme's resource. For now, render a placeholder box.

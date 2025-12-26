@@ -1,9 +1,9 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.Component
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class TargetHudComponent(
@@ -11,9 +11,9 @@ class TargetHudComponent(
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<ComponentTweak>
-) : NativeComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphics) {
         val hit = mc.crosshairTarget
         val entity = if (hit != null && hit is net.minecraft.util.hit.EntityHitResult) hit.entity else null
 

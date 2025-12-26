@@ -1,8 +1,7 @@
 package net.ccbluex.liquidbounce.integration.theme.component
 
 import com.google.gson.JsonObject
-import net.ccbluex.liquidbounce.integration.theme.component.components.ArrayListComponent
-import net.ccbluex.liquidbounce.integration.theme.component.components.WatermarkComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.*
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 // Register native components with the theme component registry

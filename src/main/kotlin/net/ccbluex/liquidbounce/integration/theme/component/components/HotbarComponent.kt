@@ -1,8 +1,8 @@
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.ComponentTweak
+import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphics
 import net.ccbluex.liquidbounce.utils.render.Alignment
 
 class HotbarComponent(
@@ -10,9 +10,9 @@ class HotbarComponent(
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<ComponentTweak>
-) : NativeComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphics) {
         val player = mc.player ?: return
         val y = mc.window.scaledHeight - 50
         val x = (mc.window.scaledWidth / 2) - 90

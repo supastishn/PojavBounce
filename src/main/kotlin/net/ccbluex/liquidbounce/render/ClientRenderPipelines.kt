@@ -127,6 +127,7 @@ object ClientRenderPipelines {
             withVertexShader("core/blit_screen")
             withFragmentShader("core/blit_screen")
             withSampler("InSampler")
+            withVertexFormat(DefaultVertexFormat.EMPTY, VertexFormat.Mode.TRIANGLES)
             withBlend(BROWSER_COMPATIBLE_BLEND)
             withDepthWrite(false)
             withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)

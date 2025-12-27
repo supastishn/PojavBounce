@@ -36,13 +36,19 @@ object HudComponentManager {
         get() = nativeComponents + (ThemeManager.theme?.components ?: emptyList())
 
     @JvmStatic
-    fun isTweakEnabled(tweak: HudComponentTweak) = ModuleHud.running && !HideAppearance.isHidingNow &&
-        components.any { component ->
+    fun isTweakEnabled(tweak: HudComponentTweak): Boolean {
+        // Tweaks are only active when theme is loaded and ModuleHud is running
+        if (!ThemeManager.isThemeAvailable) return false
+        if (!ModuleHud.running || HideAppearance.isHidingNow) return false
+
+        return components.any { component ->
             component.enabled && component.tweaks.contains(tweak)
         }
+    }
 
     @JvmStatic
     fun getComponentWithTweak(tweak: HudComponentTweak): HudComponent? {
+        if (!ThemeManager.isThemeAvailable) return null
         if (!ModuleHud.running || HideAppearance.isHidingNow) {
             return null
         }

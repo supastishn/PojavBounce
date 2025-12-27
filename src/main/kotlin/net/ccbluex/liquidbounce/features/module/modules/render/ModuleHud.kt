@@ -18,74 +18,54 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.render
 
+import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
-import net.ccbluex.liquidbounce.event.EventManager
-import net.ccbluex.liquidbounce.event.events.BrowserReadyEvent
-import net.ccbluex.liquidbounce.event.events.DisconnectEvent
-import net.ccbluex.liquidbounce.event.events.ScreenEvent
-import net.ccbluex.liquidbounce.event.events.SpaceSeperatedNamesChangeEvent
+import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.isDestructed
 import net.ccbluex.liquidbounce.features.misc.HideAppearance.isHidingNow
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
-import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud.themes
-import net.ccbluex.liquidbounce.integration.VirtualScreenType
-import net.ccbluex.liquidbounce.integration.backend.browser.Browser
-import net.ccbluex.liquidbounce.integration.backend.browser.BrowserSettings
-import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
+import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.MinimapHudComponent
-import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.inGame
-import net.ccbluex.liquidbounce.utils.client.markAsError
-import net.minecraft.client.gui.screens.DisconnectedScreen
-import net.minecraft.client.gui.screens.LevelLoadingScreen
+import net.minecraft.util.ARGB
 
 /**
  * Module HUD
  *
- * The client in-game dashboard.
- * NOTE: Disabled on native-only builds (no browser support)
+ * Native Minecraft HUD overlay that displays:
+ * - LiquidBounce watermark in top left
+ * - List of enabled modules in top right
  */
-
 object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = true) {
 
-    // HUD is disabled on native-only builds (requires browser)
-    private const val DISABLED_MESSAGE = "HUD module is disabled on this build (requires browser support)"
-
     override val running
-        get() = false // Always disabled on native-only builds
+        get() = this.enabled && !isDestructed
 
     private val visible: Boolean
         get() = !isHidingNow && inGame
 
     override val baseKey: String
         get() = "liquidbounce.module.hud"
-    private var browserBrowser: Browser? = null
 
     init {
         tree(Blur)
     }
 
     object Blur : ToggleableConfigurable(ModuleHud, "Blur", enabled = false) {
-        /**
-         * The range in which the blending from not-blurred to blurred occurs.
-         */
         val alphaBlendRange by floatRange("AlphaBlendRange", 0.0F..0.75F, 0.0F..1.0F)
     }
 
-    @Suppress("unused")
-    private val spaceSeperatedNames by boolean("SpaceSeperatedNames", true).onChange { state ->
-        EventManager.callEvent(SpaceSeperatedNamesChangeEvent(state))
-        state
-    }
+    // Native HUD settings
+    private val showWatermark by boolean("ShowWatermark", true)
+    private val showArrayList by boolean("ShowArrayList", true)
+    private val arrayListBackground by boolean("ArrayListBackground", true)
 
     val isBlurEffectActive
         get() = Blur.enabled && !(mc.options.hideGui && mc.screen == null)
-
-    private var browserSettings: BrowserSettings? = null
 
     val themes = tree(Configurable("Themes"))
 
@@ -93,9 +73,6 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
         tree(MinimapHudComponent)
     }
 
-    /**
-     * Updates [themes] content
-     */
     fun updateThemes() {
         themes.inner.clear()
         for (theme in ThemeManager.themes) {
@@ -105,65 +82,53 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
         themes.walkKeyPath()
     }
 
-    override fun onEnabled() {
-        // HUD is disabled on native-only builds - immediately disable and warn
-        chat(markAsError(DISABLED_MESSAGE))
-        enabled = false
-    }
-
-    override fun onDisabled() {
-        // Closes tab entirely
-        close()
-    }
-
     @Suppress("unused")
-    private val browserReadyHandler = handler<BrowserReadyEvent> { event ->
-        tree(GlobalBrowserSettings)
-        browserSettings = tree(BrowserSettings(60, ::reopen))
-    }
-
-    @Suppress("unused")
-    private val screenHandler = handler<ScreenEvent> { event ->
-        // Close the tab when the HUD is not running, is hiding now, or the player is not in-game
-        if (!enabled || !visible) {
-            close()
+    private val overlayRenderHandler = handler<OverlayRenderEvent> { event ->
+        if (!running || !visible || mc.options.hideGui) {
             return@handler
         }
 
-        // Otherwise, open the tab and set its visibility
-        val browserTab = open()
-        browserTab.visible = event.screen !is DisconnectedScreen && event.screen !is LevelLoadingScreen
-    }
+        val context = event.context
+        val font = mc.font
+        val screenWidth = context.guiWidth()
 
-    @Suppress("unused")
-    private val disconnectHandler = handler<DisconnectEvent> {
-        close()
-    }
-
-    private fun open(): Browser {
-        browserBrowser?.let { return it }
-
-        return ThemeManager.openImmediate(
-            VirtualScreenType.HUD,
-            true,
-            browserSettings!!
-        ).also { browser ->
-            browserBrowser = browser
+        // Draw watermark in top left
+        if (showWatermark) {
+            val watermark = "${LiquidBounce.CLIENT_NAME} v${LiquidBounce.clientVersion}"
+            context.drawString(font, watermark, 4, 4, 0x00FFFF, true)
         }
-    }
 
-    private fun close() {
-        browserBrowser?.let {
-            it.close()
-            browserBrowser = null
+        // Draw enabled modules list in top right
+        if (showArrayList) {
+            val enabledModules = ModuleManager
+                .filter { it.enabled && !it.hide }
+                .sortedByDescending { font.width(it.name) }
+
+            var yOffset = 4
+            for (module in enabledModules) {
+                val textWidth = font.width(module.name)
+                val xPos = screenWidth - textWidth - 4
+
+                // Background
+                if (arrayListBackground) {
+                    context.fill(
+                        xPos - 2,
+                        yOffset - 1,
+                        screenWidth,
+                        yOffset + font.lineHeight,
+                        ARGB.color(120, 0, 0, 0)
+                    )
+                }
+
+                // Module name
+                context.drawString(font, module.name, xPos, yOffset, 0x00FF00, true)
+                yOffset += font.lineHeight + 1
+            }
         }
     }
 
     fun reopen() {
-        close()
-        if (enabled && visible) {
-            open()
-        }
+        // No-op for native HUD
     }
 
     fun disableBlur() {

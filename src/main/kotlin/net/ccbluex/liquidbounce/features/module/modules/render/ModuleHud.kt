@@ -65,7 +65,7 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
         tree(Blur)
     }
 
-    object Blur : ToggleableConfigurable(ModuleHud, "Blur", enabled = true) {
+    object Blur : ToggleableConfigurable(ModuleHud, "Blur", enabled = false) {
         /**
          * The range in which the blending from not-blurred to blurred occurs.
          */

@@ -101,7 +101,7 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
         // Draw enabled modules list in top right
         if (showArrayList) {
             val enabledModules = ModuleManager
-                .filter { it.enabled && !it.hide }
+                .filter { it.enabled && !it.hidden }
                 .sortedByDescending { font.width(it.name) }
 
             var yOffset = 4

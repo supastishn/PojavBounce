@@ -147,6 +147,13 @@ object ClientRenderPipelines {
             withSnippet(RenderPipelines.GUI_SNIPPET)
             withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLES)
         }
+
+        @JvmField
+        val TexturedQuads = newPipeline("gui/textured_quads") {
+            withSnippet(RenderPipelines.GUI_TEXTURED_SNIPPET)
+            withBlend(BlendFunction.TRANSLUCENT)
+            withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+        }
     }
 
     @JvmField

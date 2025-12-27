@@ -87,7 +87,8 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
         ModuleHud.running && ModuleHud.isBlurEffectActive
 
     fun blitBlurOverlay() {
-        if (!isDrawingHudFramebuffer) {
+        if (!isDrawingHudFramebuffer || !shouldDrawBlur()) {
+            isDrawingHudFramebuffer = false
             return
         }
         isDrawingHudFramebuffer = false

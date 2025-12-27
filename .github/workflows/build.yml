@@ -90,26 +90,23 @@ jobs:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew build -x test -x detekt
-      - name: Create artifact
+      - name: Find JAR artifact
+        id: find-jar
         run: |
           set -euo pipefail
-
           cd build/libs
-          JAR=$(find . -regex '.*liquidbounce-[0-9.]*\.jar')
+          JAR=$(find . -maxdepth 1 -regex '.*liquidbounce-[0-9.]*\.jar' -printf '%f\n' | head -1)
           if [ -z "$JAR" ]; then
             echo "[ERROR] built jar not found in build/libs" >&2
             exit 1
           fi
-
-          cp $JAR zip/liquidbounce.jar
-          cd zip
-          zip -r liquidbounce.zip *
-          md5sum liquidbounce.zip
+          echo "jar_name=$JAR" >> "$GITHUB_OUTPUT"
+          echo "Found JAR: $JAR"
       - name: Upload artifact to GitHub Actions
         uses: actions/upload-artifact@v4
         with:
           name: liquidbounce-${{ needs.extract-versions.outputs.lb_version }}
-          path: build/libs/zip/liquidbounce.zip
+          path: build/libs/${{ steps.find-jar.outputs.jar_name }}
           retention-days: 30
 
   verify-pr:

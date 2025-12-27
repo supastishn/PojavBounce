@@ -40,7 +40,7 @@ fun getTheme(requestObject: RequestObject): FullHttpResponse {
     val theme = if (id != null) {
         ThemeManager.themes.find { it.metadata.id == id } ?: return httpNotFound(id, "Theme not found")
     } else {
-        ThemeManager.theme
+        ThemeManager.theme ?: return httpNotFound("current", "No theme loaded")
     }
 
     return httpOk(accessibleInteropGson.toJsonTree(theme))

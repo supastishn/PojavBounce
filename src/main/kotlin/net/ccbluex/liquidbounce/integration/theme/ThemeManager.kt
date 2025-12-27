@@ -59,22 +59,27 @@ object ThemeManager : Configurable("theme") {
         }
     }
 
-    internal lateinit var includedTheme: Theme
+    internal var includedTheme: Theme? = null
         private set
+
+    val isThemeAvailable: Boolean
+        get() = includedTheme != null
+
     /**
      * Used for development.
      */
     private var temporaryTheme: Theme? = null
 
-    var theme: Theme
+    var theme: Theme?
         get() = temporaryTheme
             ?: themes.find { theme -> theme.metadata.id.equals(currentTheme, true) }
             ?: includedTheme
         set(value) {
+            if (value == null) return
             // When external, set as a temporary theme.
             if (value.origin.external) {
                 temporaryTheme = value
-                currentTheme = includedTheme.metadata.id
+                currentTheme = includedTheme?.metadata?.id ?: "liquidbounce"
             } else {
                 temporaryTheme = null
                 currentTheme = value.metadata.id
@@ -85,10 +90,10 @@ object ThemeManager : Configurable("theme") {
 
     var shaderEnabled by boolean("Shader", false)
         .onChange { enabled ->
-            if (enabled) {
+            if (enabled && isThemeAvailable) {
                 renderScope.launch {
-                    theme.compileShader()
-                    includedTheme.compileShader()
+                    theme?.compileShader()
+                    includedTheme?.compileShader()
                 }
             }
 
@@ -105,8 +110,13 @@ object ThemeManager : Configurable("theme") {
     }
 
     suspend fun init() {
-        // Load default theme
-        includedTheme = Theme.load(Theme.Origin.RESOURCE, File("liquidbounce"))
+        // Load default theme - may fail if ClientInteropServer routes are not available
+        // (e.g., native-only builds without JCEF browser support)
+        runCatching {
+            includedTheme = Theme.load(Theme.Origin.RESOURCE, File("liquidbounce"))
+        }.onFailure {
+            logger.warn("Failed to load default theme - theme features will be unavailable", it)
+        }
     }
 
     suspend fun load() {
@@ -147,7 +157,7 @@ object ThemeManager : Configurable("theme") {
             }
         }
 
-        themes.add(includedTheme)
+        includedTheme?.let { themes.add(it) }
 
         ModuleHud.updateThemes()
         if (LiquidBounce.isInitialized) {
@@ -197,31 +207,32 @@ object ThemeManager : Configurable("theme") {
     }
 
     fun getScreenLocation(virtualScreenType: VirtualScreenType? = null, markAsStatic: Boolean = false): ScreenLocation {
-        val theme = theme.takeIf { theme ->
-            virtualScreenType == null || theme.isSupported(virtualScreenType.routeName)
-        } ?: includedTheme.takeIf { theme ->
-            virtualScreenType == null || theme.isSupported(virtualScreenType.routeName)
+        val selectedTheme = theme?.takeIf { t ->
+            virtualScreenType == null || t.isSupported(virtualScreenType.routeName)
+        } ?: includedTheme?.takeIf { t ->
+            virtualScreenType == null || t.isSupported(virtualScreenType.routeName)
         } ?: error("No theme supports the route ${virtualScreenType?.routeName}")
 
         return ScreenLocation(
-            theme,
-            theme.getUrl(virtualScreenType?.routeName, markAsStatic)
+            selectedTheme,
+            selectedTheme.getUrl(virtualScreenType?.routeName, markAsStatic)
         )
     }
 
     fun loadBackground() = runBlocking {
-        theme.loadBackgroundImage()
+        theme?.loadBackgroundImage()
         if (shaderEnabled) {
-            theme.compileShader()
+            theme?.compileShader()
         }
     }
 
     @Suppress("LongParameterList")
     fun drawBackground(context: GuiGraphics, width: Int, height: Int, mouseX: Int, mouseY: Int, delta: Float): Boolean {
+        val currentTheme = theme ?: return false
         val background = if (shaderEnabled) {
-            theme.themeBackgroundShader
+            currentTheme.themeBackgroundShader
         } else {
-            theme.themeBackgroundTexture
+            currentTheme.themeBackgroundTexture
         } ?: return false
 
         background.draw(context, width, height, mouseX, mouseY, delta)

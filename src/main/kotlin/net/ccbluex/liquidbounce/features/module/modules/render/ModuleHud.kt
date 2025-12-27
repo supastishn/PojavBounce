@@ -47,12 +47,16 @@ import net.minecraft.client.gui.screens.LevelLoadingScreen
  * Module HUD
  *
  * The client in-game dashboard.
+ * NOTE: Disabled on native-only builds (no browser support)
  */
 
-object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = true) {
+object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = true) {
+
+    // HUD is disabled on native-only builds (requires browser)
+    private const val DISABLED_MESSAGE = "HUD module is disabled on this build (requires browser support)"
 
     override val running
-        get() = this.enabled && !isDestructed
+        get() = false // Always disabled on native-only builds
 
     private val visible: Boolean
         get() = !isHidingNow && inGame
@@ -102,13 +106,9 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = true, hide = tru
     }
 
     override fun onEnabled() {
-        if (isHidingNow) {
-            chat(markAsError(message("hidingAppearance")))
-        }
-
-        if (visible) {
-            open()
-        }
+        // HUD is disabled on native-only builds - immediately disable and warn
+        chat(markAsError(DISABLED_MESSAGE))
+        enabled = false
     }
 
     override fun onDisabled() {

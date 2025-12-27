@@ -27,6 +27,7 @@ import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.util.ARGB
 
 /**
  * Native Minecraft GUI implementation of ClickGUI
@@ -74,8 +75,8 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
-        // Render semi-transparent background
-        renderBackground(context, mouseX, mouseY, delta)
+        // Use solid semi-transparent background instead of blur to avoid "can only blur once per frame" error
+        context.fill(0, 0, width, height, ARGB.color(180, 20, 20, 20))
 
         // Render all panels
         for (panel in panels) {

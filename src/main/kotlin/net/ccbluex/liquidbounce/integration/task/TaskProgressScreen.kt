@@ -48,7 +48,9 @@ class TaskProgressScreen(
     private val percentFormat = DecimalFormat("0.0")
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
-        renderBackground(context, mouseX, mouseY, partialTick)
+        // Use solid background instead of blur to avoid "can only blur once per frame" error
+        context.fill(0, 0, width, height, ARGB.color(255, 24, 26, 27))
+
         val cx = width / 2.0
         val cy = height / 2.0
 

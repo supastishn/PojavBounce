@@ -123,7 +123,9 @@ object IntegrationListener : EventListener {
         virtualOpen(type = type)
     }
 
-    fun virtualOpen(theme: Theme = ThemeManager.theme, type: VirtualScreenType) {
+    fun virtualOpen(theme: Theme? = ThemeManager.theme, type: VirtualScreenType) {
+        if (theme == null) return
+
         // Check if the virtual screen is already open
         if (momentaryVirtualScreen?.type == type) {
             return

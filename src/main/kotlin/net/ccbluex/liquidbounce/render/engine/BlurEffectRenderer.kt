@@ -83,8 +83,8 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
     private fun hasNoFullScreen(): Boolean =
         mc.screen == null || mc.screen is ChatScreen || FeatureSilentScreen.shouldHide
 
-    fun shouldDrawBlur(): Boolean = inGame && hasNoFullScreen() &&
-        ModuleHud.running && ModuleHud.isBlurEffectActive
+    fun shouldDrawBlur(): Boolean = false // Disabled on native-only builds
+    // Original: inGame && hasNoFullScreen() && ModuleHud.running && ModuleHud.isBlurEffectActive
 
     fun blitBlurOverlay() {
         if (!isDrawingHudFramebuffer || !shouldDrawBlur()) {

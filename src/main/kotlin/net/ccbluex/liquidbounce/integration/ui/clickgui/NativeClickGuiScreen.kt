@@ -28,9 +28,12 @@ import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.features.module.Category
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
+import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.client.asPlainText
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.mc
-import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.MouseButtonEvent
@@ -49,6 +52,7 @@ import kotlin.math.min
  * - Panel scrolling
  * - Persistent panel positions
  * - Slider controls for ranged values
+ * - Inter font support
  */
 class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
@@ -57,6 +61,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
     // Active slider drag state
     private var activeSliderDrag: SliderDragState? = null
+
+    // Font rendering
+    private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
+    private val fontScale = 0.28f  // Scale for Inter font (43px base -> ~12px display)
 
     companion object {
         private const val PANEL_WIDTH = 140
@@ -78,6 +86,20 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private val savedPanelPositions = mutableMapOf<Category, Pair<Int, Int>>()
         private val savedPanelExpanded = mutableMapOf<Category, Boolean>()
         private val savedPanelScrollOffsets = mutableMapOf<Category, Int>()
+
+        // Colors
+        private val COLOR_WHITE = Color4b(255, 255, 255, 255)
+        private val COLOR_GREEN = Color4b(0, 255, 0, 255)
+        private val COLOR_RED = Color4b(255, 102, 102, 255)
+        private val COLOR_GRAY = Color4b(170, 170, 170, 255)
+        private val COLOR_DARK_GRAY = Color4b(136, 136, 136, 255)
+        private val COLOR_LIGHT_GRAY = Color4b(204, 204, 204, 255)
+        private val COLOR_CYAN = Color4b(102, 204, 255, 255)
+        private val COLOR_PURPLE = Color4b(221, 170, 255, 255)
+        private val COLOR_LIGHT_CYAN = Color4b(170, 221, 255, 255)
+        private val COLOR_LIGHT_PURPLE = Color4b(187, 187, 255, 255)
+        private val COLOR_LIGHT_GREEN = Color4b(136, 255, 136, 255)
+        private val COLOR_YELLOW = Color4b(255, 204, 102, 255)
     }
 
     // Represents active slider being dragged
@@ -130,16 +152,33 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         context.fill(0, 0, width, height, ARGB.color(180, 20, 20, 20))
 
-        renderSearchBar(context, mouseX, mouseY, mc.font)
+        renderSearchBar(context, mouseX, mouseY)
 
         for (panel in panels) {
-            panel.render(context, mouseX, mouseY, delta, mc.font, searchQuery)
+            panel.render(context, mouseX, mouseY, delta, fontRenderer, fontScale, searchQuery)
         }
 
         super.render(context, mouseX, mouseY, delta)
     }
 
-    private fun renderSearchBar(context: GuiGraphics, mouseX: Int, mouseY: Int, textRenderer: Font) {
+    // Helper method to draw text using Inter font
+    private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
+        val processedText = fontRenderer.process(text.asText(), color)
+        context.pose().pushMatrix()
+        context.pose().translate(x, y)
+        context.pose().scale(fontScale, fontScale)
+        with(context) {
+            fontRenderer.draw(processedText, 0f, 0f, shadow = shadow)
+        }
+        context.pose().popMatrix()
+    }
+
+    private fun getTextWidth(text: String): Float {
+        val processedText = fontRenderer.process(text.asText(), COLOR_WHITE)
+        return fontRenderer.getStringWidth(processedText, shadow = true) * fontScale
+    }
+
+    private fun renderSearchBar(context: GuiGraphics, mouseX: Int, mouseY: Int) {
         val barX = PANEL_MARGIN
         val barY = PANEL_MARGIN
         val barWidth = width - PANEL_MARGIN * 2
@@ -152,15 +191,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         context.fill(barX + barWidth - 1, barY, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
 
         val label = "Search: "
-        context.drawString(textRenderer, label, barX + 4, barY + 6, 0xFF888888.toInt(), false)
+        drawText(context, label, barX + 4f, barY + 5f, COLOR_DARK_GRAY)
 
         val displayText = if (searchQuery.isEmpty()) "(type to filter modules)" else searchQuery
-        val textColor = if (searchQuery.isEmpty()) 0xFF666666.toInt() else 0xFFFFFFFF.toInt()
-        context.drawString(textRenderer, displayText, barX + 4 + textRenderer.width(label), barY + 6, textColor, false)
+        val textColor = if (searchQuery.isEmpty()) Color4b(102, 102, 102, 255) else COLOR_WHITE
+        drawText(context, displayText, barX + 4f + getTextWidth(label), barY + 5f, textColor)
 
         if (searchQuery.isNotEmpty() || (System.currentTimeMillis() / 500) % 2 == 0L) {
-            val cursorX = barX + 4 + textRenderer.width(label) + textRenderer.width(searchQuery)
-            context.drawString(textRenderer, "_", cursorX, barY + 6, 0xFFFFFFFF.toInt(), false)
+            val cursorX = barX + 4f + getTextWidth(label) + getTextWidth(searchQuery)
+            drawText(context, "_", cursorX, barY + 5f, COLOR_WHITE)
         }
     }
 
@@ -346,7 +385,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             return if (isSliderValue(value)) SLIDER_HEIGHT else SETTING_HEIGHT
         }
 
-        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, textRenderer: Font, searchQuery: String) {
+        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, fr: FontRenderer, scale: Float, searchQuery: String) {
             val modules = getFilteredModules(searchQuery)
             if (modules.isEmpty() && searchQuery.isNotEmpty()) {
                 return
@@ -369,10 +408,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             } else {
                 category.choiceName
             }
-            context.drawString(textRenderer, displayName, x + 4, y + 4, 0xFFFFFFFF.toInt(), true)
+            drawPanelText(context, fr, scale, displayName, x + 4f, y + 3f, COLOR_WHITE)
 
             val indicator = if (expanded) "v" else ">"
-            context.drawString(textRenderer, indicator, x + panelWidth - 12, y + 4, 0xFFFFFFFF.toInt(), true)
+            drawPanelText(context, fr, scale, indicator, x + panelWidth - 12f, y + 3f, COLOR_WHITE)
 
             if (expanded && modules.isNotEmpty()) {
                 val contentY = y + PANEL_HEADER_HEIGHT
@@ -380,7 +419,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
                 var currentY = contentY - scrollOffset
                 for (module in modules) {
-                    currentY = renderModuleWithSettings(context, module, currentY, mouseX, mouseY, textRenderer, 0)
+                    currentY = renderModuleWithSettings(context, module, currentY, mouseX, mouseY, fr, scale, 0)
                 }
 
                 context.disableScissor()
@@ -391,6 +430,22 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                     context.fill(x + panelWidth - 3, scrollBarY, x + panelWidth - 1, scrollBarY + scrollBarHeight, 0x80FFFFFF.toInt())
                 }
             }
+        }
+
+        private fun drawPanelText(context: GuiGraphics, fr: FontRenderer, scale: Float, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
+            val processedText = fr.process(text.asText(), color)
+            context.pose().pushMatrix()
+            context.pose().translate(x, y)
+            context.pose().scale(scale, scale)
+            with(context) {
+                fr.draw(processedText, 0f, 0f, shadow = shadow)
+            }
+            context.pose().popMatrix()
+        }
+
+        private fun getTextWidth(fr: FontRenderer, scale: Float, text: String): Float {
+            val processedText = fr.process(text.asText(), COLOR_WHITE)
+            return fr.getStringWidth(processedText, shadow = true) * scale
         }
 
         private fun calculateTotalContentHeight(modules: List<ClientModule> = allModules): Int {
@@ -430,16 +485,16 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderModuleWithSettings(
             context: GuiGraphics, module: ClientModule, startY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, depth: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int
         ): Int {
             var currentY = startY
             val expandState = getModuleExpandState(module)
 
-            renderModuleRow(context, module, currentY, mouseX, mouseY, textRenderer, expandState)
+            renderModuleRow(context, module, currentY, mouseX, mouseY, fr, scale, expandState)
             currentY += MODULE_HEIGHT
 
             if (expandState.expanded) {
-                currentY = renderConfigurableSettings(context, module, currentY, mouseX, mouseY, textRenderer, 1)
+                currentY = renderConfigurableSettings(context, module, currentY, mouseX, mouseY, fr, scale, 1)
             }
 
             return currentY
@@ -447,7 +502,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderModuleRow(
             context: GuiGraphics, module: ClientModule, moduleY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, expandState: ExpandState
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, expandState: ExpandState
         ) {
             val isHovered = mouseX >= x && mouseX < x + panelWidth &&
                 mouseY >= moduleY && mouseY < moduleY + MODULE_HEIGHT
@@ -462,26 +517,26 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             context.fill(x + 2, moduleY, x + panelWidth - 2, moduleY + MODULE_HEIGHT, backgroundColor)
 
-            val color = if (module.enabled) 0xFF00FF00.toInt() else 0xFFFFFFFF.toInt()
-            context.drawString(textRenderer, module.name, x + 6, moduleY + 3, color, true)
+            val color = if (module.enabled) COLOR_GREEN else COLOR_WHITE
+            drawPanelText(context, fr, scale, module.name, x + 6f, moduleY + 2f, color)
 
             val settings = getFilteredValues(module)
             if (settings.isNotEmpty()) {
                 val indicator = if (isExpanded) "-" else "+"
-                context.drawString(textRenderer, indicator, x + panelWidth - 12, moduleY + 3, 0xFFAAAAAA.toInt(), true)
+                drawPanelText(context, fr, scale, indicator, x + panelWidth - 12f, moduleY + 2f, COLOR_GRAY)
             } else {
                 val bindText = module.bind.keyName
                 if (bindText.isNotEmpty() && bindText != UNBOUND_KEY_NAME) {
                     val displayText = "[$bindText]"
-                    val textX = x + panelWidth - textRenderer.width(displayText) - 6
-                    context.drawString(textRenderer, displayText, textX, moduleY + 3, 0xFF888888.toInt(), true)
+                    val textW = getTextWidth(fr, scale, displayText)
+                    drawPanelText(context, fr, scale, displayText, x + panelWidth - textW - 6f, moduleY + 2f, COLOR_DARK_GRAY)
                 }
             }
         }
 
         private fun renderConfigurableSettings(
             context: GuiGraphics, configurable: Configurable, startY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, depth: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int
         ): Int {
             var currentY = startY
             val indent = depth * INDENT_PER_LEVEL
@@ -490,20 +545,20 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             for (value in values) {
                 when (value) {
                     is ChoiceConfigurable<*> -> {
-                        currentY = renderChoiceConfigurable(context, value, currentY, mouseX, mouseY, textRenderer, depth, indent)
+                        currentY = renderChoiceConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)
                     }
                     is ToggleableConfigurable -> {
-                        currentY = renderToggleableConfigurable(context, value, currentY, mouseX, mouseY, textRenderer, depth, indent)
+                        currentY = renderToggleableConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)
                     }
                     is Configurable -> {
-                        currentY = renderNestedConfigurable(context, value, currentY, mouseX, mouseY, textRenderer, depth, indent)
+                        currentY = renderNestedConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)
                     }
                     else -> {
                         if (isSliderValue(value)) {
-                            renderSliderValue(context, value, currentY, mouseX, mouseY, textRenderer, indent)
+                            renderSliderValue(context, value, currentY, mouseX, mouseY, fr, scale, indent)
                             currentY += SLIDER_HEIGHT
                         } else {
-                            renderSettingValue(context, value, currentY, mouseX, mouseY, textRenderer, indent)
+                            renderSettingValue(context, value, currentY, mouseX, mouseY, fr, scale, indent)
                             currentY += SETTING_HEIGHT
                         }
                     }
@@ -514,7 +569,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderChoiceConfigurable(
             context: GuiGraphics, choice: ChoiceConfigurable<*>, startY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, depth: Int, indent: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(choice)
@@ -531,21 +586,21 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             val displayName = choice.name
             val activeChoice = choice.activeChoice.name
-            context.drawString(textRenderer, displayName, x + 6 + indent, currentY + 2, 0xFFDDAAFF.toInt(), false)
+            drawPanelText(context, fr, scale, displayName, x + 6f + indent, currentY + 1f, COLOR_PURPLE, false)
 
             val choiceText = "[$activeChoice]"
-            val choiceX = x + panelWidth - textRenderer.width(choiceText) - 8
-            context.drawString(textRenderer, choiceText, choiceX, currentY + 2, 0xFFAADDFF.toInt(), false)
+            val choiceTextWidth = getTextWidth(fr, scale, choiceText)
+            drawPanelText(context, fr, scale, choiceText, x + panelWidth - choiceTextWidth - 16f, currentY + 1f, COLOR_LIGHT_CYAN, false)
 
             val indicator = if (expandState.expanded) "v" else ">"
-            context.drawString(textRenderer, indicator, x + panelWidth - 8, currentY + 2, 0xFFAAAAAA.toInt(), false)
+            drawPanelText(context, fr, scale, indicator, x + panelWidth - 8f, currentY + 1f, COLOR_GRAY, false)
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
             if (isExpanded) {
                 val activeConfigurable = choice.activeChoice as? Configurable
                 if (activeConfigurable != null) {
-                    currentY = renderConfigurableSettings(context, activeConfigurable, currentY, mouseX, mouseY, textRenderer, depth + 1)
+                    currentY = renderConfigurableSettings(context, activeConfigurable, currentY, mouseX, mouseY, fr, scale, depth + 1)
                 }
             }
 
@@ -554,7 +609,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderToggleableConfigurable(
             context: GuiGraphics, toggleable: ToggleableConfigurable, startY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, depth: Int, indent: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(toggleable)
@@ -571,20 +626,21 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             context.fill(x + 4 + indent, currentY, x + panelWidth - 4, currentY + CONFIGURABLE_HEADER_HEIGHT, bgColor)
 
-            val nameColor = if (toggleable.enabled) 0xFF88FF88.toInt() else 0xFFCCCCCC.toInt()
-            context.drawString(textRenderer, toggleable.name, x + 6 + indent, currentY + 2, nameColor, false)
+            val nameColor = if (toggleable.enabled) COLOR_LIGHT_GREEN else COLOR_LIGHT_GRAY
+            drawPanelText(context, fr, scale, toggleable.name, x + 6f + indent, currentY + 1f, nameColor, false)
 
             val statusText = if (toggleable.enabled) "ON" else "OFF"
-            val statusColor = if (toggleable.enabled) 0xFF00FF00.toInt() else 0xFFFF6666.toInt()
-            context.drawString(textRenderer, statusText, x + panelWidth - textRenderer.width(statusText) - 20, currentY + 2, statusColor, false)
+            val statusColor = if (toggleable.enabled) COLOR_GREEN else COLOR_RED
+            val statusWidth = getTextWidth(fr, scale, statusText)
+            drawPanelText(context, fr, scale, statusText, x + panelWidth - statusWidth - 20f, currentY + 1f, statusColor, false)
 
             val indicator = if (expandState.expanded) "v" else ">"
-            context.drawString(textRenderer, indicator, x + panelWidth - 8, currentY + 2, 0xFFAAAAAA.toInt(), false)
+            drawPanelText(context, fr, scale, indicator, x + panelWidth - 8f, currentY + 1f, COLOR_GRAY, false)
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
             if (isExpanded) {
-                currentY = renderConfigurableSettings(context, toggleable, currentY, mouseX, mouseY, textRenderer, depth + 1)
+                currentY = renderConfigurableSettings(context, toggleable, currentY, mouseX, mouseY, fr, scale, depth + 1)
             }
 
             return currentY
@@ -592,7 +648,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderNestedConfigurable(
             context: GuiGraphics, configurable: Configurable, startY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, depth: Int, indent: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(configurable)
@@ -607,15 +663,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             context.fill(x + 4 + indent, currentY, x + panelWidth - 4, currentY + CONFIGURABLE_HEADER_HEIGHT, bgColor)
 
-            context.drawString(textRenderer, configurable.name, x + 6 + indent, currentY + 2, 0xFFBBBBFF.toInt(), false)
+            drawPanelText(context, fr, scale, configurable.name, x + 6f + indent, currentY + 1f, COLOR_LIGHT_PURPLE, false)
 
             val indicator = if (expandState.expanded) "v" else ">"
-            context.drawString(textRenderer, indicator, x + panelWidth - 8, currentY + 2, 0xFFAAAAAA.toInt(), false)
+            drawPanelText(context, fr, scale, indicator, x + panelWidth - 8f, currentY + 1f, COLOR_GRAY, false)
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
             if (isExpanded) {
-                currentY = renderConfigurableSettings(context, configurable, currentY, mouseX, mouseY, textRenderer, depth + 1)
+                currentY = renderConfigurableSettings(context, configurable, currentY, mouseX, mouseY, fr, scale, depth + 1)
             }
 
             return currentY
@@ -623,7 +679,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderSliderValue(
             context: GuiGraphics, value: Value<*>, settingY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, indent: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, indent: Int
         ) {
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= settingY && mouseY < settingY + SLIDER_HEIGHT
@@ -633,18 +689,12 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             // Draw name
             val displayText = getSettingDisplayText(value)
-            var displayName = value.name
-            val maxNameWidth = panelWidth / 2 - indent
-            if (textRenderer.width(displayName) > maxNameWidth) {
-                while (textRenderer.width(displayName + "..") > maxNameWidth && displayName.isNotEmpty()) {
-                    displayName = displayName.dropLast(1)
-                }
-                displayName += ".."
-            }
-            context.drawString(textRenderer, displayName, x + 6 + indent, settingY + 2, 0xFFCCCCCC.toInt(), false)
+            val displayName = value.name.take(12) + if (value.name.length > 12) ".." else ""
+            drawPanelText(context, fr, scale, displayName, x + 6f + indent, settingY + 1f, COLOR_LIGHT_GRAY, false)
 
             // Draw value text
-            context.drawString(textRenderer, displayText, x + panelWidth - textRenderer.width(displayText) - 8, settingY + 2, 0xFF66CCFF.toInt(), false)
+            val valueWidth = getTextWidth(fr, scale, displayText)
+            drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, COLOR_CYAN, false)
 
             // Draw slider track
             val sliderX = x + 6 + indent
@@ -744,7 +794,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun renderSettingValue(
             context: GuiGraphics, value: Value<*>, settingY: Int,
-            mouseX: Int, mouseY: Int, textRenderer: Font, indent: Int
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, indent: Int
         ) {
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= settingY && mouseY < settingY + SETTING_HEIGHT
@@ -753,21 +803,13 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             context.fill(x + 4 + indent, settingY, x + panelWidth - 4, settingY + SETTING_HEIGHT, backgroundColor)
 
             val displayText = getSettingDisplayText(value)
-            val nameColor = 0xFFCCCCCC.toInt()
+            val displayName = value.name.take(12) + if (value.name.length > 12) ".." else ""
 
-            val maxNameWidth = panelWidth - 50 - indent
-            var displayName = value.name
-            if (textRenderer.width(displayName) > maxNameWidth) {
-                while (textRenderer.width(displayName + "..") > maxNameWidth && displayName.isNotEmpty()) {
-                    displayName = displayName.dropLast(1)
-                }
-                displayName += ".."
-            }
+            drawPanelText(context, fr, scale, displayName, x + 6f + indent, settingY + 1f, COLOR_LIGHT_GRAY, false)
 
-            context.drawString(textRenderer, displayName, x + 6 + indent, settingY + 2, nameColor, false)
-
-            val valueColor = getValueColor(value)
-            context.drawString(textRenderer, displayText, x + panelWidth - textRenderer.width(displayText) - 8, settingY + 2, valueColor, false)
+            val valueColor = getValueColorC4b(value)
+            val valueWidth = getTextWidth(fr, scale, displayText)
+            drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, valueColor, false)
         }
 
         private fun getSettingDisplayText(value: Value<*>): String {
@@ -791,6 +833,16 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 is NamedChoice -> 0xFFFFCC66.toInt()
                 is ClosedFloatingPointRange<*>, is IntRange -> 0xFF66CCFF.toInt()
                 else -> 0xFFAAAAAA.toInt()
+            }
+        }
+
+        private fun getValueColorC4b(value: Value<*>): Color4b {
+            return when (val inner = value.get()) {
+                is Boolean -> if (inner) COLOR_GREEN else COLOR_RED
+                is Number -> COLOR_CYAN
+                is NamedChoice -> COLOR_YELLOW
+                is ClosedFloatingPointRange<*>, is IntRange -> COLOR_CYAN
+                else -> COLOR_GRAY
             }
         }
 

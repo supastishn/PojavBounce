@@ -74,12 +74,38 @@ enum class VirtualScreenType(
     ),
     PROXY_MANAGER(
         "proxymanager",
-        recognizer = { 
+        recognizer = {
             it is net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen
         },
-        open = { 
+        open = {
             mc.setScreen(
                 net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(
+                    IntegrationListener.parent
+                )
+            )
+        }
+    ),
+    SCRIPT_MANAGER(
+        "scriptmanager",
+        recognizer = {
+            it is net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen
+        },
+        open = {
+            mc.setScreen(
+                net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen(
+                    IntegrationListener.parent
+                )
+            )
+        }
+    ),
+    THEME_MANAGER(
+        "thememanager",
+        recognizer = {
+            it is net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen
+        },
+        open = {
+            mc.setScreen(
+                net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen(
                     IntegrationListener.parent
                 )
             )

@@ -36,7 +36,6 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.util.ARGB
 import kotlin.math.max
-import kotlin.math.min
 
 /**
  * Native Minecraft GUI implementation of ClickGUI
@@ -57,7 +56,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val PANEL_MARGIN = 10
         private const val UNBOUND_KEY_NAME = "None"
         private const val INDENT_PER_LEVEL = 6
-        private const val ANIMATION_SPEED = 0.15f
     }
 
     override fun init() {
@@ -133,23 +131,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     override fun shouldCloseOnEsc() = true
 
     /**
-     * Tracks expansion state and animation progress for a configurable
+     * Tracks expansion state for a configurable
      */
     private class ExpandState {
         var expanded = false
-        var animProgress = 0f // 0 = collapsed, 1 = expanded
-
-        fun update(delta: Float) {
-            val target = if (expanded) 1f else 0f
-            animProgress = if (animProgress < target) {
-                min(animProgress + ANIMATION_SPEED * delta * 60f, 1f)
-            } else {
-                max(animProgress - ANIMATION_SPEED * delta * 60f, 0f)
-            }
-        }
-
-        val isAnimating: Boolean get() = animProgress != (if (expanded) 1f else 0f)
-        val visibleFraction: Float get() = animProgress
     }
 
     private inner class CategoryPanel(
@@ -178,10 +163,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
 
         fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, textRenderer: Font) {
-            // Update all animations
-            moduleExpandStates.values.forEach { it.update(delta) }
-            configurableExpandStates.values.forEach { it.update(delta) }
-
             val contentHeight = if (expanded) {
                 calculateTotalContentHeight()
             } else 0
@@ -210,9 +191,8 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             for (module in modules) {
                 height += MODULE_HEIGHT
                 val expandState = getModuleExpandState(module)
-                if (expandState.visibleFraction > 0f) {
-                    val settingsHeight = calculateSettingsHeight(module, 0)
-                    height += (settingsHeight * expandState.visibleFraction).toInt()
+                if (expandState.expanded) {
+                    height += calculateSettingsHeight(module, 0)
                 }
             }
             return height
@@ -225,9 +205,8 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 if (value is Configurable) {
                     height += CONFIGURABLE_HEADER_HEIGHT
                     val subExpandState = getConfigurableExpandState(value)
-                    if (subExpandState.visibleFraction > 0f) {
-                        val subHeight = calculateSettingsHeight(value, depth + 1)
-                        height += (subHeight * subExpandState.visibleFraction).toInt()
+                    if (subExpandState.expanded) {
+                        height += calculateSettingsHeight(value, depth + 1)
                     }
                 } else {
                     height += SETTING_HEIGHT
@@ -248,28 +227,14 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         ): Int {
             var currentY = startY
             val expandState = getModuleExpandState(module)
-            val isExpanded = expandState.expanded || expandState.visibleFraction > 0f
 
             // Render module row
             renderModuleRow(context, module, currentY, mouseX, mouseY, textRenderer, expandState)
             currentY += MODULE_HEIGHT
 
-            // Render settings if expanded (with animation)
-            if (isExpanded) {
-                val settingsHeight = calculateSettingsHeight(module, 0)
-                val visibleHeight = (settingsHeight * expandState.visibleFraction).toInt()
-
-                if (visibleHeight > 0) {
-                    // Enable scissor for animation clipping
-                    val clipY = currentY
-                    val clipHeight = visibleHeight
-                    context.enableScissor(x, clipY, x + panelWidth, clipY + clipHeight)
-
-                    val endY = renderConfigurableSettings(context, module, currentY, mouseX, mouseY, textRenderer, 1)
-
-                    context.disableScissor()
-                    currentY += visibleHeight
-                }
+            // Render settings if expanded
+            if (expandState.expanded) {
+                currentY = renderConfigurableSettings(context, module, currentY, mouseX, mouseY, textRenderer, 1)
             }
 
             return currentY
@@ -343,7 +308,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(choice)
-            val isExpanded = expandState.expanded || expandState.visibleFraction > 0f
+            val isExpanded = expandState.expanded
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
 
@@ -371,7 +336,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
             // Render active choice settings if expanded
-            if (isExpanded && expandState.visibleFraction > 0f) {
+            if (isExpanded) {
                 val activeConfigurable = choice.activeChoice as? Configurable
                 if (activeConfigurable != null) {
                     currentY = renderConfigurableSettings(context, activeConfigurable, currentY, mouseX, mouseY, textRenderer, depth + 1)
@@ -387,7 +352,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(toggleable)
-            val isExpanded = expandState.expanded || expandState.visibleFraction > 0f
+            val isExpanded = expandState.expanded
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
 
@@ -417,7 +382,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
             // Render nested settings if expanded
-            if (isExpanded && expandState.visibleFraction > 0f) {
+            if (isExpanded) {
                 currentY = renderConfigurableSettings(context, toggleable, currentY, mouseX, mouseY, textRenderer, depth + 1)
             }
 
@@ -430,7 +395,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         ): Int {
             var currentY = startY
             val expandState = getConfigurableExpandState(configurable)
-            val isExpanded = expandState.expanded || expandState.visibleFraction > 0f
+            val isExpanded = expandState.expanded
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
 
@@ -448,7 +413,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
-            if (isExpanded && expandState.visibleFraction > 0f) {
+            if (isExpanded) {
                 currentY = renderConfigurableSettings(context, configurable, currentY, mouseX, mouseY, textRenderer, depth + 1)
             }
 
@@ -574,7 +539,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             currentY += MODULE_HEIGHT
 
             // Check settings if expanded
-            if (expandState.visibleFraction > 0f) {
+            if (expandState.expanded) {
                 val result = handleConfigurableClick(module, mouseX, mouseY, button, currentY, 1)
                 if (result.first) return true to result.second
                 currentY = result.second
@@ -604,7 +569,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         }
                         currentY += CONFIGURABLE_HEADER_HEIGHT
 
-                        if (expandState.visibleFraction > 0f) {
+                        if (expandState.expanded) {
                             val activeConfigurable = value.activeChoice as? Configurable
                             if (activeConfigurable != null) {
                                 val result = handleConfigurableClick(activeConfigurable, mouseX, mouseY, button, currentY, depth + 1)
@@ -625,7 +590,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         }
                         currentY += CONFIGURABLE_HEADER_HEIGHT
 
-                        if (expandState.visibleFraction > 0f) {
+                        if (expandState.expanded) {
                             val result = handleConfigurableClick(value, mouseX, mouseY, button, currentY, depth + 1)
                             if (result.first) return result
                             currentY = result.second
@@ -642,7 +607,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         }
                         currentY += CONFIGURABLE_HEADER_HEIGHT
 
-                        if (expandState.visibleFraction > 0f) {
+                        if (expandState.expanded) {
                             val result = handleConfigurableClick(value, mouseX, mouseY, button, currentY, depth + 1)
                             if (result.first) return result
                             currentY = result.second
@@ -749,7 +714,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         ): Pair<Boolean, Int> {
             var currentY = startY + MODULE_HEIGHT
             val expandState = getModuleExpandState(module)
-            if (expandState.visibleFraction > 0f) {
+            if (expandState.expanded) {
                 val result = handleConfigurableScroll(module, mouseX, mouseY, amount, currentY, 1)
                 if (result.first) return result
                 currentY = result.second
@@ -769,7 +734,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                     is Configurable -> {
                         currentY += CONFIGURABLE_HEADER_HEIGHT
                         val expandState = getConfigurableExpandState(value)
-                        if (expandState.visibleFraction > 0f) {
+                        if (expandState.expanded) {
                             val result = handleConfigurableScroll(value, mouseX, mouseY, amount, currentY, depth + 1)
                             if (result.first) return result
                             currentY = result.second

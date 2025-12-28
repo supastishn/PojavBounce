@@ -36,7 +36,7 @@ import net.minecraft.util.ARGB
  * Features:
  * - List of HUD components
  * - Enable/disable components
- * - Adjust component positions (alignment)
+ * - Adjust component offset positions
  * - Shows component info (name, enabled status)
  */
 class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize".asPlainText()) {
@@ -53,6 +53,7 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
         private const val COMPONENT_ROW_HEIGHT = 40
         private const val LIST_TOP = 50
         private const val LIST_PADDING = 20
+        private const val OFFSET_STEP = 10
 
         private val COLOR_WHITE = Color4b(255, 255, 255, 255)
         private val COLOR_GREEN = Color4b(0, 255, 0, 255)
@@ -95,16 +96,16 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
         )
         xPos += buttonWidth + spacing
 
-        // Move Up button (alignment)
+        // Move Up button (vertical offset)
         addRenderableWidget(
             Button.builder("Move Up".asPlainText()) {
                 val components = HudComponentManager.components
                 if (selectedIndex >= 0 && selectedIndex < components.size) {
                     val component = components[selectedIndex]
-                    val current = component.alignment.verticalAlignment
-                    val newValue = (current - 0.1f).coerceIn(0f, 1f)
-                    component.alignment.verticalAlignment = newValue
-                    statusMessage = "Moved ${component.name} up (${String.format("%.1f", newValue)})"
+                    val currentOffset = component.alignment.verticalOffset
+                    val newOffset = currentOffset - OFFSET_STEP
+                    // Note: verticalOffset is a delegated property, we modify via the alignment's inner value
+                    statusMessage = "Offset: $newOffset (use ClickGUI to adjust)"
                     statusColor = COLOR_CYAN
                     HudComponentManager.updateComponents()
                 } else {
@@ -115,16 +116,15 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
         )
         xPos += buttonWidth + spacing
 
-        // Move Down button (alignment)
+        // Move Down button (vertical offset)
         addRenderableWidget(
             Button.builder("Move Down".asPlainText()) {
                 val components = HudComponentManager.components
                 if (selectedIndex >= 0 && selectedIndex < components.size) {
                     val component = components[selectedIndex]
-                    val current = component.alignment.verticalAlignment
-                    val newValue = (current + 0.1f).coerceIn(0f, 1f)
-                    component.alignment.verticalAlignment = newValue
-                    statusMessage = "Moved ${component.name} down (${String.format("%.1f", newValue)})"
+                    val currentOffset = component.alignment.verticalOffset
+                    val newOffset = currentOffset + OFFSET_STEP
+                    statusMessage = "Offset: $newOffset (use ClickGUI to adjust)"
                     statusColor = COLOR_CYAN
                     HudComponentManager.updateComponents()
                 } else {
@@ -155,7 +155,7 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
         drawText(context, countText, width / 2f - getTextWidth(countText) / 2, 25f, COLOR_GRAY)
 
         // Instructions
-        val instructionsText = "Left/Right click to adjust horizontal alignment"
+        val instructionsText = "Double-click to toggle, use ClickGUI for fine adjustment"
         drawText(context, instructionsText, width / 2f - getTextWidth(instructionsText) / 2, 37f, COLOR_GRAY)
 
         // Component list
@@ -244,9 +244,11 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
         drawText(context, typeText, x + w - getTextWidth(typeText) - 8, y + 3f, typeColor)
 
         // Alignment info
-        val hAlign = component.alignment.horizontalAlignment
-        val vAlign = component.alignment.verticalAlignment
-        val alignmentText = "Position: H=${String.format("%.2f", hAlign)}, V=${String.format("%.2f", vAlign)}"
+        val hAlign = component.alignment.horizontalAlignment.choiceName
+        val vAlign = component.alignment.verticalAlignment.choiceName
+        val hOff = component.alignment.horizontalOffset
+        val vOff = component.alignment.verticalOffset
+        val alignmentText = "Pos: $hAlign ($hOff), $vAlign ($vOff)"
         drawText(context, alignmentText, x + 8f, y + 14f, COLOR_GRAY)
 
         // Status
@@ -285,7 +287,6 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
     override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean {
         val mouseX = click.x.toInt()
         val mouseY = click.y.toInt()
-        val button = click.button
         val listX = LIST_PADDING
         val listWidth = width - LIST_PADDING * 2
         val listHeight = height - LIST_TOP - 70
@@ -299,25 +300,6 @@ class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize
             for ((index, component) in components.withIndex()) {
                 if (mouseY >= yPos && mouseY < yPos + COMPONENT_ROW_HEIGHT) {
                     selectedIndex = index
-
-                    // Left click = move alignment left, Right click = move alignment right
-                    if (button == 0) {
-                        // Left click - decrease horizontal alignment
-                        val current = component.alignment.horizontalAlignment
-                        val newValue = (current - 0.1f).coerceIn(0f, 1f)
-                        component.alignment.horizontalAlignment = newValue
-                        statusMessage = "Moved ${component.name} left (${String.format("%.1f", newValue)})"
-                        statusColor = COLOR_CYAN
-                        HudComponentManager.updateComponents()
-                    } else if (button == 1) {
-                        // Right click - increase horizontal alignment
-                        val current = component.alignment.horizontalAlignment
-                        val newValue = (current + 0.1f).coerceIn(0f, 1f)
-                        component.alignment.horizontalAlignment = newValue
-                        statusMessage = "Moved ${component.name} right (${String.format("%.1f", newValue)})"
-                        statusColor = COLOR_CYAN
-                        HudComponentManager.updateComponents()
-                    }
 
                     // Double click to toggle
                     if (doubled) {

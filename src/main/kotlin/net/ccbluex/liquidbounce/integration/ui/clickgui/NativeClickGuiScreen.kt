@@ -287,8 +287,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             is ClosedFloatingPointRange<*> -> {
                 @Suppress("UNCHECKED_CAST")
                 val ranged = drag.value as RangedValue<ClosedFloatingPointRange<Float>>
-                val start = ranged.range.start.start
-                val end = ranged.range.endInclusive.endInclusive
+                val rangeStart = ranged.range.start as ClosedFloatingPointRange<Float>
+                val rangeEnd = ranged.range.endInclusive as ClosedFloatingPointRange<Float>
+                val start = rangeStart.start
+                val end = rangeEnd.endInclusive
                 val currentRange = inner as ClosedFloatingPointRange<Float>
                 val newVal = (start + (end - start) * fraction).toFloat()
                 if (drag.thumbIndex == 0) {
@@ -304,8 +306,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             is IntRange -> {
                 @Suppress("UNCHECKED_CAST")
                 val ranged = drag.value as RangedValue<IntRange>
-                val start = ranged.range.start.first
-                val end = ranged.range.endInclusive.last
+                val rangeStart = ranged.range.start as IntRange
+                val rangeEnd = ranged.range.endInclusive as IntRange
+                val start = rangeStart.first
+                val end = rangeEnd.last
                 val newVal = (start + (end - start) * fraction).toInt()
                 if (drag.thumbIndex == 0) {
                     val newStart = newVal.coerceAtMost(inner.last)

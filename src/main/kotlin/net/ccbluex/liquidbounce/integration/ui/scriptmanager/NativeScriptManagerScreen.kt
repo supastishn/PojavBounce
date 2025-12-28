@@ -219,27 +219,28 @@ class NativeScriptManagerScreen(private val parent: Screen?) : Screen("Script Ma
     private fun renderScriptRow(context: GuiGraphics, script: PolyglotScript, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int) {
         val isHovered = mouseX >= x && mouseX < x + w && mouseY >= y && mouseY < y + SCRIPT_ROW_HEIGHT
         val isSelected = index == selectedIndex
-        val isEnabled = script.registeredModules.isNotEmpty() || script.registeredCommands.isNotEmpty()
+        // Use scriptName initialization as a proxy for whether script is loaded
+        val isLoaded = runCatching { script.scriptName }.isSuccess
 
         // Row background
         val bgColor = when {
-            isEnabled && isSelected -> ARGB.color(200, 60, 100, 80)
-            isEnabled -> ARGB.color(150, 50, 80, 60)
+            isLoaded && isSelected -> ARGB.color(200, 60, 100, 80)
+            isLoaded -> ARGB.color(150, 50, 80, 60)
             isSelected -> ARGB.color(200, 80, 70, 100)
             isHovered -> ARGB.color(150, 60, 55, 80)
             else -> ARGB.color(100, 45, 40, 65)
         }
         context.fill(x, y, x + w, y + SCRIPT_ROW_HEIGHT - 2, bgColor)
 
-        // Script name (file name)
-        val scriptName = script.file.nameWithoutExtension
+        // Script name (use public scriptName if available, else file name)
+        val displayName = runCatching { script.scriptName }.getOrElse { script.file.nameWithoutExtension }
         val nameColor = when {
-            isEnabled -> COLOR_GREEN
+            isLoaded -> COLOR_GREEN
             isSelected -> COLOR_WHITE
             isHovered -> COLOR_WHITE
             else -> COLOR_GRAY
         }
-        drawText(context, scriptName, x + 8f, y + 3f, nameColor)
+        drawText(context, displayName, x + 8f, y + 3f, nameColor)
 
         // Language badge
         val langColor = when (script.language.lowercase()) {
@@ -250,11 +251,11 @@ class NativeScriptManagerScreen(private val parent: Screen?) : Screen("Script Ma
         }
         drawText(context, "[${script.language}]", x + w - getTextWidth("[${script.language}]") - 8, y + 3f, langColor)
 
-        // Module/command count
-        val moduleCount = script.registeredModules.size
-        val commandCount = script.registeredCommands.size
-        val statsText = "Modules: $moduleCount, Commands: $commandCount"
-        drawText(context, statsText, x + 8f, y + 16f, COLOR_GRAY)
+        // Script info (version and authors if available)
+        val versionText = runCatching { "v${script.scriptVersion}" }.getOrElse { "Unknown" }
+        val authorsText = runCatching { script.scriptAuthors.joinToString(", ") }.getOrElse { "" }
+        val infoText = if (authorsText.isNotEmpty()) "$versionText by $authorsText" else versionText
+        drawText(context, infoText, x + 8f, y + 16f, COLOR_GRAY)
 
         // File path
         val pathText = script.file.parentFile?.name ?: ""

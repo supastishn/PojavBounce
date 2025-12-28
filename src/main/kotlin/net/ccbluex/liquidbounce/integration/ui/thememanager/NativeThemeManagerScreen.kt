@@ -250,7 +250,7 @@ class NativeThemeManagerScreen(private val parent: Screen?) : Screen("Theme Mana
         drawText(context, originText, x + w - getTextWidth(originText) - 8, y + 3f, originColor)
 
         // Author
-        val authorText = "by ${metadata.author}"
+        val authorText = "by ${metadata.authors.joinToString(", ")}"
         drawText(context, authorText, x + 8f, y + 14f, COLOR_GRAY)
 
         // Version

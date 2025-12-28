@@ -77,7 +77,7 @@ class NativeProxyManagerScreen(private val parent: Screen?) : Screen("Proxy Mana
         // Proxy field for adding new proxies
         proxyField = EditBox(font, width / 2 - 150, height - 60, 300, 20, "Proxy".asPlainText())
         proxyField!!.setMaxLength(200)
-        proxyField!!.hint = "host:port or user:pass@host:port".asPlainText()
+        proxyField!!.setHint("host:port or user:pass@host:port".asPlainText())
         addWidget(proxyField!!)
 
         // Calculate button positions
@@ -276,7 +276,7 @@ class NativeProxyManagerScreen(private val parent: Screen?) : Screen("Proxy Mana
 
         // IP info if available
         proxy.ipInfo?.let { ipInfo ->
-            val location = "${ipInfo.countryCode ?: "?"}"
+            val location = "${ipInfo.country ?: "?"}"
             drawText(context, location, x + 50f, y + 14f, COLOR_GRAY)
         }
 

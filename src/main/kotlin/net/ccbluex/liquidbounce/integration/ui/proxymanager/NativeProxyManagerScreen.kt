@@ -44,7 +44,7 @@ import net.minecraft.util.ARGB
 class NativeProxyManagerScreen(private val parent: Screen?) : Screen("Proxy Manager".asPlainText()) {
 
     private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.28f
+    private val fontScale = 0.22f
 
     private var scrollOffset = 0
     private var selectedIndex = -1

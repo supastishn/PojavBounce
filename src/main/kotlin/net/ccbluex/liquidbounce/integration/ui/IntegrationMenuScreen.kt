@@ -55,6 +55,8 @@ class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
                 mc.setScreen(net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen(this))
             VirtualScreenType.THEME_MANAGER ->
                 mc.setScreen(net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen(this))
+            VirtualScreenType.CUSTOMIZE ->
+                mc.setScreen(net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen(this))
             else ->
                 mc.setScreen(net.ccbluex.liquidbounce.integration.VirtualDisplayScreen(type))
         }

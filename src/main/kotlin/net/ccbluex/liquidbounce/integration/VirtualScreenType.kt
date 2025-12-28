@@ -111,6 +111,19 @@ enum class VirtualScreenType(
             )
         }
     ),
+    CUSTOMIZE(
+        "customize",
+        recognizer = {
+            it is net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen
+        },
+        open = {
+            mc.setScreen(
+                net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen(
+                    IntegrationListener.parent
+                )
+            )
+        }
+    ),
 
     TITLE(
         "title",

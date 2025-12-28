@@ -78,7 +78,7 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
         // Username field for adding cracked accounts
         usernameField = EditBox(font, width / 2 - 100, height - 60, 200, 20, "Username".asPlainText())
         usernameField!!.setMaxLength(16)
-        usernameField!!.hint = "Enter username...".asPlainText()
+        usernameField!!.setHint("Enter username...".asPlainText())
         addWidget(usernameField!!)
 
         // Calculate button positions

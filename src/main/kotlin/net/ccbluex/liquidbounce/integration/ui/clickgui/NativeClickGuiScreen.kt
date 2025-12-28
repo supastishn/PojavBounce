@@ -519,21 +519,27 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 is Int -> {
                     @Suppress("UNCHECKED_CAST")
                     val intValue = value as RangedValue<Int>
-                    val newVal = (current + direction).coerceIn(intValue.range)
+                    val rangeStart = intValue.range.start as Int
+                    val rangeEnd = intValue.range.endInclusive as Int
+                    val newVal = (current + direction).coerceIn(rangeStart, rangeEnd)
                     intValue.set(newVal)
                 }
                 is Float -> {
                     @Suppress("UNCHECKED_CAST")
                     val floatValue = value as RangedValue<Float>
-                    val step = (floatValue.range.endInclusive - floatValue.range.start) / 20f
-                    val newVal = (current + step * direction).coerceIn(floatValue.range)
+                    val rangeStart = floatValue.range.start as Float
+                    val rangeEnd = floatValue.range.endInclusive as Float
+                    val step = (rangeEnd - rangeStart) / 20f
+                    val newVal = (current + step * direction).coerceIn(rangeStart, rangeEnd)
                     floatValue.set(newVal)
                 }
                 is Double -> {
                     @Suppress("UNCHECKED_CAST")
                     val doubleValue = value as RangedValue<Double>
-                    val step = (doubleValue.range.endInclusive - doubleValue.range.start) / 20.0
-                    val newVal = (current + step * direction).coerceIn(doubleValue.range)
+                    val rangeStart = doubleValue.range.start as Double
+                    val rangeEnd = doubleValue.range.endInclusive as Double
+                    val step = (rangeEnd - rangeStart) / 20.0
+                    val newVal = (current + step * direction).coerceIn(rangeStart, rangeEnd)
                     doubleValue.set(newVal)
                 }
             }

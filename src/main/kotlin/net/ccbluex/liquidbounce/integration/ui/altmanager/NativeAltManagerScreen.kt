@@ -46,7 +46,7 @@ import net.minecraft.util.ARGB
 class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager".asPlainText()) {
 
     private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.28f
+    private val fontScale = 0.22f
 
     private var scrollOffset = 0
     private var selectedIndex = -1

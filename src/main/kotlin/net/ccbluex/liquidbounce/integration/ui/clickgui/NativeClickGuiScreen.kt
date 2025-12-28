@@ -64,7 +64,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
     // Font rendering
     private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.28f  // Scale for Inter font (43px base -> ~12px display)
+    private val fontScale = 0.22f  // Scale for Inter font (43px base -> ~9px display)
 
     companion object {
         private const val PANEL_WIDTH = 140

@@ -42,7 +42,7 @@ import net.minecraft.util.ARGB
 class NativeCustomizeScreen(private val parent: Screen?) : Screen("HUD Customize".asPlainText()) {
 
     private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.28f
+    private val fontScale = 0.22f
 
     private var scrollOffset = 0
     private var selectedIndex = -1

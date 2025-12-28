@@ -43,7 +43,7 @@ import java.io.File
 class NativeScriptManagerScreen(private val parent: Screen?) : Screen("Script Manager".asPlainText()) {
 
     private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.28f
+    private val fontScale = 0.22f
 
     private var scrollOffset = 0
     private var selectedIndex = -1

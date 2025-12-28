@@ -669,7 +669,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             } else {
                 (currentIndex + 1) % choices.size
             }
-            choice.setFromValueName(choices[newIndex].name)
+            choice.setByString(choices[newIndex].choiceName)
         }
 
         private fun handleSettingClick(value: Value<*>, button: Int) {

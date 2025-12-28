@@ -84,7 +84,9 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
 
     @Suppress("unused")
     private val overlayRenderHandler = handler<OverlayRenderEvent> { event ->
-        if (!running || !visible || mc.options.hideGui) {
+        // Only hide HUD when F1 is pressed (hideGui) AND no screen/menu is open.
+        // This allows HUD to render when menus are open (e.g., pause menu via Esc).
+        if (!running || !visible || (mc.options.hideGui && mc.screen == null)) {
             return@handler
         }
 

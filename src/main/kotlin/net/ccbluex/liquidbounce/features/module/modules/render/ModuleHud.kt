@@ -30,6 +30,10 @@ import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
 import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.MinimapHudComponent
+import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.liquidbounce.render.drawQuad
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.inGame
 import net.minecraft.util.ARGB
 
@@ -37,8 +41,8 @@ import net.minecraft.util.ARGB
  * Module HUD
  *
  * Native Minecraft HUD overlay that displays:
- * - LiquidBounce watermark in top left
- * - List of enabled modules in top right
+ * - LiquidBounce watermark in top left (using Inter font)
+ * - List of enabled modules in top right (using Inter font)
  */
 object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = true) {
 
@@ -63,6 +67,13 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
     private val showWatermark by boolean("ShowWatermark", true)
     private val showArrayList by boolean("ShowArrayList", true)
     private val arrayListBackground by boolean("ArrayListBackground", true)
+    private val useCustomFont by boolean("UseCustomFont", true)
+    private val hudScale by float("Scale", 0.4f, 0.2f..1.0f)
+
+    // Colors
+    private val watermarkColor = Color4b(0, 255, 255, 255)  // Cyan
+    private val arrayListColor = Color4b(0, 255, 0, 255)     // Green
+    private val backgroundColor = Color4b(0, 0, 0, 120)      // Semi-transparent black
 
     val isBlurEffectActive
         get() = Blur.enabled && !(mc.options.hideGui && mc.screen == null)
@@ -93,13 +104,87 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
         }
 
         val context = event.context
-        val font = mc.font
         val screenWidth = context.guiWidth()
+
+        if (useCustomFont) {
+            renderWithCustomFont(context, screenWidth)
+        } else {
+            renderWithMinecraftFont(context, screenWidth)
+        }
+    }
+
+    private fun renderWithCustomFont(context: net.minecraft.client.gui.GuiGraphics, screenWidth: Int) {
+        val fontRenderer = FontManager.FONT_RENDERER
+        val scale = hudScale
 
         // Draw watermark in top left
         if (showWatermark) {
             val watermark = "${LiquidBounce.CLIENT_NAME} v${LiquidBounce.clientVersion}"
-            context.drawString(font, watermark, 4, 4, 0x00FFFF, true)
+            val processedText = fontRenderer.process(watermark.asText(), watermarkColor)
+
+            context.pose().pushMatrix()
+            context.pose().translate(4f, 4f)
+            context.pose().scale(scale, scale)
+            with(context) {
+                fontRenderer.draw(processedText, 0f, 0f, shadow = true)
+            }
+            context.pose().popMatrix()
+        }
+
+        // Draw enabled modules list in top right
+        if (showArrayList) {
+            val enabledModules = ModuleManager
+                .filter { it.enabled && !it.hidden }
+                .sortedByDescending { module ->
+                    val text = fontRenderer.process(module.name.asText(), arrayListColor)
+                    fontRenderer.getStringWidth(text, shadow = true)
+                }
+
+            var yOffset = 4f
+            val lineHeight = fontRenderer.height * scale + 2
+
+            for ((index, module) in enabledModules.withIndex()) {
+                val processedText = fontRenderer.process(module.name.asText(), arrayListColor)
+                val textWidth = fontRenderer.getStringWidth(processedText, shadow = true) * scale
+                val xPos = screenWidth - textWidth - 4f
+
+                // Background
+                if (arrayListBackground) {
+                    context.drawQuad(
+                        xPos - 2f,
+                        yOffset - 1f,
+                        screenWidth.toFloat(),
+                        yOffset + lineHeight - 1f,
+                        fillColor = backgroundColor
+                    )
+                }
+
+                // Rainbow-ish color based on index
+                val hue = (index * 10f) / 360f
+                val color = Color4b.ofHSB(hue, 1f, 1f)
+                val coloredText = fontRenderer.process(module.name.asText(), color)
+
+                // Module name
+                context.pose().pushMatrix()
+                context.pose().translate(xPos, yOffset)
+                context.pose().scale(scale, scale)
+                with(context) {
+                    fontRenderer.draw(coloredText, 0f, 0f, shadow = true)
+                }
+                context.pose().popMatrix()
+
+                yOffset += lineHeight
+            }
+        }
+    }
+
+    private fun renderWithMinecraftFont(context: net.minecraft.client.gui.GuiGraphics, screenWidth: Int) {
+        val font = mc.font
+
+        // Draw watermark in top left
+        if (showWatermark) {
+            val watermark = "${LiquidBounce.CLIENT_NAME} v${LiquidBounce.clientVersion}"
+            context.drawString(font, watermark, 4, 4, 0xFF00FFFF.toInt(), true)
         }
 
         // Draw enabled modules list in top right
@@ -109,7 +194,7 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
                 .sortedByDescending { font.width(it.name) }
 
             var yOffset = 4
-            for (module in enabledModules) {
+            for ((index, module) in enabledModules.withIndex()) {
                 val textWidth = font.width(module.name)
                 val xPos = screenWidth - textWidth - 4
 
@@ -124,8 +209,13 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
                     )
                 }
 
+                // Rainbow-ish color based on index
+                val hue = (index * 10f) / 360f
+                val color = java.awt.Color.getHSBColor(hue, 1f, 1f)
+                val argb = (0xFF shl 24) or (color.red shl 16) or (color.green shl 8) or color.blue
+
                 // Module name
-                context.drawString(font, module.name, xPos, yOffset, 0x00FF00, true)
+                context.drawString(font, module.name, xPos, yOffset, argb, true)
                 yOffset += font.lineHeight + 1
             }
         }

@@ -48,17 +48,22 @@ import kotlin.math.min
  * - Search bar for filtering modules
  * - Panel scrolling
  * - Persistent panel positions
+ * - Slider controls for ranged values
  */
 class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
     private val panels = mutableListOf<CategoryPanel>()
     private var searchQuery = ""
 
+    // Active slider drag state
+    private var activeSliderDrag: SliderDragState? = null
+
     companion object {
         private const val PANEL_WIDTH = 140
         private const val PANEL_HEADER_HEIGHT = 16
         private const val MODULE_HEIGHT = 14
         private const val SETTING_HEIGHT = 12
+        private const val SLIDER_HEIGHT = 18  // Taller for slider track
         private const val CONFIGURABLE_HEADER_HEIGHT = 11
         private const val PANEL_SPACING = 10
         private const val PANEL_MARGIN = 10
@@ -66,12 +71,22 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val UNBOUND_KEY_NAME = "None"
         private const val INDENT_PER_LEVEL = 6
         private const val MAX_PANEL_HEIGHT = 300
+        private const val SLIDER_TRACK_HEIGHT = 4
+        private const val SLIDER_THUMB_WIDTH = 6
 
         // Persistent panel positions (survives screen close/reopen)
         private val savedPanelPositions = mutableMapOf<Category, Pair<Int, Int>>()
         private val savedPanelExpanded = mutableMapOf<Category, Boolean>()
         private val savedPanelScrollOffsets = mutableMapOf<Category, Int>()
     }
+
+    // Represents active slider being dragged
+    private data class SliderDragState(
+        val value: Value<*>,
+        val thumbIndex: Int,  // 0 for single slider or left thumb, 1 for right thumb
+        val sliderX: Int,
+        val sliderWidth: Int
+    )
 
     override fun init() {
         super.init()
@@ -92,21 +107,18 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 panelCount = 0
             }
 
-            // Use saved position if available, otherwise use calculated position
             val (savedX, savedY) = savedPanelPositions[category] ?: (xPos to yPos)
             val savedExpanded = savedPanelExpanded[category] ?: true
             val savedScroll = savedPanelScrollOffsets[category] ?: 0
 
             panels.add(CategoryPanel(category, modules, savedX, savedY, PANEL_WIDTH, savedExpanded, savedScroll))
 
-            // Update default position for next panel
             xPos += PANEL_WIDTH + PANEL_SPACING
             panelCount++
         }
     }
 
     override fun removed() {
-        // Save panel positions when screen closes
         for (panel in panels) {
             savedPanelPositions[panel.category] = panel.x to panel.y
             savedPanelExpanded[panel.category] = panel.expanded
@@ -118,7 +130,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         context.fill(0, 0, width, height, ARGB.color(180, 20, 20, 20))
 
-        // Render search bar
         renderSearchBar(context, mouseX, mouseY, mc.font)
 
         for (panel in panels) {
@@ -133,25 +144,20 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         val barY = PANEL_MARGIN
         val barWidth = width - PANEL_MARGIN * 2
 
-        // Background
         context.fill(barX, barY, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xC8323232.toInt())
 
-        // Border
         context.fill(barX, barY, barX + barWidth, barY + 1, 0xFF505050.toInt())
         context.fill(barX, barY + SEARCH_BAR_HEIGHT - 1, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
         context.fill(barX, barY, barX + 1, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
         context.fill(barX + barWidth - 1, barY, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
 
-        // Search icon/label
         val label = "Search: "
         context.drawString(textRenderer, label, barX + 4, barY + 6, 0xFF888888.toInt(), false)
 
-        // Search text
         val displayText = if (searchQuery.isEmpty()) "(type to filter modules)" else searchQuery
         val textColor = if (searchQuery.isEmpty()) 0xFF666666.toInt() else 0xFFFFFFFF.toInt()
         context.drawString(textRenderer, displayText, barX + 4 + textRenderer.width(label), barY + 6, textColor, false)
 
-        // Cursor blink
         if (searchQuery.isNotEmpty() || (System.currentTimeMillis() / 500) % 2 == 0L) {
             val cursorX = barX + 4 + textRenderer.width(label) + textRenderer.width(searchQuery)
             context.drawString(textRenderer, "_", cursorX, barY + 6, 0xFFFFFFFF.toInt(), false)
@@ -168,12 +174,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun keyPressed(event: KeyEvent): Boolean {
-        // Backspace
         if (event.key == 259 && searchQuery.isNotEmpty()) {
             searchQuery = searchQuery.dropLast(1)
             return true
         }
-        // Escape clears search if there's text, otherwise closes
         if (event.key == 256 && searchQuery.isNotEmpty()) {
             searchQuery = ""
             return true
@@ -191,6 +195,12 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun mouseDragged(click: MouseButtonEvent, offsetX: Double, offsetY: Double): Boolean {
+        // Handle slider drag
+        activeSliderDrag?.let { drag ->
+            updateSliderValue(drag, click.x)
+            return true
+        }
+
         for (panel in panels) {
             if (panel.mouseDragged(click.x, click.y, click.button(), offsetX, offsetY)) {
                 return true
@@ -200,10 +210,73 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun mouseReleased(click: MouseButtonEvent): Boolean {
+        activeSliderDrag = null
         for (panel in panels) {
             panel.dragging = false
         }
         return super.mouseReleased(click)
+    }
+
+    private fun updateSliderValue(drag: SliderDragState, mouseX: Double) {
+        val fraction = ((mouseX - drag.sliderX) / drag.sliderWidth).coerceIn(0.0, 1.0)
+
+        when (val inner = drag.value.get()) {
+            is Int -> {
+                @Suppress("UNCHECKED_CAST")
+                val ranged = drag.value as RangedValue<Int>
+                val start = ranged.range.start as Int
+                val end = ranged.range.endInclusive as Int
+                val newVal = (start + (end - start) * fraction).toInt()
+                ranged.set(newVal)
+            }
+            is Float -> {
+                @Suppress("UNCHECKED_CAST")
+                val ranged = drag.value as RangedValue<Float>
+                val start = ranged.range.start as Float
+                val end = ranged.range.endInclusive as Float
+                val newVal = (start + (end - start) * fraction).toFloat()
+                ranged.set(newVal)
+            }
+            is Double -> {
+                @Suppress("UNCHECKED_CAST")
+                val ranged = drag.value as RangedValue<Double>
+                val start = ranged.range.start as Double
+                val end = ranged.range.endInclusive as Double
+                val newVal = start + (end - start) * fraction
+                ranged.set(newVal)
+            }
+            is ClosedFloatingPointRange<*> -> {
+                @Suppress("UNCHECKED_CAST")
+                val ranged = drag.value as RangedValue<ClosedFloatingPointRange<Float>>
+                val start = ranged.range.start.start
+                val end = ranged.range.endInclusive.endInclusive
+                val currentRange = inner as ClosedFloatingPointRange<Float>
+                val newVal = (start + (end - start) * fraction).toFloat()
+                if (drag.thumbIndex == 0) {
+                    // Left thumb - adjust start
+                    val newStart = newVal.coerceAtMost(currentRange.endInclusive)
+                    ranged.set(newStart..currentRange.endInclusive)
+                } else {
+                    // Right thumb - adjust end
+                    val newEnd = newVal.coerceAtLeast(currentRange.start)
+                    ranged.set(currentRange.start..newEnd)
+                }
+            }
+            is IntRange -> {
+                @Suppress("UNCHECKED_CAST")
+                val ranged = drag.value as RangedValue<IntRange>
+                val start = ranged.range.start.first
+                val end = ranged.range.endInclusive.last
+                val newVal = (start + (end - start) * fraction).toInt()
+                if (drag.thumbIndex == 0) {
+                    val newStart = newVal.coerceAtMost(inner.last)
+                    ranged.set(newStart..inner.last)
+                } else {
+                    val newEnd = newVal.coerceAtLeast(inner.first)
+                    ranged.set(inner.first..newEnd)
+                }
+            }
+        }
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontal: Double, vertical: Double): Boolean {
@@ -257,10 +330,25 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
         }
 
+        private fun isSliderValue(value: Value<*>): Boolean {
+            if (value !is RangedValue<*>) return false
+            val inner = value.get()
+            return inner is Number || inner is ClosedFloatingPointRange<*> || inner is IntRange
+        }
+
+        private fun isDualSliderValue(value: Value<*>): Boolean {
+            if (value !is RangedValue<*>) return false
+            val inner = value.get()
+            return inner is ClosedFloatingPointRange<*> || inner is IntRange
+        }
+
+        private fun getValueHeight(value: Value<*>): Int {
+            return if (isSliderValue(value)) SLIDER_HEIGHT else SETTING_HEIGHT
+        }
+
         fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, textRenderer: Font, searchQuery: String) {
             val modules = getFilteredModules(searchQuery)
             if (modules.isEmpty() && searchQuery.isNotEmpty()) {
-                // Don't render panel if no modules match search
                 return
             }
 
@@ -268,14 +356,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val visibleContentHeight = min(contentHeight, MAX_PANEL_HEIGHT)
             val totalPanelHeight = PANEL_HEADER_HEIGHT + visibleContentHeight
 
-            // Clamp scroll offset
             val maxScroll = max(0, contentHeight - MAX_PANEL_HEIGHT)
             scrollOffset = scrollOffset.coerceIn(0, maxScroll)
 
-            // Panel background
             context.fill(x, y, x + panelWidth, y + totalPanelHeight, 0xB41E1E1E.toInt())
 
-            // Header
             val headerColor = 0xC8323232.toInt()
             context.fill(x, y, x + panelWidth, y + PANEL_HEADER_HEIGHT, headerColor)
 
@@ -290,7 +375,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             context.drawString(textRenderer, indicator, x + panelWidth - 12, y + 4, 0xFFFFFFFF.toInt(), true)
 
             if (expanded && modules.isNotEmpty()) {
-                // Enable scissor for scrolling
                 val contentY = y + PANEL_HEADER_HEIGHT
                 context.enableScissor(x, contentY, x + panelWidth, contentY + visibleContentHeight)
 
@@ -301,7 +385,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
                 context.disableScissor()
 
-                // Render scroll indicator if content is scrollable
                 if (contentHeight > MAX_PANEL_HEIGHT) {
                     val scrollBarHeight = (visibleContentHeight.toFloat() / contentHeight * visibleContentHeight).toInt().coerceAtLeast(10)
                     val scrollBarY = contentY + (scrollOffset.toFloat() / maxScroll * (visibleContentHeight - scrollBarHeight)).toInt()
@@ -333,7 +416,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         height += calculateSettingsHeight(value, depth + 1)
                     }
                 } else {
-                    height += SETTING_HEIGHT
+                    height += getValueHeight(value)
                 }
             }
             return height
@@ -416,8 +499,13 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         currentY = renderNestedConfigurable(context, value, currentY, mouseX, mouseY, textRenderer, depth, indent)
                     }
                     else -> {
-                        renderSettingValue(context, value, currentY, mouseX, mouseY, textRenderer, indent)
-                        currentY += SETTING_HEIGHT
+                        if (isSliderValue(value)) {
+                            renderSliderValue(context, value, currentY, mouseX, mouseY, textRenderer, indent)
+                            currentY += SLIDER_HEIGHT
+                        } else {
+                            renderSettingValue(context, value, currentY, mouseX, mouseY, textRenderer, indent)
+                            currentY += SETTING_HEIGHT
+                        }
                     }
                 }
             }
@@ -533,6 +621,127 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             return currentY
         }
 
+        private fun renderSliderValue(
+            context: GuiGraphics, value: Value<*>, settingY: Int,
+            mouseX: Int, mouseY: Int, textRenderer: Font, indent: Int
+        ) {
+            val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
+                mouseY >= settingY && mouseY < settingY + SLIDER_HEIGHT
+
+            val backgroundColor = if (isHovered) 0x50404060.toInt() else 0x40202030.toInt()
+            context.fill(x + 4 + indent, settingY, x + panelWidth - 4, settingY + SLIDER_HEIGHT, backgroundColor)
+
+            // Draw name
+            val displayText = getSettingDisplayText(value)
+            var displayName = value.name
+            val maxNameWidth = panelWidth / 2 - indent
+            if (textRenderer.width(displayName) > maxNameWidth) {
+                while (textRenderer.width(displayName + "..") > maxNameWidth && displayName.isNotEmpty()) {
+                    displayName = displayName.dropLast(1)
+                }
+                displayName += ".."
+            }
+            context.drawString(textRenderer, displayName, x + 6 + indent, settingY + 2, 0xFFCCCCCC.toInt(), false)
+
+            // Draw value text
+            context.drawString(textRenderer, displayText, x + panelWidth - textRenderer.width(displayText) - 8, settingY + 2, 0xFF66CCFF.toInt(), false)
+
+            // Draw slider track
+            val sliderX = x + 6 + indent
+            val sliderWidth = panelWidth - 14 - indent
+            val sliderY = settingY + 12
+            val sliderEndX = sliderX + sliderWidth
+
+            // Track background
+            context.fill(sliderX, sliderY, sliderEndX, sliderY + SLIDER_TRACK_HEIGHT, 0xFF404040.toInt())
+
+            // Filled portion and thumb(s)
+            if (isDualSliderValue(value)) {
+                renderDualSlider(context, value, sliderX, sliderY, sliderWidth)
+            } else {
+                renderSingleSlider(context, value, sliderX, sliderY, sliderWidth)
+            }
+        }
+
+        private fun renderSingleSlider(context: GuiGraphics, value: Value<*>, sliderX: Int, sliderY: Int, sliderWidth: Int) {
+            val ranged = value as RangedValue<*>
+            val fraction = when (val inner = ranged.get()) {
+                is Int -> {
+                    val start = ranged.range.start as Int
+                    val end = ranged.range.endInclusive as Int
+                    if (end == start) 0f else (inner - start).toFloat() / (end - start)
+                }
+                is Float -> {
+                    val start = ranged.range.start as Float
+                    val end = ranged.range.endInclusive as Float
+                    if (end == start) 0f else (inner - start) / (end - start)
+                }
+                is Double -> {
+                    val start = ranged.range.start as Double
+                    val end = ranged.range.endInclusive as Double
+                    if (end == start) 0f else ((inner - start) / (end - start)).toFloat()
+                }
+                else -> 0f
+            }
+
+            val filledWidth = (sliderWidth * fraction).toInt()
+            context.fill(sliderX, sliderY, sliderX + filledWidth, sliderY + SLIDER_TRACK_HEIGHT, 0xFF4488CC.toInt())
+
+            // Thumb
+            val thumbX = sliderX + filledWidth - SLIDER_THUMB_WIDTH / 2
+            context.fill(thumbX, sliderY - 1, thumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFFFFFFFF.toInt())
+        }
+
+        private fun renderDualSlider(context: GuiGraphics, value: Value<*>, sliderX: Int, sliderY: Int, sliderWidth: Int) {
+            val ranged = value as RangedValue<*>
+            val inner = ranged.get()
+
+            val (startFraction, endFraction) = when (inner) {
+                is ClosedFloatingPointRange<*> -> {
+                    val range = inner as ClosedFloatingPointRange<Float>
+                    val rangeStart = ranged.range.start as ClosedFloatingPointRange<*>
+                    val rangeEnd = ranged.range.endInclusive as ClosedFloatingPointRange<*>
+                    val min = (rangeStart.start as Float)
+                    val max = (rangeEnd.endInclusive as Float)
+                    if (max == min) {
+                        0f to 1f
+                    } else {
+                        val s = (range.start - min) / (max - min)
+                        val e = (range.endInclusive - min) / (max - min)
+                        s to e
+                    }
+                }
+                is IntRange -> {
+                    val rangeStart = ranged.range.start as IntRange
+                    val rangeEnd = ranged.range.endInclusive as IntRange
+                    val min = rangeStart.first
+                    val max = rangeEnd.last
+                    if (max == min) {
+                        0f to 1f
+                    } else {
+                        val s = (inner.first - min).toFloat() / (max - min)
+                        val e = (inner.last - min).toFloat() / (max - min)
+                        s to e
+                    }
+                }
+                else -> 0f to 1f
+            }
+
+            val startX = sliderX + (sliderWidth * startFraction).toInt()
+            val endX = sliderX + (sliderWidth * endFraction).toInt()
+
+            // Filled portion between thumbs
+            context.fill(startX, sliderY, endX, sliderY + SLIDER_TRACK_HEIGHT, 0xFF4488CC.toInt())
+
+            // Left thumb
+            val leftThumbX = startX - SLIDER_THUMB_WIDTH / 2
+            context.fill(leftThumbX, sliderY - 1, leftThumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFF88CCFF.toInt())
+
+            // Right thumb
+            val rightThumbX = endX - SLIDER_THUMB_WIDTH / 2
+            context.fill(rightThumbX, sliderY - 1, rightThumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFFFFCC88.toInt())
+        }
+
         private fun renderSettingValue(
             context: GuiGraphics, value: Value<*>, settingY: Int,
             mouseX: Int, mouseY: Int, textRenderer: Font, indent: Int
@@ -564,17 +773,9 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private fun getSettingDisplayText(value: Value<*>): String {
             return when (val inner = value.get()) {
                 is Boolean -> if (inner) "ON" else "OFF"
-                is Number -> {
-                    if (value is RangedValue<*>) {
-                        when (inner) {
-                            is Float -> String.format("%.1f", inner)
-                            is Double -> String.format("%.2f", inner)
-                            else -> inner.toString()
-                        }
-                    } else {
-                        inner.toString()
-                    }
-                }
+                is Int -> inner.toString()
+                is Float -> String.format("%.1f", inner)
+                is Double -> String.format("%.2f", inner)
                 is NamedChoice -> inner.choiceName
                 is Enum<*> -> inner.name
                 is ClosedFloatingPointRange<*> -> "${String.format("%.1f", inner.start)}..${String.format("%.1f", inner.endInclusive)}"
@@ -732,12 +933,56 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                         }
                     }
                     else -> {
+                        val valueHeight = getValueHeight(value)
                         if (mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
-                            mouseY >= currentY && mouseY < currentY + SETTING_HEIGHT) {
-                            handleSettingClick(value, button)
-                            return true to currentY
+                            mouseY >= currentY && mouseY < currentY + valueHeight) {
+                            if (isSliderValue(value)) {
+                                // Start slider drag
+                                val sliderX = x + 6 + indent
+                                val sliderWidth = panelWidth - 14 - indent
+
+                                // Determine which thumb (for dual slider)
+                                val thumbIndex = if (isDualSliderValue(value)) {
+                                    // Check which thumb is closer
+                                    val ranged = value as RangedValue<*>
+                                    val inner = ranged.get()
+                                    val (startFrac, endFrac) = when (inner) {
+                                        is ClosedFloatingPointRange<*> -> {
+                                            val range = inner as ClosedFloatingPointRange<Float>
+                                            val rangeStart = ranged.range.start as ClosedFloatingPointRange<*>
+                                            val rangeEnd = ranged.range.endInclusive as ClosedFloatingPointRange<*>
+                                            val min = (rangeStart.start as Float)
+                                            val max = (rangeEnd.endInclusive as Float)
+                                            if (max == min) 0f to 1f
+                                            else (range.start - min) / (max - min) to (range.endInclusive - min) / (max - min)
+                                        }
+                                        is IntRange -> {
+                                            val rangeStart = ranged.range.start as IntRange
+                                            val rangeEnd = ranged.range.endInclusive as IntRange
+                                            val min = rangeStart.first
+                                            val max = rangeEnd.last
+                                            if (max == min) 0f to 1f
+                                            else (inner.first - min).toFloat() / (max - min) to (inner.last - min).toFloat() / (max - min)
+                                        }
+                                        else -> 0f to 1f
+                                    }
+
+                                    val startThumbX = sliderX + (sliderWidth * startFrac)
+                                    val endThumbX = sliderX + (sliderWidth * endFrac)
+                                    if (kotlin.math.abs(mouseX - startThumbX) < kotlin.math.abs(mouseX - endThumbX)) 0 else 1
+                                } else {
+                                    0
+                                }
+
+                                activeSliderDrag = SliderDragState(value, thumbIndex, sliderX, sliderWidth)
+                                updateSliderValue(activeSliderDrag!!, mouseX)
+                                return true to currentY
+                            } else {
+                                handleSettingClick(value, button)
+                                return true to currentY
+                            }
                         }
-                        currentY += SETTING_HEIGHT
+                        currentY += valueHeight
                     }
                 }
             }
@@ -767,10 +1012,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                     }
                 }
             }
-            if (value is RangedValue<*>) {
-                val step = if (button == 1) -1 else 1
-                adjustRangedValue(value, step)
-            }
         }
 
         private fun <T : NamedChoice> cycleChoice(value: ChooseListValue<T>, reverse: Boolean) {
@@ -784,46 +1025,13 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             value.set(choices[newIndex])
         }
 
-        private fun adjustRangedValue(value: RangedValue<*>, direction: Int) {
-            when (val current = value.get()) {
-                is Int -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val intValue = value as RangedValue<Int>
-                    val rangeStart = intValue.range.start as Int
-                    val rangeEnd = intValue.range.endInclusive as Int
-                    val newVal = (current + direction).coerceIn(rangeStart, rangeEnd)
-                    intValue.set(newVal)
-                }
-                is Float -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val floatValue = value as RangedValue<Float>
-                    val rangeStart = floatValue.range.start as Float
-                    val rangeEnd = floatValue.range.endInclusive as Float
-                    val step = (rangeEnd - rangeStart) / 20f
-                    val newVal = (current + step * direction).coerceIn(rangeStart, rangeEnd)
-                    floatValue.set(newVal)
-                }
-                is Double -> {
-                    @Suppress("UNCHECKED_CAST")
-                    val doubleValue = value as RangedValue<Double>
-                    val rangeStart = doubleValue.range.start as Double
-                    val rangeEnd = doubleValue.range.endInclusive as Double
-                    val step = (rangeEnd - rangeStart) / 20.0
-                    val newVal = (current + step * direction).coerceIn(rangeStart, rangeEnd)
-                    doubleValue.set(newVal)
-                }
-            }
-        }
-
         fun mouseScrolled(mouseX: Double, mouseY: Double, amount: Double): Boolean {
             if (!expanded) return false
 
-            // Check if mouse is over this panel
             val contentHeight = min(calculateTotalContentHeight(), MAX_PANEL_HEIGHT)
             if (mouseX >= x && mouseX < x + panelWidth &&
                 mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT + contentHeight) {
 
-                // Scroll the panel content
                 val totalContentHeight = calculateTotalContentHeight()
                 if (totalContentHeight > MAX_PANEL_HEIGHT) {
                     val scrollAmount = (amount * 20).toInt()
@@ -833,61 +1041,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 }
             }
 
-            // Fall through to ranged value scrolling
-            val modules = getFilteredModules(searchQuery)
-            var currentY = y + PANEL_HEADER_HEIGHT - scrollOffset
-            for (module in modules) {
-                val result = handleModuleScrollArea(module, mouseX, mouseY, amount, currentY)
-                if (result.first) return true
-                currentY = result.second
-            }
             return false
-        }
-
-        private fun handleModuleScrollArea(
-            module: ClientModule, mouseX: Double, mouseY: Double, amount: Double, startY: Int
-        ): Pair<Boolean, Int> {
-            var currentY = startY + MODULE_HEIGHT
-            val expandState = getModuleExpandState(module)
-            if (expandState.expanded) {
-                val result = handleConfigurableScroll(module, mouseX, mouseY, amount, currentY, 1)
-                if (result.first) return result
-                currentY = result.second
-            }
-            return false to currentY
-        }
-
-        private fun handleConfigurableScroll(
-            configurable: Configurable, mouseX: Double, mouseY: Double, amount: Double, startY: Int, depth: Int
-        ): Pair<Boolean, Int> {
-            var currentY = startY
-            val indent = depth * INDENT_PER_LEVEL
-            val values = getFilteredValues(configurable)
-
-            for (value in values) {
-                when (value) {
-                    is Configurable -> {
-                        currentY += CONFIGURABLE_HEADER_HEIGHT
-                        val expandState = getConfigurableExpandState(value)
-                        if (expandState.expanded) {
-                            val result = handleConfigurableScroll(value, mouseX, mouseY, amount, currentY, depth + 1)
-                            if (result.first) return result
-                            currentY = result.second
-                        }
-                    }
-                    else -> {
-                        if (mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
-                            mouseY >= currentY && mouseY < currentY + SETTING_HEIGHT) {
-                            if (value is RangedValue<*>) {
-                                adjustRangedValue(value, if (amount > 0) 1 else -1)
-                                return true to currentY
-                            }
-                        }
-                        currentY += SETTING_HEIGHT
-                    }
-                }
-            }
-            return false to currentY
         }
 
         @Suppress("UnusedParameter")

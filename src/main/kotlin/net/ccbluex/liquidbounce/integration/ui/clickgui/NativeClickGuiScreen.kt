@@ -34,6 +34,8 @@ import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.MouseButtonEvent
+import net.minecraft.client.input.CharacterEvent
+import net.minecraft.client.input.KeyEvent
 import net.minecraft.util.ARGB
 import kotlin.math.max
 import kotlin.math.min
@@ -156,26 +158,27 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
     }
 
-    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+    override fun charTyped(event: CharacterEvent): Boolean {
+        val chr = event.codepoint().toChar()
         if (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-') {
             searchQuery += chr
             return true
         }
-        return super.charTyped(chr, modifiers)
+        return super.charTyped(event)
     }
 
-    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+    override fun keyPressed(event: KeyEvent): Boolean {
         // Backspace
-        if (keyCode == 259 && searchQuery.isNotEmpty()) {
+        if (event.key == 259 && searchQuery.isNotEmpty()) {
             searchQuery = searchQuery.dropLast(1)
             return true
         }
         // Escape clears search if there's text, otherwise closes
-        if (keyCode == 256 && searchQuery.isNotEmpty()) {
+        if (event.key == 256 && searchQuery.isNotEmpty()) {
             searchQuery = ""
             return true
         }
-        return super.keyPressed(keyCode, scanCode, modifiers)
+        return super.keyPressed(event)
     }
 
     override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {

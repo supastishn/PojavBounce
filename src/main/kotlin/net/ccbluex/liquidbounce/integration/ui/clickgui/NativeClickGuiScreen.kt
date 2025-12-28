@@ -36,15 +36,21 @@ import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.util.ARGB
 import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Native Minecraft GUI implementation of ClickGUI
- * Replaces the browser/svelte-based ClickGUI with pure Minecraft widgets
- * Supports nested configurables with animated accordions
+ * Features:
+ * - Category panels with module lists
+ * - Nested configurable support (accordions)
+ * - Search bar for filtering modules
+ * - Panel scrolling
+ * - Persistent panel positions
  */
 class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
     private val panels = mutableListOf<CategoryPanel>()
+    private var searchQuery = ""
 
     companion object {
         private const val PANEL_WIDTH = 140
@@ -54,8 +60,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val CONFIGURABLE_HEADER_HEIGHT = 11
         private const val PANEL_SPACING = 10
         private const val PANEL_MARGIN = 10
+        private const val SEARCH_BAR_HEIGHT = 20
         private const val UNBOUND_KEY_NAME = "None"
         private const val INDENT_PER_LEVEL = 6
+        private const val MAX_PANEL_HEIGHT = 300
+
+        // Persistent panel positions (survives screen close/reopen)
+        private val savedPanelPositions = mutableMapOf<Category, Pair<Int, Int>>()
+        private val savedPanelExpanded = mutableMapOf<Category, Boolean>()
+        private val savedPanelScrollOffsets = mutableMapOf<Category, Int>()
     }
 
     override fun init() {
@@ -63,7 +76,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         panels.clear()
 
         var xPos = PANEL_MARGIN
-        var yPos = PANEL_MARGIN
+        var yPos = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5
         val maxPanelsPerRow = max(1, (width - PANEL_MARGIN * 2) / (PANEL_WIDTH + PANEL_SPACING))
         var panelCount = 0
 
@@ -73,24 +86,96 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             if (panelCount >= maxPanelsPerRow) {
                 xPos = PANEL_MARGIN
-                yPos += 350
+                yPos += MAX_PANEL_HEIGHT + 20
                 panelCount = 0
             }
 
-            panels.add(CategoryPanel(category, modules, xPos, yPos, PANEL_WIDTH))
+            // Use saved position if available, otherwise use calculated position
+            val (savedX, savedY) = savedPanelPositions[category] ?: (xPos to yPos)
+            val savedExpanded = savedPanelExpanded[category] ?: true
+            val savedScroll = savedPanelScrollOffsets[category] ?: 0
+
+            panels.add(CategoryPanel(category, modules, savedX, savedY, PANEL_WIDTH, savedExpanded, savedScroll))
+
+            // Update default position for next panel
             xPos += PANEL_WIDTH + PANEL_SPACING
             panelCount++
         }
     }
 
+    override fun removed() {
+        // Save panel positions when screen closes
+        for (panel in panels) {
+            savedPanelPositions[panel.category] = panel.x to panel.y
+            savedPanelExpanded[panel.category] = panel.expanded
+            savedPanelScrollOffsets[panel.category] = panel.scrollOffset
+        }
+        super.removed()
+    }
+
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
         context.fill(0, 0, width, height, ARGB.color(180, 20, 20, 20))
 
+        // Render search bar
+        renderSearchBar(context, mouseX, mouseY, mc.font)
+
         for (panel in panels) {
-            panel.render(context, mouseX, mouseY, delta, mc.font)
+            panel.render(context, mouseX, mouseY, delta, mc.font, searchQuery)
         }
 
         super.render(context, mouseX, mouseY, delta)
+    }
+
+    private fun renderSearchBar(context: GuiGraphics, mouseX: Int, mouseY: Int, textRenderer: Font) {
+        val barX = PANEL_MARGIN
+        val barY = PANEL_MARGIN
+        val barWidth = width - PANEL_MARGIN * 2
+
+        // Background
+        context.fill(barX, barY, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xC8323232.toInt())
+
+        // Border
+        context.fill(barX, barY, barX + barWidth, barY + 1, 0xFF505050.toInt())
+        context.fill(barX, barY + SEARCH_BAR_HEIGHT - 1, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
+        context.fill(barX, barY, barX + 1, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
+        context.fill(barX + barWidth - 1, barY, barX + barWidth, barY + SEARCH_BAR_HEIGHT, 0xFF505050.toInt())
+
+        // Search icon/label
+        val label = "Search: "
+        context.drawString(textRenderer, label, barX + 4, barY + 6, 0xFF888888.toInt(), false)
+
+        // Search text
+        val displayText = if (searchQuery.isEmpty()) "(type to filter modules)" else searchQuery
+        val textColor = if (searchQuery.isEmpty()) 0xFF666666.toInt() else 0xFFFFFFFF.toInt()
+        context.drawString(textRenderer, displayText, barX + 4 + textRenderer.width(label), barY + 6, textColor, false)
+
+        // Cursor blink
+        if (searchQuery.isNotEmpty() || (System.currentTimeMillis() / 500) % 2 == 0L) {
+            val cursorX = barX + 4 + textRenderer.width(label) + textRenderer.width(searchQuery)
+            context.drawString(textRenderer, "_", cursorX, barY + 6, 0xFFFFFFFF.toInt(), false)
+        }
+    }
+
+    override fun charTyped(chr: Char, modifiers: Int): Boolean {
+        if (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-') {
+            searchQuery += chr
+            return true
+        }
+        return super.charTyped(chr, modifiers)
+    }
+
+    override fun keyPressed(keyCode: Int, scanCode: Int, modifiers: Int): Boolean {
+        // Backspace
+        if (keyCode == 259 && searchQuery.isNotEmpty()) {
+            searchQuery = searchQuery.dropLast(1)
+            return true
+        }
+        // Escape clears search if there's text, otherwise closes
+        if (keyCode == 256 && searchQuery.isNotEmpty()) {
+            searchQuery = ""
+            return true
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers)
     }
 
     override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
@@ -128,30 +213,28 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun isPauseScreen() = false
-    override fun shouldCloseOnEsc() = true
+    override fun shouldCloseOnEsc() = searchQuery.isEmpty()
 
-    /**
-     * Tracks expansion state for a configurable
-     */
     private class ExpandState {
         var expanded = false
     }
 
     private inner class CategoryPanel(
-        private val category: Category,
-        private val modules: List<ClientModule>,
-        private var x: Int,
-        private var y: Int,
-        private val panelWidth: Int
+        val category: Category,
+        private val allModules: List<ClientModule>,
+        var x: Int,
+        var y: Int,
+        private val panelWidth: Int,
+        initialExpanded: Boolean = true,
+        initialScroll: Int = 0
     ) {
-        var expanded = true
+        var expanded = initialExpanded
         var dragging = false
+        var scrollOffset = initialScroll
         private var dragOffsetX = 0.0
         private var dragOffsetY = 0.0
 
-        // Expansion state per module
         private val moduleExpandStates = mutableMapOf<ClientModule, ExpandState>()
-        // Expansion state for nested configurables (by identity)
         private val configurableExpandStates = mutableMapOf<Any, ExpandState>()
 
         private fun getModuleExpandState(module: ClientModule): ExpandState {
@@ -162,31 +245,69 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             return configurableExpandStates.getOrPut(configurable) { ExpandState() }
         }
 
-        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, textRenderer: Font) {
-            val contentHeight = if (expanded) {
-                calculateTotalContentHeight()
-            } else 0
+        private fun getFilteredModules(searchQuery: String): List<ClientModule> {
+            if (searchQuery.isEmpty()) return allModules
+            val query = searchQuery.lowercase()
+            return allModules.filter { module ->
+                module.name.lowercase().contains(query) ||
+                module.aliases.any { it.lowercase().contains(query) }
+            }
+        }
 
-            val totalPanelHeight = PANEL_HEADER_HEIGHT + contentHeight
+        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, textRenderer: Font, searchQuery: String) {
+            val modules = getFilteredModules(searchQuery)
+            if (modules.isEmpty() && searchQuery.isNotEmpty()) {
+                // Don't render panel if no modules match search
+                return
+            }
+
+            val contentHeight = if (expanded) calculateTotalContentHeight(modules) else 0
+            val visibleContentHeight = min(contentHeight, MAX_PANEL_HEIGHT)
+            val totalPanelHeight = PANEL_HEADER_HEIGHT + visibleContentHeight
+
+            // Clamp scroll offset
+            val maxScroll = max(0, contentHeight - MAX_PANEL_HEIGHT)
+            scrollOffset = scrollOffset.coerceIn(0, maxScroll)
+
+            // Panel background
             context.fill(x, y, x + panelWidth, y + totalPanelHeight, 0xB41E1E1E.toInt())
 
+            // Header
             val headerColor = 0xC8323232.toInt()
             context.fill(x, y, x + panelWidth, y + PANEL_HEADER_HEIGHT, headerColor)
 
-            context.drawString(textRenderer, category.choiceName, x + 4, y + 4, 0xFFFFFFFF.toInt(), true)
+            val displayName = if (modules.size != allModules.size) {
+                "${category.choiceName} (${modules.size})"
+            } else {
+                category.choiceName
+            }
+            context.drawString(textRenderer, displayName, x + 4, y + 4, 0xFFFFFFFF.toInt(), true)
 
             val indicator = if (expanded) "v" else ">"
             context.drawString(textRenderer, indicator, x + panelWidth - 12, y + 4, 0xFFFFFFFF.toInt(), true)
 
-            if (expanded) {
-                var currentY = y + PANEL_HEADER_HEIGHT
+            if (expanded && modules.isNotEmpty()) {
+                // Enable scissor for scrolling
+                val contentY = y + PANEL_HEADER_HEIGHT
+                context.enableScissor(x, contentY, x + panelWidth, contentY + visibleContentHeight)
+
+                var currentY = contentY - scrollOffset
                 for (module in modules) {
                     currentY = renderModuleWithSettings(context, module, currentY, mouseX, mouseY, textRenderer, 0)
+                }
+
+                context.disableScissor()
+
+                // Render scroll indicator if content is scrollable
+                if (contentHeight > MAX_PANEL_HEIGHT) {
+                    val scrollBarHeight = (visibleContentHeight.toFloat() / contentHeight * visibleContentHeight).toInt().coerceAtLeast(10)
+                    val scrollBarY = contentY + (scrollOffset.toFloat() / maxScroll * (visibleContentHeight - scrollBarHeight)).toInt()
+                    context.fill(x + panelWidth - 3, scrollBarY, x + panelWidth - 1, scrollBarY + scrollBarHeight, 0x80FFFFFF.toInt())
                 }
             }
         }
 
-        private fun calculateTotalContentHeight(): Int {
+        private fun calculateTotalContentHeight(modules: List<ClientModule> = allModules): Int {
             var height = 0
             for (module in modules) {
                 height += MODULE_HEIGHT
@@ -228,11 +349,9 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             var currentY = startY
             val expandState = getModuleExpandState(module)
 
-            // Render module row
             renderModuleRow(context, module, currentY, mouseX, mouseY, textRenderer, expandState)
             currentY += MODULE_HEIGHT
 
-            // Render settings if expanded
             if (expandState.expanded) {
                 currentY = renderConfigurableSettings(context, module, currentY, mouseX, mouseY, textRenderer, 1)
             }
@@ -312,7 +431,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
 
-            // Header background
             val bgColor = when {
                 isExpanded -> 0x60506080.toInt()
                 isHovered -> 0x50405060.toInt()
@@ -320,7 +438,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             context.fill(x + 4 + indent, currentY, x + panelWidth - 4, currentY + CONFIGURABLE_HEADER_HEIGHT, bgColor)
 
-            // Choice name and current selection
             val displayName = choice.name
             val activeChoice = choice.activeChoice.name
             context.drawString(textRenderer, displayName, x + 6 + indent, currentY + 2, 0xFFDDAAFF.toInt(), false)
@@ -329,13 +446,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val choiceX = x + panelWidth - textRenderer.width(choiceText) - 8
             context.drawString(textRenderer, choiceText, choiceX, currentY + 2, 0xFFAADDFF.toInt(), false)
 
-            // Expand indicator
             val indicator = if (expandState.expanded) "v" else ">"
             context.drawString(textRenderer, indicator, x + panelWidth - 8, currentY + 2, 0xFFAAAAAA.toInt(), false)
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
-            // Render active choice settings if expanded
             if (isExpanded) {
                 val activeConfigurable = choice.activeChoice as? Configurable
                 if (activeConfigurable != null) {
@@ -356,7 +471,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
 
-            // Header background
             val bgColor = when {
                 toggleable.enabled && isExpanded -> 0x60508060.toInt()
                 toggleable.enabled -> 0x50406050.toInt()
@@ -366,22 +480,18 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             context.fill(x + 4 + indent, currentY, x + panelWidth - 4, currentY + CONFIGURABLE_HEADER_HEIGHT, bgColor)
 
-            // Toggleable name
             val nameColor = if (toggleable.enabled) 0xFF88FF88.toInt() else 0xFFCCCCCC.toInt()
             context.drawString(textRenderer, toggleable.name, x + 6 + indent, currentY + 2, nameColor, false)
 
-            // ON/OFF indicator
             val statusText = if (toggleable.enabled) "ON" else "OFF"
             val statusColor = if (toggleable.enabled) 0xFF00FF00.toInt() else 0xFFFF6666.toInt()
             context.drawString(textRenderer, statusText, x + panelWidth - textRenderer.width(statusText) - 20, currentY + 2, statusColor, false)
 
-            // Expand indicator
             val indicator = if (expandState.expanded) "v" else ">"
             context.drawString(textRenderer, indicator, x + panelWidth - 8, currentY + 2, 0xFFAAAAAA.toInt(), false)
 
             currentY += CONFIGURABLE_HEADER_HEIGHT
 
-            // Render nested settings if expanded
             if (isExpanded) {
                 currentY = renderConfigurableSettings(context, toggleable, currentY, mouseX, mouseY, textRenderer, depth + 1)
             }
@@ -484,7 +594,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             if (isMouseInHeader(mouseX, mouseY)) {
                 return handleHeaderClick(mouseX, mouseY, button)
             }
-            if (expanded) {
+            if (expanded && isMouseInContent(mouseX, mouseY)) {
                 return handleContentClick(mouseX, mouseY, button)
             }
             return false
@@ -492,6 +602,12 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun isMouseInHeader(mouseX: Double, mouseY: Double): Boolean {
             return mouseX >= x && mouseX < x + panelWidth && mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT
+        }
+
+        private fun isMouseInContent(mouseX: Double, mouseY: Double): Boolean {
+            val contentHeight = min(calculateTotalContentHeight(), MAX_PANEL_HEIGHT)
+            return mouseX >= x && mouseX < x + panelWidth &&
+                mouseY >= y + PANEL_HEADER_HEIGHT && mouseY < y + PANEL_HEADER_HEIGHT + contentHeight
         }
 
         @Suppress("UNUSED_PARAMETER")
@@ -512,7 +628,8 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
 
         private fun handleContentClick(mouseX: Double, mouseY: Double, button: Int): Boolean {
-            var currentY = y + PANEL_HEADER_HEIGHT
+            val modules = getFilteredModules(searchQuery)
+            var currentY = y + PANEL_HEADER_HEIGHT - scrollOffset
 
             for (module in modules) {
                 val result = handleModuleAreaClick(module, mouseX, mouseY, button, currentY, 0)
@@ -528,7 +645,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             var currentY = startY
             val expandState = getModuleExpandState(module)
 
-            // Check module row click
             if (mouseX >= x && mouseX < x + panelWidth && mouseY >= currentY && mouseY < currentY + MODULE_HEIGHT) {
                 when (button) {
                     0 -> module.enabled = !module.enabled
@@ -538,7 +654,6 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
             currentY += MODULE_HEIGHT
 
-            // Check settings if expanded
             if (expandState.expanded) {
                 val result = handleConfigurableClick(module, mouseX, mouseY, button, currentY, 1)
                 if (result.first) return true to result.second
@@ -699,8 +814,25 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         fun mouseScrolled(mouseX: Double, mouseY: Double, amount: Double): Boolean {
             if (!expanded) return false
-            // Scroll handling for ranged values
-            var currentY = y + PANEL_HEADER_HEIGHT
+
+            // Check if mouse is over this panel
+            val contentHeight = min(calculateTotalContentHeight(), MAX_PANEL_HEIGHT)
+            if (mouseX >= x && mouseX < x + panelWidth &&
+                mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT + contentHeight) {
+
+                // Scroll the panel content
+                val totalContentHeight = calculateTotalContentHeight()
+                if (totalContentHeight > MAX_PANEL_HEIGHT) {
+                    val scrollAmount = (amount * 20).toInt()
+                    val maxScroll = totalContentHeight - MAX_PANEL_HEIGHT
+                    scrollOffset = (scrollOffset - scrollAmount).coerceIn(0, maxScroll)
+                    return true
+                }
+            }
+
+            // Fall through to ranged value scrolling
+            val modules = getFilteredModules(searchQuery)
+            var currentY = y + PANEL_HEADER_HEIGHT - scrollOffset
             for (module in modules) {
                 val result = handleModuleScrollArea(module, mouseX, mouseY, amount, currentY)
                 if (result.first) return true

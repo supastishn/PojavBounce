@@ -17,15 +17,5 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("NOTHING_TO_INLINE")
-package net.ccbluex.liquidbounce.utils.kotlin
-
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList
-import java.util.*
-
-fun <T> Array<out T>?.unmodifiable(): List<T> =
-    when {
-        isNullOrEmpty() -> emptyList()
-        size == 1 -> Collections.singletonList(this[0])
-        else -> ObjectImmutableList(this)
-    }
+@org.jspecify.annotations.NullMarked
+package net.ccbluex.liquidbounce.utils.render;

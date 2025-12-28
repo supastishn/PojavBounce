@@ -74,7 +74,9 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
     }
 
     fun updateThemes() {
-        themes.inner.clear()
+        themes.inner.filterIsInstance<Configurable>().forEach {
+            themes.drop(it)
+        }
         for (theme in ThemeManager.themes) {
             themes.tree(theme.settings)
         }

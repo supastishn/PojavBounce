@@ -269,13 +269,14 @@ class NativeThemeManagerScreen(private val parent: Screen?) : Screen("Theme Mana
 
     private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
         val processedText = fontRenderer.process(text.asText(), color)
-        context.pose().pushMatrix()
-        context.pose().translate(x, y)
-        context.pose().scale(fontScale, fontScale)
         with(context) {
-            fontRenderer.draw(processedText, 0f, 0f, shadow = shadow)
+            fontRenderer.draw(processedText) {
+                this.x = x
+                this.y = y
+                this.scale = fontScale
+                this.shadow = shadow
+            }
         }
-        context.pose().popMatrix()
     }
 
     private fun getTextWidth(text: String): Float {

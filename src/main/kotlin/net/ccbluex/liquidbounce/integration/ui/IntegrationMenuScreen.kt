@@ -20,18 +20,31 @@
 package net.ccbluex.liquidbounce.integration.ui
 
 import net.ccbluex.liquidbounce.integration.VirtualScreenType
+import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.components.Button
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.network.chat.Component
+import net.minecraft.util.ARGB
 
 class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
+
+    private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
+    private val fontScale = 0.22f
+
+    companion object {
+        private val COLOR_WHITE = Color4b(255, 255, 255, 255)
+        private val COLOR_CYAN = Color4b(0, 255, 255, 255)
+    }
 
     override fun init() {
         super.init()
         // Build buttons for available routes
-        var y = 40
+        var y = 50
         for (type in VirtualScreenType.entries) {
             val name = type.routeName.replaceFirstChar { it.uppercase() }
             val button = Button.builder(Component.literal(name)) { onOpen(type) }
@@ -63,7 +76,29 @@ class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
     }
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float) {
-        renderBackground(context, mouseX, mouseY, delta)
+        // Background
+        context.fill(0, 0, width, height, ARGB.color(200, 30, 25, 40))
+
+        // Title with Inter font
+        val titleText = "Integration Menu"
+        drawText(context, titleText, width / 2f - getTextWidth(titleText) / 2, 15f, COLOR_CYAN)
+
         super.render(context, mouseX, mouseY, delta)
+    }
+
+    private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
+        val processedText = fontRenderer.process(text.asText(), color)
+        context.pose().pushMatrix()
+        context.pose().translate(x, y)
+        context.pose().scale(fontScale, fontScale)
+        with(context) {
+            fontRenderer.draw(processedText, 0f, 0f, shadow = shadow)
+        }
+        context.pose().popMatrix()
+    }
+
+    private fun getTextWidth(text: String): Float {
+        val processedText = fontRenderer.process(text.asText(), COLOR_WHITE)
+        return fontRenderer.getStringWidth(processedText, shadow = true) * fontScale
     }
 }

@@ -24,8 +24,12 @@ package net.ccbluex.liquidbounce.integration.task
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
 import net.ccbluex.liquidbounce.integration.task.type.ResourceTask
 import net.ccbluex.liquidbounce.integration.task.type.Task
+import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
+import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.client.PlainText
 import net.ccbluex.liquidbounce.utils.client.asPlainText
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.formatAsCapacity
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.collection.Pools
@@ -46,6 +50,14 @@ class TaskProgressScreen(
 ) : Screen(title.asPlainText()) {
 
     private val percentFormat = DecimalFormat("0.0")
+    private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
+    private val fontScale = 0.22f
+
+    companion object {
+        private val COLOR_WHITE = Color4b(255, 255, 255, 255)
+        private val COLOR_GOLD = Color4b(255, 215, 0, 255)
+        private val COLOR_GRAY = Color4b(170, 170, 170, 255)
+    }
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
         // Use solid background instead of blur to avoid "can only blur once per frame" error
@@ -63,32 +75,20 @@ class TaskProgressScreen(
         val textLines = getTaskLines(progress)
 
         // Draw text
-        val textHeight = textLines.size * (font.lineHeight + 2)
+        val textHeight = textLines.size * 15
         var yOffset = (cy - textHeight / 2).toInt() - 40
 
         // Draw title
-        context.drawString(
-            font,
-            title.string.asPlainText(ChatFormatting.GOLD),
-            (cx - font.width(title.string) / 2).toInt(),
-            yOffset,
-            -1,
-            true
-        )
+        drawText(context, title.string, (cx - getTextWidth(title.string) / 2).toFloat(), yOffset.toFloat(), COLOR_GOLD)
 
-        yOffset += font.lineHeight + 10
+        yOffset += 18
 
         // Draw task information
-        for (line in textLines) {
-            context.drawString(
-                font,
-                line,
-                (cx - font.width(line) / 2).toInt(),
-                yOffset,
-                -1,
-                false
-            )
-            yOffset += font.lineHeight + 2
+        for ((index, line) in textLines.withIndex()) {
+            val lineStr = line.string
+            val color = if (index == 0) COLOR_WHITE else COLOR_GRAY
+            drawText(context, lineStr, (cx - getTextWidth(lineStr) / 2).toFloat(), yOffset.toFloat(), color)
+            yOffset += 14
         }
 
         val progressBarHeight = 14
@@ -118,6 +118,22 @@ class TaskProgressScreen(
             -1
         )
         poseStack.popMatrix()
+    }
+
+    private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
+        val processedText = fontRenderer.process(text.asText(), color)
+        context.pose().pushMatrix()
+        context.pose().translate(x, y)
+        context.pose().scale(fontScale, fontScale)
+        with(context) {
+            fontRenderer.draw(processedText, 0f, 0f, shadow = shadow)
+        }
+        context.pose().popMatrix()
+    }
+
+    private fun getTextWidth(text: String): Float {
+        val processedText = fontRenderer.process(text.asText(), COLOR_WHITE)
+        return fontRenderer.getStringWidth(processedText, shadow = true) * fontScale
     }
 
     private fun getTaskLines(progress: Float): List<Component> {

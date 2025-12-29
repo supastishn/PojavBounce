@@ -1004,18 +1004,16 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                                     val (startFrac, endFrac) = when (inner) {
                                         is ClosedFloatingPointRange<*> -> {
                                             val range = inner as ClosedFloatingPointRange<Float>
-                                            val rangeStart = ranged.range.start as ClosedFloatingPointRange<*>
-                                            val rangeEnd = ranged.range.endInclusive as ClosedFloatingPointRange<*>
-                                            val min = (rangeStart.start as Float)
-                                            val max = (rangeEnd.endInclusive as Float)
+                                            // ranged.range.start and endInclusive are Float values (min/max bounds)
+                                            val min = ranged.range.start as Float
+                                            val max = ranged.range.endInclusive as Float
                                             if (max == min) 0f to 1f
                                             else (range.start - min) / (max - min) to (range.endInclusive - min) / (max - min)
                                         }
                                         is IntRange -> {
-                                            val rangeStart = ranged.range.start as IntRange
-                                            val rangeEnd = ranged.range.endInclusive as IntRange
-                                            val min = rangeStart.first
-                                            val max = rangeEnd.last
+                                            // ranged.range.start and endInclusive are Int values (min/max bounds)
+                                            val min = ranged.range.start as Int
+                                            val max = ranged.range.endInclusive as Int
                                             if (max == min) 0f to 1f
                                             else (inner.first - min).toFloat() / (max - min) to (inner.last - min).toFloat() / (max - min)
                                         }

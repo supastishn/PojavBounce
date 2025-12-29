@@ -164,13 +164,14 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     // Helper method to draw text using Inter font
     private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
         val processedText = fontRenderer.process(text.asText(), color)
-        context.pose().pushMatrix()
-        context.pose().translate(x, y)
-        context.pose().scale(fontScale, fontScale)
         with(context) {
-            fontRenderer.draw(processedText, 0f, 0f, shadow = shadow)
+            fontRenderer.draw(processedText) {
+                this.x = x
+                this.y = y
+                this.scale = fontScale
+                this.shadow = shadow
+            }
         }
-        context.pose().popMatrix()
     }
 
     private fun getTextWidth(text: String): Float {
@@ -436,13 +437,14 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private fun drawPanelText(context: GuiGraphics, fr: FontRenderer, scale: Float, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
             val processedText = fr.process(text.asText(), color)
-            context.pose().pushMatrix()
-            context.pose().translate(x, y)
-            context.pose().scale(scale, scale)
             with(context) {
-                fr.draw(processedText, 0f, 0f, shadow = shadow)
+                fr.draw(processedText) {
+                    this.x = x
+                    this.y = y
+                    this.scale = scale
+                    this.shadow = shadow
+                }
             }
-            context.pose().popMatrix()
         }
 
         private fun getTextWidth(fr: FontRenderer, scale: Float, text: String): Float {

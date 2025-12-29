@@ -122,13 +122,14 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
             val watermark = "${LiquidBounce.CLIENT_NAME} v${LiquidBounce.clientVersion}"
             val processedText = fontRenderer.process(watermark.asText(), watermarkColor)
 
-            context.pose().pushMatrix()
-            context.pose().translate(4f, 4f)
-            context.pose().scale(scale, scale)
             with(context) {
-                fontRenderer.draw(processedText, 0f, 0f, shadow = true)
+                fontRenderer.draw(processedText) {
+                    x = 4f
+                    y = 4f
+                    this.scale = scale
+                    shadow = true
+                }
             }
-            context.pose().popMatrix()
         }
 
         // Draw enabled modules list in top right
@@ -165,13 +166,14 @@ object ModuleHud : ClientModule("HUD", Category.RENDER, state = false, hide = tr
                 val coloredText = fontRenderer.process(module.name.asText(), color)
 
                 // Module name
-                context.pose().pushMatrix()
-                context.pose().translate(xPos, yOffset)
-                context.pose().scale(scale, scale)
                 with(context) {
-                    fontRenderer.draw(coloredText, 0f, 0f, shadow = true)
+                    fontRenderer.draw(coloredText) {
+                        x = xPos
+                        y = yOffset
+                        this.scale = scale
+                        shadow = true
+                    }
                 }
-                context.pose().popMatrix()
 
                 yOffset += lineHeight
             }

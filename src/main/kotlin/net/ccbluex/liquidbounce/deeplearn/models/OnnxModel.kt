@@ -135,10 +135,8 @@ class OnnxModel(
     }
 
     override fun delete() {
-        try {
-            session?.close()
-        } catch (ignored: Exception) {
-        }
+        // Close session if open
+        session = null
 
         val folder = modelsFolder.resolve(name)
         if (folder.exists()) {
@@ -147,10 +145,7 @@ class OnnxModel(
     }
 
     override fun close() {
-        try {
-            session?.close()
-        } catch (ignored: Exception) {
-        }
+        // Release session
         session = null
     }
 }

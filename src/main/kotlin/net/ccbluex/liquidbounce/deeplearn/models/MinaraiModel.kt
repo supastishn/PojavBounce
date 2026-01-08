@@ -69,4 +69,21 @@ class MinaraiModel(
         implementation?.close()
         implementation = null
     }
+
+    /** Train the model (delegates to backend implementation) */
+    fun train(features: Array<FloatArray>, labels: Array<FloatArray>) {
+        val impl = implementation ?: throw IllegalStateException("Model '$name' is not loaded")
+        impl.train(features, labels)
+    }
+
+    /** Save the model (delegates to backend implementation) */
+    fun save(name: String) {
+        val impl = implementation ?: throw IllegalStateException("Model '$this.name' is not loaded")
+        impl.save(name)
+    }
+
+    /** Save the model with its current name */
+    fun save() {
+        save(name)
+    }
 }

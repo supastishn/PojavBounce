@@ -197,18 +197,18 @@ dependencies {
 }
 
 // Task to extract ONNX Runtime natives from included AAR/jar dependencies into build folder
- tasks.register<Copy>("extractOnnxRuntimeNatives") {
-     doFirst {
-         logger.info("[build] Extracting ONNX Runtime natives into $buildDir/onnx-natives")
-     }
+tasks.register<Copy>("extractOnnxRuntimeNatives") {
+    doFirst {
+        logger.info("[build] Extracting ONNX Runtime natives into ${layout.buildDirectory.get()}/onnx-natives")
+    }
 
-     val dest = file("$buildDir/onnx-natives")
+    val dest = layout.buildDirectory.dir("onnx-natives")
 
-     // Resolve dependencies lazily when task executes
-     from({ configurations.includeDependency.resolve().map { zipTree(it) } })
-     include("jni/**/*.so")
-     into(dest)
- }
+    // Resolve dependencies lazily when task executes
+    from({ includeDependency.resolve().map { zipTree(it) } })
+    include("jni/**/*.so")
+    into(dest)
+}
 
 tasks.processResources {
     dependsOn("bundleTheme", "extractOnnxRuntimeNatives")
@@ -237,14 +237,14 @@ tasks.processResources {
     inputs.property("contributors", contributors)
 
     // Copy extracted ONNX natives into the resource tree (natives/android/<abi>/lib.so)
-    from("$buildDir/onnx-natives") {
+    from(layout.buildDirectory.dir("onnx-natives")) {
         include("jni/**/*.so")
         includeEmptyDirs = false
         eachFile {
-            val segments = it.relativePath.segments
+            val segments = relativePath.segments
             if (segments.isNotEmpty() && segments[0] == "jni" && segments.size >= 3) {
                 val abi = segments[1]
-                it.relativePath = RelativePath(true, "natives", "android", abi, it.name)
+                relativePath = RelativePath(true, "natives", "android", abi, name)
             }
         }
     }

@@ -21,14 +21,51 @@
 package net.ccbluex.liquidbounce.deeplearn.models
 
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
-import net.ccbluex.liquidbounce.deeplearn.translators.FloatArrayInAndOutTranslator
+import net.ccbluex.liquidbounce.config.types.nesting.Choice
 
 class MinaraiModel(
     name: String,
-    parent: ChoiceConfigurable<*>
-) : ModelWrapper<FloatArray, FloatArray>(
-    name,
-    FloatArrayInAndOutTranslator(),
-    2, // X, Y
-    parent
-)
+    private val parent: ChoiceConfigurable<*>
+) : Choice(name) {
+
+    private var implementation: net.ccbluex.liquidbounce.deeplearn.backend.DeepModel? = null
+
+    /** Predict using the currently loaded backend implementation */
+    fun predict(input: FloatArray): FloatArray {
+        val impl = implementation ?: throw IllegalStateException("Model '$name' is not loaded")
+        return impl.predict(input)
+    }
+
+    /** Load the model using the appropriate backend (ONNX on Android, DJL on desktop) */
+    fun load() {
+        // Close previous implementation if present
+        implementation?.close()
+
+        implementation = when (DeepLearningEngine.backend) {
+            net.ccbluex.liquidbounce.deeplearn.backend.Backend.ONNX -> net.ccbluex.liquidbounce.deeplearn.backend.OnnxBackend.createModel(name, parent)
+            net.ccbluex.liquidbounce.deeplearn.backend.Backend.DJL -> net.ccbluex.liquidbounce.deeplearn.backend.DjlBackend.createModel(name, parent)
+            net.ccbluex.liquidbounce.deeplearn.backend.Backend.NONE -> throw IllegalStateException("No deep learning backend available")
+        }
+
+        try {
+            implementation!!.load(name)
+        } catch (e: Exception) {
+            net.ccbluex.liquidbounce.utils.client.logger.error("[MinaraiModel] Failed to load model '$name'", e)
+            implementation!!.close()
+            implementation = null
+            throw e
+        }
+    }
+
+    fun delete() {
+        implementation?.delete() ?: run {
+            val folder = DeepLearningEngine.modelsFolder.resolve(name)
+            if (folder.exists()) folder.deleteRecursively()
+        }
+    }
+
+    fun close() {
+        implementation?.close()
+        implementation = null
+    }
+

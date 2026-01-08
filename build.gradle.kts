@@ -22,6 +22,7 @@ import com.github.gradle.node.task.NodeTask
 import groovy.json.JsonOutput
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.gradle.kotlin.dsl.support.listFilesOrdered
+import org.gradle.api.file.RelativePath
 
 plugins {
     alias(libs.plugins.fabric.loom)
@@ -159,6 +160,9 @@ dependencies {
     includeDependency(libs.djl.api)
     includeDependency(libs.djl.pytorch)
 
+    // ONNX Runtime (mobile) - used on Android for inference
+    includeDependency(libs.onnxruntime.mobile)
+
     // HTTP library
     includeDependency(libs.bundles.okhttp)
 
@@ -192,8 +196,22 @@ dependencies {
     }
 }
 
+// Task to extract ONNX Runtime natives from included AAR/jar dependencies into build folder
+ tasks.register<Copy>("extractOnnxRuntimeNatives") {
+     doFirst {
+         logger.info("[build] Extracting ONNX Runtime natives into $buildDir/onnx-natives")
+     }
+
+     val dest = file("$buildDir/onnx-natives")
+
+     // Resolve dependencies lazily when task executes
+     from({ configurations.includeDependency.resolve().map { zipTree(it) } })
+     include("jni/**/*.so")
+     into(dest)
+ }
+
 tasks.processResources {
-    dependsOn("bundleTheme")
+    dependsOn("bundleTheme", "extractOnnxRuntimeNatives")
 
     val modVersion = providers.gradleProperty("mod_version")
     val minecraftVersion = libs.versions.minecraft
@@ -217,6 +235,19 @@ tasks.processResources {
     inputs.property("fabric_kotlin_version", fabricKotlinVersion)
     inputs.property("viafabricplus_version", viafabricplusVersion)
     inputs.property("contributors", contributors)
+
+    // Copy extracted ONNX natives into the resource tree (natives/android/<abi>/lib.so)
+    from("$buildDir/onnx-natives") {
+        include("jni/**/*.so")
+        includeEmptyDirs = false
+        eachFile {
+            val segments = it.relativePath.segments
+            if (segments.isNotEmpty() && segments[0] == "jni" && segments.size >= 3) {
+                val abi = segments[1]
+                it.relativePath = RelativePath(true, "natives", "android", abi, it.name)
+            }
+        }
+    }
 
     filesMatching("fabric.mod.json") {
         expand(
@@ -412,7 +443,7 @@ tasks.register<Copy>("copyZipInclude") {
 }
 
 tasks.named("sourcesJar") {
-    dependsOn("bundleTheme")
+    dependsOn("bundleTheme", "extractOnnxRuntimeNatives")
 }
 
 tasks.named("build") {

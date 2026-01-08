@@ -85,7 +85,7 @@ polyglot-js = { group = "org.graalvm.polyglot", name = "js-community", version.r
 
 djl-api = { group = "ai.djl", name = "api", version.ref = "djl" }
 djl-pytorch = { group = "ai.djl.pytorch", name = "pytorch-engine", version.ref = "djl" }
-onnxruntime-mobile = { group = "com.microsoft.onnxruntime", name = "onnxruntime-mobile", version.ref = "onnxruntime" }
+onnxruntime-mobile = { group = "com.microsoft.onnxruntime", name = "onnxruntime-android", version.ref = "onnxruntime" }
 #djl-mxnet = { group = "ai.djl.mxnet", name = "mxnet-engine", version.ref = "djl" }
 #djl-tensorflow = { group = "ai.djl.tensorflow", name = "tensorflow-engine", version.ref = "djl" }
 

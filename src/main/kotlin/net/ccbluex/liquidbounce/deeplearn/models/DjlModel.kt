@@ -37,11 +37,13 @@ import ai.djl.training.optimizer.Adam
 import ai.djl.training.tracker.Tracker
 import ai.djl.translate.TranslateException
 import ai.djl.translate.Translator
-import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine.modelsFolder
-import net.ccbluex.liquidbounce.deeplearn.listener.OverlayTrainingListener
+import net.ccbluex.liquidbounce.deeplearn.backend.Backend
+import net.ccbluex.liquidbounce.deeplearn.backend.DjlBackend
+import net.ccbluex.liquidbounce.utils.client.logger
+import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.file.Path
@@ -50,28 +52,34 @@ import java.util.*
 private const val NUM_EPOCH = 100
 private const val BATCH_SIZE = 32
 
-abstract class ModelWrapper<I, O>(
-    name: String,
-    val translator: Translator<I, O>,
+/**
+ * DJL model implementation wrapping ai.djl.Model and Predictor.
+ */
+class DjlModel(
+    private val modelName: String,
+    val translator: Translator<FloatArray, FloatArray>,
     val outputs: Long,
     override val parent: ChoiceConfigurable<*>
-) : Choice(name), Closeable {
+) : Choice(modelName), net.ccbluex.liquidbounce.deeplearn.backend.DeepModel, Closeable {
+
+    override val name: String = modelName
 
     private val model: Model by lazy {
         Model.newInstance(name).apply {
             block = createMlpBlock(outputs)
         }
     }
-    private val predictor: Predictor<I, O> by lazy { model.newPredictor(translator) }
+
+    private val predictor: Predictor<FloatArray, FloatArray> by lazy { model.newPredictor(translator) }
 
     @Throws(TranslateException::class)
-    fun predict(input: I): O {
+    override fun predict(input: FloatArray): FloatArray {
         require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized" }
 
         return predictor.predict(input)
     }
 
-    fun train(features: Array<FloatArray>, labels: Array<FloatArray>) {
+    override fun train(features: Array<FloatArray>, labels: Array<FloatArray>) {
         require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized" }
 
         require(features.size == labels.size) { "Features and labels must have the same size" }
@@ -85,7 +93,7 @@ abstract class ModelWrapper<I, O>(
                     .optLearningRateTracker(Tracker.fixed(0.001f))
                     .build()
             )
-            .addTrainingListeners(LoggingTrainingListener(), OverlayTrainingListener(NUM_EPOCH))
+            .addTrainingListeners(LoggingTrainingListener())
         val trainer = model.newTrainer(trainingConfig)
 
         val manager = NDManager.newBaseManager()
@@ -99,15 +107,15 @@ abstract class ModelWrapper<I, O>(
         EasyTrain.fit(trainer, NUM_EPOCH, trainingSet, null)
     }
 
-    fun load(stream: InputStream) {
+    override fun load(stream: InputStream) {
         model.load(stream)
     }
 
-    fun load(path: Path) {
+    override fun load(path: Path) {
         model.load(path, "tf")
     }
 
-    fun load(name: String = this.name) {
+    override fun load(name: String) {
         val folder = modelsFolder.resolve(name)
 
         if (folder.exists()) {
@@ -120,24 +128,29 @@ abstract class ModelWrapper<I, O>(
         }
     }
 
-    fun save(path: Path) {
+    override fun save(path: Path) {
         model.save(path, "tf")
     }
 
-    fun save(name: String = this.name) {
+    override fun save(name: String) {
         save(modelsFolder.resolve(name).toPath())
     }
 
-    fun delete() {
+    override fun delete() {
         close()
         modelsFolder.resolve(name).delete()
     }
 
     override fun close() {
-        predictor.close()
-        model.close()
+        try {
+            predictor.close()
+        } catch (ignored: Exception) {
+        }
+        try {
+            model.close()
+        } catch (ignored: Exception) {
+        }
     }
-
 }
 
 /**

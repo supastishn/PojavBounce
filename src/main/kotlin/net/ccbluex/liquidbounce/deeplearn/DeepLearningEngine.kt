@@ -21,6 +21,7 @@
 package net.ccbluex.liquidbounce.deeplearn
 
 import ai.djl.engine.Engine
+import net.ccbluex.liquidbounce.deeplearn.backend.Backend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.ConfigSystem.rootFolder
@@ -116,45 +117,63 @@ object DeepLearningEngine {
      * - Missing Android-specific native builds
      * In these cases, DJL features will be gracefully disabled.
      */
+    // Backend that is currently in use (DJL, ONNX or NONE)
+    var backend: Backend = Backend.NONE
+
     suspend fun init(task: Task) {
         this.task = task
 
-        logger.info("[DeepLearning] Initializing engine...")
+        logger.info("[DeepLearning] Initializing deep learning backends...")
+
+        // Try ONNX Runtime first on Android
         if (isAndroid) {
-            logger.info("[DeepLearning] Running on Android platform - attempting native initialization")
+            logger.info("[DeepLearning] Android: attempting ONNX Runtime initialization")
+            try {
+                if (net.ccbluex.liquidbounce.deeplearn.backend.OnnxBackend.init(task, enginesCacheFolder)) {
+                    backend = Backend.ONNX
+                    isInitialized = true
+                    logger.info("[DeepLearning] ONNX Runtime backend initialized and selected")
+                    this.task = null
+                    return
+                } else {
+                    logger.warn("[DeepLearning] ONNX Runtime initialization failed, will try DJL as fallback")
+                }
+            } catch (e: Throwable) {
+                logger.error("[DeepLearning] ONNX Runtime initialization threw an error, trying DJL fallback", e)
+            }
         }
 
+        // Fallback / Desktop: initialize DJL
+        logger.info("[DeepLearning] Initializing DJL backend")
         try {
-            val engine = withContext(Dispatchers.IO) {
-                Engine.getInstance()
-            }
-            val name = engine.engineName
-            val version = engine.version
-            val deviceType = engine.defaultDevice().deviceType.uppercase(Locale.ENGLISH)
-            logger.info("[DeepLearning] Using engine $name $version on $deviceType.")
-
-            isInitialized = true
-        } catch (t: Throwable) {
-            logger.error("[DeepLearning] Failed to initialize DJL engine", t)
-            logger.error("[DeepLearning] Engine initialization failure details:\n${collectDiagnosticInfo()}")
-
-            if (isAndroid) {
-                // Graceful degradation on Android
-                logger.warn("[DeepLearning] Android native library support is currently experimental")
-                logger.warn("[DeepLearning] Possible causes:")
-                logger.warn("[DeepLearning]   - Namespace isolation (libs not accessible from external storage)")
-                logger.warn("[DeepLearning]   - GLIBC vs Bionic incompatibility")
-                logger.warn("[DeepLearning]   - Missing Android-specific PyTorch natives")
-                logger.warn("[DeepLearning] Deep learning features will be disabled on this platform")
-                logger.warn("[DeepLearning] Desktop platforms are fully supported")
-
-                isInitialized = false
-                this.task = null
-                return  // Don't throw - graceful degradation on Android
+            if (net.ccbluex.liquidbounce.deeplearn.backend.DjlBackend.init(task, enginesCacheFolder)) {
+                backend = Backend.DJL
+                isInitialized = true
+                logger.info("[DeepLearning] DJL backend initialized and selected")
             } else {
-                // Rethrow on desktop platforms - this is a critical error
+                logger.error("[DeepLearning] DJL backend failed to initialize")
+                backend = Backend.NONE
+                isInitialized = false
+                if (!isAndroid) {
+                    this.task = null
+                    throw IllegalStateException("Failed to initialize DJL backend")
+                } else {
+                    // On Android, disable deep learning gracefully
+                    this.task = null
+                    return
+                }
+            }
+        } catch (t: Throwable) {
+            logger.error("[DeepLearning] DJL initialization threw an error", t)
+            backend = Backend.NONE
+            isInitialized = false
+
+            if (!isAndroid) {
                 this.task = null
                 throw t
+            } else {
+                this.task = null
+                return
             }
         }
 

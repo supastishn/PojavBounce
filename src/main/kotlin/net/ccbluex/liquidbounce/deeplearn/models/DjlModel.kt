@@ -62,10 +62,10 @@ class DjlModel(
     override val parent: ChoiceConfigurable<*>
 ) : Choice(modelName), net.ccbluex.liquidbounce.deeplearn.backend.DeepModel, Closeable {
 
-    override val name: String = modelName
+    // name is already provided by Choice(modelName)
 
     private val model: Model by lazy {
-        Model.newInstance(name).apply {
+        Model.newInstance(modelName).apply {
             block = createMlpBlock(outputs)
         }
     }

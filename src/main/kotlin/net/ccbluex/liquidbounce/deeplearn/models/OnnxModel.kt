@@ -37,7 +37,7 @@ import java.nio.file.Path
  */
 class OnnxModel(
     private val modelName: String,
-    override val parent: ChoiceConfigurable<*>?
+    val parent: ChoiceConfigurable<*>?
 ) : net.ccbluex.liquidbounce.deeplearn.backend.DeepModel {
 
     override val name: String = modelName

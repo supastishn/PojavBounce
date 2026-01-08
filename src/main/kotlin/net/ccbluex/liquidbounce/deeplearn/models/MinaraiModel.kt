@@ -22,10 +22,11 @@ package net.ccbluex.liquidbounce.deeplearn.models
 
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.nesting.Choice
+import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 
 class MinaraiModel(
     name: String,
-    private val parent: ChoiceConfigurable<*>
+    override val parent: ChoiceConfigurable<*>
 ) : Choice(name) {
 
     private var implementation: net.ccbluex.liquidbounce.deeplearn.backend.DeepModel? = null
@@ -68,4 +69,4 @@ class MinaraiModel(
         implementation?.close()
         implementation = null
     }
-
+}

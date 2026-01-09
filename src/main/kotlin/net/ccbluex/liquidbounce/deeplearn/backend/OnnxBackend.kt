@@ -19,6 +19,7 @@
 package net.ccbluex.liquidbounce.deeplearn.backend
 
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
+import net.ccbluex.liquidbounce.deeplearn.models.OnnxModel
 import net.ccbluex.liquidbounce.deeplearn.utils.NativeLibExtractor
 import net.ccbluex.liquidbounce.integration.task.type.Task
 import net.ccbluex.liquidbounce.utils.client.logger

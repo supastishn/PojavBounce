@@ -56,12 +56,10 @@ class OnnxModel(
         val tensor = OnnxTensor.createTensor(env, FloatBuffer.wrap(input), inputShape)
 
         return try {
-            val results = sess.run(mapOf("input" to tensor))
-
-            try {
+            sess.run(mapOf("input" to tensor)).use { results ->
                 val value = results[0].value
                 // Commonly ONNX outputs are float[][] or float[] depending on model; handle both
-                return when (value) {
+                when (value) {
                     is Array<*> -> {
                         @Suppress("UNCHECKED_CAST")
                         val arr = value as Array<FloatArray>
@@ -70,11 +68,8 @@ class OnnxModel(
                     is FloatArray -> value
                     else -> throw IllegalStateException("Unexpected ONNX output type: ${value?.javaClass}")
                 }
-            } finally {
-                // Close returned OnnxValues
-                results.forEach { try { it.close() } catch (ignored: Exception) {} }
             }
-        } catch (e: OrtException) {
+        } catch (e: ai.onnxruntime.OrtException) {
             logger.error("[OnnxModel] Failed to run inference for model '$name'", e)
             throw e
         } finally {

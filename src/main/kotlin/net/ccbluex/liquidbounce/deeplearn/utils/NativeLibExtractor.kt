@@ -418,6 +418,30 @@ object NativeLibExtractor {
         appendLine("  os.name: ${System.getProperty("os.name")}")
         appendLine("  java.library.path: ${System.getProperty("java.library.path")}")
 
+        appendLine("\nClassLoader diagnostics:")
+        try {
+            val ctxCl = Thread.currentThread().contextClassLoader
+            appendLine("  contextClassLoader: ${ctxCl?.javaClass?.name} (toString: $ctxCl)")
+
+            var cl: ClassLoader? = ctxCl
+            while (cl != null) {
+                appendLine("  - ${cl.javaClass.name}")
+                try {
+                    // Try common methods to get URLs from classloader
+                    val getUrlsMethod = cl.javaClass.methods.firstOrNull { it.name == "getUrls" || it.name == "getURLs" }
+                    if (getUrlsMethod != null) {
+                        val urls = getUrlsMethod.invoke(cl)
+                        appendLine("    urls: ${urls?.toString()}")
+                    }
+                } catch (e: Exception) {
+                    appendLine("    (failed to read URLs: ${e.message})")
+                }
+                cl = cl.parent
+            }
+        } catch (e: Exception) {
+            appendLine("  Error collecting classloader diagnostics: ${e.message}")
+        }
+
         appendLine("\nTarget Folder (${targetFolder.absolutePath}):")
         try {
             if (!targetFolder.exists()) {

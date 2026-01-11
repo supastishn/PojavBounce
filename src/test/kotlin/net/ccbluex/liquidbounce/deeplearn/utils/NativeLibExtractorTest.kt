@@ -223,4 +223,40 @@ class NativeLibExtractorTest {
         }
     }
 
+    @Test
+    fun `test extract from embedded onnxruntime-android aar with jni layout`() {
+        val method = NativeLibExtractor::class.java.getDeclaredMethod(
+            "extractFromAar",
+            String::class.java,
+            String::class.java,
+            String::class.java,
+            File::class.java
+        )
+        method.isAccessible = true
+
+        // Create embedded AAR with jni/arm64-v8a/libonnxruntime.so
+        val embeddedAar = File.createTempFile("onnx-android-embed", ".aar")
+        java.util.jar.JarOutputStream(java.io.FileOutputStream(embeddedAar)).use { jos ->
+            jos.putNextEntry(java.util.jar.JarEntry("jni/arm64-v8a/libonnxruntime.so"))
+            jos.write(byteArrayOf(1, 2, 3, 4))
+            jos.closeEntry()
+        }
+
+        // Create main JAR containing the embedded AAR under META-INF/jars/
+        val mainJar = File.createTempFile("main-jar", ".jar")
+        java.util.jar.JarOutputStream(java.io.FileOutputStream(mainJar)).use { jos ->
+            val entry = java.util.jar.JarEntry("META-INF/jars/onnxruntime-android-embedded.aar")
+            jos.putNextEntry(entry)
+            embeddedAar.inputStream().use { it.copyTo(jos) }
+            jos.closeEntry()
+        }
+
+        val aarPath = "jar:file:${mainJar.absolutePath}!/META-INF/jars/onnxruntime-android-embedded.aar"
+        val extracted = method.invoke(NativeLibExtractor, aarPath, "libonnxruntime.so", "arm64-v8a", tempDir) as java.io.File?
+
+        assertNotNull(extracted)
+        assertTrue(extracted!!.exists())
+        assertEquals(4, extracted.length())
+    }
+
 }

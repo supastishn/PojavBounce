@@ -199,28 +199,75 @@ object NativeLibExtractor {
                     logger.info("[NativeExtractor] Checking for embedded ONNX Runtime in: ${currentJarFile.name}")
 
                     val jarFile = java.util.jar.JarFile(currentJarFile)
-                    val entries = jarFile.entries()
-                    while (entries.hasMoreElements()) {
-                        val entry = entries.nextElement()
-                        if (entry.name.contains("onnxruntime") && entry.name.endsWith(".jar") && !entry.isDirectory) {
-                            logger.info("[NativeExtractor] Found embedded ONNX Runtime JAR: ${entry.name}")
+                    try {
+                        var bestAltEmbedded: String? = null
+                        val entries = jarFile.entries()
+                        while (entries.hasMoreElements()) {
+                            val entry = entries.nextElement()
+                            if (entry.isDirectory) continue
 
-                            // Construct the embedded JAR path
-                            val embeddedJarPath = "jar:file:${currentJarFile.absolutePath}!/${entry.name}"
-                            logger.info("[NativeExtractor] Trying embedded path: $embeddedJarPath")
+                            val isCandidate =
+                                entry.name.startsWith("META-INF/jars/") &&
+                                    entry.name.contains("onnxruntime") &&
+                                    (entry.name.endsWith(".jar") || entry.name.endsWith(".aar"))
 
-                            // Test if this embedded JAR contains our native library
+                            if (!isCandidate) continue
+
+                            logger.info("[NativeExtractor] Found embedded ONNX archive: ${entry.name}")
+
+                            // Construct the embedded archive path
+                            val embeddedArchivePath = "jar:file:${currentJarFile.absolutePath}!/${entry.name}"
+                            logger.info("[NativeExtractor] Probing embedded archive: $embeddedArchivePath")
+
+                            val tempExt = if (entry.name.endsWith(".aar")) ".aar" else ".jar"
+                            val tempArchive = File.createTempFile("onnxruntime-probe", tempExt)
                             try {
-                                // For testing, we'll assume it contains the library and let extractFromAar handle it
-                                logger.info("[NativeExtractor] Found embedded ONNX Runtime AAR: $embeddedJarPath")
-                                jarFile.close()
-                                return embeddedJarPath
+                                jarFile.getInputStream(entry).use { input ->
+                                    tempArchive.outputStream().use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+
+                                val jniPath = "jni/$abi/$libName"
+
+                                val mappedPlatform = when (abi) {
+                                    "arm64-v8a" -> "linux-aarch64"
+                                    "armeabi-v7a" -> "linux-arm32"
+                                    "x86_64" -> "linux-x64"
+                                    "x86" -> "linux-x86"
+                                    else -> abi
+                                }
+                                val altPath = "ai/onnxruntime/native/$mappedPlatform/$libName"
+
+                                val (hasJni, hasAlt) = java.util.jar.JarFile(tempArchive).use { embedded ->
+                                    (embedded.getEntry(jniPath) != null) to (embedded.getEntry(altPath) != null)
+                                }
+
+                                if (hasJni) {
+                                    logger.info("[NativeExtractor] Embedded archive contains $jniPath; using $embeddedArchivePath")
+                                    return embeddedArchivePath
+                                }
+
+                                // Prefer Android JNI layout if present anywhere. Only fall back to the alternate layout
+                                // if we did not find any JNI-containing embedded archive.
+                                if (hasAlt && bestAltEmbedded == null) {
+                                    logger.info("[NativeExtractor] Embedded archive contains $altPath; deferring selection")
+                                    bestAltEmbedded = embeddedArchivePath
+                                }
                             } catch (e: Exception) {
-                                logger.warn("[NativeExtractor] Error with embedded path $embeddedJarPath: ${e.message}")
+                                logger.warn("[NativeExtractor] Error probing embedded archive ${entry.name}: ${e.message}")
+                            } finally {
+                                tempArchive.delete()
                             }
                         }
+
+                        if (bestAltEmbedded != null) {
+                            logger.info("[NativeExtractor] No JNI embedded archive found; using $bestAltEmbedded")
+                            return bestAltEmbedded
+                        }
+                    } finally {
+                        jarFile.close()
                     }
-                    jarFile.close()
                 } catch (e: Exception) {
                     logger.warn("[NativeExtractor] Error checking current JAR: ${e.message}")
                 }
@@ -258,13 +305,14 @@ object NativeLibExtractor {
 
                 val mainJarFile = java.util.jar.JarFile(mainJarPath)
                 try {
-                    // If this points to an embedded JAR (e.g., META-INF/jars/onnxruntime-*.jar), extract the embedded JAR first
-                    if (embeddedPath.contains("META-INF/jars/") && embeddedPath.endsWith(".jar")) {
+                    // If this points to an embedded archive (e.g., META-INF/jars/onnxruntime-*.jar or .aar), extract it first
+                    if (embeddedPath.contains("META-INF/jars/") && (embeddedPath.endsWith(".jar") || embeddedPath.endsWith(".aar"))) {
                         val embeddedEntry = mainJarFile.getEntry(embeddedPath)
 
                         if (embeddedEntry != null) {
-                            // Extract the embedded JAR to a temp location first
-                            val tempJarFile = File.createTempFile("onnxruntime", ".jar")
+                            // Extract the embedded archive to a temp location first
+                            val tempExt = if (embeddedPath.endsWith(".aar")) ".aar" else ".jar"
+                            val tempJarFile = File.createTempFile("onnxruntime", tempExt)
                             mainJarFile.getInputStream(embeddedEntry).use { input ->
                                 tempJarFile.outputStream().use { output ->
                                     input.copyTo(output)

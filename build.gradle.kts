@@ -204,9 +204,27 @@ tasks.register<Copy>("extractOnnxRuntimeNatives") {
 
     val dest = layout.buildDirectory.dir("onnx-natives")
 
-    // Resolve dependencies lazily when task executes
-    from({ includeDependency.resolve().map { zipTree(it) } })
+    // Resolve dependencies lazily when task executes, filter for JAR/AAR files only
+    from({
+        includeDependency.resolve()
+            .filter { it.name.endsWith(".jar") || it.name.endsWith(".aar") }
+            .map { zipTree(it) }
+    })
+
+    // Include JNI libraries and map AAR structure to JAR structure
+    // AAR files have: jni/arm64-v8a/libonnxruntime.so
+    // JAR expects: natives/android/arm64-v8a/libonnxruntime.so
     include("jni/**/*.so")
+    eachFile {
+        // Remap AAR structure to JAR structure
+        val pathParts = it.path.split("/")
+        if (pathParts.size >= 2 && pathParts[0] == "jni") {
+            // Map: jni/arm64-v8a/lib.so -> natives/android/arm64-v8a/lib.so
+            val newPath = "natives/android/" + pathParts.drop(1).joinToString("/")
+            it.path = newPath
+        }
+    }
+
     into(dest)
 }
 

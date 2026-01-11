@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+source .env
+
 # Script to fetch the latest GitHub Actions artifact and deploy to FCL mods directory
 # Repository: supastishn/PojavBounce
 # Target: /storage/emulated/0/FCL/.minecraft/versions/1.21.11-Fabric/mods

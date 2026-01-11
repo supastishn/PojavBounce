@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+source .env
+
 # Script to fetch full GitHub Actions build logs for detailed analysis
 # Repository: supastishn/PojavBounce
 

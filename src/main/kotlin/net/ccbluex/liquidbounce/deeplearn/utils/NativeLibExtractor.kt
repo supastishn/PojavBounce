@@ -48,6 +48,7 @@ object NativeLibExtractor {
 
     /**
      * Extract native libraries for ONNX Runtime from JAR resources.
+     * NEW APPROACH: Load directly from AAR file at runtime instead of extracting.
      *
      * @param targetFolder Destination folder (typically enginesCacheFolder)
      * @param libraryNames List of library filenames to extract
@@ -58,51 +59,101 @@ object NativeLibExtractor {
         val extractedFiles = mutableListOf<File>()
 
         logger.info("[NativeExtractor] Detecting ABI: $abi")
-        logger.info("[NativeExtractor] Extracting native libraries to ${targetFolder.absolutePath}")
+        logger.info("[NativeExtractor] Loading native libraries directly from AAR dependencies")
 
-        // Create target folder
-        targetFolder.mkdirs()
-
+        // NEW APPROACH: Find and load directly from AAR files in classpath
         for (libName in libraryNames) {
             try {
-                val resourcePath = "/natives/android/$abi/$libName"
-                val inputStream = NativeLibExtractor::class.java.getResourceAsStream(resourcePath)
-
-                if (inputStream == null) {
-                    logger.warn("[NativeExtractor] Library not found in resources: $resourcePath")
-                    continue
-                }
-
-                val targetFile = File(targetFolder, libName)
-
-                // Skip if already extracted and size matches
-                if (targetFile.exists()) {
-                    logger.debug("[NativeExtractor] Library already extracted: ${targetFile.absolutePath}")
-                    extractedFiles.add(targetFile)
-                    continue
-                }
-
-                // Extract library
-                logger.info("[NativeExtractor] Extracting $libName...")
-                inputStream.use { input ->
-                    targetFile.outputStream().use { output ->
-                        input.copyTo(output)
+                // Try to find the AAR file containing the native library
+                val aarPath = findAarWithNativeLibrary(libName, abi)
+                if (aarPath != null) {
+                    // Extract the specific library from the AAR
+                    val extractedFile = extractFromAar(aarPath, libName, abi, targetFolder)
+                    if (extractedFile != null) {
+                        extractedFiles.add(extractedFile)
                     }
+                } else {
+                    logger.warn("[NativeExtractor] Could not find AAR containing $libName for ABI $abi")
                 }
-
-                // Set executable permissions (may not be necessary on Android, but doesn't hurt)
-                targetFile.setExecutable(true)
-                targetFile.setReadable(true)
-
-                logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
-                extractedFiles.add(targetFile)
-
             } catch (e: Exception) {
-                logger.error("[NativeExtractor] Failed to extract $libName", e)
+                logger.error("[NativeExtractor] Failed to load $libName from AAR", e)
             }
         }
 
         return extractedFiles
+    }
+
+    /**
+     * Find AAR file in classpath that contains the specified native library
+     */
+    private fun findAarWithNativeLibrary(libName: String, abi: String): String? {
+        try {
+            // Get all URLs in classpath
+            val classLoader = NativeLibExtractor::class.java.classLoader
+            val classpathUrls = (classLoader as? java.net.URLClassLoader)?.urLs ?: return null
+
+            for (url in classpathUrls) {
+                if (url.protocol == "file" && url.path.endsWith(".aar")) {
+                    try {
+                        val jarFile = java.util.jar.JarFile(java.io.File(url.path))
+                        val entry = jarFile.getEntry("jni/$abi/$libName")
+                        jarFile.close()
+                        if (entry != null) {
+                            logger.info("[NativeExtractor] Found $libName in AAR: ${url.path}")
+                            return url.path
+                        }
+                    } catch (e: Exception) {
+                        // Continue searching
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            logger.error("[NativeExtractor] Error searching for AAR files", e)
+        }
+        return null
+    }
+
+    /**
+     * Extract a specific native library from an AAR file
+     */
+    private fun extractFromAar(aarPath: String, libName: String, abi: String, targetFolder: File): File? {
+        return try {
+            targetFolder.mkdirs()
+            val targetFile = File(targetFolder, libName)
+
+            // Skip if already extracted
+            if (targetFile.exists()) {
+                logger.debug("[NativeExtractor] Library already extracted: ${targetFile.absolutePath}")
+                return targetFile
+            }
+
+            val jarFile = java.util.jar.JarFile(aarPath)
+            val entry = jarFile.getEntry("jni/$abi/$libName")
+
+            if (entry == null) {
+                logger.warn("[NativeExtractor] Library $libName not found in AAR at jni/$abi/")
+                jarFile.close()
+                return null
+            }
+
+            logger.info("[NativeExtractor] Extracting $libName from AAR...")
+            jarFile.getInputStream(entry).use { input ->
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+            jarFile.close()
+
+            // Set permissions
+            targetFile.setExecutable(true)
+            targetFile.setReadable(true)
+
+            logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+            targetFile
+        } catch (e: Exception) {
+            logger.error("[NativeExtractor] Failed to extract $libName from AAR", e)
+            null
+        }
     }
 
     /**

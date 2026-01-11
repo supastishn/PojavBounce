@@ -473,9 +473,11 @@ tasks.register("verifyOnnxNativesInJar") {
     group = "verification"
     description = "Verify that ONNX Android native libraries are present in the JAR under natives/android"
 
-    dependsOn("jar")
+    dependsOn("remapJar")
     doLast {
-        val jarFile = tasks.named<Jar>("jar").get().archiveFile.get().asFile
+        val libsDir = layout.buildDirectory.dir("libs").get().asFile
+        val jarFile = fileTree(libsDir).matching { include("liquidbounce-*.jar") }.files.firstOrNull()
+            ?: throw GradleException("Built jar not found in ${libsDir.absolutePath}")
         JarFile(jarFile).use { jf ->
             val entries = jf.entries()
             var found = false

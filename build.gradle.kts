@@ -215,13 +215,13 @@ tasks.register<Copy>("extractOnnxRuntimeNatives") {
     // AAR files have: jni/arm64-v8a/libonnxruntime.so
     // JAR expects: natives/android/arm64-v8a/libonnxruntime.so
     include("jni/**/*.so")
-    eachFile { fileCopyDetails ->
+    filesMatching("jni/**/*.so") {
         // Remap AAR structure to JAR structure
-        val pathParts = fileCopyDetails.path.split("/")
+        val pathParts = path.split("/")
         if (pathParts.size >= 2 && pathParts[0] == "jni") {
             // Map: jni/arm64-v8a/lib.so -> natives/android/arm64-v8a/lib.so
             val newPath = "natives/android/" + pathParts.drop(1).joinToString("/")
-            fileCopyDetails.path = newPath
+            path = newPath
         }
     }
 

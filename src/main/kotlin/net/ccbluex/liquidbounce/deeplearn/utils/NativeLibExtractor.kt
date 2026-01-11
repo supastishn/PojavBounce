@@ -292,7 +292,37 @@ object NativeLibExtractor {
                                 logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
                                 return targetFile
                             } else {
-                                logger.warn("[NativeExtractor] Native library not found in embedded JAR at jni/$abi/$libName")
+                                // Some ONNX distributions place their native libraries under ai/onnxruntime/native/<platform>/
+                                val mappedPlatform = when (abi) {
+                                    "arm64-v8a" -> "linux-aarch64"
+                                    "armeabi-v7a" -> "linux-arm32"
+                                    "x86_64" -> "linux-x64"
+                                    "x86" -> "linux-x86"
+                                    else -> abi
+                                }
+
+                                val altPath = "ai/onnxruntime/native/$mappedPlatform/$libName"
+                                val altEntry = tempJar.getEntry(altPath)
+
+                                if (altEntry != null) {
+                                    logger.info("[NativeExtractor] Extracting $libName from embedded ONNX layout at $altPath...")
+                                    tempJar.getInputStream(altEntry).use { input ->
+                                        targetFile.outputStream().use { output ->
+                                            input.copyTo(output)
+                                        }
+                                    }
+                                    tempJar.close()
+                                    tempJarFile.delete()
+
+                                    // Set permissions
+                                    targetFile.setExecutable(true)
+                                    targetFile.setReadable(true)
+
+                                    logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+                                    return targetFile
+                                }
+
+                                logger.warn("[NativeExtractor] Native library not found in embedded JAR at jni/$abi/$libName or $altPath")
                                 tempJar.close()
                                 tempJarFile.delete()
                                 return null

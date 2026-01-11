@@ -58,17 +58,22 @@ object NativeLibExtractor {
         val abi = detectAndroidAbi()
         val extractedFiles = mutableListOf<File>()
 
-        logger.info("[NativeExtractor] Detecting ABI: $abi")
-        logger.info("[NativeExtractor] Loading native libraries directly from AAR dependencies")
+        logger.info("[NativeExtractor] ===== STARTING NATIVE LIBRARY EXTRACTION =====")
+        logger.info("[NativeExtractor] Detected ABI: $abi")
+        logger.info("[NativeExtractor] Target folder: ${targetFolder.absolutePath}")
+        logger.info("[NativeExtractor] Library names: $libraryNames")
 
         // NEW APPROACH: Find and load directly from AAR files in classpath
         for (libName in libraryNames) {
+            logger.info("[NativeExtractor] Processing library: $libName")
             try {
                 // Try to find the AAR file containing the native library
                 val aarPath = findAarWithNativeLibrary(libName, abi)
+                logger.info("[NativeExtractor] AAR search result for $libName: $aarPath")
                 if (aarPath != null) {
                     // Extract the specific library from the AAR
                     val extractedFile = extractFromAar(aarPath, libName, abi, targetFolder)
+                    logger.info("[NativeExtractor] Extraction result for $libName: ${extractedFile?.absolutePath}")
                     if (extractedFile != null) {
                         extractedFiles.add(extractedFile)
                     }
@@ -80,6 +85,7 @@ object NativeLibExtractor {
             }
         }
 
+        logger.info("[NativeExtractor] ===== EXTRACTION COMPLETE: ${extractedFiles.size} libraries extracted =====")
         return extractedFiles
     }
 
@@ -87,26 +93,42 @@ object NativeLibExtractor {
      * Find AAR file in classpath that contains the specified native library
      */
     private fun findAarWithNativeLibrary(libName: String, abi: String): String? {
+        logger.info("[NativeExtractor] Searching for AAR containing $libName for ABI $abi")
         try {
             // Get all URLs in classpath
             val classLoader = NativeLibExtractor::class.java.classLoader
-            val classpathUrls = (classLoader as? java.net.URLClassLoader)?.urLs ?: return null
+            logger.info("[NativeExtractor] ClassLoader type: ${classLoader::class.java.name}")
+
+            val classpathUrls = (classLoader as? java.net.URLClassLoader)?.urLs
+            logger.info("[NativeExtractor] URLClassLoader cast successful: ${classpathUrls != null}")
+            logger.info("[NativeExtractor] Number of classpath URLs: ${classpathUrls?.size ?: 0}")
+
+            if (classpathUrls == null) {
+                logger.warn("[NativeExtractor] ClassLoader is not URLClassLoader or urLs is null")
+                return null
+            }
 
             for (url in classpathUrls) {
+                logger.info("[NativeExtractor] Checking classpath URL: ${url}")
                 if (url.protocol == "file" && url.path.endsWith(".aar")) {
+                    logger.info("[NativeExtractor] Found potential AAR: ${url.path}")
                     try {
                         val jarFile = java.util.jar.JarFile(java.io.File(url.path))
                         val entry = jarFile.getEntry("jni/$abi/$libName")
+                        logger.info("[NativeExtractor] Entry 'jni/$abi/$libName' exists: ${entry != null}")
                         jarFile.close()
                         if (entry != null) {
                             logger.info("[NativeExtractor] Found $libName in AAR: ${url.path}")
                             return url.path
                         }
                     } catch (e: Exception) {
+                        logger.warn("[NativeExtractor] Error checking AAR ${url.path}: ${e.message}")
                         // Continue searching
                     }
                 }
             }
+
+            logger.warn("[NativeExtractor] No AAR found containing $libName for ABI $abi")
         } catch (e: Exception) {
             logger.error("[NativeExtractor] Error searching for AAR files", e)
         }

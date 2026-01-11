@@ -23,6 +23,7 @@ import groovy.json.JsonOutput
 import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 import org.gradle.api.file.RelativePath
+import java.util.jar.JarFile
 
 plugins {
     alias(libs.plugins.fabric.loom)
@@ -162,6 +163,8 @@ dependencies {
 
     // ONNX Runtime (mobile) - used on Android for inference
     includeDependency(libs.onnxruntime.mobile)
+    // Also include the Android AAR explicitly so we can extract JNI libs at build time
+    includeDependency("com.microsoft.onnxruntime:onnxruntime-android:${libs.versions.onnxruntime.get()}@aar")
 
     // HTTP library
     includeDependency(libs.bundles.okhttp)
@@ -198,11 +201,31 @@ dependencies {
 
 // Task to extract ONNX Runtime natives from included AAR/jar dependencies into build folder
 tasks.register<Copy>("extractOnnxRuntimeNatives") {
+    description = "Extract Android JNI libraries from ONNX Runtime AARs into build/onnx-natives"
+    group = "build"
+
+    val destDir = layout.buildDirectory.dir("onnx-natives")
+
+    // Resolve AAR/JAR files from includeDependency configuration and extract their contents
+    from({
+        includeDependency.files.map { file -> zipTree(file) }
+    })
+
+    // Only extract JNI native libraries
+    include("jni/**")
+    includeEmptyDirs = false
+
+
+    into(destDir)
+
     doFirst {
-        logger.info("[build] ONNX Runtime natives will be loaded directly from AAR at runtime")
+        logger.info("[build] Extracting ONNX Runtime natives from AAR/JAR dependencies into ${destDir.get().asFile.absolutePath}")
     }
 
-    // No extraction needed - we'll load directly from AAR
+    doLast {
+        val extractedCount = fileTree(destDir.get().asFile).matching { include("**/*.so") }.files.size
+        logger.info("[build] ONNX Runtime native extraction complete. Extracted $extractedCount files to ${destDir.get().asFile.absolutePath}")
+    }
 }
 
 tasks.processResources {
@@ -443,4 +466,36 @@ tasks.named("sourcesJar") {
 
 tasks.named("build") {
     dependsOn("copyZipInclude")
+}
+
+// Verify that our built JAR includes Android native libraries under natives/android/*
+tasks.register("verifyOnnxNativesInJar") {
+    group = "verification"
+    description = "Verify that ONNX Android native libraries are present in the JAR under natives/android"
+
+    dependsOn("jar")
+    doLast {
+        val jarFile = tasks.named<Jar>("jar").get().archiveFile.get().asFile
+        JarFile(jarFile).use { jf ->
+            val entries = jf.entries()
+            var found = false
+            while (entries.hasMoreElements()) {
+                val entry = entries.nextElement()
+                if (entry.name.startsWith("natives/android/") && entry.name.endsWith(".so")) {
+                    found = true
+                    break
+                }
+            }
+
+            if (!found) {
+                throw GradleException("No Android native libraries found in ${jarFile.name} under natives/android/*")
+            } else {
+                logger.lifecycle("[build] Verified Android native libraries present in ${jarFile.name}")
+            }
+        }
+    }
+}
+
+tasks.named("check") {
+    dependsOn("verifyOnnxNativesInJar")
 }

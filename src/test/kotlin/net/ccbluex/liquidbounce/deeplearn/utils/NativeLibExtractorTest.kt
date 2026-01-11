@@ -187,4 +187,40 @@ class NativeLibExtractorTest {
         assertTrue(diagnostics.contains("contextClassLoader"))
     }
 
+    @Test
+    fun `test extract from embedded onnxruntime with linux-aarch64 layout`() {
+        val prevOsArch = System.getProperty("os.arch")
+        System.setProperty("os.arch", "aarch64")
+        try {
+            // Create embedded onnxruntime JAR with ai/onnxruntime/native/linux-aarch64/libonnxruntime.so
+            val embeddedJar = File.createTempFile("onnx-embed", ".jar")
+            java.util.jar.JarOutputStream(java.io.FileOutputStream(embeddedJar)).use { jos ->
+                jos.putNextEntry(java.util.jar.JarEntry("ai/onnxruntime/native/linux-aarch64/libonnxruntime.so"))
+                jos.write(byteArrayOf(9, 8, 7))
+                jos.closeEntry()
+            }
+
+            // Create main JAR containing the embedded JAR under META-INF/jars/
+            val mainJar = File.createTempFile("main-jar", ".jar")
+            java.util.jar.JarOutputStream(java.io.FileOutputStream(mainJar)).use { jos ->
+                val entry = java.util.jar.JarEntry("META-INF/jars/onnxruntime-embedded.jar")
+                jos.putNextEntry(entry)
+                embeddedJar.inputStream().use { it.copyTo(jos) }
+                jos.closeEntry()
+            }
+
+            // Call extractFromAar directly with the jar:file URL pointing at the embedded JAR
+            val method = NativeLibExtractor::class.java.getDeclaredMethod("extractFromAar", String::class.java, String::class.java, String::class.java, File::class.java)
+            method.isAccessible = true
+            val aarPath = "jar:file:${mainJar.absolutePath}!/META-INF/jars/onnxruntime-embedded.jar"
+            val extracted = method.invoke(NativeLibExtractor, aarPath, "libonnxruntime.so", "arm64-v8a", tempDir) as java.io.File?
+
+            assertNotNull(extracted)
+            assertTrue(extracted!!.exists())
+            assertEquals(3, extracted.length())
+        } finally {
+            if (prevOsArch == null) System.clearProperty("os.arch") else System.setProperty("os.arch", prevOsArch)
+        }
+    }
+
 }

@@ -127,4 +127,32 @@ class NativeLibExtractorTest {
         assertFalse(success)
     }
 
+    @Test
+    fun `test extraction from jar via classloader resources`() {
+        val prevOsArch = System.getProperty("os.arch")
+        System.setProperty("os.arch", "aarch64")
+        try {
+            val tempJar = File.createTempFile("onnxruntime-test", ".jar")
+            java.util.jar.JarOutputStream(java.io.FileOutputStream(tempJar)).use { jos ->
+                jos.putNextEntry(java.util.jar.JarEntry("jni/arm64-v8a/libonnxruntime.so"))
+                jos.write(byteArrayOf(1, 2, 3))
+                jos.closeEntry()
+            }
+
+            val urlClassLoader = java.net.URLClassLoader(arrayOf(tempJar.toURI().toURL()), Thread.currentThread().contextClassLoader)
+            val prevCL = Thread.currentThread().contextClassLoader
+            Thread.currentThread().contextClassLoader = urlClassLoader
+            try {
+                val extracted = NativeLibExtractor.extractNativeLibraries(tempDir, listOf("libonnxruntime.so"))
+                assertTrue(extracted.isNotEmpty())
+                assertTrue(extracted[0].exists())
+                assertEquals(3, extracted[0].length())
+            } finally {
+                Thread.currentThread().contextClassLoader = prevCL
+            }
+        } finally {
+            if (prevOsArch == null) System.clearProperty("os.arch") else System.setProperty("os.arch", prevOsArch)
+        }
+    }
+
 }

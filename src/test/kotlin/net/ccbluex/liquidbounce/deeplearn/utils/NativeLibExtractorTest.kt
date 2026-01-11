@@ -155,4 +155,36 @@ class NativeLibExtractorTest {
         }
     }
 
+    @Test
+    fun `test find aar via java class path`() {
+        val prevOsArch = System.getProperty("os.arch")
+        val prevClassPath = System.getProperty("java.class.path")
+        System.setProperty("os.arch", "aarch64")
+        try {
+            val tempJar = File.createTempFile("onnx-cp-test", ".jar")
+            java.util.jar.JarOutputStream(java.io.FileOutputStream(tempJar)).use { jos ->
+                jos.putNextEntry(java.util.jar.JarEntry("jni/arm64-v8a/libonnxruntime.so"))
+                jos.write(byteArrayOf(5, 6, 7))
+                jos.closeEntry()
+            }
+
+            System.setProperty("java.class.path", tempJar.absolutePath)
+
+            val extracted = NativeLibExtractor.extractNativeLibraries(tempDir, listOf("libonnxruntime.so"))
+            assertTrue(extracted.isNotEmpty())
+            assertTrue(extracted[0].exists())
+            assertEquals(3, extracted[0].length())
+        } finally {
+            if (prevClassPath == null) System.clearProperty("java.class.path") else System.setProperty("java.class.path", prevClassPath)
+            if (prevOsArch == null) System.clearProperty("os.arch") else System.setProperty("os.arch", prevOsArch)
+        }
+    }
+
+    @Test
+    fun `test diagnostics include classloader info`() {
+        val diagnostics = NativeLibExtractor.collectDiagnostics(tempDir)
+        assertTrue(diagnostics.contains("ClassLoader diagnostics"))
+        assertTrue(diagnostics.contains("contextClassLoader"))
+    }
+
 }

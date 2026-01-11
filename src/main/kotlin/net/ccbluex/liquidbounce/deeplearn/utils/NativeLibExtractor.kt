@@ -69,17 +69,18 @@ object NativeLibExtractor {
             try {
                 // First, try to find the library already packaged in our resources tree
                 val resourcePath = "/natives/android/$abi/$libName"
-                NativeLibExtractor::class.java.getResourceAsStream(resourcePath)?.let { inputStream ->
+                val resourceStream = NativeLibExtractor::class.java.getResourceAsStream(resourcePath)
+                if (resourceStream != null) {
                     logger.info("[NativeExtractor] Found $libName bundled as resource at $resourcePath, extracting to filesystem...")
                     targetFolder.mkdirs()
                     val targetFile = File(targetFolder, libName)
-                    inputStream.use { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
+                    resourceStream.use { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
                     targetFile.setExecutable(true)
                     targetFile.setReadable(true)
                     logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
                     extractedFiles.add(targetFile)
                     // proceed to next library
-                    return@for
+                    continue
                 }
 
                 // Try to find the AAR file containing the native library

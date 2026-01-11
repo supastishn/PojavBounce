@@ -67,6 +67,21 @@ object NativeLibExtractor {
         for (libName in libraryNames) {
             logger.info("[NativeExtractor] Processing library: $libName")
             try {
+                // First, try to find the library already packaged in our resources tree
+                val resourcePath = "/natives/android/$abi/$libName"
+                NativeLibExtractor::class.java.getResourceAsStream(resourcePath)?.let { inputStream ->
+                    logger.info("[NativeExtractor] Found $libName bundled as resource at $resourcePath, extracting to filesystem...")
+                    targetFolder.mkdirs()
+                    val targetFile = File(targetFolder, libName)
+                    inputStream.use { input -> targetFile.outputStream().use { output -> input.copyTo(output) } }
+                    targetFile.setExecutable(true)
+                    targetFile.setReadable(true)
+                    logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+                    extractedFiles.add(targetFile)
+                    // proceed to next library
+                    return@for
+                }
+
                 // Try to find the AAR file containing the native library
                 val aarPath = findAarWithNativeLibrary(libName, abi)
                 logger.info("[NativeExtractor] AAR search result for $libName: $aarPath")
@@ -127,6 +142,53 @@ object NativeLibExtractor {
                 }
             }
 
+            // Approach 2: Search classloader resources for the native library
+            val resourceName = "jni/$abi/$libName"
+            val classLoader = Thread.currentThread().contextClassLoader ?: NativeLibExtractor::class.java.classLoader
+            logger.info("[NativeExtractor] Searching classloader resources for $resourceName using $classLoader")
+            try {
+                val resources = classLoader.getResources(resourceName)
+                while (resources.hasMoreElements()) {
+                    val url = resources.nextElement()
+                    logger.info("[NativeExtractor] Found resource for $resourceName at $url")
+                    val urlStr = url.toString()
+                    if (urlStr.startsWith("jar:file:")) {
+                        logger.info("[NativeExtractor] Resource points to jar URL: $urlStr")
+                        return urlStr
+                    } else if (url.protocol == "file") {
+                        try {
+                            val file = java.io.File(url.toURI())
+                            var current: java.io.File? = file.parentFile
+                            while (current != null) {
+                                current.listFiles()?.forEach { candidate ->
+                                    if (candidate.isFile && (candidate.name.endsWith(".jar") || candidate.name.endsWith(".aar") || candidate.name.contains("onnxruntime"))) {
+                                        logger.info("[NativeExtractor] Checking candidate jar: ${candidate.absolutePath}")
+                                        try {
+                                            val jarFile = java.util.jar.JarFile(candidate)
+                                            val entry = jarFile.getEntry(resourceName)
+                                            jarFile.close()
+                                            if (entry != null) {
+                                                logger.info("[NativeExtractor] Found $libName in: ${candidate.absolutePath}")
+                                                return candidate.absolutePath
+                                            }
+                                        } catch (e: Exception) {
+                                            logger.warn("[NativeExtractor] Error checking candidate jar ${candidate.absolutePath}: ${e.message}")
+                                        }
+                                    }
+                                }
+                                current = current.parentFile
+                            }
+                        } catch (e: Exception) {
+                            logger.warn("[NativeExtractor] Error while processing file resource $url: ${e.message}")
+                        }
+                    } else {
+                        logger.info("[NativeExtractor] Resource URL has unsupported protocol: ${url.protocol}")
+                    }
+                }
+            } catch (e: Exception) {
+                logger.warn("[NativeExtractor] Error searching resources for $resourceName: ${e.message}")
+            }
+
             // Approach 3: Check for embedded JARs in current JAR
             val currentJarUrl = NativeLibExtractor::class.java.protectionDomain?.codeSource?.location
             if (currentJarUrl != null && currentJarUrl.protocol == "file") {
@@ -184,12 +246,9 @@ object NativeLibExtractor {
                 return targetFile
             }
 
-            // Handle embedded JAR case (META-INF/jars/onnxruntime-*.jar)
-            if (aarPath.startsWith("jar:file:") && aarPath.contains("META-INF/jars/")) {
-                logger.info("[NativeExtractor] Handling embedded JAR: $aarPath")
-                // For embedded JARs, we need to use a different approach
-                // The path looks like: jar:file:/path/to/main.jar!/META-INF/jars/onnxruntime.jar
-
+            // Handle jar:file: URLs (either embedded JARs or direct native entry inside a JAR)
+            if (aarPath.startsWith("jar:file:")) {
+                logger.info("[NativeExtractor] Handling jar-file URL: $aarPath")
                 val mainJarPath = aarPath.substringAfter("jar:file:").substringBefore("!")
                 val embeddedPath = aarPath.substringAfter("!").substring(1) // Remove leading /
 
@@ -197,48 +256,76 @@ object NativeLibExtractor {
                 logger.info("[NativeExtractor] Embedded path: $embeddedPath")
 
                 val mainJarFile = java.util.jar.JarFile(mainJarPath)
-                val embeddedEntry = mainJarFile.getEntry(embeddedPath)
+                try {
+                    // If this points to an embedded JAR (e.g., META-INF/jars/onnxruntime-*.jar), extract the embedded JAR first
+                    if (embeddedPath.contains("META-INF/jars/") && embeddedPath.endsWith(".jar")) {
+                        val embeddedEntry = mainJarFile.getEntry(embeddedPath)
 
-                if (embeddedEntry != null) {
-                    // Extract the embedded JAR to a temp location first
-                    val tempJarFile = File.createTempFile("onnxruntime", ".jar")
-                    mainJarFile.getInputStream(embeddedEntry).use { input ->
-                        tempJarFile.outputStream().use { output ->
-                            input.copyTo(output)
-                        }
-                    }
-                    mainJarFile.close()
-
-                    // Now extract the native library from the embedded JAR
-                    val tempJar = java.util.jar.JarFile(tempJarFile)
-                    val nativeEntry = tempJar.getEntry("jni/$abi/$libName")
-
-                    if (nativeEntry != null) {
-                        logger.info("[NativeExtractor] Extracting $libName from embedded JAR...")
-                        tempJar.getInputStream(nativeEntry).use { input ->
-                            targetFile.outputStream().use { output ->
-                                input.copyTo(output)
+                        if (embeddedEntry != null) {
+                            // Extract the embedded JAR to a temp location first
+                            val tempJarFile = File.createTempFile("onnxruntime", ".jar")
+                            mainJarFile.getInputStream(embeddedEntry).use { input ->
+                                tempJarFile.outputStream().use { output ->
+                                    input.copyTo(output)
+                                }
                             }
+
+                            // Now extract the native library from the embedded JAR
+                            val tempJar = java.util.jar.JarFile(tempJarFile)
+                            val nativeEntry = tempJar.getEntry("jni/$abi/$libName")
+
+                            if (nativeEntry != null) {
+                                logger.info("[NativeExtractor] Extracting $libName from embedded JAR...")
+                                tempJar.getInputStream(nativeEntry).use { input ->
+                                    targetFile.outputStream().use { output ->
+                                        input.copyTo(output)
+                                    }
+                                }
+                                tempJar.close()
+                                tempJarFile.delete()
+
+                                // Set permissions
+                                targetFile.setExecutable(true)
+                                targetFile.setReadable(true)
+
+                                logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+                                return targetFile
+                            } else {
+                                logger.warn("[NativeExtractor] Native library not found in embedded JAR at jni/$abi/$libName")
+                                tempJar.close()
+                                tempJarFile.delete()
+                                return null
+                            }
+                        } else {
+                            logger.warn("[NativeExtractor] Embedded JAR not found at $embeddedPath")
+                            return null
                         }
-                        tempJar.close()
-                        tempJarFile.delete()
-
-                        // Set permissions
-                        targetFile.setExecutable(true)
-                        targetFile.setReadable(true)
-
-                        logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
-                        return targetFile
                     } else {
-                        logger.warn("[NativeExtractor] Native library not found in embedded JAR at jni/$abi/$libName")
-                        tempJar.close()
-                        tempJarFile.delete()
-                        return null
+                        // The embeddedPath likely points directly to the native file inside the main JAR
+                        val nativeEntry = mainJarFile.getEntry(embeddedPath)
+                        if (nativeEntry != null) {
+                            logger.info("[NativeExtractor] Extracting $libName from main JAR entry $embeddedPath...")
+                            mainJarFile.getInputStream(nativeEntry).use { input ->
+                                targetFile.outputStream().use { output ->
+                                    input.copyTo(output)
+                                }
+                            }
+
+                            // Set permissions
+                            targetFile.setExecutable(true)
+                            targetFile.setReadable(true)
+
+                            logger.info("[NativeExtractor] Extracted ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+                            return targetFile
+                        } else {
+                            logger.warn("[NativeExtractor] Native library not found in main JAR at $embeddedPath")
+                            return null
+                        }
                     }
-                } else {
-                    logger.warn("[NativeExtractor] Embedded JAR not found at $embeddedPath")
-                    mainJarFile.close()
-                    return null
+                } catch (e: Exception) {
+                    logger.warn("[NativeExtractor] Error handling jar-file URL $aarPath: ${e.message}")
+                } finally {
+                    try { mainJarFile.close() } catch (ignored: Exception) {}
                 }
             }
 

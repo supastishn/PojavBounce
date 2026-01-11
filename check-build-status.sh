@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Load environment variables from .env file
+source .env
+
 # Script to check the latest GitHub Actions workflow status and jobs
 # Repository: supastishn/PojavBounce
 

@@ -163,8 +163,6 @@ dependencies {
 
     // ONNX Runtime (mobile) - used on Android for inference
     includeDependency(libs.onnxruntime.mobile)
-    // Also include the Android AAR explicitly so we can extract JNI libs at build time
-    includeDependency("com.microsoft.onnxruntime:onnxruntime-android:${libs.versions.onnxruntime.get()}@aar")
 
     // HTTP library
     includeDependency(libs.bundles.okhttp)
@@ -206,9 +204,15 @@ tasks.register<Copy>("extractOnnxRuntimeNatives") {
 
     val destDir = layout.buildDirectory.dir("onnx-natives")
 
-    // Resolve AAR/JAR files from includeDependency configuration and extract their contents
+    // Resolve the Android AAR directly (Loom include does not reliably handle .aar artifacts)
+    val onnxAndroidAar = configurations.detachedConfiguration(
+        dependencies.create("com.microsoft.onnxruntime:onnxruntime-android:${libs.versions.onnxruntime.get()}@aar")
+    ).apply {
+        isTransitive = false
+    }
+
     from({
-        includeDependency.files.map { file -> zipTree(file) }
+        onnxAndroidAar.files.map { file -> zipTree(file) }
     })
 
     // Only extract JNI native libraries

@@ -13,3 +13,4 @@
 /.kotlin/
 .DS_Store
 *.log
+.env

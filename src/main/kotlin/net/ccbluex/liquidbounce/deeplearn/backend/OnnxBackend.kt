@@ -41,12 +41,21 @@ object OnnxBackend : BackendManager {
 
         try {
             // Extract and load native libraries from resources to the engines cache folder
-            val extractedAndLoaded = NativeLibExtractor.extractAndLoad(cacheFolder, listOf("libonnxruntime.so"))
+            // Extract both the runtime and the JNI loader so ONNX's Android path can use them directly
+            val extractedAndLoaded = NativeLibExtractor.extractAndLoad(
+                cacheFolder,
+                listOf("libonnxruntime.so", "libonnxruntime4j_jni.so")
+            )
 
             if (!extractedAndLoaded) {
                 logger.error("[OnnxBackend] Failed to extract or load native ONNX Runtime libraries")
                 return false
             }
+
+            // Tell the ONNX Java loader to prefer native libraries from our cache folder so it doesn't
+            // try to extract a linux/glibc variant that won't load on Android devices.
+            System.setProperty("onnxruntime.native.path", cacheFolder.absolutePath)
+            logger.info("[OnnxBackend] Set onnxruntime.native.path=${cacheFolder.absolutePath}")
 
             // Try to get environment. This will verify that the native libraries are loadable.
             try {

@@ -106,6 +106,20 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
+      - name: Fallback: params -> ONNX (heuristic)
+        if: always()
+        env:
+          PYTHONUNBUFFERED: 1
+        run: |
+          python -m pip install --upgrade pip
+          pip install onnx
+          mkdir -p src/main/resources/resources/liquidbounce/models
+          for dump in build/exports/export-debug/*.params.dump; do
+            name=$(basename "$dump" .params.dump)
+            out=src/main/resources/resources/liquidbounce/models/${name}.onnx
+            echo "Attempting params->ONNX for $dump -> $out"
+            python ./scripts/params_to_onnx.py "$dump" 2 "$out" || true
+          done
       - name: Upload export debug dumps
         if: always()
         uses: actions/upload-artifact@v4

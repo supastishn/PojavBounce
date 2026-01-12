@@ -42,7 +42,7 @@ object ExportDjlToSavedModel {
 
                 println("[Export] Loading model $name from resource $resourcePath")
 
-                val model = Model.newInstance(name).apply { block = createMlpBlock(2) }
+                val model = Model.newInstance(name)
                 model.load(stream)
 
                 val outDir = outRoot.resolve(name)

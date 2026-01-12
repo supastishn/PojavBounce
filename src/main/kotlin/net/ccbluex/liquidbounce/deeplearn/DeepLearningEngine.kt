@@ -46,10 +46,18 @@ object DeepLearningEngine {
      * On desktop, use the standard config folder.
      */
     private val deepLearningFolder = if (isAndroid) {
-        // Try to use app-private directory on Android
-        val appDataDir = System.getProperty("user.home")
-            ?: System.getProperty("java.io.tmpdir")
-            ?: "/data/local/tmp"
+        // Prefer app-private tmpdir; in launchers like Pojav/FCL, user.home often points to external storage.
+        val tmpDir = System.getProperty("java.io.tmpdir")
+        val userHome = System.getProperty("user.home")
+
+        val appDataDir = when {
+            tmpDir != null && !tmpDir.startsWith("/storage/") && !tmpDir.startsWith("/sdcard") -> tmpDir
+            userHome != null && !userHome.startsWith("/storage/") && !userHome.startsWith("/sdcard") -> userHome
+            tmpDir != null -> tmpDir
+            userHome != null -> userHome
+            else -> "/data/local/tmp"
+        }
+
         File(appDataDir, "LiquidBounce/deeplearning").apply { mkdirs() }
     } else {
         rootFolder.resolve("deeplearning").apply { mkdirs() }

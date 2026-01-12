@@ -508,8 +508,8 @@ tasks.register<JavaExec>("exportDjlSavedModels") {
     description = "Export DJL resource models to TensorFlow SavedModel directories"
     // Ensure classes are compiled before running the JavaExec task
     dependsOn("classes")
-    classpath = files(sourceSets["main"].runtimeClasspath, configurations.getByName("includeDependency"))
-    mainClass.set("net.ccbluex.liquidbounce.deeplearn.tools.ExportDjlToSavedModelKt")
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("net.ccbluex.liquidbounce.deeplearn.tools.ExportDjlToSavedModel")
 }
 
 tasks.named("check") {

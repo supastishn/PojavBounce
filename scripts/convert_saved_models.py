@@ -71,7 +71,12 @@ if __name__ == '__main__':
         saved = saved_root / name
         if not saved.exists():
             print('Saved model not found:', saved)
-            ok = False
+            # Skip missing directory; do not fail the whole conversion for missing directories
+            continue
+        # Ensure a SavedModel file exists inside the directory before converting
+        if not ((saved / 'saved_model.pb').exists() or (saved / 'saved_model.pbtxt').exists()):
+            print('SavedModel file not found inside directory, skipping:', saved)
+            # Skip directories without a SavedModel file
             continue
         out_file = out_dir / (name.lower() + '.onnx')
         if not convert(saved, out_file):

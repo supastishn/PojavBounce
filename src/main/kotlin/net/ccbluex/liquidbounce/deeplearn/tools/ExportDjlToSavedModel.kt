@@ -6,7 +6,6 @@ import ai.djl.nn.Blocks
 import ai.djl.nn.SequentialBlock
 import ai.djl.nn.core.Linear
 import ai.djl.nn.norm.BatchNorm
-import net.ccbluex.liquidbounce.deeplearn.ModelHolster
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -24,8 +23,9 @@ object ExportDjlToSavedModel {
         val outRoot: Path = Paths.get("build/exports/savedmodels")
         Files.createDirectories(outRoot)
 
-        // Use base models from ModelHolster and any additional names passed as CLI args
-        val modelNames = if (args.isNotEmpty()) args.toList() else ModelHolster.baseModels.toList()
+        // Use base models (avoid referencing ModelHolster to prevent Minecraft bootstrap during static init)
+        val baseModels = listOf("21KC11KP", "19KC8KP")
+        val modelNames = if (args.isNotEmpty()) args.toList() else baseModels
 
         println("Exporting DJL models to TensorFlow SavedModel format into: $outRoot")
 

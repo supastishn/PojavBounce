@@ -34,7 +34,10 @@ while getopts ":r:w:b:i:t:s:h" opt; do
 done
 shift $((OPTIND-1))
 
-RUN_ID="$1"
+RUN_ID=""
+if [ $# -ge 1 ]; then
+  RUN_ID="$1"
+fi
 
 if [ -z "$OWNER_REPO" ]; then
   # Try to infer from git remote

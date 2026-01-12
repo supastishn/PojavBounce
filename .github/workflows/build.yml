@@ -106,6 +106,12 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
+      - name: Upload export debug dumps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-debug-${{ github.run_id }}
+          path: build/exports/export-debug
       - name: Build
         env:
           CI: true

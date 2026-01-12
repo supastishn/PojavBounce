@@ -57,39 +57,56 @@ object ExportDjlToSavedModel {
                 Files.write(dumpFile, resourceBytes)
                 println("[Export] Wrote debug params to: $dumpFile (size=${resourceBytes.size})")
 
-                // Try loading using a ByteArrayInputStream first. If that fails, try writing to a temp file and
-                // loading via path (some engines expect a file path).
+                // Try loading using a ByteArrayInputStream first. Some DJL params need the model Block to be
+                // set before loading (they only contain parameter arrays). Try setting a default MLP block
+                // (Minarai model architecture) and load into it first. If that fails, fall back to stream-only
+                // load and then to a path-based load with a TensorFlow engine preference.
                 var model = Model.newInstance(name)
                 var loaded = false
 
+                // Try with an explicit MLP block (this matches the runtime MinaraiModel createMlpBlock(2))
                 try {
+                    model.block = createMlpBlock(2)
                     model.load(java.io.ByteArrayInputStream(resourceBytes))
                     loaded = true
                 } catch (t: Throwable) {
-                    System.err.println("[Export] model.load failed (stream): ${t.message}. Trying path-based load and TensorFlow fallback...")
+                    System.err.println("[Export] model.load failed with explicit block (stream): ${t.message}. Will try stream without block and path-based methods...")
                     t.printStackTrace()
                     try {
                         model.close()
                     } catch (_: Exception) { }
 
-                    // Try a path-based load after setting TensorFlow as preferred engine (some resources are TF-specific)
-                    System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
-                    System.setProperty("TF_FLAVOR", "cpu")
+                    // Try without setting an explicit block (some formats are self-describing)
                     model = Model.newInstance(name)
-
-                    val tmpFile = debugDir.resolve("${name}.params.tmp")
-                    Files.write(tmpFile, resourceBytes)
                     try {
-                        model.load(tmpFile)
+                        model.load(java.io.ByteArrayInputStream(resourceBytes))
                         loaded = true
                     } catch (t2: Throwable) {
-                        System.err.println("[Export] model.load failed (path): ${t2.message}")
+                        System.err.println("[Export] model.load failed (stream): ${t2.message}. Trying path-based load and TensorFlow fallback...")
                         t2.printStackTrace()
+                        try {
+                            model.close()
+                        } catch (_: Exception) { }
+
+                        // Try a path-based load after setting TensorFlow as preferred engine (some resources are TF-specific)
+                        System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
+                        System.setProperty("TF_FLAVOR", "cpu")
+                        model = Model.newInstance(name)
+
+                        val tmpFile = debugDir.resolve("${name}.params.tmp")
+                        Files.write(tmpFile, resourceBytes)
+                        try {
+                            model.load(tmpFile)
+                            loaded = true
+                        } catch (t3: Throwable) {
+                            System.err.println("[Export] model.load failed (path): ${t3.message}")
+                            t3.printStackTrace()
+                        }
                     }
                 }
 
                 if (!loaded) {
-                    System.err.println("[Export] Skipping model $name: unable to load resource as a DJL model (tried stream and path)")
+                    System.err.println("[Export] Skipping model $name: unable to load resource as a DJL model (tried explicit block, stream and path)")
                     continue
                 }
 

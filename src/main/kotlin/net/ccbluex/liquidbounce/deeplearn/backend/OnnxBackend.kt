@@ -50,8 +50,24 @@ object OnnxBackend : BackendManager {
 
             // Try to get environment. This will verify that the native libraries are loadable.
             try {
-                // Use OrtEnvironment lazily where needed in OnnxModel; just check we can obtain it here.
-                ai.onnxruntime.OrtEnvironment.getEnvironment()
+                // Use OrtEnvironment lazily where needed in OnnxModel; check we can obtain it here.
+                try {
+                    ai.onnxruntime.OrtEnvironment.getEnvironment()
+                } catch (e: IllegalStateException) {
+                    // Some ONNX Java bindings reject os.name='android'. If that happens, retry with os.name='Linux'.
+                    if (e.message?.contains("Unsupported os:android") == true) {
+                        logger.warn("[OnnxBackend] ONNX Runtime rejected os.name='android'; retrying initialization with os.name='Linux'")
+                        val prevOs = System.getProperty("os.name")
+                        try {
+                            System.setProperty("os.name", "Linux")
+                            ai.onnxruntime.OrtEnvironment.getEnvironment()
+                        } finally {
+                            if (prevOs != null) System.setProperty("os.name", prevOs) else System.clearProperty("os.name")
+                        }
+                    } else {
+                        throw e
+                    }
+                }
             } catch (e: Throwable) {
                 logger.error("[OnnxBackend] OrtEnvironment initialization failed", e)
                 logger.error("[OnnxBackend] Diagnostics: ${NativeLibExtractor.collectDiagnostics(cacheFolder)}")

@@ -86,10 +86,8 @@ object DeepLearningEngine {
             // Android-specific configuration
             logger.info("[DeepLearning] Android environment detected, using Android-optimized settings")
 
-            // Override OS name to request Android natives
-            System.setProperty("os.name", "android")
-
-            // Set the default engine to PyTorch with Android flavor
+            // Do NOT globally override os.name to 'android' — it breaks some native Java bindings (e.g., ONNX Runtime).
+            // Instead, request Android-specific engines using DJL flavor properties.
             System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
             System.setProperty("PYTORCH_FLAVOR", "cpu-android")
 

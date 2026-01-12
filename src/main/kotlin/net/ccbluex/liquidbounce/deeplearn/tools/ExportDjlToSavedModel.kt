@@ -11,14 +11,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
-/**
- * Small utility to export DJL-packaged models (resources/*.params) into TensorFlow SavedModel directories.
- *
- * Usage from project root:
- * ./gradlew exportDjlSavedModels
- *
- * Output is written to build/exports/savedmodels/<MODEL_NAME>.
- */
+// Small utility to export DJL-packaged models (resources/*.params) into TensorFlow SavedModel directories.
+//
+// Usage from project root:
+// ./gradlew exportDjlSavedModels
+//
+// Output is written to build/exports/savedmodels/<MODEL_NAME>.
 object ExportDjlToSavedModel {
 
     @JvmStatic

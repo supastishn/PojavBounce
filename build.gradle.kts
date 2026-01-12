@@ -506,6 +506,8 @@ tasks.register("verifyOnnxNativesInJar") {
 tasks.register<JavaExec>("exportDjlSavedModels") {
     group = "deeplearn"
     description = "Export DJL resource models to TensorFlow SavedModel directories"
+    // Ensure classes are compiled before running the JavaExec task
+    dependsOn("classes")
     classpath = sourceSets["main"].runtimeClasspath
     mainClass.set("net.ccbluex.liquidbounce.deeplearn.tools.ExportDjlToSavedModelKt")
 }

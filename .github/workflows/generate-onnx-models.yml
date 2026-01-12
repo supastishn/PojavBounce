@@ -1,0 +1,76 @@
+name: Generate ONNX models
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - nextgen
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Export DJL SavedModels
+        run: ./gradlew exportDjlSavedModels -q --no-daemon
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install converter dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tf2onnx onnx onnxruntime tensorflow
+
+      - name: Convert SavedModels -> ONNX
+        run: |
+          ./scripts/convert_saved_models.py --saved build/exports/savedmodels
+
+      - name: Show generated ONNX files
+        run: |
+          ls -la src/main/resources/resources/liquidbounce/models || true
+
+      - name: Commit generated ONNX files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/main/resources/resources/liquidbounce/models/*.onnx || true
+          if git diff --cached --quiet; then
+            echo "No ONNX changes to commit"
+            exit 0
+          fi
+          git commit -m "chore(deeplearn): generate ONNX models from DJL .params [skip ci]"
+
+      - name: Create Pull Request with generated ONNX files
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: nextgen
+          branch: automated/onnx-generated-${{ github.run_id }}
+          title: "chore(deeplearn): add generated ONNX models"
+          body: |
+            This automated PR adds ONNX model files generated from the DJL .params resources.
+            The workflow converts DJL .params -> TensorFlow SavedModel -> ONNX and validates the produced ONNX files.
+
+          labels: autogen

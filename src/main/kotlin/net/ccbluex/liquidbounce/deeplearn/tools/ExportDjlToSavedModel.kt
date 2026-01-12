@@ -42,26 +42,55 @@ object ExportDjlToSavedModel {
 
                 println("[Export] Loading model $name from resource $resourcePath")
 
-                // Try loading the model stream with the default engine. If that fails with an EngineException
-                // (e.g. engine tried to parse a different model format), attempt a TensorFlow-engine fallback.
+                // Read the resource bytes once so we can both dump them for debugging and try multiple
+                // loading strategies (stream-based and path-based).
+                val resourceBytes = ExportDjlToSavedModel::class.java.getResourceAsStream(resourcePath)?.readAllBytes()
+                if (resourceBytes == null) {
+                    println("[Export] Resource not found for model $name at $resourcePath; skipping")
+                    continue
+                }
+
+                // Write a debug dump so the CI logs / artifacts can be inspected if load fails
+                val debugDir = outRoot.resolve("../export-debug").normalize()
+                Files.createDirectories(debugDir)
+                val dumpFile = debugDir.resolve("${name}.params.dump")
+                Files.write(dumpFile, resourceBytes)
+                println("[Export] Wrote debug params to: $dumpFile (size=${resourceBytes.size})")
+
+                // Try loading using a ByteArrayInputStream first. If that fails, try writing to a temp file and
+                // loading via path (some engines expect a file path).
                 var model = Model.newInstance(name)
+                var loaded = false
+
                 try {
-                    model.load(stream)
+                    model.load(java.io.ByteArrayInputStream(resourceBytes))
+                    loaded = true
                 } catch (t: Throwable) {
-                    System.err.println("[Export] model.load failed: ${t.message}. Trying TensorFlow fallback...")
+                    System.err.println("[Export] model.load failed (stream): ${t.message}. Trying path-based load and TensorFlow fallback...")
+                    t.printStackTrace()
                     try {
                         model.close()
                     } catch (_: Exception) { }
-                    // Prefer TensorFlow for DJL if the resource looks like TF (fallback)
+
+                    // Try a path-based load after setting TensorFlow as preferred engine (some resources are TF-specific)
                     System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
                     System.setProperty("TF_FLAVOR", "cpu")
                     model = Model.newInstance(name)
-                    ExportDjlToSavedModel::class.java.getResourceAsStream(resourcePath)?.use { s2 ->
-                        model.load(s2)
-                    } ?: run {
-                        println("[Export] Resource not found for model $name on fallback attempt; skipping")
-                        continue
+
+                    val tmpFile = debugDir.resolve("${name}.params.tmp")
+                    Files.write(tmpFile, resourceBytes)
+                    try {
+                        model.load(tmpFile)
+                        loaded = true
+                    } catch (t2: Throwable) {
+                        System.err.println("[Export] model.load failed (path): ${t2.message}")
+                        t2.printStackTrace()
                     }
+                }
+
+                if (!loaded) {
+                    System.err.println("[Export] Skipping model $name: unable to load resource as a DJL model (tried stream and path)")
+                    continue
                 }
 
                 val outDir = outRoot.resolve(name)

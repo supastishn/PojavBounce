@@ -57,6 +57,29 @@ object ExportDjlToSavedModel {
                 Files.write(dumpFile, resourceBytes)
                 println("[Export] Wrote debug params to: $dumpFile (size=${resourceBytes.size})")
 
+                // Additional debug: attempt to decode resourceBytes as a DJL NDList using NDList.decode.
+                try {
+                    val manager = ai.djl.ndarray.NDManager.newBaseManager()
+                    java.io.ByteArrayInputStream(resourceBytes).use { ins ->
+                        val loaded = try {
+                            ai.djl.ndarray.NDList.decode(manager, ins)
+                        } catch (e: Throwable) {
+                            null
+                        }
+                        if (loaded != null) {
+                            println("[Export] NDList decoded from params: size=${'$'}{loaded.size}")
+                            for ((i, nd) in loaded.withIndex()) {
+                                println("[Export] ND[${'$'}i] shape=${'$'}{nd.shape} dtype=${'$'}{nd.dataType}")
+                            }
+                        } else {
+                            println("[Export] NDList.decode: resource did not decode as NDList (or unsupported format)")
+                        }
+                    }
+                } catch (e: Throwable) {
+                    System.err.println("[Export] NDList decode attempt threw: ${'$'}{e.message}")
+                    e.printStackTrace()
+                }
+
 
                 // Try loading using a ByteArrayInputStream first. Some DJL params need the model Block to be
                 // set before loading (they only contain parameter arrays). Try setting a default MLP block

@@ -161,6 +161,7 @@ dependencies {
     // Machine Learning
     includeDependency(libs.djl.api)
     includeDependency(libs.djl.pytorch)
+    includeDependency(libs.djl.mxnet)
 
     // ONNX Runtime (mobile) - used on Android for inference
     includeDependency(libs.onnxruntime.mobile)

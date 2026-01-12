@@ -106,7 +106,7 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
-      - name: Fallback: params -> ONNX (heuristic)
+      - name: "Fallback: params -> ONNX (heuristic)"
         if: always()
         env:
           PYTHONUNBUFFERED: 1

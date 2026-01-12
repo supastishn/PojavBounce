@@ -42,8 +42,27 @@ object ExportDjlToSavedModel {
 
                 println("[Export] Loading model $name from resource $resourcePath")
 
-                val model = Model.newInstance(name)
-                model.load(stream)
+                // Try loading the model stream with the default engine. If that fails with an EngineException
+                // (e.g. engine tried to parse a different model format), attempt a TensorFlow-engine fallback.
+                var model = Model.newInstance(name)
+                try {
+                    model.load(stream)
+                } catch (t: Throwable) {
+                    System.err.println("[Export] model.load failed: ${t.message}. Trying TensorFlow fallback...")
+                    try {
+                        model.close()
+                    } catch (_: Exception) { }
+                    // Prefer TensorFlow for DJL if the resource looks like TF (fallback)
+                    System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
+                    System.setProperty("TF_FLAVOR", "cpu")
+                    model = Model.newInstance(name)
+                    ExportDjlToSavedModel::class.java.getResourceAsStream(resourcePath)?.use { s2 ->
+                        model.load(s2)
+                    } ?: run {
+                        println("[Export] Resource not found for model $name on fallback attempt; skipping")
+                        continue
+                    }
+                }
 
                 val outDir = outRoot.resolve(name)
                 Files.createDirectories(outDir)

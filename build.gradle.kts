@@ -24,6 +24,7 @@ import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 import org.gradle.api.file.RelativePath
 import java.util.jar.JarFile
+import org.gradle.api.tasks.JavaExec
 
 plugins {
     alias(libs.plugins.fabric.loom)
@@ -500,6 +501,13 @@ tasks.register("verifyOnnxNativesInJar") {
             }
         }
     }
+}
+
+tasks.register<JavaExec>("exportDjlSavedModels") {
+    group = "deeplearn"
+    description = "Export DJL resource models to TensorFlow SavedModel directories"
+    classpath = sourceSets["main"].runtimeClasspath
+    mainClass.set("net.ccbluex.liquidbounce.deeplearn.tools.ExportDjlToSavedModelKt")
 }
 
 tasks.named("check") {

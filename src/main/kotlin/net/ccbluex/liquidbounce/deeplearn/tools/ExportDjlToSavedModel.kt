@@ -88,9 +88,9 @@ object ExportDjlToSavedModel {
                             model.close()
                         } catch (_: Exception) { }
 
-                        // Try a path-based load after setting TensorFlow as preferred engine (some resources are TF-specific)
-                        System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
-                        System.setProperty("TF_FLAVOR", "cpu")
+                        // Try a path-based load after trying MXNet first (some resources are MXNet-style params),
+                        // then TensorFlow as a fallback.
+                        System.setProperty("DJL_DEFAULT_ENGINE", "MXNet")
                         model = Model.newInstance(name)
 
                         val tmpFile = debugDir.resolve("${name}.params.tmp")
@@ -99,8 +99,21 @@ object ExportDjlToSavedModel {
                             model.load(tmpFile)
                             loaded = true
                         } catch (t3: Throwable) {
-                            System.err.println("[Export] model.load failed (path): ${t3.message}")
+                            System.err.println("[Export] model.load failed (path with MXNet): ${t3.message}")
                             t3.printStackTrace()
+                            try {
+                                model.close()
+                            } catch (_: Exception) { }
+                            System.setProperty("DJL_DEFAULT_ENGINE", "TensorFlow")
+                            System.setProperty("TF_FLAVOR", "cpu")
+                            model = Model.newInstance(name)
+                            try {
+                                model.load(tmpFile)
+                                loaded = true
+                            } catch (t4: Throwable) {
+                                System.err.println("[Export] model.load failed (path with TensorFlow): ${t4.message}")
+                                t4.printStackTrace()
+                            }
                         }
                     }
                 }

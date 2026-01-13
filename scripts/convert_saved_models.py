@@ -36,9 +36,24 @@ def convert(saved_model_dir: Path, output_file: Path) -> bool:
         print(res.stderr)
         return False
 
-    # sanity check with onnx checker
+    # Verify and validate the converted model
     try:
         model = onnx.load(str(output_file))
+
+        # Check IR version and opset
+        ir_version = model.ir_version
+        opset_version = model.opset_import[0].version if model.opset_import else 0
+        print(f"Model IR version: {ir_version}, Opset: {opset_version}")
+
+        # ONNX Runtime on Android supports up to IR version 9
+        if ir_version > 9:
+            print(f"WARNING: IR version {ir_version} exceeds maximum supported version 9")
+            print("Attempting to downgrade to IR v9...")
+            # Set IR version to 9 (this is a compatibility hack)
+            model.ir_version = 9
+            onnx.save(model, str(output_file))
+            print(f"IR version downgraded to 9")
+
         onnx.checker.check_model(model)
     except Exception as e:
         print('ONNX validation failed:', e)

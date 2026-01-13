@@ -243,7 +243,7 @@ jobs:
   onnx:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/nextgen'
+    if: false  # DISABLED: Conversion happens in build job, no need for duplicate
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

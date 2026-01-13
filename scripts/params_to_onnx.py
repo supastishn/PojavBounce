@@ -246,7 +246,12 @@ def build_onnx(layers, outputs, out_path):
     nodes.append(helper.make_node('Identity', [prev], ['output'], name='Output'))
 
     graph = helper.make_graph(nodes, 'mlp_export', inputs, outputs_info, initializer=initializers)
-    model = helper.make_model(graph)
+    # Create model with IR version 9 and opset 9 for maximum compatibility with ONNX Runtime on Android
+    model = helper.make_model(graph, ir_version=9, opset_imports=[helper.make_opsetid("", 9)])
+    
+    # Verify IR version and opset
+    print(f'Model IR version: {model.ir_version}, Opset: {model.opset_import[0].version}')
+    
     onnx.save(model, out_path)
     print('Written ONNX', out_path)
 

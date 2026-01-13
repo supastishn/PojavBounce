@@ -27,7 +27,7 @@ def convert(saved_model_dir: Path, output_file: Path) -> bool:
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    cmd = [sys.executable, '-m', 'tf2onnx.convert', '--saved-model', str(saved_model_dir), '--output', str(output_file), '--opset', '13']
+    cmd = [sys.executable, '-m', 'tf2onnx.convert', '--saved-model', str(saved_model_dir), '--output', str(output_file), '--opset', '9']
     print('Running:', ' '.join(cmd))
     res = subprocess.run(cmd, capture_output=True, text=True)
     if res.returncode != 0:

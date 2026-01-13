@@ -17,3 +17,4 @@
 
 ai/
 generated-opset9-models/
+*.onnx

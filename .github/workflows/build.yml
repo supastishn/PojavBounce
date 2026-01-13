@@ -222,9 +222,17 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels
-      - name: Show generated ONNX files
+      - name: "Show generated ONNX files"
         run: |
           ls -la src/main/resources/resources/liquidbounce/models || true
+
+      - name: "Upload ONNX models (artifact)"
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-models-${{ github.run_id }}
+          path: src/main/resources/resources/liquidbounce/models/*.onnx
+          retention-days: 30
       - name: Commit generated ONNX files
         run: |
           git config user.name "github-actions[bot]"

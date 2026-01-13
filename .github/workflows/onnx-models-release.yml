@@ -1,0 +1,107 @@
+name: ONNX Models Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run weekly to provide latest ONNX models
+    - cron: '0 0 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  package-onnx-models:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'graalvm'
+          java-version: '21'
+          cache: 'gradle'
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Export DJL SavedModels
+        run: |
+          set -x
+          ./gradlew exportDjlSavedModels --no-daemon --stacktrace
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install converter dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install tf2onnx onnx onnxruntime tensorflow
+
+      - name: Convert SavedModels -> ONNX (opset 9)
+        run: |
+          mkdir -p src/main/resources/resources/liquidbounce/models
+          ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
+
+      - name: "Fallback: params -> ONNX (heuristic)"
+        if: always()
+        env:
+          PYTHONUNBUFFERED: 1
+        run: |
+          python -m pip install --upgrade pip
+          pip install onnx
+          mkdir -p src/main/resources/resources/liquidbounce/models
+          for dump in build/exports/export-debug/*.params.dump; do
+            if [ -f "$dump" ]; then
+              name=$(basename "$dump" .params.dump)
+              out=src/main/resources/resources/liquidbounce/models/${name}.onnx
+              echo "Attempting params->ONNX for $dump -> $out"
+              python ./scripts/params_to_onnx.py "$dump" 2 "$out" || true
+            fi
+          done
+
+      - name: Create ONNX models zip
+        run: |
+          cd src/main/resources/resources/liquidbounce
+          if [ -f models/*.onnx ]; then
+            zip -r ../../../../../onnx-models.zip models/
+            ls -lh ../../../../../onnx-models.zip
+          else
+            echo "No ONNX models generated"
+            exit 1
+          fi
+
+      - name: Upload ONNX models zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-models-opset9-${{ github.run_id }}
+          path: onnx-models.zip
+          retention-days: 90
+
+      - name: Generate checksum
+        run: |
+          sha256sum onnx-models.zip > onnx-models.zip.sha256
+
+      - name: Display model info
+        run: |
+          echo "=== ONNX Models Generated ==="
+          python3 << 'EOF'
+          import onnx
+          from pathlib import Path
+
+          models_dir = Path("src/main/resources/resources/liquidbounce/models")
+          for model_file in sorted(models_dir.glob("*.onnx")):
+              try:
+                  model = onnx.load(str(model_file))
+                  ir_version = model.ir_version
+                  opset = model.opset_import[0].version if model.opset_import else "unknown"
+                  size_mb = model_file.stat().st_size / (1024 * 1024)
+                  print(f"{model_file.name}: IR v{ir_version}, opset {opset}, {size_mb:.2f} MB")
+              except Exception as e:
+                  print(f"{model_file.name}: Error - {e}")
+          EOF

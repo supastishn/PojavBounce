@@ -15,40 +15,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'graalvm'
-          java-version: '21'
-          cache: 'gradle'
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
-
-      - name: Export DJL SavedModels
-        run: |
-          set -x
-          ./gradlew exportDjlSavedModels --no-daemon --stacktrace
-
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
 
-      - name: Install converter dependencies
+      - name: Install ONNX dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install tf2onnx onnx onnxruntime tensorflow
+          pip install onnx numpy
 
-      - name: Convert SavedModels -> ONNX (opset 9)
+      - name: Convert params -> ONNX (IR v9, opset 9)
         run: |
+          set -x
           mkdir -p src/main/resources/resources/liquidbounce/models
-          ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
+          chmod +x scripts/params_to_onnx.py
+          
+          # Convert both model params to ONNX with IR v9 and opset 9
+          ./scripts/params_to_onnx.py src/main/resources/resources/liquidbounce/models/21kc11kp.params 2 src/main/resources/resources/liquidbounce/models/21kc11kp.onnx
+          ./scripts/params_to_onnx.py src/main/resources/resources/liquidbounce/models/19kc8kp.params 2 src/main/resources/resources/liquidbounce/models/19kc8kp.onnx
 
-      - name: Verify ONNX IR version is v9 (safety check)
+      - name: Verify ONNX IR version is v9
         run: |
-          # Note: convert_saved_models.py now handles IR version downgrading automatically,
-          # but this step remains as a verification/safety check
+          # Verify that params_to_onnx.py generated IR v9 models correctly
           python3 << 'EOF'
           import onnx
           from pathlib import Path
@@ -63,20 +52,17 @@ jobs:
           for model_file in onnx_files:
               try:
                   model = onnx.load(str(model_file))
-                  original_ir = model.ir_version
-                  if original_ir > 9:
-                      print(f"Downgrading {model_file.name}: IR v{original_ir} -> v9")
-                      model.ir_version = 9
-                      onnx.save(model, str(model_file))
-                      # Verify
-                      model = onnx.load(str(model_file))
-                      print(f"  ✓ Verified: IR v{model.ir_version}")
+                  ir_version = model.ir_version
+                  if ir_version != 9:
+                      print(f"ERROR: {model_file.name} has IR v{ir_version}, expected v9")
+                      exit(1)
                   else:
-                      print(f"Skipping {model_file.name}: already IR v{original_ir}")
+                      print(f"✓ {model_file.name}: IR v{ir_version}")
               except Exception as e:
                   print(f"Error processing {model_file.name}: {e}")
+                  exit(1)
 
-          print("IR downgrading complete!")
+          print("All models verified as IR v9!")
           EOF
 
       - name: Display model info
@@ -101,8 +87,8 @@ jobs:
       - name: Create ONNX models zip
         run: |
           cd src/main/resources/resources/liquidbounce
-          if [ -f models/*.onnx ]; then
-            zip -r ../../../../../onnx-models.zip models/
+          if ls models/*.onnx 1> /dev/null 2>&1; then
+            zip -r ../../../../../onnx-models.zip models/*.onnx
             ls -lh ../../../../../onnx-models.zip
           else
             echo "No ONNX models generated"
@@ -114,6 +100,13 @@ jobs:
         with:
           name: onnx-models-v9-${{ github.run_id }}
           path: onnx-models.zip
+          retention-days: 90
+
+      - name: Upload individual ONNX files as artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-files-v9-${{ github.run_id }}
+          path: src/main/resources/resources/liquidbounce/models/*.onnx
           retention-days: 90
 
       - name: Generate checksum

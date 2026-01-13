@@ -153,7 +153,7 @@ jobs:
             python ./scripts/params_to_onnx.py "$dump" 2 "$out" || true
           done
       - name: "Downgrade ONNX IR version to v9 (fallback models)"
-        if: always()
+        if: false  # Disabled since fallback is disabled
         run: |
           python3 << 'EOF'
           import onnx
@@ -273,6 +273,23 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels
+      - name: Downgrade ONNX IR version to v9
+        run: |
+          python3 << 'EOF'
+          import onnx
+          from pathlib import Path
+
+          models_dir = Path("src/main/resources/resources/liquidbounce/models")
+          for model_file in models_dir.glob("*.onnx"):
+              try:
+                  model = onnx.load(str(model_file))
+                  if model.ir_version > 9:
+                      print(f"Downgrading {model_file.name}: IR v{model.ir_version} -> v9")
+                      model.ir_version = 9
+                      onnx.save(model, str(model_file))
+              except Exception as e:
+                  print(f"Skipping {model_file.name}: {e}")
+          EOF
       - name: "Show generated ONNX files"
         run: |
           ls -la src/main/resources/resources/liquidbounce/models || true

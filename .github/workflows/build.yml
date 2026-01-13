@@ -184,7 +184,7 @@ jobs:
         run: |
           set -x
           mkdir -p build/logs
-          ./gradlew build -x test -x detekt 2>&1 | tee build/logs/gradle.log
+          ./gradlew clean build -x test -x detekt 2>&1 | tee build/logs/gradle.log
 
       - name: Upload Gradle build log
         if: always()

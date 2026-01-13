@@ -107,6 +107,27 @@ jobs:
       - name: Convert SavedModels -> ONNX
         run: |
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
+      - name: Downgrade ONNX IR version to v9
+        run: |
+          python3 << 'EOF'
+          import onnx
+          from pathlib import Path
+
+          models_dir = Path("src/main/resources/resources/liquidbounce/models")
+          for model_file in models_dir.glob("*.onnx"):
+              try:
+                  model = onnx.load(str(model_file))
+                  original_ir = model.ir_version
+                  if original_ir > 9:
+                      print(f"Downgrading {model_file.name}: IR v{original_ir} -> v9")
+                      model.ir_version = 9
+                      onnx.save(model, str(model_file))
+                      # Verify
+                      model = onnx.load(str(model_file))
+                      print(f"  Verified: IR v{model.ir_version}")
+              except Exception as e:
+                  print(f"Error processing {model_file.name}: {e}")
+          EOF
       - name: "Fallback: params -> ONNX (heuristic)"
         if: always()
         env:

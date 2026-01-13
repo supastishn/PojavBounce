@@ -1,16 +1,13 @@
-name: ONNX Models Release
+name: Convert ONNX Models
 
 on:
   workflow_dispatch:
-  schedule:
-    # Run weekly to provide latest ONNX models
-    - cron: '0 0 * * 0'
 
 permissions:
   contents: read
 
 jobs:
-  package-onnx-models:
+  convert-onnx-models:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -55,7 +52,13 @@ jobs:
           from pathlib import Path
 
           models_dir = Path("src/main/resources/resources/liquidbounce/models")
-          for model_file in models_dir.glob("*.onnx"):
+          print(f"Checking models in: {models_dir}")
+          print(f"Directory exists: {models_dir.exists()}")
+
+          onnx_files = list(models_dir.glob("*.onnx"))
+          print(f"Found {len(onnx_files)} ONNX files")
+
+          for model_file in onnx_files:
               try:
                   model = onnx.load(str(model_file))
                   original_ir = model.ir_version
@@ -65,49 +68,14 @@ jobs:
                       onnx.save(model, str(model_file))
                       # Verify
                       model = onnx.load(str(model_file))
-                      print(f"  Verified: IR v{model.ir_version}")
+                      print(f"  ✓ Verified: IR v{model.ir_version}")
+                  else:
+                      print(f"Skipping {model_file.name}: already IR v{original_ir}")
               except Exception as e:
                   print(f"Error processing {model_file.name}: {e}")
+
+          print("IR downgrading complete!")
           EOF
-
-      - name: "Fallback: params -> ONNX (heuristic)"
-        if: always()
-        env:
-          PYTHONUNBUFFERED: 1
-        run: |
-          python -m pip install --upgrade pip
-          pip install onnx
-          mkdir -p src/main/resources/resources/liquidbounce/models
-          for dump in build/exports/export-debug/*.params.dump; do
-            if [ -f "$dump" ]; then
-              name=$(basename "$dump" .params.dump)
-              out=src/main/resources/resources/liquidbounce/models/${name}.onnx
-              echo "Attempting params->ONNX for $dump -> $out"
-              python ./scripts/params_to_onnx.py "$dump" 2 "$out" || true
-            fi
-          done
-
-      - name: Create ONNX models zip
-        run: |
-          cd src/main/resources/resources/liquidbounce
-          if [ -f models/*.onnx ]; then
-            zip -r ../../../../../onnx-models.zip models/
-            ls -lh ../../../../../onnx-models.zip
-          else
-            echo "No ONNX models generated"
-            exit 1
-          fi
-
-      - name: Upload ONNX models zip as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: onnx-models-opset9-${{ github.run_id }}
-          path: onnx-models.zip
-          retention-days: 90
-
-      - name: Generate checksum
-        run: |
-          sha256sum onnx-models.zip > onnx-models.zip.sha256
 
       - name: Display model info
         run: |
@@ -127,3 +95,33 @@ jobs:
               except Exception as e:
                   print(f"{model_file.name}: Error - {e}")
           EOF
+
+      - name: Create ONNX models zip
+        run: |
+          cd src/main/resources/resources/liquidbounce
+          if [ -f models/*.onnx ]; then
+            zip -r ../../../../../onnx-models.zip models/
+            ls -lh ../../../../../onnx-models.zip
+          else
+            echo "No ONNX models generated"
+            exit 1
+          fi
+
+      - name: Upload ONNX models zip as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-models-v9-${{ github.run_id }}
+          path: onnx-models.zip
+          retention-days: 90
+
+      - name: Generate checksum
+        run: |
+          sha256sum onnx-models.zip > onnx-models.zip.sha256
+          cat onnx-models.zip.sha256
+
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: onnx-models-v9-${{ github.run_id }}-checksum
+          path: onnx-models.zip.sha256
+          retention-days: 90

@@ -7,9 +7,10 @@ Usage:
   ./scripts/convert_saved_models.py [--saved root] [--out resources_dir] [model1 model2 ...]
 
 Requirements:
-  pip install tf2onnx tensorflow onnx==1.14.0 onnxruntime
+  pip install tf2onnx tensorflow onnx onnxruntime
 
-Note: ONNX 1.14.0 generates IR v9, newer versions generate IR v13+
+Note: This script automatically ensures all models use IR v9 for Android compatibility,
+regardless of the ONNX version installed.
 """
 
 import argparse

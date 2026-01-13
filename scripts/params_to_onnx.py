@@ -9,6 +9,7 @@ Steps:
 - Group tokens into layer chunks and pick the smaller float array for each token (heuristic)
 - Infer input dimension from first weight array length and known output units (128)
 - Build ONNX graph programmatically using initializers and ops (MatMul, Add, BatchNormalization, Relu)
+- Generate ONNX model with IR version 9 and opset 9 for Android compatibility
 
 This is a best-effort converter for inclusion in CI; if it fails we will iterate.
 """

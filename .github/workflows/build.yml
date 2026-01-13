@@ -114,7 +114,13 @@ jobs:
           from pathlib import Path
 
           models_dir = Path("src/main/resources/resources/liquidbounce/models")
-          for model_file in models_dir.glob("*.onnx"):
+          print(f"Checking models in: {models_dir}")
+          print(f"Directory exists: {models_dir.exists()}")
+
+          onnx_files = list(models_dir.glob("*.onnx"))
+          print(f"Found {len(onnx_files)} ONNX files")
+
+          for model_file in onnx_files:
               try:
                   model = onnx.load(str(model_file))
                   original_ir = model.ir_version
@@ -124,9 +130,13 @@ jobs:
                       onnx.save(model, str(model_file))
                       # Verify
                       model = onnx.load(str(model_file))
-                      print(f"  Verified: IR v{model.ir_version}")
+                      print(f"  ✓ Verified: IR v{model.ir_version}")
+                  else:
+                      print(f"Skipping {model_file.name}: already IR v{original_ir}")
               except Exception as e:
                   print(f"Error processing {model_file.name}: {e}")
+
+          print("IR downgrading complete!")
           EOF
       - name: "Fallback: params -> ONNX (heuristic)"
         if: always()

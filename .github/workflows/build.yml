@@ -138,8 +138,8 @@ jobs:
 
           print("IR downgrading complete!")
           EOF
-      - name: "Fallback: params -> ONNX (heuristic)"
-        if: always()
+      - name: "Fallback: params -> ONNX (heuristic) - DISABLED"
+        if: false  # Disabled - use only tf2onnx conversion
         env:
           PYTHONUNBUFFERED: 1
         run: |

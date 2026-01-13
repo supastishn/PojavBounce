@@ -86,10 +86,12 @@ jobs:
 
       - name: Create ONNX models zip
         run: |
-          cd src/main/resources/resources/liquidbounce
-          if ls models/*.onnx 1> /dev/null 2>&1; then
+          # Create a clean zip with models/ directory structure
+          if ls src/main/resources/resources/liquidbounce/models/*.onnx 1> /dev/null 2>&1; then
+            cd src/main/resources/resources/liquidbounce
             zip -r ../../../../../onnx-models.zip models/*.onnx
-            ls -lh ../../../../../onnx-models.zip
+            cd ../../../../../
+            ls -lh onnx-models.zip
           else
             echo "No ONNX models generated"
             exit 1

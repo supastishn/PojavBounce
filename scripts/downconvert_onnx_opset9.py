@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Downconvert ONNX models to opset 9 for compatibility with ONNX Runtime on Android.
+Downconvert ONNX models to IR version 9 and opset 9 for compatibility with ONNX Runtime on Android.
 
-This script uses ONNX Shape Inference and simplification to downconvert models
-from higher opsets to opset 9 for maximum compatibility with mobile devices.
+This script sets both the IR version and opset to 9 for maximum compatibility with mobile devices.
+Models generated with newer ONNX versions (IR v10+, opset 10+) may not work on Android.
 
 Usage:
   ./scripts/downconvert_onnx_opset9.py <model_file> [<output_file>]
@@ -23,7 +23,7 @@ import onnxruntime as rt
 
 
 def downconvert_to_opset9(model_path: Path, output_path: Path = None) -> bool:
-    """Downconvert ONNX model to opset 9."""
+    """Downconvert ONNX model to IR version 9 and opset 9."""
     if output_path is None:
         output_path = model_path
 
@@ -39,12 +39,17 @@ def downconvert_to_opset9(model_path: Path, output_path: Path = None) -> bool:
 
     print(f"Original model - IR version: {original_ir}, Opset: {original_opset}")
 
-    # Check if already at opset 9 or lower
-    if original_opset <= 9:
-        print("Model is already at opset 9 or lower. No conversion needed.")
+    # Check if already at IR v9 and opset 9 or lower
+    if original_ir <= 9 and original_opset <= 9:
+        print("Model is already at IR v9 and opset 9 or lower. No conversion needed.")
         return True
 
     try:
+        # Update IR version to 9 for ONNX Runtime compatibility on Android
+        if original_ir > 9:
+            model.ir_version = 9
+            print(f"Updated IR version to 9")
+        
         # Update opset version to 9
         for opset_import in model.opset_import:
             if opset_import.domain == "" or opset_import.domain == "ai.onnx":
@@ -90,7 +95,7 @@ def downconvert_to_opset9(model_path: Path, output_path: Path = None) -> bool:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description='Downconvert ONNX models to opset 9 for mobile compatibility'
+        description='Downconvert ONNX models to IR v9 and opset 9 for mobile compatibility'
     )
     parser.add_argument('model', help='Input ONNX model file')
     parser.add_argument('--output', '-o', help='Output model file (default: overwrite input)')

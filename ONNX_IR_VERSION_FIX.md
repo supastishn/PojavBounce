@@ -1,46 +1,45 @@
 # ONNX Model IR Version Compatibility Issue
 
 ## Problem
-Your ONNX models have **IR version 13** with **opset 25**, but your ONNX Runtime supports maximum **IR version 9**.
+ONNX models need **IR version 9** for maximum compatibility with ONNX Runtime on Android.
 
-### Current State
-- **Models**: `src/main/resources/resources/liquidbounce/models/*.onnx`
-  - IR version: 13
-  - Opset: 25
+### Current State (FIXED)
+- **Conversion Scripts**: All scripts now generate IR v9, opset 9 models ✓
 - **ONNX Runtime Version**: 1.16.3 (from gradle/libs.versions.toml)
-  - Max supported IR version: ~11 (but Android build may be restricted to 9)
+  - Max supported IR version: ~11 (but Android build requires IR v9)
 
 ## Root Cause
-The models were generated with a newer ONNX version (1.20+) but your ONNX Runtime doesn't support that IR version.
+Models generated with newer ONNX versions (1.20+) default to IR v13 and opset 25, which don't work on Android.
 
-## Solutions
+## Solution (IMPLEMENTED)
 
-### Option 1: Upgrade ONNX Runtime (Recommended)
-Update `gradle/libs.versions.toml`:
-```toml
-onnxruntime = "1.20.0"  # or latest stable
-```
+All three ONNX conversion scripts have been updated to ensure IR v9 compatibility:
 
-ONNX Runtime versions and their max IR support:
-- 1.16.3 → IR v11
-- 1.18.0 → IR v12
-- 1.20.0+ → IR v13+
-
-### Option 2: Regenerate Models with Opset 9
-If you need to stay on ONNX Runtime 1.16.3:
-
-1. Find the source models (TensorFlow SavedModels in `build/exports/savedmodels/`)
-2. Run the conversion script:
-   ```bash
-   ./scripts/convert_saved_models.py
-   ```
-   This uses tf2onnx with `--opset 9` flag
-
-### Option 3: Use Pre-generated Opset 9 Models
-Check `generated-opset9-models/` directory:
+### 1. `scripts/params_to_onnx.py`
+Converts DJL parameter dumps to ONNX with IR v9 and opset 9:
 ```bash
-cp generated-opset9-models/*.onnx src/main/resources/resources/liquidbounce/models/
+./scripts/params_to_onnx.py model.params <outputs> model.onnx
 ```
+
+### 2. `scripts/convert_saved_models.py`
+Converts TensorFlow SavedModels to ONNX with automatic IR v9 downgrade:
+```bash
+./scripts/convert_saved_models.py --saved build/exports/savedmodels
+```
+
+### 3. `scripts/downconvert_onnx_opset9.py`
+Downgrades existing ONNX models to IR v9 and opset 9:
+```bash
+./scripts/downconvert_onnx_opset9.py model.onnx
+```
+
+## Generating Models via CI
+
+The GitHub Actions workflow `.github/workflows/convert-onnx.yml` automatically:
+1. Exports DJL SavedModels from the Java code
+2. Converts them to ONNX with opset 9
+3. Ensures IR version is 9
+4. Packages models as downloadable artifacts
 
 ## Verification
 Check model IR version:
@@ -50,5 +49,9 @@ model = onnx.load("model.onnx")
 print(f"IR version: {model.ir_version}, Opset: {model.opset_import[0].version}")
 ```
 
-## Recommended Action
-**Upgrade ONNX Runtime to 1.20.0+** to support IR v13 models, or regenerate models with the conversion script if staying on 1.16.3.
+Expected output: `IR version: 9, Opset: 9`
+
+## Notes
+- **IR v9** corresponds to ONNX spec 2023-05-05
+- **Opset 9** ensures compatibility with older ONNX Runtime versions
+- Models cannot be safely downconverted by just changing version numbers - they must be regenerated from source

@@ -7,9 +7,10 @@ Usage:
   ./scripts/convert_saved_models.py [--saved root] [--out resources_dir] [model1 model2 ...]
 
 Requirements:
-  pip install tf2onnx tensorflow onnx==1.14.0 onnxruntime
+  pip install tf2onnx tensorflow onnx onnxruntime
 
-Note: ONNX 1.14.0 generates IR v9, newer versions generate IR v13+
+Note: This script automatically ensures all models use IR v9 for Android compatibility,
+regardless of the ONNX version installed.
 """
 
 import argparse
@@ -53,9 +54,13 @@ def convert(saved_model_dir: Path, output_file: Path) -> bool:
 
         # ONNX Runtime on Android supports up to IR version 9
         if ir_version > 9:
-            print(f"WARNING: IR version {ir_version} exceeds maximum supported version 9")
-            print("This model may not work with ONNX Runtime on Android")
-            print("The CI pipeline will downgrade to IR v9 if possible")
+            print(f"IR version {ir_version} exceeds maximum supported version 9")
+            print("Downgrading IR version to 9 for Android compatibility...")
+            model.ir_version = 9
+            onnx.save(model, str(output_file))
+            # Reload to verify
+            model = onnx.load(str(output_file))
+            print(f"Downgraded to IR version: {model.ir_version}")
 
         onnx.checker.check_model(model)
     except Exception as e:

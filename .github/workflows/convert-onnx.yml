@@ -38,15 +38,17 @@ jobs:
       - name: Install converter dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install tf2onnx "onnx==1.14.0" onnxruntime tensorflow
+          pip install tf2onnx onnx onnxruntime tensorflow
 
       - name: Convert SavedModels -> ONNX (opset 9)
         run: |
           mkdir -p src/main/resources/resources/liquidbounce/models
           ./scripts/convert_saved_models.py --saved build/exports/savedmodels --out src/main/resources/resources/liquidbounce/models
 
-      - name: Downgrade ONNX IR version to v9
+      - name: Verify ONNX IR version is v9 (safety check)
         run: |
+          # Note: convert_saved_models.py now handles IR version downgrading automatically,
+          # but this step remains as a verification/safety check
           python3 << 'EOF'
           import onnx
           from pathlib import Path

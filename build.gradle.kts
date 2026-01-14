@@ -156,12 +156,11 @@ dependencies {
     includeDependency(libs.polyglot.tools)
 
     // Machine Learning - DJL with Android support
-    // Using BOM for consistent versioning across all DJL modules
-    includeDependency("ai.djl:bom:0.36.0")
-    includeDependency("ai.djl:api")
-    includeDependency("ai.djl.android:core")
-    includeDependency("ai.djl.pytorch:pytorch-engine")
-    includeDependency("ai.djl.android:pytorch-native")
+    // Use centralized versions from gradle/libs.versions.toml
+    includeDependency(libs.djl.api)
+    includeDependency(libs.djl.pytorch)
+    includeDependency(libs.djl.android.core)
+    includeDependency(libs.djl.android.pytorch.native)
 
     // HTTP library
     includeDependency(libs.bundles.okhttp)

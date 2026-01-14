@@ -84,6 +84,10 @@ polyglot-js = { group = "org.graalvm.polyglot", name = "js-community", version.r
 
 djl-api = { group = "ai.djl", name = "api", version.ref = "djl" }
 djl-pytorch = { group = "ai.djl.pytorch", name = "pytorch-engine", version.ref = "djl" }
+# DJL Android modules
+# See DJL Android docs: https://github.com/deepjavalibrary/djl/tree/master/android
+djl-android-core = { group = "ai.djl.android", name = "core", version.ref = "djl" }
+djl-android-pytorch-native = { group = "ai.djl.android", name = "pytorch-native", version.ref = "djl" }
 #djl-mxnet = { group = "ai.djl.mxnet", name = "mxnet-engine", version.ref = "djl" }
 #djl-tensorflow = { group = "ai.djl.tensorflow", name = "tensorflow-engine", version.ref = "djl" }
 

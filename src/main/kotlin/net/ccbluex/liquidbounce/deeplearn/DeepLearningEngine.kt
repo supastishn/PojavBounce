@@ -67,30 +67,14 @@ object DeepLearningEngine {
     }
 
     init {
-        System.setProperty("DJL_CACHE_DIR", djlCacheFolder.absolutePath)
-        System.setProperty("ENGINE_CACHE_DIR", enginesCacheFolder.absolutePath)
+        // Skip DJL configuration entirely on Android since DJL doesn't support Android
+        if (!isAndroid) {
+            System.setProperty("DJL_CACHE_DIR", djlCacheFolder.absolutePath)
+            System.setProperty("ENGINE_CACHE_DIR", enginesCacheFolder.absolutePath)
 
-        // Disable tracking of DJL
-        System.setProperty("OPT_OUT_TRACKING", "true")
+            // Disable tracking of DJL
+            System.setProperty("OPT_OUT_TRACKING", "true")
 
-        if (isAndroid) {
-            // Android-specific configuration
-            logger.info("[DeepLearning] Android environment detected, using Android-optimized settings")
-
-            // Override OS name to request Android natives
-            System.setProperty("os.name", "android")
-
-            // Set the default engine to PyTorch with Android flavor
-            System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
-            System.setProperty("PYTORCH_FLAVOR", "cpu-android")
-
-            // Android-specific library path hints
-            val javaLibPath = System.getProperty("java.library.path", "")
-            System.setProperty(
-                "java.library.path",
-                "$javaLibPath:${enginesCacheFolder.absolutePath}"
-            )
-        } else {
             // Desktop configuration
             System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
             System.setProperty("PYTORCH_FLAVOR", "cpu")
@@ -120,8 +104,16 @@ object DeepLearningEngine {
         this.task = task
 
         logger.info("[DeepLearning] Initializing engine...")
+
+        // Skip DJL initialization entirely on Android - DJL does not support Android platform
+        // and attempting to load it causes AssertionError: Unsupported platform: android
         if (isAndroid) {
-            logger.info("[DeepLearning] Running on Android platform - attempting native initialization")
+            logger.info("[DeepLearning] Android platform detected (PojavLauncher/similar)")
+            logger.info("[DeepLearning] DJL does not support Android - skipping engine initialization")
+            logger.info("[DeepLearning] Deep learning features are disabled on this platform")
+            isInitialized = false
+            this.task = null
+            return
         }
 
         try {
@@ -138,24 +130,9 @@ object DeepLearningEngine {
             logger.error("[DeepLearning] Failed to initialize DJL engine", t)
             logger.error("[DeepLearning] Engine initialization failure details:\n${collectDiagnosticInfo()}")
 
-            if (isAndroid) {
-                // Graceful degradation on Android
-                logger.warn("[DeepLearning] Android native library support is currently experimental")
-                logger.warn("[DeepLearning] Possible causes:")
-                logger.warn("[DeepLearning]   - Namespace isolation (libs not accessible from external storage)")
-                logger.warn("[DeepLearning]   - GLIBC vs Bionic incompatibility")
-                logger.warn("[DeepLearning]   - Missing Android-specific PyTorch natives")
-                logger.warn("[DeepLearning] Deep learning features will be disabled on this platform")
-                logger.warn("[DeepLearning] Desktop platforms are fully supported")
-
-                isInitialized = false
-                this.task = null
-                return  // Don't throw - graceful degradation on Android
-            } else {
-                // Rethrow on desktop platforms - this is a critical error
-                this.task = null
-                throw t
-            }
+            // Rethrow on desktop platforms - this is a critical error
+            this.task = null
+            throw t
         }
 
         this.task = null

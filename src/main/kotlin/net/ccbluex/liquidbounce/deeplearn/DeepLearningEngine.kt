@@ -29,6 +29,9 @@ import net.ccbluex.liquidbounce.utils.client.logger
 import java.io.File
 import java.util.*
 
+internal const val ANDROID_PYTORCH_FLAVOR = "cpu"
+internal val ANDROID_OS_NAME_OVERRIDE: String? = null
+
 object DeepLearningEngine {
 
     var isInitialized = false
@@ -75,14 +78,12 @@ object DeepLearningEngine {
 
         if (isAndroid) {
             // Android-specific configuration
-            logger.info("[DeepLearning] Android environment detected, using Android-optimized settings")
-
-            // Override OS name to request Android natives
-            System.setProperty("os.name", "android")
+            logger.info("[DeepLearning] Android environment detected, using desktop DJL settings for PojavLauncher")
+            ANDROID_OS_NAME_OVERRIDE?.let { System.setProperty("os.name", it) }
 
             // Set the default engine to PyTorch with Android flavor
             System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
-            System.setProperty("PYTORCH_FLAVOR", "cpu-android")
+            System.setProperty("PYTORCH_FLAVOR", ANDROID_PYTORCH_FLAVOR)
 
             // Android-specific library path hints
             val javaLibPath = System.getProperty("java.library.path", "")

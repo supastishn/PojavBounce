@@ -18,6 +18,8 @@
  */
 package net.ccbluex.liquidbounce.deeplearn
 
+import net.ccbluex.liquidbounce.deeplearn.ANDROID_OS_NAME_OVERRIDE
+import net.ccbluex.liquidbounce.deeplearn.ANDROID_PYTORCH_FLAVOR
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test

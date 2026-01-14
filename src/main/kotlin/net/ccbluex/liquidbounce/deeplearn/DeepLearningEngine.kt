@@ -48,11 +48,7 @@ object DeepLearningEngine {
      * On desktop, use the standard config folder.
      */
     private val deepLearningFolder = if (isAndroid) {
-        // Try to use app-private directory on Android
-        val appDataDir = System.getProperty("user.home")
-            ?: System.getProperty("java.io.tmpdir")
-            ?: "/data/local/tmp"
-        File(appDataDir, "LiquidBounce/deeplearning").apply { mkdirs() }
+        createAndroidDeepLearningFolder().apply { mkdirs() }
     } else {
         rootFolder.resolve("deeplearning").apply { mkdirs() }
     }
@@ -237,6 +233,53 @@ object DeepLearningEngine {
                System.getProperty("java.vm.name")?.contains("Dalvik", ignoreCase = true) == true ||
                System.getProperty("java.runtime.name")?.contains("Android", ignoreCase = true) == true ||
                File("/system/build.prop").exists()
+    }
+
+    /**
+     * Choose an Android cache folder that is executable (external storage is usually mounted noexec).
+     * Prefers temp/cache directories under app-private storage to allow dlopen of native libraries.
+     */
+    private fun createAndroidDeepLearningFolder(): File {
+        val candidates = listOfNotNull(
+            System.getenv("LIQUIDBOUNCE_DL_DIR")?.let(::File),
+            System.getProperty("java.io.tmpdir")?.let(::File),
+            System.getenv("TMPDIR")?.let(::File),
+            File("/data/data/com.termux/files/usr/tmp").takeIf { it.exists() },
+            System.getProperty("user.home")?.let(::File),
+            File("/data/local/tmp")
+        )
+
+        val usableBase = candidates.firstOrNull { dir ->
+            try {
+                dir.mkdirs()
+                dir.isDirectory && dir.canWrite() && !isNoExecPath(dir)
+            } catch (_: Exception) {
+                false
+            }
+        } ?: File("/data/local/tmp")
+
+        logger.info("[DeepLearning] Using Android cache directory: ${usableBase.absolutePath}")
+        return File(usableBase, "LiquidBounce/deeplearning")
+    }
+
+    /**
+     * Checks whether a directory resides on a noexec mount by inspecting /proc/self/mounts.
+     */
+    private fun isNoExecPath(path: File): Boolean {
+        return try {
+            val absPath = path.absolutePath
+            File("/proc/self/mounts").useLines { lines ->
+                lines.mapNotNull { line ->
+                    val parts = line.split(" ")
+                    if (parts.size < 4) return@mapNotNull null
+                    val mountPoint = parts[1]
+                    val options = parts[3]
+                    if (absPath.startsWith(mountPoint)) mountPoint to options else null
+                }.maxByOrNull { it.first.length }?.second?.contains("noexec") == true
+            }
+        } catch (_: Exception) {
+            false
+        }
     }
 
 }

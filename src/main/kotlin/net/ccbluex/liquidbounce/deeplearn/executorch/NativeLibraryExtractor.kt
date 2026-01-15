@@ -74,6 +74,30 @@ object NativeLibraryExtractor {
     }
 
     /**
+     * Extracts multiple native libraries with dependencies.
+     * This ensures that dependent libraries are extracted before their dependents.
+     *
+     * @param libraryNames List of library names in dependency order (dependencies first)
+     * @param targetDir The directory where libraries will be extracted
+     * @param osArch The OS architecture
+     * @return List of successfully extracted library files
+     */
+    fun extractLibraries(libraryNames: List<String>, targetDir: File, osArch: String): List<File> {
+        val extractedLibs = mutableListOf<File>()
+        
+        for (libraryName in libraryNames) {
+            val extracted = extractLibrary(libraryName, targetDir, osArch)
+            if (extracted != null) {
+                extractedLibs.add(extracted)
+            } else {
+                logger.warn("[NativeLibraryExtractor] Failed to extract $libraryName, continuing with remaining libraries")
+            }
+        }
+        
+        return extractedLibs
+    }
+
+    /**
      * Extracts an input stream to a file in the target directory.
      */
     private fun extractToFile(inputStream: InputStream, targetDir: File, fileName: String): File {

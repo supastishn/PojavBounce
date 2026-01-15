@@ -22,9 +22,15 @@ The mod will automatically detect your architecture and report it in the logs. C
 - **x86_64** - Android emulators and x86 devices
 - **x86** - Older emulators
 
-### Step 2: Obtain the Native Library
+### Step 2: Obtain the Native Libraries
 
-You need to obtain `libexecutorch.so` built for your architecture. Options:
+**Note:** As of the latest version, `libfbjni.so` is now included in the mod resources for common architectures (aarch64, arm, x86_64, x86). You only need to obtain `libexecutorch.so`.
+
+You need to obtain `libexecutorch.so` built for your architecture. The `libfbjni.so` dependency will be automatically extracted from the mod resources.
+
+#### Required Libraries:
+1. **libfbjni.so** - Facebook JNI library (dependency of ExecuTorch) - **Now included in mod**
+2. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
 
 #### Option A: Build from Source (Recommended)
 1. Follow the [ExecuTorch build instructions](https://pytorch.org/executorch/stable/build-run-coreml.html)
@@ -47,12 +53,20 @@ Some community members may provide pre-built binaries. Ensure they are:
 - Compatible with ExecuTorch version 1.0.1 or later
 - Trusted source (security risk!)
 
+**Note:** libexecutorch.so must be compatible with libfbjni.so version 0.5.1 (included in the mod).
+
 ### Step 3: Place the Library
+
+**Note:** With the latest version, `libfbjni.so` is automatically extracted from the mod. You only need to place `libexecutorch.so`.
 
 1. Copy `libexecutorch.so` to your device
 2. Place it in the ExecuTorch native folder:
-   - Path: `<cache>/LiquidBounce/executorch/native/libexecutorch.so`
-   - On PojavLauncher, this is typically: `/data/user/0/com.tungsten.fcl/cache/fclauncher/LiquidBounce/executorch/native/libexecutorch.so`
+   - Path: `<cache>/LiquidBounce/executorch/native/`
+   - On PojavLauncher, this is typically: `/data/user/0/com.tungsten.fcl/cache/fclauncher/LiquidBounce/executorch/native/`
+   - Required file:
+     - `libexecutorch.so` (main library)
+   - Optional (if automatic extraction fails):
+     - `libfbjni.so` (dependency, will be auto-extracted if not present)
 
 The exact path will be shown in the error logs when the mod attempts to load the library.
 
@@ -61,6 +75,8 @@ The exact path will be shown in the error logs when the mod attempts to load the
 Ensure the library file has proper permissions:
 ```bash
 chmod 755 /path/to/libexecutorch.so
+# Only needed if you manually placed libfbjni.so:
+chmod 755 /path/to/libfbjni.so
 ```
 
 ### Step 5: Restart
@@ -73,7 +89,12 @@ Check the logs for these messages:
 
 **Success:**
 ```
-[ExecuTorch] Found manually placed library at: /path/to/libexecutorch.so
+[ExecuTorch] Attempting to extract native libraries for architecture: aarch64
+[NativeLibraryExtractor] Found library at /native/android/aarch64/libfbjni.so
+[NativeLibraryExtractor] Extracted library to /path/to/native/libfbjni.so
+[ExecuTorch] Loading extracted library: /path/to/native/libfbjni.so
+[ExecuTorch] Successfully loaded libfbjni.so
+[ExecuTorch] Found manually placed ExecuTorch library at: /path/to/libexecutorch.so
 [ExecuTorch] Successfully loaded native ExecuTorch library from manual placement
 [ExecuTorch] ExecuTorch runtime initialized successfully
 ```
@@ -88,7 +109,11 @@ Check the logs for these messages:
 
 ### Library Not Found
 - **Symptom**: "No native library found" in logs
-- **Solution**: Verify the file path and filename (must be exactly `libexecutorch.so`)
+- **Solution**: Verify the file paths and filenames (must be exactly `libfbjni.so` and `libexecutorch.so`)
+
+### Missing Dependency
+- **Symptom**: "dlopen failed: library 'libfbjni.so' not found" in logs
+- **Solution**: This should no longer occur as libfbjni.so is now included in the mod and will be automatically extracted. If it still occurs, manually place libfbjni.so in the native folder.
 
 ### Wrong Architecture
 - **Symptom**: "Failed to load native library" or crash
@@ -96,14 +121,15 @@ Check the logs for these messages:
 
 ### Permission Denied
 - **Symptom**: "Permission denied" in logs
-- **Solution**: Run `chmod 755` on the library file
+- **Solution**: Run `chmod 755` on both library files
 
 ### Incompatible Library
 - **Symptom**: "undefined symbol" or similar errors
-- **Solution**: Ensure library is built with:
+- **Solution**: Ensure both libraries are built with:
   - Android NDK (not desktop GLIBC)
   - Compatible ExecuTorch version
   - Correct ABI (e.g., arm64-v8a for aarch64)
+  - Compatible builds (libfbjni.so and libexecutorch.so must be from compatible versions)
 
 ## Alternative: Disable ExecuTorch
 
@@ -124,9 +150,11 @@ These are not available in PojavLauncher's JVM environment, making it impossible
 ### Library Loading Order
 
 The mod attempts to load libraries in this order:
-1. **Manual placement**: Check for `libexecutorch.so` in native folder
+1. **Manual placement**: Check for `libfbjni.so` and `libexecutorch.so` in native folder
 2. **JAR extraction**: Try to extract from embedded resources
-3. **System library path**: Try `System.loadLibrary("executorch")`
+3. **System library path**: Try `System.loadLibrary("fbjni")` and `System.loadLibrary("executorch")`
+
+Dependencies are always loaded first (libfbjni.so before libexecutorch.so).
 
 For Android/PojavLauncher, only manual placement (#1) will work.
 

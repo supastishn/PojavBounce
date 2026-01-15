@@ -43,16 +43,17 @@ object ModelConverter {
      *
      * @return Python script content as a string
      */
+    @Suppress("LongMethod") // Python script template
     fun generateExportScript(): String = """
         #!/usr/bin/env python3
-        """
+        ${"\"\"\""}
         ExecuTorch model export script
 
         Converts PyTorch models to ExecuTorch .pte format for on-device inference.
 
         Usage:
             python export_model.py --model-path model.pth --output-path model.pte
-        """
+        ${"\"\"\""}
 
         import argparse
         import torch
@@ -61,14 +62,14 @@ object ModelConverter {
 
 
         def export_model_to_executorch(model_path: str, output_path: str, input_shape: tuple):
-            """
+            ${"\"\"\""}
             Exports a PyTorch model to ExecuTorch .pte format.
 
             Args:
                 model_path: Path to the PyTorch model (.pt or .pth file)
                 output_path: Path to save the ExecuTorch model (.pte file)
                 input_shape: Shape of the input tensor (e.g., (1, 784) for MNIST)
-            """
+            ${"\"\"\""}
             print(f"Loading model from {model_path}...")
 
             # Load the model
@@ -136,9 +137,10 @@ object ModelConverter {
      *
      * @return Python script content as a string
      */
+    @Suppress("LongMethod") // Python script template
     fun generateMinaraiExportScript(): String = """
         #!/usr/bin/env python3
-        """
+        ${"\"\"\""}
         ExecuTorch Minarai model export script
 
         Converts LiquidBounce Minarai DJL models to ExecuTorch .pte format.
@@ -149,7 +151,7 @@ object ModelConverter {
 
         Usage:
             python export_minarai.py --model-name 21KC11KP --output-dir ./models
-        """
+        ${"\"\"\""}
 
         import argparse
         import torch
@@ -159,7 +161,7 @@ object ModelConverter {
 
 
         def load_minarai_model_from_params(params_path: str) -> torch.nn.Module:
-            """
+            ${"\"\"\""}
             Loads a Minarai model from DJL .params file.
 
             The Minarai model is a simple feedforward neural network:
@@ -173,7 +175,7 @@ object ModelConverter {
 
             Returns:
                 PyTorch model with loaded parameters
-            """
+            ${"\"\"\""}
             model = torch.nn.Sequential(
                 torch.nn.Linear(4, 128),
                 torch.nn.BatchNorm1d(128),
@@ -202,13 +204,13 @@ object ModelConverter {
 
 
         def export_minarai_to_executorch(model_name: str, output_dir: str):
-            """
+            ${"\"\"\""}
             Exports a Minarai model to ExecuTorch .pte format.
 
             Args:
                 model_name: Name of the model (e.g., "21KC11KP")
                 output_dir: Directory to save the .pte file
-            """
+            ${"\"\"\""}
             print(f"Exporting Minarai model: {model_name}")
 
             # Create/load model
@@ -313,6 +315,7 @@ object ModelConverter {
      * @param inputShape Input tensor shape (e.g., listOf(1, 784))
      * @return True if conversion succeeded, false otherwise
      */
+    @Suppress("SpreadOperator") // Required for ProcessBuilder varargs
     fun convertUsingPython(
         modelPath: Path,
         outputPath: Path,

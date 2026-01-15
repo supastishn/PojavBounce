@@ -24,13 +24,14 @@ The mod will automatically detect your architecture and report it in the logs. C
 
 ### Step 2: Obtain the Native Libraries
 
-**Note:** As of the latest version, `libfbjni.so` is now included in the mod resources for common architectures (aarch64, arm, x86_64, x86). You only need to obtain `libexecutorch.so`.
+**Note:** As of the latest version, both `libfbjni.so` (native library) and the fbjni Java classes are now included in the mod. The native library will be automatically extracted from the mod resources for common architectures (aarch64, arm, x86_64, x86). You only need to obtain `libexecutorch.so`.
 
-You need to obtain `libexecutorch.so` built for your architecture. The `libfbjni.so` dependency will be automatically extracted from the mod resources.
+You need to obtain `libexecutorch.so` built for your architecture. The `libfbjni.so` dependency and its Java classes will be automatically extracted/loaded from the mod.
 
 #### Required Libraries:
-1. **libfbjni.so** - Facebook JNI library (dependency of ExecuTorch) - **Now included in mod**
-2. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
+1. **fbjni Java classes** - Facebook JNI Java library (dependency of ExecuTorch) - **Now included in mod**
+2. **libfbjni.so** - Facebook JNI native library (dependency of ExecuTorch) - **Now included in mod**
+3. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
 
 #### Option A: Build from Source (Recommended)
 1. Follow the [ExecuTorch build instructions](https://pytorch.org/executorch/stable/build-run-coreml.html)
@@ -53,11 +54,11 @@ Some community members may provide pre-built binaries. Ensure they are:
 - Compatible with ExecuTorch version 1.0.1 or later
 - Trusted source (security risk!)
 
-**Note:** libexecutorch.so must be compatible with libfbjni.so version 0.5.1 (included in the mod).
+**Note:** libexecutorch.so must be compatible with libfbjni.so version 0.7.0 (included in the mod).
 
 ### Step 3: Place the Library
 
-**Note:** With the latest version, `libfbjni.so` is automatically extracted from the mod. You only need to place `libexecutorch.so`.
+**Note:** With the latest version, both the fbjni Java classes and `libfbjni.so` are automatically included in the mod. The native library will be extracted from the mod resources. You only need to place `libexecutorch.so`.
 
 1. Copy `libexecutorch.so` to your device
 2. Place it in the ExecuTorch native folder:
@@ -65,8 +66,8 @@ Some community members may provide pre-built binaries. Ensure they are:
    - On PojavLauncher, this is typically: `/data/user/0/com.tungsten.fcl/cache/fclauncher/LiquidBounce/executorch/native/`
    - Required file:
      - `libexecutorch.so` (main library)
-   - Optional (if automatic extraction fails):
-     - `libfbjni.so` (dependency, will be auto-extracted if not present)
+   - Optional (automatically extracted if not present):
+     - `libfbjni.so` (dependency, will be auto-extracted from mod resources)
 
 The exact path will be shown in the error logs when the mod attempts to load the library.
 
@@ -112,8 +113,8 @@ Check the logs for these messages:
 - **Solution**: Verify the file paths and filenames (must be exactly `libfbjni.so` and `libexecutorch.so`)
 
 ### Missing Dependency
-- **Symptom**: "dlopen failed: library 'libfbjni.so' not found" in logs
-- **Solution**: This should no longer occur as libfbjni.so is now included in the mod and will be automatically extracted. If it still occurs, manually place libfbjni.so in the native folder.
+- **Symptom**: "dlopen failed: library 'libfbjni.so' not found" or "com/facebook/jni/HybridData$Destructor" errors in logs
+- **Solution**: This should no longer occur as both the fbjni Java classes and libfbjni.so are now included in the mod. The Java classes are automatically loaded, and the native library will be automatically extracted. If it still occurs, check that the mod was built correctly with the fbjni dependency.
 
 ### Wrong Architecture
 - **Symptom**: "Failed to load native library" or crash

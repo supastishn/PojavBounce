@@ -169,7 +169,7 @@ object ExecuTorchEngine {
                                     osArch
                                 )
                                 
-                                if (extractedFbjni != null && extractedFbjni.exists()) {
+                                if (extractedFbjni != null) {
                                     logger.info(
                                         "[ExecuTorch] Extracted libfbjni.so from JAR, loading it"
                                     )

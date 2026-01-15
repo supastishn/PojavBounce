@@ -164,8 +164,9 @@ dependencies {
 
     // Machine Learning - ExecuTorch
     // Official PyTorch on-device inference runtime for Android/mobile
-    // Provides native .pte (ExecuTorch Program) model support
-    includeDependency(libs.executorch.android)
+    // Note: executorch-android is an AAR (Android Archive) and only used on Android
+    // Desktop JVM doesn't use this; it's included at runtime on Android via PojavLauncher
+    // includeDependency(libs.executorch.android)  // Uncomment when building Android APK
 
     // HTTP library
     includeDependency(libs.bundles.okhttp)

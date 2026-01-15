@@ -12,10 +12,10 @@ ExecuTorch is the official PyTorch runtime for edge devices, providing:
 
 ## Current Status
 
-**ExecuTorch Runtime Framework**: ✅ Integrated
-**ExecuTorch JARs**: ✅ Available on Maven Central (`org.pytorch:executorch-android:1.0.1`)
+**ExecuTorch Runtime Framework**: ✅ Integrated (pure Kotlin wrappers)
+**ExecuTorch Android JAR**: ✅ Available on Maven Central (`org.pytorch:executorch-android:1.0.1`)
 
-The ExecuTorchEngine and ExecuTorchModel classes are ready to use with the official ExecuTorch Android package.
+The ExecuTorchEngine and ExecuTorchModel classes are Kotlin framework classes that work seamlessly with ExecuTorch on Android. The Android JAR is provided at runtime on Android devices via PojavLauncher.
 
 ## Model Conversion Workflow
 
@@ -108,14 +108,24 @@ val output = model.predict(input)  // Returns FloatArray
 
 ExecuTorch Android v1.0.1 is available on Maven Central!
 
-**Automatic** (recommended):
-- The build.gradle.kts already includes `org.pytorch:executorch-android:1.0.1`
-- Just build normally: `./gradlew build`
+**For Android Devices**:
+- ExecuTorch is automatically loaded at runtime on Android devices running PojavLauncher
+- The framework classes (ExecuTorchEngine, ExecuTorchModel) are pure Kotlin and work on any platform
+- The native .so libraries are provided by PojavLauncher's native environment
 
-**Verify Installation**:
+**Build Desktop Mod**:
 ```bash
-./gradlew build --info | grep executorch
-# Should show successful dependency resolution
+./gradlew build
+# Builds successfully on desktop (uses DJL backend)
+# ExecuTorch classes are included but inactive on desktop
+```
+
+**Build for Android** (when integrating with Android build system):
+```gradle
+// In Android build.gradle.kts, uncomment to enable ExecuTorch:
+dependencies {
+    implementation("org.pytorch:executorch-android:1.0.1")
+}
 ```
 
 **Build from Source** (optional):

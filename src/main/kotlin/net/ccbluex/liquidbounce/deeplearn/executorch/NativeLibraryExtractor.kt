@@ -43,14 +43,9 @@ object NativeLibraryExtractor {
         // Determine library file name based on OS
         val libFileName = "lib$libraryName.so"
         
-        // Possible resource paths where the library might be located
+        // Possible resource paths where the library might be located (only look in native dir)
         val resourcePaths = listOf(
-            "/native/android/$osArch/$libFileName",
-            "/native/linux/$osArch/$libFileName",
-            "/lib/$osArch/$libFileName",
-            "/$osArch/$libFileName",
-            "/native/$libFileName",
-            "/$libFileName"
+            "/native/$libFileName"
         )
 
         logger.info("[NativeLibraryExtractor] Attempting to extract $libFileName for $osArch")

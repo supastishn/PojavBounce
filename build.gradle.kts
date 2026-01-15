@@ -166,8 +166,8 @@ dependencies {
     // Official PyTorch on-device inference runtime for Android/mobile
     // Provides native .pte (ExecuTorch Program) model support
     includeDependency(libs.executorch.api)
-    // Include Android native libraries for on-device inference
-    includeNative(libs.executorch.android.native)
+    // Include Android native libraries for on-device inference (arm64-v8a architecture)
+    includeNative("org.pytorch:executorch:${libs.versions.executorch.get()}:android-arm64-v8a@aar")
 
     // HTTP library
     includeDependency(libs.bundles.okhttp)

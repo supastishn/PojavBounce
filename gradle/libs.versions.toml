@@ -95,7 +95,6 @@ djl-android-pytorch-native = { group = "ai.djl.android", name = "pytorch-native"
 
 # ExecuTorch - PyTorch on-device inference runtime
 executorch-api = { group = "org.pytorch", name = "executorch", version.ref = "executorch" }
-executorch-android-native = { group = "org.pytorch", name = "executorch", version.ref = "executorch", classifier = "android-arm64-v8a" }
 
 # mods
 modmenu = { group = "maven.modrinth", name = "modmenu", version.ref = "modmenu" }

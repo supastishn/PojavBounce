@@ -108,8 +108,8 @@ object ExecuTorchEngine {
      * This library is required by libfbjni.so on Android.
      * 
      * Loading order:
-     * 1. Try loading from manually placed file in native folder
-     * 2. Try extracting from JAR resources and loading
+     * 1. Try extracting from JAR resources (ensures version compatibility)
+     * 2. Try loading from manually placed file in native folder
      * 3. Try loading from system library paths
      * 
      * Silently fails if the library is not available (it may already be loaded or not needed).
@@ -117,30 +117,30 @@ object ExecuTorchEngine {
     private fun tryLoadCppShared() {
         var loaded = false
         
-        // First, try to load from manually placed file in native folder
-        val manualLib = File(nativeFolder, "libc++_shared.so")
-        if (manualLib.exists() && manualLib.isFile) {
-            try {
-                System.load(manualLib.absolutePath)
-                logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from native folder")
+        // First, try extracting from JAR (most reliable, version-matched)
+        try {
+            val osArch = NativeLibraryExtractor.detectOsArch()
+            val extractedLib = NativeLibraryExtractor.extractLibrary("c++_shared", nativeFolder, osArch)
+            if (extractedLib != null) {
+                System.load(extractedLib.absolutePath)
+                logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from JAR resources")
                 loaded = true
-            } catch (e: Throwable) {
-                logger.debug("[ExecuTorch] Failed to load libc++_shared.so from native folder: ${e.message}")
             }
+        } catch (e: Throwable) {
+            logger.debug("[ExecuTorch] Failed to extract/load libc++_shared.so from JAR: ${e.message}")
         }
         
-        // If not loaded, try extracting from JAR
+        // Second, try loading from manually placed file in native folder
         if (!loaded) {
-            try {
-                val osArch = NativeLibraryExtractor.detectOsArch()
-                val extractedLib = NativeLibraryExtractor.extractLibrary("c++_shared", nativeFolder, osArch)
-                if (extractedLib != null) {
-                    System.load(extractedLib.absolutePath)
-                    logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from extracted JAR")
+            val manualLib = File(nativeFolder, "libc++_shared.so")
+            if (manualLib.exists() && manualLib.isFile) {
+                try {
+                    System.load(manualLib.absolutePath)
+                    logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from native folder")
                     loaded = true
+                } catch (e: Throwable) {
+                    logger.debug("[ExecuTorch] Failed to load libc++_shared.so from native folder: ${e.message}")
                 }
-            } catch (e: Throwable) {
-                logger.debug("[ExecuTorch] Failed to extract/load libc++_shared.so from JAR: ${e.message}")
             }
         }
         

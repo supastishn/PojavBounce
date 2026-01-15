@@ -136,8 +136,7 @@ object DeepLearningEngine {
      * DJL is not initialized on Android due to native library compatibility issues.
      */
     private suspend fun initAndroid(task: Task) {
-        logger.info("[DeepLearning] Running on Android platform - using ExecuTorch backend")
-        logger.info("[DeepLearning] DJL initialization skipped on Android (use ExecuTorch instead)")
+        logger.info("[DeepLearning] Running on Android platform - ExecuTorch only (DJL skipped)")
         
         // Initialize ExecuTorch for Android
         try {

@@ -36,7 +36,7 @@ class MinaraiModel(
     parent: ChoiceConfigurable<*>
 ) : ModelWrapper<FloatArray, FloatArray>(
     name,
-    FloatArrayInAndOutTranslator(),
+    TRANSLATOR,
     2, // X, Y
     parent
 ) {
@@ -51,7 +51,7 @@ class MinaraiModel(
             if (execuTorchModel == null) {
                 execuTorchModel = ExecuTorchModel(
                     name,
-                    FloatArrayInAndOutTranslator(),
+                    TRANSLATOR,
                     outputs,
                     parent
                 )
@@ -81,5 +81,10 @@ class MinaraiModel(
         execuTorchModel?.close()
         execuTorchModel = null
         super.close()
+    }
+
+    companion object {
+        // Shared translator instance to avoid duplication
+        private val TRANSLATOR = FloatArrayInAndOutTranslator()
     }
 }

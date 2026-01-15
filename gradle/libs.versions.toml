@@ -23,6 +23,7 @@ djl = "0.36.0"
 # ExecuTorch - PyTorch Mobile runtime for edge inference
 executorch = "1.0.1"
 # fbjni - Facebook JNI library (required by ExecuTorch native library)
+# Version must match the native libfbjni.so in resources
 fbjni = "0.7.0"
 # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 okhttp = "5.3.2"

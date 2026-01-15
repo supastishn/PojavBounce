@@ -104,6 +104,63 @@ object ExecuTorchEngine {
     var task: Task? = null
 
     /**
+     * Attempts to preload libc++_shared.so which is a common dependency of Android native libraries.
+     * This library is required by libfbjni.so on Android.
+     * 
+     * Loading order:
+     * 1. Try loading from manually placed file in native folder
+     * 2. Try extracting from JAR resources and loading
+     * 3. Try loading from system library paths
+     * 
+     * Silently fails if the library is not available (it may already be loaded or not needed).
+     */
+    private fun tryLoadCppShared() {
+        var loaded = false
+        
+        // First, try to load from manually placed file in native folder
+        val manualLib = File(nativeFolder, "libc++_shared.so")
+        if (manualLib.exists() && manualLib.isFile) {
+            try {
+                System.load(manualLib.absolutePath)
+                logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from native folder")
+                loaded = true
+            } catch (e: Throwable) {
+                logger.debug("[ExecuTorch] Failed to load libc++_shared.so from native folder: ${e.message}")
+            }
+        }
+        
+        // If not loaded, try extracting from JAR
+        if (!loaded) {
+            try {
+                val osArch = NativeLibraryExtractor.detectOsArch()
+                val extractedLib = NativeLibraryExtractor.extractLibrary("c++_shared", nativeFolder, osArch)
+                if (extractedLib != null) {
+                    System.load(extractedLib.absolutePath)
+                    logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from extracted JAR")
+                    loaded = true
+                }
+            } catch (e: Throwable) {
+                logger.debug("[ExecuTorch] Failed to extract/load libc++_shared.so from JAR: ${e.message}")
+            }
+        }
+        
+        // Finally, try system library path as fallback
+        if (!loaded) {
+            try {
+                System.loadLibrary("c++_shared")
+                logger.debug("[ExecuTorch] Successfully loaded libc++_shared.so from system paths")
+                loaded = true
+            } catch (e: Throwable) {
+                logger.debug("[ExecuTorch] libc++_shared.so not available in system paths: ${e.message}")
+            }
+        }
+        
+        if (!loaded) {
+            logger.debug("[ExecuTorch] libc++_shared.so not loaded (may not be needed on this platform)")
+        }
+    }
+
+    /**
      * Initializes the ExecuTorch runtime.
      * This attempts to load native libraries and prepare for model execution.
      *
@@ -147,6 +204,8 @@ object ExecuTorchEngine {
                                         manualLibFbjni.absolutePath
                                 )
                                 try {
+                                    // Try to preload libc++_shared.so which is a dependency of libfbjni.so
+                                    tryLoadCppShared()
                                     System.load(manualLibFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so dependency")
                                     fbjniLoaded = true
@@ -174,6 +233,8 @@ object ExecuTorchEngine {
                                         "[ExecuTorch] Extracted libfbjni.so from JAR, loading it"
                                     )
                                     try {
+                                        // Try to preload libc++_shared.so which is a dependency of libfbjni.so
+                                        tryLoadCppShared()
                                         System.load(extractedFbjni.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded libfbjni.so from extracted JAR")
                                         fbjniLoaded = true
@@ -214,9 +275,9 @@ object ExecuTorchEngine {
                                 "[ExecuTorch] Attempting to extract native libraries for architecture: $osArch"
                             )
                             
-                            // Extract dependencies in order: fbjni first, then executorch
+                            // Extract dependencies in order: c++_shared (dependency of fbjni), fbjni, executorch
                             val extractedLibs = NativeLibraryExtractor.extractLibraries(
-                                listOf("fbjni", "executorch"),
+                                listOf("c++_shared", "fbjni", "executorch"),
                                 nativeFolder,
                                 osArch
                             )
@@ -266,6 +327,8 @@ object ExecuTorchEngine {
                         try {
                             // Try loading fbjni dependency first
                             try {
+                                // Preload libc++_shared.so before loading libfbjni.so
+                                tryLoadCppShared()
                                 System.loadLibrary("fbjni")
                                 logger.info(
                                     "[ExecuTorch] Successfully loaded fbjni dependency from system"
@@ -285,9 +348,9 @@ object ExecuTorchEngine {
                             logger.info("[ExecuTorch] Standard library loading failed, attempting extraction")
                             val osArch = NativeLibraryExtractor.detectOsArch()
                             
-                            // Extract dependencies in order
+                            // Extract dependencies in order: c++_shared (dependency of fbjni), fbjni, executorch
                             val extractedLibs = NativeLibraryExtractor.extractLibraries(
-                                listOf("fbjni", "executorch"),
+                                listOf("c++_shared", "fbjni", "executorch"),
                                 nativeFolder,
                                 osArch
                             )
@@ -319,8 +382,8 @@ object ExecuTorchEngine {
                                             loadedExecutorch = true
                                         }
                                     } catch (e: Throwable) {
-                                        // Only warn for fbjni, throw for executorch
-                                        if (lib.name == "libfbjni.so") {
+                                        // Only warn for c++_shared and fbjni, throw for executorch
+                                        if (lib.name == "libc++_shared.so" || lib.name == "libfbjni.so") {
                                             logger.warn("[ExecuTorch] Failed to load ${lib.name}: ${e.message}")
                                         } else {
                                             throw e

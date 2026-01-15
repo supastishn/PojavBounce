@@ -24,14 +24,18 @@ The mod will automatically detect your architecture and report it in the logs. C
 
 ### Step 2: Obtain the Native Libraries
 
-**Note:** As of the latest version, both `libfbjni.so` (native library) and the fbjni Java classes are now included in the mod. The native library will be automatically extracted from the mod resources for common architectures (aarch64, arm, x86_64, x86). You only need to obtain `libexecutorch.so`.
+**Note:** As of the latest version, the fbjni Java classes, `libfbjni.so`, and `libc++_shared.so` are included in the mod and will be automatically extracted from resources if present. You primarily need to obtain `libexecutorch.so`.
 
-You need to obtain `libexecutorch.so` built for your architecture. The `libfbjni.so` dependency and its Java classes will be automatically extracted/loaded from the mod.
+You need to obtain `libexecutorch.so` built for your architecture. The mod will attempt to automatically load dependencies (`libc++_shared.so` and `libfbjni.so`) from:
+1. JAR resources (if bundled)
+2. Native folder (if manually placed)
+3. System library paths (as fallback)
 
 #### Required Libraries:
-1. **fbjni Java classes** - Facebook JNI Java library (dependency of ExecuTorch) - **Now included in mod**
-2. **libfbjni.so** - Facebook JNI native library (dependency of ExecuTorch) - **Now included in mod**
-3. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
+1. **fbjni Java classes** - Facebook JNI Java library (dependency of ExecuTorch) - **Included in mod**
+2. **libfbjni.so** - Facebook JNI native library (dependency of ExecuTorch) - **Included in mod**
+3. **libc++_shared.so** - Android C++ standard library (dependency of libfbjni.so) - **Can be bundled/auto-extracted**
+4. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
 
 #### Option A: Build from Source (Recommended)
 1. Follow the [ExecuTorch build instructions](https://pytorch.org/executorch/stable/build-run-coreml.html)
@@ -58,7 +62,9 @@ Some community members may provide pre-built binaries. Ensure they are:
 
 ### Step 3: Place the Library
 
-**Note:** With the latest version, both the fbjni Java classes and `libfbjni.so` are automatically included in the mod. The native library will be extracted from the mod resources. You only need to place `libexecutorch.so`.
+**Note:** With the latest version, the fbjni Java classes, `libfbjni.so`, and `libc++_shared.so` (if bundled) are automatically included in the mod. The native libraries will be extracted from the mod resources. You only need to place `libexecutorch.so`.
+
+**Optional:** If you encounter loading issues, you can also manually place `libc++_shared.so` for your architecture in the native folder to ensure compatibility.
 
 1. Copy `libexecutorch.so` to your device
 2. Place it in the ExecuTorch native folder:
@@ -66,8 +72,9 @@ Some community members may provide pre-built binaries. Ensure they are:
    - On PojavLauncher, this is typically: `/data/user/0/com.tungsten.fcl/cache/fclauncher/LiquidBounce/executorch/native/`
    - Required file:
      - `libexecutorch.so` (main library)
-   - Optional (automatically extracted if not present):
-     - `libfbjni.so` (dependency, will be auto-extracted from mod resources)
+   - Optional (will be auto-extracted from mod resources if present):
+     - `libfbjni.so` (dependency)
+     - `libc++_shared.so` (C++ standard library, dependency of libfbjni.so)
 
 The exact path will be shown in the error logs when the mod attempts to load the library.
 
@@ -113,8 +120,13 @@ Check the logs for these messages:
 - **Solution**: Verify the file paths and filenames (must be exactly `libfbjni.so` and `libexecutorch.so`)
 
 ### Missing Dependency
-- **Symptom**: "dlopen failed: library 'libfbjni.so' not found" or "com/facebook/jni/HybridData$Destructor" errors in logs
-- **Solution**: This should no longer occur as both the fbjni Java classes and libfbjni.so are now included in the mod. The Java classes are automatically loaded, and the native library will be automatically extracted. If it still occurs, check that the mod was built correctly with the fbjni dependency.
+- **Symptom**: "Could not initialize class com.facebook.jni.ThreadScopeSupport", "dlopen failed: library not found", or similar errors
+- **Solution**: 
+  - The mod now includes fbjni Java classes, `libfbjni.so`, and supports bundling `libc++_shared.so`
+  - If bundled in JAR resources, these will be auto-extracted
+  - If you encounter this error, try manually placing `libc++_shared.so` for your architecture (aarch64) in the native folder
+  - Get `libc++_shared.so` from Android NDK: `$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so`
+  - Or place it in `src/main/resources/native/libc++_shared.so` to bundle it with the mod
 
 ### Wrong Architecture
 - **Symptom**: "Failed to load native library" or crash

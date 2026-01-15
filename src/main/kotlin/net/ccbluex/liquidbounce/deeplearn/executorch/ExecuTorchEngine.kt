@@ -152,7 +152,8 @@ object ExecuTorchEngine {
                                     fbjniLoaded = true
                                 } catch (e: Throwable) {
                                     logger.warn("[ExecuTorch] Failed to load libfbjni.so: ${e.message}")
-                                    // Try system load as fallback
+                                    // Try system load as fallback if manual placement failed
+                                    // This can happen if the library has missing dependencies
                                 }
                             }
                             

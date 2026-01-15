@@ -139,7 +139,7 @@ object ExecuTorchEngine {
                 isInitialized = true
                 logger.info("[ExecuTorch] ExecuTorch runtime initialized successfully")
             } else {
-                throw Exception("Failed to load ExecuTorch native library")
+                throw ExecuTorchInitializationException("Failed to load ExecuTorch native library")
             }
         } catch (t: Throwable) {
             logger.error("[ExecuTorch] Failed to initialize ExecuTorch engine", t)
@@ -172,6 +172,7 @@ object ExecuTorchEngine {
      * Collects diagnostic information useful for troubleshooting ExecuTorch initialization failures.
      * Includes system properties, environment info, and folder contents.
      */
+    @Suppress("CognitiveComplexMethod") // Diagnostic function with multiple checks
     private fun collectDiagnosticInfo(): String = buildString {
         appendLine("System Properties:")
         appendLine("  os.arch: ${System.getProperty("os.arch")}")
@@ -191,7 +192,8 @@ object ExecuTorchEngine {
             val dlFiles = executorchFolder.listFiles()
             if (dlFiles != null && dlFiles.isNotEmpty()) {
                 dlFiles.forEach { file ->
-                    appendLine("    - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")
+                    val fileInfo = if (file.isDirectory) "dir" else "file, ${file.length()} bytes"
+                    appendLine("    - ${file.name} ($fileInfo)")
                 }
             } else {
                 appendLine("    (empty or not accessible)")
@@ -205,7 +207,8 @@ object ExecuTorchEngine {
             val nativeFiles = nativeFolder.listFiles()
             if (nativeFiles != null && nativeFiles.isNotEmpty()) {
                 nativeFiles.forEach { file ->
-                    appendLine("    - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")
+                    val fileInfo = if (file.isDirectory) "dir" else "file, ${file.length()} bytes"
+                    appendLine("    - ${file.name} ($fileInfo)")
                 }
             } else {
                 appendLine("    (empty or not accessible)")
@@ -277,3 +280,9 @@ object ExecuTorchEngine {
     }
 
 }
+
+/**
+ * Exception thrown when ExecuTorch engine initialization fails.
+ */
+class ExecuTorchInitializationException(message: String, cause: Throwable? = null) : Exception(message, cause)
+

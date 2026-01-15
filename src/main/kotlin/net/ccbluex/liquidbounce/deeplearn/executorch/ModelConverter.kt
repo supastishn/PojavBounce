@@ -43,6 +43,7 @@ object ModelConverter {
      *
      * @return Python script content as a string
      */
+    @Suppress("LongMethod") // Python script template
     fun generateExportScript(): String = """
         #!/usr/bin/env python3
         ${"\"\"\""}
@@ -136,6 +137,7 @@ object ModelConverter {
      *
      * @return Python script content as a string
      */
+    @Suppress("LongMethod") // Python script template
     fun generateMinaraiExportScript(): String = """
         #!/usr/bin/env python3
         ${"\"\"\""}
@@ -313,6 +315,7 @@ object ModelConverter {
      * @param inputShape Input tensor shape (e.g., listOf(1, 784))
      * @return True if conversion succeeded, false otherwise
      */
+    @Suppress("SpreadOperator") // Required for ProcessBuilder varargs
     fun convertUsingPython(
         modelPath: Path,
         outputPath: Path,

@@ -54,7 +54,7 @@ Some community members may provide pre-built binaries. Ensure they are:
 - Compatible with ExecuTorch version 1.0.1 or later
 - Trusted source (security risk!)
 
-**Note:** libexecutorch.so must be compatible with libfbjni.so version 0.7.0 (included in the mod).
+**Note:** libexecutorch.so must be compatible with fbjni 0.7.0 (included in the mod). ExecuTorch 1.0.1 or later is recommended.
 
 ### Step 3: Place the Library
 
@@ -76,9 +76,9 @@ The exact path will be shown in the error logs when the mod attempts to load the
 Ensure the library file has proper permissions:
 ```bash
 chmod 755 /path/to/libexecutorch.so
-# Only needed if you manually placed libfbjni.so:
-chmod 755 /path/to/libfbjni.so
 ```
+
+Note: libfbjni.so permissions are automatically set when extracted by the mod.
 
 ### Step 5: Restart
 
@@ -128,9 +128,15 @@ Check the logs for these messages:
 - **Symptom**: "undefined symbol" or similar errors
 - **Solution**: Ensure both libraries are built with:
   - Android NDK (not desktop GLIBC)
-  - Compatible ExecuTorch version
+  - Compatible ExecuTorch version (1.0.1 or later recommended)
   - Correct ABI (e.g., arm64-v8a for aarch64)
-  - Compatible builds (libfbjni.so and libexecutorch.so must be from compatible versions)
+  - Compatible builds (libfbjni.so 0.7.0 included in mod is compatible with most ExecuTorch 1.0+ builds)
+  
+**Version Compatibility Notes:**
+- This mod includes fbjni 0.7.0 (Java classes and native library)
+- ExecuTorch 1.0.1 or later is recommended
+- If you encounter compatibility issues, ensure your libexecutorch.so was built against fbjni 0.7.0 headers
+- For building ExecuTorch with fbjni 0.7.0, use the matching version of fbjni headers from Maven Central
 
 ## Alternative: Disable ExecuTorch
 

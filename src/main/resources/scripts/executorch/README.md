@@ -10,6 +10,13 @@ ExecuTorch is the official PyTorch runtime for edge devices, providing:
 - Smaller model sizes and faster inference vs PyTorch Mobile
 - Graceful fallback for platforms without native library support
 
+## Current Status
+
+**ExecuTorch Runtime Framework**: ✅ Integrated
+**ExecuTorch JARs**: ⏳ To be provided by users or built from source
+
+The ExecuTorchEngine and ExecuTorchModel classes are ready to use once ExecuTorch JARs are available.
+
 ## Model Conversion Workflow
 
 ### Quick Start: Converting Minarai Models
@@ -45,6 +52,7 @@ cp exported_models/*.pte src/main/resources/resources/liquidbounce/models/execut
 
 #### Step 4: Rebuild
 
+Once ExecuTorch JARs are available:
 ```bash
 ./gradlew build
 ```
@@ -63,6 +71,8 @@ python export_model.py \
 The `--input-shape` parameter should match your model's expected input dimensions.
 
 ## Usage in LiquidBounce Code
+
+Once ExecuTorch JARs are available:
 
 ```kotlin
 import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchModel
@@ -93,6 +103,25 @@ val output = model.predict(input)  // Returns FloatArray
 - Generates Python export script templates
 - Provides Kotlin API for subprocess-based conversion
 - Supports both generic and Minarai-specific workflows
+
+## Obtaining ExecuTorch JARs
+
+ExecuTorch is not yet widely distributed on Maven Central. Options:
+
+1. **Build from Source**:
+   ```bash
+   git clone https://github.com/pytorch/executorch.git
+   cd executorch
+   cmake -B build .
+   # Build Android JARs and native libraries
+   ```
+
+2. **Use PyTorch Nightly Builds**:
+   - Check https://download.pytorch.org/ for pre-built Android distributions
+
+3. **Local Development**:
+   - Place ExecuTorch JARs in local Maven repository
+   - Add to build.gradle.kts when available
 
 ## Troubleshooting
 

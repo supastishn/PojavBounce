@@ -131,6 +131,17 @@ object ExecuTorchEngine {
                         val manualLibExecutorch = File(nativeFolder, "libexecutorch.so")
                         val manualLibFbjni = File(nativeFolder, "libfbjni.so")
                         
+                        // Attempt to preload libfbjni.so from the native folder if present. This ensures
+                        // that the dependency is available to the dynamic linker before loading
+                        // libexecutorch.so (which may fail if fbjni isn't already resolved).
+                        if (manualLibFbjni.exists() && manualLibFbjni.isFile) {
+                            try {
+                                System.load(manualLibFbjni.absolutePath)
+                                logger.info("[ExecuTorch] Preloaded libfbjni.so from native folder: ${manualLibFbjni.absolutePath}")
+                            } catch (e: Throwable) {
+                                logger.warn("[ExecuTorch] Preload of libfbjni.so failed: ${e.message}")
+                            }
+                        }
                         if (manualLibExecutorch.exists() && manualLibExecutorch.isFile) {
                             logger.info("[ExecuTorch] Found manually placed ExecuTorch library at: ${manualLibExecutorch.absolutePath}")
                             

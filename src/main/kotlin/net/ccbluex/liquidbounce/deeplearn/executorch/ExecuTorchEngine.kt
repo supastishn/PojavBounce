@@ -160,19 +160,45 @@ object ExecuTorchEngine {
                             if (!fbjniLoaded) {
                                 logger.info(
                                     "[ExecuTorch] libfbjni.so not loaded from native folder, " +
-                                        "attempting system load"
+                                        "attempting extraction from JAR"
                                 )
-                                try {
-                                    System.loadLibrary("fbjni")
-                                    logger.info("[ExecuTorch] Successfully loaded libfbjni.so from system")
-                                    fbjniLoaded = true
-                                } catch (e: Throwable) {
-                                    logger.warn(
-                                        "[ExecuTorch] libfbjni.so not available in system paths: ${e.message}"
+                                // Try to extract from JAR resources first
+                                val extractedFbjni = NativeLibraryExtractor.extractLibrary(
+                                    "fbjni",
+                                    nativeFolder,
+                                    osArch
+                                )
+                                
+                                if (extractedFbjni != null && extractedFbjni.exists()) {
+                                    logger.info(
+                                        "[ExecuTorch] Extracted libfbjni.so from JAR, loading it"
                                     )
-                                    logger.warn(
-                                        "[ExecuTorch] ExecuTorch may fail to load without this dependency"
+                                    try {
+                                        System.load(extractedFbjni.absolutePath)
+                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so from extracted JAR")
+                                        fbjniLoaded = true
+                                    } catch (e: Throwable) {
+                                        logger.warn("[ExecuTorch] Failed to load extracted libfbjni.so: ${e.message}")
+                                    }
+                                }
+                                
+                                // If extraction failed, try system load as final fallback
+                                if (!fbjniLoaded) {
+                                    logger.info(
+                                        "[ExecuTorch] Attempting system load for libfbjni.so"
                                     )
+                                    try {
+                                        System.loadLibrary("fbjni")
+                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so from system")
+                                        fbjniLoaded = true
+                                    } catch (e: Throwable) {
+                                        logger.warn(
+                                            "[ExecuTorch] libfbjni.so not available in system paths: ${e.message}"
+                                        )
+                                        logger.warn(
+                                            "[ExecuTorch] ExecuTorch may fail to load without this dependency"
+                                        )
+                                    }
                                 }
                             }
                             

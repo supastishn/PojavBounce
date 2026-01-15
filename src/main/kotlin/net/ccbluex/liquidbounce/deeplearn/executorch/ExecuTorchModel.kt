@@ -63,6 +63,9 @@ class ExecuTorchModel(
      * Performs inference on input using the loaded ExecuTorch model.
      * Requires ExecuTorchEngine to be initialized.
      *
+     * This method shadows the parent class predict method but does not override it
+     * since ModelWrapper.predict is not marked as open.
+     *
      * @param input FloatArray of input features
      * @return FloatArray of output predictions
      * @throws IllegalStateException if ExecuTorchEngine is not initialized
@@ -77,42 +80,45 @@ class ExecuTorchModel(
 
     /**
      * Loads the ExecuTorch model from an input stream.
+     * This method shadows the parent class load method.
      *
      * @param stream InputStream containing .pte model data
      */
-    fun load(stream: InputStream) {
+    override fun load(stream: InputStream) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
         try {
             module = ExecuTorchModule(stream.readBytes())
         } catch (e: Exception) {
-            throw RuntimeException("Failed to load ExecuTorch model from stream", e)
+            throw ModelLoadException("Failed to load ExecuTorch model from stream", e)
         }
     }
 
     /**
      * Loads the ExecuTorch model from a file path.
+     * This method shadows the parent class load method.
      *
      * @param path Path to .pte model file
      */
-    fun load(path: Path) {
+    override fun load(path: Path) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
         try {
             val bytes = path.toFile().readBytes()
             module = ExecuTorchModule(bytes)
         } catch (e: Exception) {
-            throw RuntimeException("Failed to load ExecuTorch model from path: $path", e)
+            throw ModelLoadException("Failed to load ExecuTorch model from path: $path", e)
         }
     }
 
     /**
      * Loads the ExecuTorch model by name.
      * First checks the models folder, then falls back to JAR resources.
+     * This method shadows the parent class load method.
      *
      * @param name Model name (without .pte extension)
      */
-    fun load(name: String = this.name) {
+    override fun load(name: String) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
         val folder = modelsFolder.resolve(name)
@@ -136,34 +142,37 @@ class ExecuTorchModel(
     /**
      * Saves the ExecuTorch model to a file path.
      * Note: This saves the in-memory model state, not the .pte binary.
+     * This method shadows the parent class save method.
      *
      * @param path Path to save model to
      */
-    fun save(path: Path) {
+    override fun save(path: Path) {
         require(module != null) { "No model loaded to save" }
 
         try {
             val bytes = module!!.serialize()
             path.toFile().writeBytes(bytes)
         } catch (e: Exception) {
-            throw RuntimeException("Failed to save ExecuTorch model to path: $path", e)
+            throw ModelSaveException("Failed to save ExecuTorch model to path: $path", e)
         }
     }
 
     /**
      * Saves the ExecuTorch model to the models folder.
+     * This method shadows the parent class save method.
      *
      * @param name Model name (without .pte extension)
      */
-    fun save(name: String = this.name) {
+    override fun save(name: String) {
         val folder = modelsFolder.resolve(name).apply { mkdirs() }
         save(folder.resolve("$name.pte").toPath())
     }
 
     /**
      * Deletes the model file and releases resources.
+     * This method shadows the parent class delete method.
      */
-    fun delete() {
+    override fun delete() {
         close()
         modelsFolder.resolve(name).deleteRecursively()
     }
@@ -225,3 +234,14 @@ internal class ExecuTorchModule(private val modelBytes: ByteArray) : Closeable {
     }
 
 }
+
+/**
+ * Exception thrown when ExecuTorch model loading fails.
+ */
+class ModelLoadException(message: String, cause: Throwable? = null) : Exception(message, cause)
+
+/**
+ * Exception thrown when ExecuTorch model saving fails.
+ */
+class ModelSaveException(message: String, cause: Throwable? = null) : Exception(message, cause)
+

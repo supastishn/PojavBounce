@@ -65,7 +65,7 @@ abstract class ModelWrapper<I, O>(
     private val predictor: Predictor<I, O> by lazy { model.newPredictor(translator) }
 
     @Throws(TranslateException::class)
-    fun predict(input: I): O {
+    open fun predict(input: I): O {
         require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized" }
 
         return predictor.predict(input)
@@ -99,15 +99,15 @@ abstract class ModelWrapper<I, O>(
         EasyTrain.fit(trainer, NUM_EPOCH, trainingSet, null)
     }
 
-    fun load(stream: InputStream) {
+    open fun load(stream: InputStream) {
         model.load(stream)
     }
 
-    fun load(path: Path) {
+    open fun load(path: Path) {
         model.load(path, "tf")
     }
 
-    fun load(name: String = this.name) {
+    open fun load(name: String = this.name) {
         val folder = modelsFolder.resolve(name)
 
         if (folder.exists()) {
@@ -120,15 +120,15 @@ abstract class ModelWrapper<I, O>(
         }
     }
 
-    fun save(path: Path) {
+    open fun save(path: Path) {
         model.save(path, "tf")
     }
 
-    fun save(name: String = this.name) {
+    open fun save(name: String = this.name) {
         save(modelsFolder.resolve(name).toPath())
     }
 
-    fun delete() {
+    open fun delete() {
         close()
         modelsFolder.resolve(name).delete()
     }

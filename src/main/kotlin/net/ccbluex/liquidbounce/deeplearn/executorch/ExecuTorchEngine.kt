@@ -131,35 +131,30 @@ object ExecuTorchEngine {
                         val manualLibExecutorch = File(nativeFolder, "libexecutorch.so")
                         val manualLibFbjni = File(nativeFolder, "libfbjni.so")
                         
-                        // Attempt to preload libfbjni.so from the native folder if present. This ensures
-                        // that the dependency is available to the dynamic linker before loading
-                        // libexecutorch.so (which may fail if fbjni isn't already resolved).
-                        if (manualLibFbjni.exists() && manualLibFbjni.isFile) {
-                            try {
-                                System.load(manualLibFbjni.absolutePath)
-                                logger.info("[ExecuTorch] Preloaded libfbjni.so from native folder: ${manualLibFbjni.absolutePath}")
-                            } catch (e: Throwable) {
-                                logger.warn("[ExecuTorch] Preload of libfbjni.so failed: ${e.message}")
-                            }
-                        }
                         if (manualLibExecutorch.exists() && manualLibExecutorch.isFile) {
                             logger.info("[ExecuTorch] Found manually placed ExecuTorch library at: ${manualLibExecutorch.absolutePath}")
                             
                             // Load fbjni dependency first if it exists
+                            // This must be loaded before libexecutorch.so because executorch depends on it
+                            var fbjniLoaded = false
                             if (manualLibFbjni.exists() && manualLibFbjni.isFile) {
                                 logger.info("[ExecuTorch] Found manually placed fbjni dependency at: ${manualLibFbjni.absolutePath}")
                                 try {
                                     System.load(manualLibFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so dependency")
+                                    fbjniLoaded = true
                                 } catch (e: Throwable) {
                                     logger.warn("[ExecuTorch] Failed to load libfbjni.so: ${e.message}")
-                                    logger.warn("[ExecuTorch] Continuing anyway - libexecutorch.so may still load if fbjni is available in system paths")
+                                    // Try system load as fallback
                                 }
-                            } else {
-                                logger.info("[ExecuTorch] libfbjni.so not found in native folder, attempting system load")
+                            }
+                            
+                            if (!fbjniLoaded) {
+                                logger.info("[ExecuTorch] libfbjni.so not loaded from native folder, attempting system load")
                                 try {
                                     System.loadLibrary("fbjni")
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so from system")
+                                    fbjniLoaded = true
                                 } catch (e: Throwable) {
                                     logger.warn("[ExecuTorch] libfbjni.so not available in system paths: ${e.message}")
                                     logger.warn("[ExecuTorch] ExecuTorch may fail to load without this dependency")

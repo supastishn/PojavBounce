@@ -198,7 +198,6 @@ object ExecuTorchEngine {
                             // Load fbjni dependency first if it exists
                             // This must be loaded before libexecutorch.so because executorch depends on it
                             var fbjniLoaded = false
-                            var fbjniLoadAttempted = false
                             
                             // First try: Load from JAR resources (most reliable)
                             // This ensures we use the version-matched library from the mod
@@ -221,14 +220,12 @@ object ExecuTorchEngine {
                                     System.load(extractedFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so from JAR")
                                     fbjniLoaded = true
-                                    fbjniLoadAttempted = true
                                 } catch (e: Throwable) {
                                     logger.warn(
                                         "[ExecuTorch] Failed to load libfbjni.so from JAR: " +
                                             "${e.javaClass.simpleName}: ${e.message}"
                                     )
                                     logger.debug("[ExecuTorch] Full exception:", e)
-                                    fbjniLoadAttempted = true
                                 }
                             }
                             

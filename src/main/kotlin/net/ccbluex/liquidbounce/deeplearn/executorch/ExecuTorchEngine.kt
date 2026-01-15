@@ -150,7 +150,9 @@ object ExecuTorchEngine {
                                 logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted file")
                                 true
                             } else {
-                                logger.warn("[ExecuTorch] No native library found (checked manual and JAR extraction)")
+                                logger.warn("[ExecuTorch] No native library found")
+                                logger.warn("[ExecuTorch] Checked: manual placement at ${manualLib.absolutePath}")
+                                logger.warn("[ExecuTorch] Checked: JAR extraction for architecture $osArch")
                                 false
                             }
                         }
@@ -175,7 +177,13 @@ object ExecuTorchEngine {
                                 logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted file")
                                 true
                             } else {
-                                throw firstError
+                                // Provide context about both failed attempts
+                                logger.warn("[ExecuTorch] Both standard loading and JAR extraction failed")
+                                logger.warn("[ExecuTorch] Attempted JAR extraction for architecture: $osArch")
+                                throw ExecuTorchInitializationException(
+                                    "Failed to load ExecuTorch library via System.loadLibrary() and JAR extraction",
+                                    firstError
+                                )
                             }
                         }
                     }

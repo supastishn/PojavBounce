@@ -77,21 +77,26 @@ object NativeLibraryExtractor {
      * Extracts an input stream to a file in the target directory.
      */
     private fun extractToFile(inputStream: InputStream, targetDir: File, fileName: String): File {
-        targetDir.mkdirs()
-        val targetFile = File(targetDir, fileName)
+        try {
+            targetDir.mkdirs()
+            val targetFile = File(targetDir, fileName)
 
-        inputStream.use { input ->
-            targetFile.outputStream().use { output ->
-                input.copyTo(output)
+            inputStream.use { input ->
+                targetFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
             }
+
+            // Make the library executable
+            targetFile.setExecutable(true, true)
+            targetFile.setReadable(true, true)
+
+            logger.info("[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+            return targetFile
+        } catch (e: Exception) {
+            logger.error("[NativeLibraryExtractor] Failed to extract library to $targetDir/$fileName: ${e.message}", e)
+            throw e
         }
-
-        // Make the library executable
-        targetFile.setExecutable(true, false)
-        targetFile.setReadable(true, false)
-
-        logger.info("[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} (${targetFile.length()} bytes)")
-        return targetFile
     }
 
     /**

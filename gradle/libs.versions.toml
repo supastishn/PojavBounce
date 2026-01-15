@@ -20,8 +20,6 @@ mc_authlib = "1.6.0"
 polyglot = "25.0.1"
 # djl
 djl = "0.36.0"
-# ExecuTorch - PyTorch Mobile runtime for edge inference
-executorch = "0.2.0"
 # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 okhttp = "5.3.2"
 
@@ -92,9 +90,6 @@ djl-android-core = { group = "ai.djl.android", name = "core", version.ref = "djl
 djl-android-pytorch-native = { group = "ai.djl.android", name = "pytorch-native", version.ref = "djl" }
 #djl-mxnet = { group = "ai.djl.mxnet", name = "mxnet-engine", version.ref = "djl" }
 #djl-tensorflow = { group = "ai.djl.tensorflow", name = "tensorflow-engine", version.ref = "djl" }
-
-# ExecuTorch - PyTorch on-device inference runtime
-executorch-api = { group = "org.pytorch", name = "executorch", version.ref = "executorch" }
 
 # mods
 modmenu = { group = "maven.modrinth", name = "modmenu", version.ref = "modmenu" }

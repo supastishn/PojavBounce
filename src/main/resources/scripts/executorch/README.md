@@ -13,7 +13,7 @@ ExecuTorch is the official PyTorch runtime for edge devices, providing:
 ## Current Status
 
 **ExecuTorch Runtime Framework**: ✅ Integrated
-**ExecuTorch JARs**: ✅ Available on Maven Central (`org.pytorch:executorch-android`)
+**ExecuTorch JARs**: ✅ Available on Maven Central (`org.pytorch:executorch-android:1.0.1`)
 
 The ExecuTorchEngine and ExecuTorchModel classes are ready to use with the official ExecuTorch Android package.
 
@@ -106,16 +106,16 @@ val output = model.predict(input)  // Returns FloatArray
 
 ## Obtaining ExecuTorch JARs
 
-ExecuTorch Android is now available on Maven Central!
+ExecuTorch Android v1.0.1 is available on Maven Central!
 
 **Automatic** (recommended):
-- The build.gradle.kts already includes `org.pytorch:executorch-android:0.1.0`
+- The build.gradle.kts already includes `org.pytorch:executorch-android:1.0.1`
 - Just build normally: `./gradlew build`
 
-**Manual** (if needed):
+**Verify Installation**:
 ```bash
-# ExecuTorch Android JAR is automatically downloaded from Maven Central
-# No additional setup required!
+./gradlew build --info | grep executorch
+# Should show successful dependency resolution
 ```
 
 **Build from Source** (optional):

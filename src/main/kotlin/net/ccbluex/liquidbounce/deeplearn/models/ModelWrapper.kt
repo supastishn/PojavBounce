@@ -148,8 +148,12 @@ abstract class ModelWrapper<I, O>(
                 predictor.close()
                 model.close()
             }
-        } catch (_: Exception) {
-            // Ignore errors during cleanup
+        } catch (e: Exception) {
+            // Log cleanup errors at debug level for troubleshooting
+            net.ccbluex.liquidbounce.utils.client.logger.debug(
+                "Error during model cleanup (this is usually harmless)",
+                e
+            )
         }
     }
 

@@ -117,90 +117,121 @@ object DeepLearningEngine {
      * ExecuTorch is the PyTorch Mobile solution optimized for on-device inference.
      * DJL is a full-featured framework better suited for desktop platforms.
      */
-    @Suppress("LongMethod", "CognitiveComplexMethod", "NestedBlockDepth")
     suspend fun init(task: Task) {
         this.task = task
 
         logger.info("[DeepLearning] Initializing engine...")
         
         if (isAndroid) {
-            // On Android, skip DJL entirely and use ExecuTorch only
-            logger.info("[DeepLearning] Running on Android platform - using ExecuTorch backend")
-            logger.info("[DeepLearning] DJL initialization skipped on Android (use ExecuTorch instead)")
-            
-            // Initialize ExecuTorch for Android
-            try {
-                ExecuTorchEngine.init(task)
-                isExecuTorchAvailable = ExecuTorchEngine.isInitialized
-                if (isExecuTorchAvailable) {
-                    logger.info("[DeepLearning] ExecuTorch backend initialized successfully on Android")
-                } else {
-                    logger.warn("[DeepLearning] ExecuTorch backend initialization failed on Android")
-                }
-            } catch (t: Throwable) {
-                logger.error("[DeepLearning] Failed to initialize ExecuTorch on Android", t)
-                isExecuTorchAvailable = false
-            }
-            
-            // DJL is not initialized on Android
-            isInitialized = false
+            initAndroid(task)
         } else {
-            // On PC, try DJL first
-            logger.info("[DeepLearning] Running on PC platform - using DJL backend")
-            
-            try {
-                val engine = withContext(Dispatchers.IO) {
-                    Engine.getInstance()
-                }
-                val name = engine.engineName
-                val version = engine.version
-                val deviceType = engine.defaultDevice().deviceType.uppercase(Locale.ENGLISH)
-                logger.info("[DeepLearning] Using DJL engine $name $version on $deviceType.")
-
-                isInitialized = true
-            } catch (t: Throwable) {
-                logger.error("[DeepLearning] Failed to initialize DJL engine on PC", t)
-                logger.error("[DeepLearning] DJL initialization failure details:\n${collectDiagnosticInfo()}")
-                logger.warn("[DeepLearning] Attempting to fallback to ExecuTorch...")
-                
-                isInitialized = false
-                
-                // Fallback to ExecuTorch on PC if DJL fails
-                try {
-                    ExecuTorchEngine.init(task)
-                    isExecuTorchAvailable = ExecuTorchEngine.isInitialized
-                    if (isExecuTorchAvailable) {
-                        logger.info("[DeepLearning] ExecuTorch backend initialized successfully (fallback mode)")
-                    } else {
-                        logger.error("[DeepLearning] ExecuTorch fallback also failed")
-                        this.task = null
-                        throw t
-                    }
-                } catch (execuTorchError: Throwable) {
-                    logger.error("[DeepLearning] ExecuTorch fallback initialization failed", execuTorchError)
-                    isExecuTorchAvailable = false
-                    this.task = null
-                    throw t  // Rethrow original DJL error
-                }
-            }
-            
-            // If DJL succeeded, also try to initialize ExecuTorch for additional backend option
-            if (isInitialized) {
-                logger.info("[DeepLearning] Initializing ExecuTorch as additional backend...")
-                try {
-                    ExecuTorchEngine.init(task)
-                    isExecuTorchAvailable = ExecuTorchEngine.isInitialized
-                    if (isExecuTorchAvailable) {
-                        logger.info("[DeepLearning] ExecuTorch backend also available")
-                    }
-                } catch (t: Throwable) {
-                    logger.warn("[DeepLearning] ExecuTorch backend initialization failed (DJL is still available)", t)
-                    isExecuTorchAvailable = false
-                }
-            }
+            initPC(task)
         }
 
         this.task = null
+    }
+
+    /**
+     * Initializes ExecuTorch backend for Android platform.
+     * DJL is not initialized on Android due to native library compatibility issues.
+     */
+    private suspend fun initAndroid(task: Task) {
+        logger.info("[DeepLearning] Running on Android platform - using ExecuTorch backend")
+        logger.info("[DeepLearning] DJL initialization skipped on Android (use ExecuTorch instead)")
+        
+        // Initialize ExecuTorch for Android
+        try {
+            ExecuTorchEngine.init(task)
+            isExecuTorchAvailable = ExecuTorchEngine.isInitialized
+            if (isExecuTorchAvailable) {
+                logger.info("[DeepLearning] ExecuTorch backend initialized successfully on Android")
+            } else {
+                logger.warn("[DeepLearning] ExecuTorch backend initialization failed on Android")
+            }
+        } catch (t: Throwable) {
+            logger.error("[DeepLearning] Failed to initialize ExecuTorch on Android", t)
+            isExecuTorchAvailable = false
+        }
+        
+        // DJL is not initialized on Android
+        isInitialized = false
+    }
+
+    /**
+     * Initializes DJL backend for PC platform, with ExecuTorch fallback.
+     * Tries to initialize DJL first, and falls back to ExecuTorch if that fails.
+     */
+    private suspend fun initPC(task: Task) {
+        logger.info("[DeepLearning] Running on PC platform - using DJL backend")
+        
+        try {
+            initDJL()
+        } catch (t: Throwable) {
+            logger.error("[DeepLearning] Failed to initialize DJL engine on PC", t)
+            logger.error("[DeepLearning] DJL initialization failure details:\n${collectDiagnosticInfo()}")
+            logger.warn("[DeepLearning] Attempting to fallback to ExecuTorch...")
+            
+            isInitialized = false
+            initExecuTorchFallback(task, t)
+            return
+        }
+        
+        // If DJL succeeded, also try to initialize ExecuTorch for additional backend option
+        tryInitExecuTorchAdditional(task)
+    }
+
+    /**
+     * Initializes DJL engine.
+     */
+    private suspend fun initDJL() {
+        val engine = withContext(Dispatchers.IO) {
+            Engine.getInstance()
+        }
+        val name = engine.engineName
+        val version = engine.version
+        val deviceType = engine.defaultDevice().deviceType.uppercase(Locale.ENGLISH)
+        logger.info("[DeepLearning] Using DJL engine $name $version on $deviceType.")
+
+        isInitialized = true
+    }
+
+    /**
+     * Initializes ExecuTorch as fallback when DJL initialization fails on PC.
+     */
+    private suspend fun initExecuTorchFallback(task: Task, originalError: Throwable) {
+        try {
+            ExecuTorchEngine.init(task)
+            isExecuTorchAvailable = ExecuTorchEngine.isInitialized
+            if (isExecuTorchAvailable) {
+                logger.info("[DeepLearning] ExecuTorch backend initialized successfully (fallback mode)")
+            } else {
+                logger.error("[DeepLearning] ExecuTorch fallback also failed")
+                this.task = null
+                throw originalError
+            }
+        } catch (execuTorchError: Throwable) {
+            logger.error("[DeepLearning] ExecuTorch fallback initialization failed", execuTorchError)
+            isExecuTorchAvailable = false
+            this.task = null
+            throw originalError  // Rethrow original DJL error
+        }
+    }
+
+    /**
+     * Tries to initialize ExecuTorch as an additional backend when DJL is already initialized.
+     */
+    private suspend fun tryInitExecuTorchAdditional(task: Task) {
+        logger.info("[DeepLearning] Initializing ExecuTorch as additional backend...")
+        try {
+            ExecuTorchEngine.init(task)
+            isExecuTorchAvailable = ExecuTorchEngine.isInitialized
+            if (isExecuTorchAvailable) {
+                logger.info("[DeepLearning] ExecuTorch backend also available")
+            }
+        } catch (t: Throwable) {
+            logger.warn("[DeepLearning] ExecuTorch backend initialization failed (DJL is still available)", t)
+            isExecuTorchAvailable = false
+        }
     }
 
     /**

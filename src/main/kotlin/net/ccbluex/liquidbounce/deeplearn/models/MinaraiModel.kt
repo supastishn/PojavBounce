@@ -46,7 +46,7 @@ class MinaraiModel(
     
     @Suppress("SwallowedException")
     override fun predict(input: FloatArray): FloatArray {
-        // On Android or when DJL is not available, use ExecuTorch
+        // Use ExecuTorch when it's available and DJL is not (Android or PC fallback case)
         if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
             if (execuTorchModel == null) {
                 execuTorchModel = ExecuTorchModel(
@@ -59,7 +59,12 @@ class MinaraiModel(
                 try {
                     execuTorchModel?.load(name)
                 } catch (e: Exception) {
-                    // Fall through to DJL if ExecuTorch model loading fails
+                    // ExecuTorch model loading failed (expected if JNI not implemented)
+                    // Fall through to DJL if available
+                    net.ccbluex.liquidbounce.utils.client.logger.debug(
+                        "ExecuTorch model loading failed, falling back to DJL",
+                        e
+                    )
                     execuTorchModel = null
                 }
             }

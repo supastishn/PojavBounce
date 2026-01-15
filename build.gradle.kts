@@ -162,6 +162,11 @@ dependencies {
     includeDependency("ai.djl:api")
     includeDependency("ai.djl.pytorch:pytorch-engine")
 
+    // fbjni - Facebook JNI library (required by ExecuTorch)
+    // Provides Java classes required by libfbjni.so native library (e.g., com.facebook.jni.HybridData)
+    // The native libfbjni.so is bundled in resources and will be extracted at runtime
+    includeDependency(libs.fbjni)
+
     // Note: ExecuTorch native libraries must be provided separately
     // The executorch-android dependency requires Android SDK which is not available in PojavLauncher
     // Users must manually place libexecutorch.so in the native folder

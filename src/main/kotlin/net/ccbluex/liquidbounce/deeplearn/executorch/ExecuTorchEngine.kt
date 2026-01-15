@@ -113,6 +113,7 @@ object ExecuTorchEngine {
      * - Missing Android-specific native builds
      * In these cases, ExecuTorch features will be gracefully disabled.
      */
+    @Suppress("LongMethod", "CognitiveComplexMethod", "ThrowsCount")
     suspend fun init(task: Task) {
         this.task = task
 
@@ -132,13 +133,19 @@ object ExecuTorchEngine {
                         val manualLibFbjni = File(nativeFolder, "libfbjni.so")
                         
                         if (manualLibExecutorch.exists() && manualLibExecutorch.isFile) {
-                            logger.info("[ExecuTorch] Found manually placed ExecuTorch library at: ${manualLibExecutorch.absolutePath}")
+                            logger.info(
+                                "[ExecuTorch] Found manually placed ExecuTorch library at: " +
+                                    manualLibExecutorch.absolutePath
+                            )
                             
                             // Load fbjni dependency first if it exists
                             // This must be loaded before libexecutorch.so because executorch depends on it
                             var fbjniLoaded = false
                             if (manualLibFbjni.exists() && manualLibFbjni.isFile) {
-                                logger.info("[ExecuTorch] Found manually placed fbjni dependency at: ${manualLibFbjni.absolutePath}")
+                                logger.info(
+                                    "[ExecuTorch] Found manually placed fbjni dependency at: " +
+                                        manualLibFbjni.absolutePath
+                                )
                                 try {
                                     System.load(manualLibFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so dependency")
@@ -150,23 +157,35 @@ object ExecuTorchEngine {
                             }
                             
                             if (!fbjniLoaded) {
-                                logger.info("[ExecuTorch] libfbjni.so not loaded from native folder, attempting system load")
+                                logger.info(
+                                    "[ExecuTorch] libfbjni.so not loaded from native folder, " +
+                                        "attempting system load"
+                                )
                                 try {
                                     System.loadLibrary("fbjni")
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so from system")
                                     fbjniLoaded = true
                                 } catch (e: Throwable) {
-                                    logger.warn("[ExecuTorch] libfbjni.so not available in system paths: ${e.message}")
-                                    logger.warn("[ExecuTorch] ExecuTorch may fail to load without this dependency")
+                                    logger.warn(
+                                        "[ExecuTorch] libfbjni.so not available in system paths: ${e.message}"
+                                    )
+                                    logger.warn(
+                                        "[ExecuTorch] ExecuTorch may fail to load without this dependency"
+                                    )
                                 }
                             }
                             
                             System.load(manualLibExecutorch.absolutePath)
-                            logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from manual placement")
+                            logger.info(
+                                "[ExecuTorch] Successfully loaded native ExecuTorch library " +
+                                    "from manual placement"
+                            )
                             true
                         } else {
                             // Try to extract from JAR
-                            logger.info("[ExecuTorch] Attempting to extract native libraries for architecture: $osArch")
+                            logger.info(
+                                "[ExecuTorch] Attempting to extract native libraries for architecture: $osArch"
+                            )
                             
                             // Extract dependencies in order: fbjni first, then executorch
                             val extractedLibs = NativeLibraryExtractor.extractLibraries(
@@ -187,7 +206,9 @@ object ExecuTorchEngine {
                                 // Load extracted libraries in order
                                 var loadedExecutorch = false
                                 for (lib in extractedLibs) {
-                                    logger.info("[ExecuTorch] Loading extracted library: ${lib.absolutePath}")
+                                    logger.info(
+                                        "[ExecuTorch] Loading extracted library: ${lib.absolutePath}"
+                                    )
                                     try {
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
@@ -195,12 +216,17 @@ object ExecuTorchEngine {
                                             loadedExecutorch = true
                                         }
                                     } catch (e: Throwable) {
-                                        logger.warn("[ExecuTorch] Failed to load ${lib.name}: ${e.message}")
+                                        logger.warn(
+                                            "[ExecuTorch] Failed to load ${lib.name}: ${e.message}"
+                                        )
                                     }
                                 }
                                 
                                 if (loadedExecutorch) {
-                                    logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted files")
+                                    logger.info(
+                                        "[ExecuTorch] Successfully loaded native ExecuTorch library " +
+                                            "from extracted files"
+                                    )
                                     true
                                 } else {
                                     logger.warn("[ExecuTorch] Failed to load libexecutorch.so")
@@ -214,9 +240,14 @@ object ExecuTorchEngine {
                             // Try loading fbjni dependency first
                             try {
                                 System.loadLibrary("fbjni")
-                                logger.info("[ExecuTorch] Successfully loaded fbjni dependency from system")
+                                logger.info(
+                                    "[ExecuTorch] Successfully loaded fbjni dependency from system"
+                                )
                             } catch (e: Throwable) {
-                                logger.debug("[ExecuTorch] fbjni not available in system paths (may not be required on desktop): ${e.message}")
+                                logger.debug(
+                                    "[ExecuTorch] fbjni not available in system paths " +
+                                        "(may not be required on desktop): ${e.message}"
+                                )
                             }
                             
                             System.loadLibrary("executorch")
@@ -236,17 +267,24 @@ object ExecuTorchEngine {
                             
                             if (extractedLibs.isEmpty()) {
                                 // Provide context about both failed attempts
-                                logger.warn("[ExecuTorch] Both standard loading and JAR extraction failed")
-                                logger.warn("[ExecuTorch] Attempted JAR extraction for architecture: $osArch")
+                                logger.warn(
+                                    "[ExecuTorch] Both standard loading and JAR extraction failed"
+                                )
+                                logger.warn(
+                                    "[ExecuTorch] Attempted JAR extraction for architecture: $osArch"
+                                )
                                 throw ExecuTorchInitializationException(
-                                    "Failed to load ExecuTorch library via System.loadLibrary() and JAR extraction",
+                                    "Failed to load ExecuTorch library via System.loadLibrary() " +
+                                        "and JAR extraction",
                                     firstError
                                 )
                             } else {
                                 // Load extracted libraries in order
                                 var loadedExecutorch = false
                                 for (lib in extractedLibs) {
-                                    logger.info("[ExecuTorch] Loading extracted library: ${lib.absolutePath}")
+                                    logger.info(
+                                        "[ExecuTorch] Loading extracted library: ${lib.absolutePath}"
+                                    )
                                     try {
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
@@ -264,7 +302,10 @@ object ExecuTorchEngine {
                                 }
                                 
                                 if (loadedExecutorch) {
-                                    logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted files")
+                                    logger.info(
+                                        "[ExecuTorch] Successfully loaded native ExecuTorch library " +
+                                            "from extracted files"
+                                    )
                                     true
                                 } else {
                                     throw ExecuTorchInitializationException(
@@ -296,14 +337,27 @@ object ExecuTorchEngine {
                 logger.warn("[ExecuTorch] Android native library support requires manual setup")
                 logger.warn("[ExecuTorch] Possible causes:")
                 logger.warn("[ExecuTorch]   - Native library not found in JAR resources")
-                logger.warn("[ExecuTorch]   - Native library not manually placed in native folder")
-                logger.warn("[ExecuTorch]   - Missing dependency: libfbjni.so (Facebook JNI library)")
-                logger.warn("[ExecuTorch]   - Incompatible architecture (expected: ${NativeLibraryExtractor.detectOsArch()})")
-                logger.warn("[ExecuTorch]   - Namespace isolation (libs not accessible from external storage)")
+                logger.warn(
+                    "[ExecuTorch]   - Native library not manually placed in native folder"
+                )
+                logger.warn(
+                    "[ExecuTorch]   - Missing dependency: libfbjni.so (Facebook JNI library)"
+                )
+                logger.warn(
+                    "[ExecuTorch]   - Incompatible architecture " +
+                        "(expected: ${NativeLibraryExtractor.detectOsArch()})"
+                )
+                logger.warn(
+                    "[ExecuTorch]   - Namespace isolation " +
+                        "(libs not accessible from external storage)"
+                )
                 logger.warn("[ExecuTorch]   - GLIBC vs Bionic incompatibility")
                 logger.warn("[ExecuTorch] ")
                 logger.warn("[ExecuTorch] To enable ExecuTorch on Android:")
-                logger.warn("[ExecuTorch]   1. Build or obtain both libfbjni.so and libexecutorch.so for ${NativeLibraryExtractor.detectOsArch()}")
+                logger.warn(
+                    "[ExecuTorch]   1. Build or obtain both libfbjni.so and libexecutorch.so for " +
+                        NativeLibraryExtractor.detectOsArch()
+                )
                 logger.warn("[ExecuTorch]   2. Place them in: ${nativeFolder.absolutePath}")
                 logger.warn("[ExecuTorch]      - libfbjni.so (required dependency)")
                 logger.warn("[ExecuTorch]      - libexecutorch.so (main library)")

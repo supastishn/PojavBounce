@@ -85,7 +85,10 @@ object NativeLibraryExtractor {
             if (extracted != null) {
                 extractedLibs.add(extracted)
             } else {
-                logger.warn("[NativeLibraryExtractor] Failed to extract $libraryName, continuing with remaining libraries")
+                logger.warn(
+                    "[NativeLibraryExtractor] Failed to extract $libraryName, " +
+                        "continuing with remaining libraries"
+                )
             }
         }
         
@@ -111,10 +114,16 @@ object NativeLibraryExtractor {
             targetFile.setReadable(true, true)
             targetFile.setWritable(true, true)
 
-            logger.info("[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+            logger.info(
+                "[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} " +
+                    "(${targetFile.length()} bytes)"
+            )
             return targetFile
         } catch (e: Exception) {
-            logger.error("[NativeLibraryExtractor] Failed to extract library to $targetDir/$fileName: ${e.message}", e)
+            logger.error(
+                "[NativeLibraryExtractor] Failed to extract library to $targetDir/$fileName: ${e.message}",
+                e
+            )
             throw e
         }
     }

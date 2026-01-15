@@ -117,6 +117,7 @@ object DeepLearningEngine {
      * ExecuTorch is the PyTorch Mobile solution optimized for on-device inference.
      * DJL is a full-featured framework better suited for desktop platforms.
      */
+    @Suppress("LongMethod", "CognitiveComplexMethod", "NestedBlockDepth")
     suspend fun init(task: Task) {
         this.task = task
 

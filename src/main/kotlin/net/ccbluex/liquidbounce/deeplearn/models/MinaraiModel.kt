@@ -44,11 +44,17 @@ class MinaraiModel(
     // ExecuTorch model for Android or fallback
     private var execuTorchModel: ExecuTorchModel? = null
     
+    @Suppress("SwallowedException")
     override fun predict(input: FloatArray): FloatArray {
         // On Android or when DJL is not available, use ExecuTorch
         if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
             if (execuTorchModel == null) {
-                execuTorchModel = ExecuTorchModel(name, FloatArrayInAndOutTranslator(), outputs, parent)
+                execuTorchModel = ExecuTorchModel(
+                    name,
+                    FloatArrayInAndOutTranslator(),
+                    outputs,
+                    parent
+                )
                 // Load the model if not already loaded
                 try {
                     execuTorchModel?.load(name)

@@ -41,6 +41,10 @@ import java.util.*
  * - Reduced model size and inference latency vs PyTorch Mobile
  * - Graceful fallback if ExecuTorch runtime is unavailable
  *
+ * Note: This class uses reflection to avoid compile-time dependency on ExecuTorch AAR,
+ * which is Android-specific and incompatible with desktop builds. The ExecuTorch JAR
+ * is loaded at runtime on Android devices via PojavLauncher.
+ *
  * @param name Model name (without .pte extension)
  * @param translator Translator for converting between FloatArray input/output and model tensors
  * @param outputs Number of output features from the model

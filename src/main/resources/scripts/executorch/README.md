@@ -13,9 +13,9 @@ ExecuTorch is the official PyTorch runtime for edge devices, providing:
 ## Current Status
 
 **ExecuTorch Runtime Framework**: ✅ Integrated
-**ExecuTorch JARs**: ⏳ To be provided by users or built from source
+**ExecuTorch JARs**: ✅ Available on Maven Central (`org.pytorch:executorch-android`)
 
-The ExecuTorchEngine and ExecuTorchModel classes are ready to use once ExecuTorch JARs are available.
+The ExecuTorchEngine and ExecuTorchModel classes are ready to use with the official ExecuTorch Android package.
 
 ## Model Conversion Workflow
 
@@ -106,22 +106,25 @@ val output = model.predict(input)  // Returns FloatArray
 
 ## Obtaining ExecuTorch JARs
 
-ExecuTorch is not yet widely distributed on Maven Central. Options:
+ExecuTorch Android is now available on Maven Central!
 
-1. **Build from Source**:
-   ```bash
-   git clone https://github.com/pytorch/executorch.git
-   cd executorch
-   cmake -B build .
-   # Build Android JARs and native libraries
-   ```
+**Automatic** (recommended):
+- The build.gradle.kts already includes `org.pytorch:executorch-android:0.1.0`
+- Just build normally: `./gradlew build`
 
-2. **Use PyTorch Nightly Builds**:
-   - Check https://download.pytorch.org/ for pre-built Android distributions
+**Manual** (if needed):
+```bash
+# ExecuTorch Android JAR is automatically downloaded from Maven Central
+# No additional setup required!
+```
 
-3. **Local Development**:
-   - Place ExecuTorch JARs in local Maven repository
-   - Add to build.gradle.kts when available
+**Build from Source** (optional):
+```bash
+git clone https://github.com/pytorch/executorch.git
+cd executorch
+cmake -B build .
+# Build Android JARs and native libraries
+```
 
 ## Troubleshooting
 

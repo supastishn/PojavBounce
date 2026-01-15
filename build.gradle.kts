@@ -162,6 +162,11 @@ dependencies {
     includeDependency("ai.djl:api")
     includeDependency("ai.djl.pytorch:pytorch-engine")
 
+    // Machine Learning - ExecuTorch
+    // Official PyTorch on-device inference runtime for Android/mobile
+    // Provides native .pte (ExecuTorch Program) model support
+    includeDependency(libs.executorch.android)
+
     // HTTP library
     includeDependency(libs.bundles.okhttp)
 

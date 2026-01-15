@@ -18,31 +18,35 @@
  *
  *
  */
-package net.ccbluex.liquidbounce.deeplearn
+package net.ccbluex.liquidbounce.deeplearn.executorch
 
-import ai.djl.engine.Engine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.ConfigSystem.rootFolder
-import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine
 import net.ccbluex.liquidbounce.integration.task.type.Task
 import net.ccbluex.liquidbounce.utils.client.logger
 import java.io.File
 import java.util.*
 
-internal const val ANDROID_PYTORCH_FLAVOR = "cpu"
-internal val ANDROID_OS_NAME_OVERRIDE: String? = null
-
-object DeepLearningEngine {
+/**
+ * ExecuTorch runtime engine for on-device PyTorch model inference on Android and mobile platforms.
+ *
+ * ExecuTorch is the official PyTorch deployment solution for edge devices, replacing PyTorch Mobile.
+ * It provides:
+ * - Direct PyTorch model export to .pte (ExecuTorch Program) format
+ * - Native hardware acceleration (CPU, GPU, NPU)
+ * - Smaller model sizes compared to full PyTorch
+ * - Optimized inference performance on mobile devices
+ *
+ * This engine manages:
+ * - Native library loading and initialization
+ * - Cache folder management for .pte models
+ * - Graceful fallback if native libraries are unavailable
+ * - Diagnostics for troubleshooting on restrictive platforms (Android)
+ */
+object ExecuTorchEngine {
 
     var isInitialized = false
-        private set
-
-    /**
-     * Flag indicating if ExecuTorch (PyTorch Mobile) backend is available.
-     * This is independent of DJL initialization and allows fallback.
-     */
-    var isExecuTorchAvailable = false
         private set
 
     /**
@@ -55,103 +59,101 @@ object DeepLearningEngine {
      * On Android, use app-private storage to avoid namespace isolation and SELinux restrictions.
      * On desktop, use the standard config folder.
      */
-    private val deepLearningFolder = if (isAndroid) {
-        createAndroidDeepLearningFolder().apply { mkdirs() }
+    private val executorchFolder = if (isAndroid) {
+        createAndroidExecutorchFolder().apply { mkdirs() }
     } else {
-        rootFolder.resolve("deeplearning").apply { mkdirs() }
+        rootFolder.resolve("executorch").apply { mkdirs() }
     }
 
-    val djlCacheFolder = deepLearningFolder.resolve("djl").apply {
+    val modelsFolder = executorchFolder.resolve("models").apply {
         mkdirs()
     }
 
-    val enginesCacheFolder = deepLearningFolder.resolve("engines").apply {
+    val cacheFolder = executorchFolder.resolve("cache").apply {
         mkdirs()
     }
 
-    val modelsFolder = deepLearningFolder.resolve("models").apply {
+    val nativeFolder = executorchFolder.resolve("native").apply {
         mkdirs()
     }
 
     init {
-        System.setProperty("DJL_CACHE_DIR", djlCacheFolder.absolutePath)
-        System.setProperty("ENGINE_CACHE_DIR", enginesCacheFolder.absolutePath)
+        // Configure ExecuTorch cache directories
+        System.setProperty("EXECUTORCH_CACHE_DIR", cacheFolder.absolutePath)
+        System.setProperty("EXECUTORCH_NATIVE_DIR", nativeFolder.absolutePath)
 
-        // Disable tracking of DJL
+        // Disable tracking of ExecuTorch
         System.setProperty("OPT_OUT_TRACKING", "true")
 
         if (isAndroid) {
             // Android-specific configuration
-            logger.info("[DeepLearning] Android environment detected, using desktop DJL settings for PojavLauncher")
-            ANDROID_OS_NAME_OVERRIDE?.let { System.setProperty("os.name", it) }
+            logger.info("[ExecuTorch] Android environment detected, configuring for PojavLauncher")
 
-            // Set the default engine to PyTorch with Android flavor
-            System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
-            System.setProperty("PYTORCH_FLAVOR", ANDROID_PYTORCH_FLAVOR)
-
-            // Android-specific library path hints
+            // Add native folder to library path for dlopen
             val javaLibPath = System.getProperty("java.library.path", "")
             System.setProperty(
                 "java.library.path",
-                "$javaLibPath:${enginesCacheFolder.absolutePath}"
+                "$javaLibPath:${nativeFolder.absolutePath}"
             )
         } else {
-            // Desktop configuration
-            System.setProperty("DJL_DEFAULT_ENGINE", "PyTorch")
-            System.setProperty("PYTORCH_FLAVOR", "cpu")
+            logger.info("[ExecuTorch] Desktop environment detected")
         }
-
-        ModelHolster
     }
 
     @JvmStatic
     var task: Task? = null
 
     /**
-     * DJL will automatically download engine libraries, as soon we call [Engine.getInstance()],
-     * for the platform we are running on.
-     *
-     * This should be done here,
-     * as we want to make sure that the libraries are downloaded
-     * before we try to load any models.
+     * Initializes the ExecuTorch runtime.
+     * This attempts to load native libraries and prepare for model execution.
      *
      * On Android platforms, native library loading may fail due to:
      * - Namespace isolation (libraries on external storage not accessible)
      * - GLIBC vs Bionic libc incompatibility
      * - Missing Android-specific native builds
-     * In these cases, DJL features will be gracefully disabled.
+     * In these cases, ExecuTorch features will be gracefully disabled.
      */
     suspend fun init(task: Task) {
         this.task = task
 
-        logger.info("[DeepLearning] Initializing engine...")
+        logger.info("[ExecuTorch] Initializing ExecuTorch runtime...")
         if (isAndroid) {
-            logger.info("[DeepLearning] Running on Android platform - attempting native initialization")
+            logger.info("[ExecuTorch] Running on Android platform - attempting native initialization")
         }
 
         try {
-            val engine = withContext(Dispatchers.IO) {
-                Engine.getInstance()
+            // Attempt to load ExecuTorch native library
+            val loaded = withContext(Dispatchers.IO) {
+                try {
+                    // Try to load the ExecuTorch native library
+                    System.loadLibrary("executorch")
+                    logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library")
+                    true
+                } catch (t: Throwable) {
+                    logger.warn("[ExecuTorch] Failed to load native library: ${t.message}")
+                    false
+                }
             }
-            val name = engine.engineName
-            val version = engine.version
-            val deviceType = engine.defaultDevice().deviceType.uppercase(Locale.ENGLISH)
-            logger.info("[DeepLearning] Using engine $name $version on $deviceType.")
 
-            isInitialized = true
+            if (loaded) {
+                isInitialized = true
+                logger.info("[ExecuTorch] ExecuTorch runtime initialized successfully")
+            } else {
+                throw Exception("Failed to load ExecuTorch native library")
+            }
         } catch (t: Throwable) {
-            logger.error("[DeepLearning] Failed to initialize DJL engine", t)
-            logger.error("[DeepLearning] Engine initialization failure details:\n${collectDiagnosticInfo()}")
+            logger.error("[ExecuTorch] Failed to initialize ExecuTorch engine", t)
+            logger.error("[ExecuTorch] Engine initialization failure details:\n${collectDiagnosticInfo()}")
 
             if (isAndroid) {
                 // Graceful degradation on Android
-                logger.warn("[DeepLearning] Android native library support is currently experimental")
-                logger.warn("[DeepLearning] Possible causes:")
-                logger.warn("[DeepLearning]   - Namespace isolation (libs not accessible from external storage)")
-                logger.warn("[DeepLearning]   - GLIBC vs Bionic incompatibility")
-                logger.warn("[DeepLearning]   - Missing Android-specific PyTorch natives")
-                logger.warn("[DeepLearning] Deep learning features will be disabled on this platform")
-                logger.warn("[DeepLearning] Desktop platforms are fully supported")
+                logger.warn("[ExecuTorch] Android native library support is currently experimental")
+                logger.warn("[ExecuTorch] Possible causes:")
+                logger.warn("[ExecuTorch]   - Namespace isolation (libs not accessible from external storage)")
+                logger.warn("[ExecuTorch]   - GLIBC vs Bionic incompatibility")
+                logger.warn("[ExecuTorch]   - Missing Android-specific ExecuTorch natives")
+                logger.warn("[ExecuTorch] ExecuTorch features will be disabled on this platform")
+                logger.warn("[ExecuTorch] Desktop platforms are fully supported")
 
                 isInitialized = false
                 this.task = null
@@ -163,29 +165,12 @@ object DeepLearningEngine {
             }
         }
 
-        // Initialize ExecuTorch (PyTorch Mobile) backend
-        // This is independent and can succeed even if DJL fails
-        logger.info("[DeepLearning] Initializing ExecuTorch backend...")
-        try {
-            ExecuTorchEngine.init(task)
-            isExecuTorchAvailable = ExecuTorchEngine.isInitialized
-            if (isExecuTorchAvailable) {
-                logger.info("[DeepLearning] ExecuTorch backend initialized successfully")
-            } else {
-                logger.warn("[DeepLearning] ExecuTorch backend initialization skipped (platform not supported)")
-            }
-        } catch (t: Throwable) {
-            logger.warn("[DeepLearning] ExecuTorch backend initialization failed", t)
-            isExecuTorchAvailable = false
-            // Don't rethrow - continue with DJL if available
-        }
-
         this.task = null
     }
 
     /**
-     * Collects diagnostic information useful for troubleshooting DJL engine initialization failures.
-     * Includes system properties, environment info, and cache folder contents.
+     * Collects diagnostic information useful for troubleshooting ExecuTorch initialization failures.
+     * Includes system properties, environment info, and folder contents.
      */
     private fun collectDiagnosticInfo(): String = buildString {
         appendLine("System Properties:")
@@ -195,17 +180,15 @@ object DeepLearningEngine {
         appendLine("  java.vm.name: ${System.getProperty("java.vm.name")}")
         appendLine("  java.runtime.name: ${System.getProperty("java.runtime.name")}")
         appendLine("  java.library.path: ${System.getProperty("java.library.path")}")
-        appendLine("  DJL_CACHE_DIR: ${System.getProperty("DJL_CACHE_DIR")}")
-        appendLine("  ENGINE_CACHE_DIR: ${System.getProperty("ENGINE_CACHE_DIR")}")
-        appendLine("  DJL_DEFAULT_ENGINE: ${System.getProperty("DJL_DEFAULT_ENGINE")}")
-        appendLine("  PYTORCH_FLAVOR: ${System.getProperty("PYTORCH_FLAVOR")}")
+        appendLine("  EXECUTORCH_CACHE_DIR: ${System.getProperty("EXECUTORCH_CACHE_DIR")}")
+        appendLine("  EXECUTORCH_NATIVE_DIR: ${System.getProperty("EXECUTORCH_NATIVE_DIR")}")
         appendLine("  isAndroid (detected): $isAndroid")
 
         appendLine("\nCache Folder Contents:")
 
         try {
-            appendLine("  deepLearningFolder (${deepLearningFolder.absolutePath}):")
-            val dlFiles = deepLearningFolder.listFiles()
+            appendLine("  executorchFolder (${executorchFolder.absolutePath}):")
+            val dlFiles = executorchFolder.listFiles()
             if (dlFiles != null && dlFiles.isNotEmpty()) {
                 dlFiles.forEach { file ->
                     appendLine("    - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")
@@ -214,35 +197,21 @@ object DeepLearningEngine {
                 appendLine("    (empty or not accessible)")
             }
         } catch (e: Exception) {
-            appendLine("    Error listing deepLearningFolder: ${e.message}")
+            appendLine("    Error listing executorchFolder: ${e.message}")
         }
 
         try {
-            appendLine("  djlCacheFolder (${djlCacheFolder.absolutePath}):")
-            val djlFiles = djlCacheFolder.listFiles()
-            if (djlFiles != null && djlFiles.isNotEmpty()) {
-                djlFiles.forEach { file ->
+            appendLine("  nativeFolder (${nativeFolder.absolutePath}):")
+            val nativeFiles = nativeFolder.listFiles()
+            if (nativeFiles != null && nativeFiles.isNotEmpty()) {
+                nativeFiles.forEach { file ->
                     appendLine("    - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")
                 }
             } else {
                 appendLine("    (empty or not accessible)")
             }
         } catch (e: Exception) {
-            appendLine("    Error listing djlCacheFolder: ${e.message}")
-        }
-
-        try {
-            appendLine("  enginesCacheFolder (${enginesCacheFolder.absolutePath}):")
-            val engineFiles = enginesCacheFolder.listFiles()
-            if (engineFiles != null && engineFiles.isNotEmpty()) {
-                engineFiles.forEach { file ->
-                    appendLine("    - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")
-                }
-            } else {
-                appendLine("    (empty or not accessible)")
-            }
-        } catch (e: Exception) {
-            appendLine("    Error listing enginesCacheFolder: ${e.message}")
+            appendLine("    Error listing nativeFolder: ${e.message}")
         }
     }
 
@@ -264,9 +233,9 @@ object DeepLearningEngine {
      * Choose an Android cache folder that is executable (external storage is usually mounted noexec).
      * Prefers temp/cache directories under app-private storage to allow dlopen of native libraries.
      */
-    private fun createAndroidDeepLearningFolder(): File {
+    private fun createAndroidExecutorchFolder(): File {
         val candidates = listOfNotNull(
-            System.getenv("LIQUIDBOUNCE_DL_DIR")?.let(::File),
+            System.getenv("LIQUIDBOUNCE_EXECUTORCH_DIR")?.let(::File),
             System.getProperty("java.io.tmpdir")?.let(::File),
             System.getenv("TMPDIR")?.let(::File),
             File("/data/data/com.termux/files/usr/tmp").takeIf { it.exists() },
@@ -283,8 +252,8 @@ object DeepLearningEngine {
             }
         } ?: File("/data/local/tmp")
 
-        logger.info("[DeepLearning] Using Android cache directory: ${usableBase.absolutePath}")
-        return File(usableBase, "LiquidBounce/deeplearning")
+        logger.info("[ExecuTorch] Using Android cache directory: ${usableBase.absolutePath}")
+        return File(usableBase, "LiquidBounce/executorch")
     }
 
     /**

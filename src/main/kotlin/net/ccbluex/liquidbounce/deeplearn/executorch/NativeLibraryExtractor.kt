@@ -125,15 +125,16 @@ object NativeLibraryExtractor {
     private fun getResourceAsStream(path: String): InputStream? {
         val normalizedPath = path.removePrefix("/")
         
-        // Try context class loader first
-        Thread.currentThread().contextClassLoader?.getResourceAsStream(normalizedPath)?.let { return it }
-        
-        // Try this class's class loader
-        NativeLibraryExtractor::class.java.getResourceAsStream(path)?.let { return it }
-        
-        // Try system class loader
-        ClassLoader.getSystemResourceAsStream(normalizedPath)?.let { return it }
-        
+        // Only check project resource folder: src/main/resources/<normalizedPath>
+        try {
+            val devFile = java.io.File("src/main/resources/$normalizedPath")
+            if (devFile.exists() && devFile.isFile) {
+                return devFile.inputStream()
+            }
+        } catch (_: Exception) {
+            // ignore
+        }
+
         return null
     }
 

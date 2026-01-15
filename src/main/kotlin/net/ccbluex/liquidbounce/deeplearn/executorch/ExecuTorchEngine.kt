@@ -125,10 +125,60 @@ object ExecuTorchEngine {
             // Attempt to load ExecuTorch native library
             val loaded = withContext(Dispatchers.IO) {
                 try {
-                    // Try to load the ExecuTorch native library
-                    System.loadLibrary("executorch")
-                    logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library")
-                    true
+                    if (isAndroid) {
+                        // On Android, first check if a manually placed library exists
+                        val osArch = NativeLibraryExtractor.detectOsArch()
+                        val manualLib = File(nativeFolder, "libexecutorch.so")
+                        
+                        if (manualLib.exists() && manualLib.isFile) {
+                            logger.info("[ExecuTorch] Found manually placed library at: ${manualLib.absolutePath}")
+                            System.load(manualLib.absolutePath)
+                            logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from manual placement")
+                            true
+                        } else {
+                            // Try to extract from JAR
+                            logger.info("[ExecuTorch] Attempting to extract native library for architecture: $osArch")
+                            val extractedLib = NativeLibraryExtractor.extractLibrary(
+                                "executorch",
+                                nativeFolder,
+                                osArch
+                            )
+                            
+                            if (extractedLib != null && extractedLib.exists()) {
+                                logger.info("[ExecuTorch] Native library extracted, attempting to load from: ${extractedLib.absolutePath}")
+                                System.load(extractedLib.absolutePath)
+                                logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted file")
+                                true
+                            } else {
+                                logger.warn("[ExecuTorch] No native library found (checked manual and JAR extraction)")
+                                false
+                            }
+                        }
+                    } else {
+                        // On desktop, try standard library loading first
+                        try {
+                            System.loadLibrary("executorch")
+                            logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library")
+                            true
+                        } catch (firstError: Throwable) {
+                            // If standard loading fails, try extracting from JAR
+                            logger.info("[ExecuTorch] Standard library loading failed, attempting extraction")
+                            val osArch = NativeLibraryExtractor.detectOsArch()
+                            val extractedLib = NativeLibraryExtractor.extractLibrary(
+                                "executorch",
+                                nativeFolder,
+                                osArch
+                            )
+                            
+                            if (extractedLib != null && extractedLib.exists()) {
+                                System.load(extractedLib.absolutePath)
+                                logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted file")
+                                true
+                            } else {
+                                throw firstError
+                            }
+                        }
+                    }
                 } catch (t: Throwable) {
                     logger.warn("[ExecuTorch] Failed to load native library: ${t.message}")
                     false
@@ -147,11 +197,19 @@ object ExecuTorchEngine {
 
             if (isAndroid) {
                 // Graceful degradation on Android
-                logger.warn("[ExecuTorch] Android native library support is currently experimental")
+                logger.warn("[ExecuTorch] Android native library support requires manual setup")
                 logger.warn("[ExecuTorch] Possible causes:")
+                logger.warn("[ExecuTorch]   - Native library not found in JAR resources")
+                logger.warn("[ExecuTorch]   - Native library not manually placed in native folder")
+                logger.warn("[ExecuTorch]   - Incompatible architecture (expected: ${NativeLibraryExtractor.detectOsArch()})")
                 logger.warn("[ExecuTorch]   - Namespace isolation (libs not accessible from external storage)")
                 logger.warn("[ExecuTorch]   - GLIBC vs Bionic incompatibility")
-                logger.warn("[ExecuTorch]   - Missing Android-specific ExecuTorch natives")
+                logger.warn("[ExecuTorch] ")
+                logger.warn("[ExecuTorch] To enable ExecuTorch on Android:")
+                logger.warn("[ExecuTorch]   1. Build or obtain libexecutorch.so for ${NativeLibraryExtractor.detectOsArch()}")
+                logger.warn("[ExecuTorch]   2. Place it in: ${nativeFolder.absolutePath}")
+                logger.warn("[ExecuTorch]   3. Restart the application")
+                logger.warn("[ExecuTorch] ")
                 logger.warn("[ExecuTorch] ExecuTorch features will be disabled on this platform")
                 logger.warn("[ExecuTorch] Desktop platforms are fully supported")
 
@@ -176,6 +234,7 @@ object ExecuTorchEngine {
     private fun collectDiagnosticInfo(): String = buildString {
         appendLine("System Properties:")
         appendLine("  os.arch: ${System.getProperty("os.arch")}")
+        appendLine("  detected arch: ${NativeLibraryExtractor.detectOsArch()}")
         appendLine("  os.name: ${System.getProperty("os.name")}")
         appendLine("  java.vendor: ${System.getProperty("java.vendor")}")
         appendLine("  java.vm.name: ${System.getProperty("java.vm.name")}")

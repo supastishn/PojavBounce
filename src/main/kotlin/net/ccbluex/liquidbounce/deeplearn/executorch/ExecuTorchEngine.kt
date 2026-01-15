@@ -104,6 +104,21 @@ object ExecuTorchEngine {
     var task: Task? = null
 
     /**
+     * Attempts to preload libc++_shared.so which is a common dependency of Android native libraries.
+     * This library is required by libfbjni.so on Android.
+     * Silently fails if the library is not available (it may already be loaded or not needed).
+     */
+    private fun tryLoadCppShared() {
+        try {
+            System.loadLibrary("c++_shared")
+            logger.debug("[ExecuTorch] Successfully preloaded libc++_shared.so")
+        } catch (e: Throwable) {
+            logger.debug("[ExecuTorch] libc++_shared.so not loaded (may not be needed): ${e.message}")
+            // Ignore - this library may not be available or may already be loaded
+        }
+    }
+
+    /**
      * Initializes the ExecuTorch runtime.
      * This attempts to load native libraries and prepare for model execution.
      *
@@ -147,6 +162,9 @@ object ExecuTorchEngine {
                                         manualLibFbjni.absolutePath
                                 )
                                 try {
+                                    // Try to preload libc++_shared.so which is a dependency of libfbjni.so
+                                    tryLoadCppShared()
+                                    
                                     System.load(manualLibFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so dependency")
                                     fbjniLoaded = true
@@ -174,6 +192,9 @@ object ExecuTorchEngine {
                                         "[ExecuTorch] Extracted libfbjni.so from JAR, loading it"
                                     )
                                     try {
+                                        // Try to preload libc++_shared.so which is a dependency of libfbjni.so
+                                        tryLoadCppShared()
+                                        
                                         System.load(extractedFbjni.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded libfbjni.so from extracted JAR")
                                         fbjniLoaded = true
@@ -237,6 +258,11 @@ object ExecuTorchEngine {
                                         "[ExecuTorch] Loading extracted library: ${lib.absolutePath}"
                                     )
                                     try {
+                                        // Preload libc++_shared.so before loading libfbjni.so
+                                        if (lib.name == "libfbjni.so") {
+                                            tryLoadCppShared()
+                                        }
+                                        
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
                                         if (lib.name == "libexecutorch.so") {
@@ -313,6 +339,11 @@ object ExecuTorchEngine {
                                         "[ExecuTorch] Loading extracted library: ${lib.absolutePath}"
                                     )
                                     try {
+                                        // Preload libc++_shared.so before loading libfbjni.so
+                                        if (lib.name == "libfbjni.so" && isAndroid) {
+                                            tryLoadCppShared()
+                                        }
+                                        
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
                                         if (lib.name == "libexecutorch.so") {

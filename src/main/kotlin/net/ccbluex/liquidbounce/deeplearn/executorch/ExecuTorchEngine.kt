@@ -340,7 +340,7 @@ object ExecuTorchEngine {
                                     )
                                     try {
                                         // Preload libc++_shared.so before loading libfbjni.so
-                                        if (lib.name == "libfbjni.so" && isAndroid) {
+                                        if (lib.name == "libfbjni.so") {
                                             tryLoadCppShared()
                                         }
                                         

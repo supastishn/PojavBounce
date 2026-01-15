@@ -150,9 +150,12 @@ object ExecuTorchEngine {
                                 logger.info("[ExecuTorch] Successfully loaded native ExecuTorch library from extracted file")
                                 true
                             } else {
-                                logger.warn("[ExecuTorch] No native library found")
-                                logger.warn("[ExecuTorch] Checked: manual placement at ${manualLib.absolutePath}")
-                                logger.warn("[ExecuTorch] Checked: JAR extraction for architecture $osArch")
+                                val errorMsg = buildString {
+                                    appendLine("No native library found")
+                                    appendLine("  - Manual placement: ${manualLib.absolutePath}")
+                                    appendLine("  - JAR extraction: checked for architecture $osArch")
+                                }
+                                logger.warn("[ExecuTorch] $errorMsg")
                                 false
                             }
                         }

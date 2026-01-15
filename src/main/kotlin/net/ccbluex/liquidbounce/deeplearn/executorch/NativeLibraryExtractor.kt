@@ -87,9 +87,10 @@ object NativeLibraryExtractor {
                 }
             }
 
-            // Make the library executable
+            // Make the library executable (owner-only for security)
             targetFile.setExecutable(true, true)
             targetFile.setReadable(true, true)
+            targetFile.setWritable(true, true)
 
             logger.info("[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} (${targetFile.length()} bytes)")
             return targetFile
@@ -103,14 +104,16 @@ object NativeLibraryExtractor {
      * Gets a resource as an input stream, trying multiple class loaders.
      */
     private fun getResourceAsStream(path: String): InputStream? {
+        val normalizedPath = path.removePrefix("/")
+        
         // Try context class loader first
-        Thread.currentThread().contextClassLoader?.getResourceAsStream(path.removePrefix("/"))?.let { return it }
+        Thread.currentThread().contextClassLoader?.getResourceAsStream(normalizedPath)?.let { return it }
         
         // Try this class's class loader
         NativeLibraryExtractor::class.java.getResourceAsStream(path)?.let { return it }
         
         // Try system class loader
-        ClassLoader.getSystemResourceAsStream(path.removePrefix("/"))?.let { return it }
+        ClassLoader.getSystemResourceAsStream(normalizedPath)?.let { return it }
         
         return null
     }

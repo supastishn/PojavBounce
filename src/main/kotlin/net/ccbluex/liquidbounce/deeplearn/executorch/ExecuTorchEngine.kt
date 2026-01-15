@@ -292,6 +292,9 @@ object ExecuTorchEngine {
                         try {
                             // Try loading fbjni dependency first
                             try {
+                                // Preload libc++_shared.so before loading libfbjni.so
+                                tryLoadCppShared()
+                                
                                 System.loadLibrary("fbjni")
                                 logger.info(
                                     "[ExecuTorch] Successfully loaded fbjni dependency from system"

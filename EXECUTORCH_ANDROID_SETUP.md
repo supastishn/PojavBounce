@@ -24,18 +24,17 @@ The mod will automatically detect your architecture and report it in the logs. C
 
 ### Step 2: Obtain the Native Libraries
 
-**Note:** As of the latest version, the fbjni Java classes, `libfbjni.so`, and `libc++_shared.so` are included in the mod and will be automatically extracted from resources if present. You primarily need to obtain `libexecutorch.so`.
+**Important:** The fbjni Java classes and native libraries (`libfbjni.so` and `libc++_shared.so`) are **already included in the mod** and will be automatically extracted. You **only** need to obtain `libexecutorch.so`.
 
-You need to obtain `libexecutorch.so` built for your architecture. The mod will attempt to automatically load dependencies (`libc++_shared.so` and `libfbjni.so`) from:
-1. JAR resources (if bundled)
-2. Native folder (if manually placed)
-3. System library paths (as fallback)
+The mod will automatically:
+1. Extract `libc++_shared.so` (Android C++ standard library) from JAR resources
+2. Extract `libfbjni.so` (Facebook JNI library, version 0.7.0) from JAR resources
+3. Load these dependencies in the correct order
 
-#### Required Libraries:
-1. **fbjni Java classes** - Facebook JNI Java library (dependency of ExecuTorch) - **Included in mod**
-2. **libfbjni.so** - Facebook JNI native library (dependency of ExecuTorch) - **Included in mod**
-3. **libc++_shared.so** - Android C++ standard library (dependency of libfbjni.so) - **Can be bundled/auto-extracted**
-4. **libexecutorch.so** - ExecuTorch runtime library - **You must provide this**
+**You must provide:**
+- `libexecutorch.so` - ExecuTorch runtime library built for your architecture
+
+**Important:** If you previously manually placed `libfbjni.so` or `libc++_shared.so` in the native folder, the mod will now use the version-matched libraries from the JAR instead. The JAR-bundled libraries are guaranteed to match the Java classes version (fbjni 0.7.0). If you want to use manually placed libraries, remove them from the native folder first to let the mod extract the correct versions.
 
 #### Option A: Build from Source (Recommended)
 1. Follow the [ExecuTorch build instructions](https://pytorch.org/executorch/stable/build-run-coreml.html)
@@ -62,19 +61,15 @@ Some community members may provide pre-built binaries. Ensure they are:
 
 ### Step 3: Place the Library
 
-**Note:** With the latest version, the fbjni Java classes, `libfbjni.so`, and `libc++_shared.so` (if bundled) are automatically included in the mod. The native libraries will be extracted from the mod resources. You only need to place `libexecutorch.so`.
-
-**Optional:** If you encounter loading issues, you can also manually place `libc++_shared.so` for your architecture in the native folder to ensure compatibility.
+The mod automatically extracts `libfbjni.so` and `libc++_shared.so` from JAR resources. You only need to place `libexecutorch.so`.
 
 1. Copy `libexecutorch.so` to your device
 2. Place it in the ExecuTorch native folder:
    - Path: `<cache>/LiquidBounce/executorch/native/`
    - On PojavLauncher, this is typically: `/data/user/0/com.tungsten.fcl/cache/fclauncher/LiquidBounce/executorch/native/`
-   - Required file:
-     - `libexecutorch.so` (main library)
-   - Optional (will be auto-extracted from mod resources if present):
-     - `libfbjni.so` (dependency)
-     - `libc++_shared.so` (C++ standard library, dependency of libfbjni.so)
+   - Required file: `libexecutorch.so`
+   
+**Note:** The mod will automatically extract and load `libfbjni.so` and `libc++_shared.so` from the JAR. If you have old versions of these files in the native folder from previous setups, you can delete them - the mod will use the version-matched libraries from the JAR.
 
 The exact path will be shown in the error logs when the mod attempts to load the library.
 
@@ -85,7 +80,7 @@ Ensure the library file has proper permissions:
 chmod 755 /path/to/libexecutorch.so
 ```
 
-Note: libfbjni.so permissions are automatically set when extracted by the mod.
+**Note:** libfbjni.so permissions are automatically set when extracted by the mod. The mod now prioritizes JAR-extracted libraries over manually placed ones to ensure version compatibility.
 
 ### Step 5: Restart
 
@@ -97,11 +92,15 @@ Check the logs for these messages:
 
 **Success:**
 ```
-[ExecuTorch] Attempting to extract native libraries for architecture: aarch64
-[NativeLibraryExtractor] Found library at /native/android/aarch64/libfbjni.so
+[ExecuTorch] Attempting to load libfbjni.so from JAR resources
+[NativeLibraryExtractor] Attempting to extract libc++_shared.so for aarch64
+[NativeLibraryExtractor] Found library at /native/libc++_shared.so
+[NativeLibraryExtractor] Extracted library to /path/to/native/libc++_shared.so
+[NativeLibraryExtractor] Attempting to extract libfbjni.so for aarch64
+[NativeLibraryExtractor] Found library at /native/libfbjni.so
 [NativeLibraryExtractor] Extracted library to /path/to/native/libfbjni.so
-[ExecuTorch] Loading extracted library: /path/to/native/libfbjni.so
-[ExecuTorch] Successfully loaded libfbjni.so
+[ExecuTorch] Extracted libfbjni.so from JAR (version-matched with Java classes)
+[ExecuTorch] Successfully loaded libfbjni.so from JAR
 [ExecuTorch] Found manually placed ExecuTorch library at: /path/to/libexecutorch.so
 [ExecuTorch] Successfully loaded native ExecuTorch library from manual placement
 [ExecuTorch] ExecuTorch runtime initialized successfully
@@ -120,13 +119,14 @@ Check the logs for these messages:
 - **Solution**: Verify the file paths and filenames (must be exactly `libfbjni.so` and `libexecutorch.so`)
 
 ### Missing Dependency
-- **Symptom**: "Could not initialize class com.facebook.jni.ThreadScopeSupport", "dlopen failed: library not found", or similar errors
+- **Symptom**: "Could not initialize class com.facebook.jni.ThreadScopeSupport", "UnsatisfiedLinkError", or similar errors
+- **Root Cause**: Version mismatch between fbjni Java classes and native library, or failed library loading due to missing system dependencies
 - **Solution**: 
-  - The mod now includes fbjni Java classes, `libfbjni.so`, and supports bundling `libc++_shared.so`
-  - If bundled in JAR resources, these will be auto-extracted
-  - If you encounter this error, try manually placing `libc++_shared.so` for your architecture (aarch64) in the native folder
-  - Get `libc++_shared.so` from Android NDK: `$ANDROID_NDK/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so`
-  - Or place it in `src/main/resources/native/libc++_shared.so` to bundle it with the mod
+  - The mod now automatically extracts version-matched `libfbjni.so` (0.7.0) from JAR resources
+  - **Delete any manually placed** `libfbjni.so` or `libc++_shared.so` from the native folder to let the mod use the correct versions
+  - Restart the application to allow fresh extraction
+  - If the issue persists, check logs for the actual error (e.g., missing `libandroid.so` or `liblog.so` - these should be available on Android)
+  - Ensure your `libexecutorch.so` was built against fbjni 0.7.0 headers
 
 ### Wrong Architecture
 - **Symptom**: "Failed to load native library" or crash
@@ -145,10 +145,11 @@ Check the logs for these messages:
   - Compatible builds (libfbjni.so 0.7.0 included in mod is compatible with most ExecuTorch 1.0+ builds)
   
 **Version Compatibility Notes:**
-- This mod includes fbjni 0.7.0 (Java classes and native library)
-- ExecuTorch 1.0.1 or later is recommended
-- If you encounter compatibility issues, ensure your libexecutorch.so was built against fbjni 0.7.0 headers
-- For building ExecuTorch with fbjni 0.7.0, use the matching version of fbjni headers from Maven Central
+- This mod includes fbjni 0.7.0 (Java classes and native library bundled in JAR)
+- The mod automatically extracts the version-matched `libfbjni.so` on first run
+- ExecuTorch 1.0.1 or later is recommended for compatibility
+- If you have manually placed `libfbjni.so` from a different source, remove it - the mod will use the bundled version
+- Ensure your `libexecutorch.so` was built against fbjni 0.7.0 headers for compatibility
 
 ## Alternative: Disable ExecuTorch
 
@@ -168,14 +169,19 @@ These are not available in PojavLauncher's JVM environment, making it impossible
 
 ### Library Loading Order
 
-The mod attempts to load libraries in this order:
-1. **Manual placement**: Check for `libfbjni.so` and `libexecutorch.so` in native folder
-2. **JAR extraction**: Try to extract from embedded resources
-3. **System library path**: Try `System.loadLibrary("fbjni")` and `System.loadLibrary("executorch")`
+The mod loads libraries in this order:
+1. **JAR extraction (preferred)**: Extract version-matched `libc++_shared.so` and `libfbjni.so` from JAR resources and load them
+2. **Manual placement (fallback)**: If JAR extraction fails, try loading manually placed libraries from the native folder
+3. **System library path (final fallback)**: Try `System.loadLibrary()` to use system-provided libraries
 
-Dependencies are always loaded first (libfbjni.so before libexecutorch.so).
+This order ensures version compatibility by prioritizing the bundled libraries that match the Java classes.
 
-For Android/PojavLauncher, only manual placement (#1) will work.
+For `libexecutorch.so`:
+1. **Manual placement**: Check for manually placed file in native folder and load it
+2. **JAR extraction**: Try to extract from embedded resources (if available)
+3. **System library path**: Try `System.loadLibrary("executorch")` as fallback
+
+Dependencies are always loaded before their dependents (`libc++_shared.so` → `libfbjni.so` → `libexecutorch.so`).
 
 ## Community Resources
 

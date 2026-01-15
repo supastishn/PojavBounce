@@ -164,7 +164,6 @@ object ExecuTorchEngine {
                                 try {
                                     // Try to preload libc++_shared.so which is a dependency of libfbjni.so
                                     tryLoadCppShared()
-                                    
                                     System.load(manualLibFbjni.absolutePath)
                                     logger.info("[ExecuTorch] Successfully loaded libfbjni.so dependency")
                                     fbjniLoaded = true
@@ -194,7 +193,6 @@ object ExecuTorchEngine {
                                     try {
                                         // Try to preload libc++_shared.so which is a dependency of libfbjni.so
                                         tryLoadCppShared()
-                                        
                                         System.load(extractedFbjni.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded libfbjni.so from extracted JAR")
                                         fbjniLoaded = true
@@ -262,7 +260,6 @@ object ExecuTorchEngine {
                                         if (lib.name == "libfbjni.so") {
                                             tryLoadCppShared()
                                         }
-                                        
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
                                         if (lib.name == "libexecutorch.so") {
@@ -294,7 +291,6 @@ object ExecuTorchEngine {
                             try {
                                 // Preload libc++_shared.so before loading libfbjni.so
                                 tryLoadCppShared()
-                                
                                 System.loadLibrary("fbjni")
                                 logger.info(
                                     "[ExecuTorch] Successfully loaded fbjni dependency from system"
@@ -346,7 +342,6 @@ object ExecuTorchEngine {
                                         if (lib.name == "libfbjni.so") {
                                             tryLoadCppShared()
                                         }
-                                        
                                         System.load(lib.absolutePath)
                                         logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
                                         if (lib.name == "libexecutorch.so") {

@@ -58,11 +58,15 @@ abstract class ModelWrapper<I, O>(
 ) : Choice(name), Closeable {
 
     private val model: Model by lazy {
+        require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized - cannot create DJL model" }
         Model.newInstance(name).apply {
             block = createMlpBlock(outputs)
         }
     }
-    private val predictor: Predictor<I, O> by lazy { model.newPredictor(translator) }
+    private val predictor: Predictor<I, O> by lazy { 
+        require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized - cannot create DJL predictor" }
+        model.newPredictor(translator) 
+    }
 
     @Throws(TranslateException::class)
     open fun predict(input: I): O {
@@ -134,8 +138,15 @@ abstract class ModelWrapper<I, O>(
     }
 
     override fun close() {
-        predictor.close()
-        model.close()
+        // Only close if DJL was actually initialized and the lazy properties were accessed
+        try {
+            if (DeepLearningEngine.isInitialized) {
+                predictor.close()
+                model.close()
+            }
+        } catch (_: Exception) {
+            // Ignore errors during cleanup
+        }
     }
 
 }

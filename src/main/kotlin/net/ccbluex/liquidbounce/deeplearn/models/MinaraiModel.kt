@@ -21,8 +21,16 @@
 package net.ccbluex.liquidbounce.deeplearn.models
 
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
+import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
+import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchModel
 import net.ccbluex.liquidbounce.deeplearn.translators.FloatArrayInAndOutTranslator
 
+/**
+ * Minarai model wrapper that automatically selects the appropriate backend:
+ * - ExecuTorch on Android (mobile-optimized)
+ * - DJL on PC (full-featured)
+ * - ExecuTorch fallback if DJL fails on PC
+ */
 class MinaraiModel(
     name: String,
     parent: ChoiceConfigurable<*>
@@ -31,4 +39,36 @@ class MinaraiModel(
     FloatArrayInAndOutTranslator(),
     2, // X, Y
     parent
-)
+) {
+    
+    // ExecuTorch model for Android or fallback
+    private var execuTorchModel: ExecuTorchModel? = null
+    
+    override fun predict(input: FloatArray): FloatArray {
+        // On Android or when DJL is not available, use ExecuTorch
+        if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
+            if (execuTorchModel == null) {
+                execuTorchModel = ExecuTorchModel(name, FloatArrayInAndOutTranslator(), outputs, parent)
+                // Load the model if not already loaded
+                try {
+                    execuTorchModel?.load(name)
+                } catch (e: Exception) {
+                    // Fall through to DJL if ExecuTorch model loading fails
+                    execuTorchModel = null
+                }
+            }
+            execuTorchModel?.let {
+                return it.predict(input)
+            }
+        }
+        
+        // Use DJL on PC or as fallback
+        return super.predict(input)
+    }
+    
+    override fun close() {
+        execuTorchModel?.close()
+        execuTorchModel = null
+        super.close()
+    }
+}

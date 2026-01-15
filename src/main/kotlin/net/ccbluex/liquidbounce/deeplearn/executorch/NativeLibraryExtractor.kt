@@ -85,7 +85,10 @@ object NativeLibraryExtractor {
             if (extracted != null) {
                 extractedLibs.add(extracted)
             } else {
-                logger.warn("[NativeLibraryExtractor] Failed to extract $libraryName, continuing with remaining libraries")
+                logger.warn(
+                    "[NativeLibraryExtractor] Failed to extract $libraryName, " +
+                        "continuing with remaining libraries"
+                )
             }
         }
         
@@ -111,10 +114,16 @@ object NativeLibraryExtractor {
             targetFile.setReadable(true, true)
             targetFile.setWritable(true, true)
 
-            logger.info("[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} (${targetFile.length()} bytes)")
+            logger.info(
+                "[NativeLibraryExtractor] Extracted library to ${targetFile.absolutePath} " +
+                    "(${targetFile.length()} bytes)"
+            )
             return targetFile
         } catch (e: Exception) {
-            logger.error("[NativeLibraryExtractor] Failed to extract library to $targetDir/$fileName: ${e.message}", e)
+            logger.error(
+                "[NativeLibraryExtractor] Failed to extract library to $targetDir/$fileName: ${e.message}",
+                e
+            )
             throw e
         }
     }
@@ -125,14 +134,27 @@ object NativeLibraryExtractor {
     private fun getResourceAsStream(path: String): InputStream? {
         val normalizedPath = path.removePrefix("/")
         
-        // Only check project resource folder: src/main/resources/<normalizedPath>
+        // Try to load from classpath first (works in production JAR)
+        try {
+            val classLoader = NativeLibraryExtractor::class.java.classLoader
+            val stream = classLoader?.getResourceAsStream(normalizedPath)
+            if (stream != null) {
+                logger.debug("[NativeLibraryExtractor] Found resource in classpath: $normalizedPath")
+                return stream
+            }
+        } catch (e: Exception) {
+            logger.debug("[NativeLibraryExtractor] Failed to load from classpath: ${e.message}")
+        }
+        
+        // Fallback to development folder for local development
         try {
             val devFile = java.io.File("src/main/resources/$normalizedPath")
             if (devFile.exists() && devFile.isFile) {
+                logger.debug("[NativeLibraryExtractor] Found resource in dev folder: $normalizedPath")
                 return devFile.inputStream()
             }
-        } catch (_: Exception) {
-            // ignore
+        } catch (e: Exception) {
+            logger.debug("[NativeLibraryExtractor] Failed to load from dev folder: ${e.message}")
         }
 
         return null

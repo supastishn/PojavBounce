@@ -98,7 +98,8 @@ class MinaraiAngleSmooth(
         currentRotation: Rotation,
         targetRotation: Rotation
     ): Rotation {
-        if (!DeepLearningEngine.isInitialized) {
+        // Check if either DJL or ExecuTorch is available
+        if (!DeepLearningEngine.isInitialized && !DeepLearningEngine.isExecuTorchAvailable) {
             if (notificationChronometer.hasElapsed(UNSUPPORTED_NOTIFICATION_TIME)) {
                 chat(markAsError(translation("liquidbounce.unsupportedDeepLearning")))
                 chat(markAsError(translation(

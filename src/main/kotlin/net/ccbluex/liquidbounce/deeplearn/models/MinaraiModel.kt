@@ -21,14 +21,70 @@
 package net.ccbluex.liquidbounce.deeplearn.models
 
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
+import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
+import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchModel
 import net.ccbluex.liquidbounce.deeplearn.translators.FloatArrayInAndOutTranslator
 
+/**
+ * Minarai model wrapper that automatically selects the appropriate backend:
+ * - ExecuTorch on Android (mobile-optimized)
+ * - DJL on PC (full-featured)
+ * - ExecuTorch fallback if DJL fails on PC
+ */
 class MinaraiModel(
     name: String,
     parent: ChoiceConfigurable<*>
 ) : ModelWrapper<FloatArray, FloatArray>(
     name,
-    FloatArrayInAndOutTranslator(),
+    TRANSLATOR,
     2, // X, Y
     parent
-)
+) {
+    
+    // ExecuTorch model for Android or fallback
+    private var execuTorchModel: ExecuTorchModel? = null
+    
+    @Suppress("SwallowedException")
+    override fun predict(input: FloatArray): FloatArray {
+        // Use ExecuTorch when it's available and DJL is not (Android or PC fallback case)
+        if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
+            if (execuTorchModel == null) {
+                execuTorchModel = ExecuTorchModel(
+                    name,
+                    TRANSLATOR,
+                    outputs,
+                    parent
+                )
+                // Load the model if not already loaded
+                try {
+                    execuTorchModel?.load(name)
+                } catch (e: Exception) {
+                    // ExecuTorch model loading failed (expected if JNI not implemented)
+                    // Fall through to DJL if available
+                    net.ccbluex.liquidbounce.utils.client.logger.debug(
+                        "ExecuTorch model loading failed, falling back to DJL",
+                        e
+                    )
+                    execuTorchModel = null
+                }
+            }
+            execuTorchModel?.let {
+                return it.predict(input)
+            }
+        }
+        
+        // Use DJL on PC or as fallback
+        return super.predict(input)
+    }
+    
+    override fun close() {
+        execuTorchModel?.close()
+        execuTorchModel = null
+        super.close()
+    }
+
+    companion object {
+        // Shared translator instance to avoid duplication
+        private val TRANSLATOR = FloatArrayInAndOutTranslator()
+    }
+}

@@ -303,34 +303,102 @@ object ExecuTorchEngine {
                                 logger.warn("[ExecuTorch] $errorMsg")
                                 false
                             } else {
-                                // Load extracted libraries in order
-                                var loadedExecutorch = false
-                                for (lib in extractedLibs) {
-                                    logger.info(
-                                        "[ExecuTorch] Loading extracted library: ${lib.absolutePath}"
-                                    )
+                                val extractedByName = extractedLibs.associateBy { it.name }
+                                var cppSharedLoaded = false
+                                val cppSharedLib = extractedByName["libc++_shared.so"]
+                                if (cppSharedLib != null) {
                                     try {
-                                        System.load(lib.absolutePath)
-                                        logger.info("[ExecuTorch] Successfully loaded ${lib.name}")
-                                        if (lib.name == "libexecutorch.so") {
-                                            loadedExecutorch = true
-                                        }
+                                        logger.info(
+                                            "[ExecuTorch] Loading extracted library: ${cppSharedLib.absolutePath}"
+                                        )
+                                        System.load(cppSharedLib.absolutePath)
+                                        logger.info("[ExecuTorch] Successfully loaded ${cppSharedLib.name}")
+                                        cppSharedLoaded = true
                                     } catch (e: Throwable) {
                                         logger.warn(
-                                            "[ExecuTorch] Failed to load ${lib.name}: ${e.message}"
+                                            "[ExecuTorch] Failed to load ${cppSharedLib.name}: ${e.message}"
                                         )
                                     }
                                 }
-                                
-                                if (loadedExecutorch) {
+                                if (!cppSharedLoaded) {
+                                    tryLoadCppShared()
+                                }
+
+                                var fbjniLoaded = false
+                                val fbjniLib = extractedByName["libfbjni.so"]
+                                if (fbjniLib != null) {
+                                    try {
+                                        logger.info(
+                                            "[ExecuTorch] Loading extracted library: ${fbjniLib.absolutePath}"
+                                        )
+                                        System.load(fbjniLib.absolutePath)
+                                        logger.info("[ExecuTorch] Successfully loaded ${fbjniLib.name}")
+                                        fbjniLoaded = true
+                                    } catch (e: Throwable) {
+                                        logger.warn(
+                                            "[ExecuTorch] Failed to load ${fbjniLib.name}: ${e.message}"
+                                        )
+                                    }
+                                }
+
+                                if (!fbjniLoaded && manualLibFbjni.exists() && manualLibFbjni.isFile) {
                                     logger.info(
-                                        "[ExecuTorch] Successfully loaded native ExecuTorch library " +
-                                            "from extracted files"
+                                        "[ExecuTorch] Found manually placed libfbjni.so at: " +
+                                            manualLibFbjni.absolutePath
                                     )
-                                    true
-                                } else {
-                                    logger.warn("[ExecuTorch] Failed to load libexecutorch.so")
+                                    try {
+                                        System.load(manualLibFbjni.absolutePath)
+                                        logger.info("[ExecuTorch] Successfully loaded manually placed libfbjni.so")
+                                        fbjniLoaded = true
+                                    } catch (e: Throwable) {
+                                        logger.warn(
+                                            "[ExecuTorch] Failed to load manually placed libfbjni.so: ${e.message}"
+                                        )
+                                    }
+                                }
+
+                                if (!fbjniLoaded) {
+                                    logger.info("[ExecuTorch] Attempting system load for libfbjni.so")
+                                    try {
+                                        System.loadLibrary("fbjni")
+                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so from system")
+                                        fbjniLoaded = true
+                                    } catch (e: Throwable) {
+                                        logger.warn(
+                                            "[ExecuTorch] libfbjni.so not available in system paths: ${e.message}"
+                                        )
+                                    }
+                                }
+
+                                if (!fbjniLoaded) {
+                                    logger.warn(
+                                        "[ExecuTorch] Failed to load libfbjni.so; skipping libexecutorch.so load"
+                                    )
                                     false
+                                } else {
+                                    val executorchLib = extractedByName["libexecutorch.so"]
+                                    if (executorchLib == null) {
+                                        logger.warn("[ExecuTorch] Failed to locate libexecutorch.so")
+                                        false
+                                    } else {
+                                        try {
+                                            logger.info(
+                                                "[ExecuTorch] Loading extracted library: " +
+                                                    executorchLib.absolutePath
+                                            )
+                                            System.load(executorchLib.absolutePath)
+                                            logger.info(
+                                                "[ExecuTorch] Successfully loaded native ExecuTorch library " +
+                                                    "from extracted files"
+                                            )
+                                            true
+                                        } catch (e: Throwable) {
+                                            logger.warn(
+                                                "[ExecuTorch] Failed to load ${executorchLib.name}: ${e.message}"
+                                            )
+                                            false
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -599,4 +667,3 @@ object ExecuTorchEngine {
  * Exception thrown when ExecuTorch engine initialization fails.
  */
 class ExecuTorchInitializationException(message: String, cause: Throwable? = null) : Exception(message, cause)
-

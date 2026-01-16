@@ -42,11 +42,13 @@ object NativeLibraryExtractor {
     fun extractLibrary(libraryName: String, targetDir: File, osArch: String): File? {
         // Determine library file name based on OS
         val libFileName = "lib$libraryName.so"
+
+        // Map detected architecture to packaged ABI folder names (Android-compatible)
+        val archFolder = mapToAbiFolder(osArch)
+        val archPath = archFolder?.let { "/native/$it/$libFileName" }
         
         // Possible resource paths where the library might be located (only look in native dir)
-        val resourcePaths = listOf(
-            "/native/$libFileName"
-        )
+        val resourcePaths = listOfNotNull(archPath, "/native/$libFileName")
 
         logger.info("[NativeLibraryExtractor] Attempting to extract $libFileName for $osArch")
         
@@ -57,6 +59,8 @@ object NativeLibraryExtractor {
                 if (inputStream != null) {
                     logger.info("[NativeLibraryExtractor] Found library at $resourcePath")
                     return extractToFile(inputStream, targetDir, libFileName)
+                } else if (resourcePath == archPath && archFolder != null) {
+                    logger.debug("[NativeLibraryExtractor] No bundled $libFileName for ABI '$archFolder', falling back to generic path")
                 }
             } catch (e: Exception) {
                 // Continue to next path
@@ -158,6 +162,14 @@ object NativeLibraryExtractor {
         }
 
         return null
+    }
+
+    private fun mapToAbiFolder(osArch: String): String? = when (osArch.lowercase()) {
+        "aarch64", "arm64", "arm64-v8a" -> "arm64-v8a"
+        "arm", "armeabi", "armeabi-v7a" -> "armeabi-v7a"
+        "x86_64", "amd64" -> "x86_64"
+        "x86", "i386", "i686" -> "x86"
+        else -> null
     }
 
     /**

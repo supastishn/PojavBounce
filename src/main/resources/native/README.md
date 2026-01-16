@@ -4,12 +4,22 @@ This directory contains native libraries for ExecuTorch support on Android.
 
 ## Current Libraries
 
-- `libfbjni.so` (173 KB) - Facebook JNI library for aarch64
-- `libexecutorch.so` (19 MB) - ExecuTorch runtime for aarch64
+Libraries are organized by ABI under `native/<abi>/`:
 
-## Adding libc++_shared.so
+- `arm64-v8a`
+  - `libfbjni.so` (fbjni 0.7.0)
+  - `libc++_shared.so` (from fbjni 0.7.0)
+  - `libexecutorch.so` (ExecuTorch 1.0.1)
+- `x86_64`
+  - `libfbjni.so` (fbjni 0.7.0)
+  - `libc++_shared.so` (from fbjni 0.7.0)
+  - `libexecutorch.so` (ExecuTorch 1.0.1)
+- `x86` / `armeabi-v7a`
+  - `libfbjni.so` + `libc++_shared.so` (fbjni 0.7.0) for users who provide their own `libexecutorch.so`
 
-The `libfbjni.so` library depends on `libc++_shared.so` (Android C++ standard library). While the code will attempt to load this from system paths, you can bundle it with the mod to ensure compatibility on all Android devices.
+## Updating libc++_shared.so
+
+The bundled `libc++_shared.so` comes from the official fbjni 0.7.0 release. If you need to replace it (e.g., for a new ABI), obtain a matching version and place it in the corresponding ABI folder.
 
 ### How to obtain libc++_shared.so
 
@@ -56,10 +66,10 @@ After adding the library:
 
 ## Architecture Support
 
-Currently, only **aarch64** (ARM64) libraries are provided. To support other architectures:
+Arm64 and x86_64 libraries are bundled. To support additional architectures:
 - Build or obtain libraries for the target architecture
-- Name them with the same filenames (the extractor looks for exact names)
-- The code will extract and use them based on detected architecture
+- Place them in `native/<abi>/` using the same filenames
+- The extractor will pick the library that matches the detected architecture
 
 ## Notes
 

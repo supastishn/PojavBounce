@@ -303,9 +303,16 @@ object ExecuTorchEngine {
                                 logger.warn("[ExecuTorch] $errorMsg")
                                 false
                             } else {
-                                val extractedByName = extractedLibs.associateBy { it.name }
+                                val extractedByName = extractedLibs.groupBy { it.name }
+                                val duplicateLibs = extractedByName.filterValues { it.size > 1 }.keys
+                                if (duplicateLibs.isNotEmpty()) {
+                                    logger.warn(
+                                        "[ExecuTorch] Duplicate native libraries found: " +
+                                            duplicateLibs.joinToString()
+                                    )
+                                }
                                 var cppSharedLoaded = false
-                                val cppSharedLib = extractedByName["libc++_shared.so"]
+                                val cppSharedLib = extractedByName["libc++_shared.so"]?.firstOrNull()
                                 if (cppSharedLib != null) {
                                     try {
                                         logger.info(
@@ -325,7 +332,7 @@ object ExecuTorchEngine {
                                 }
 
                                 var fbjniLoaded = false
-                                val fbjniLib = extractedByName["libfbjni.so"]
+                                val fbjniLib = extractedByName["libfbjni.so"]?.firstOrNull()
                                 if (fbjniLib != null) {
                                     try {
                                         logger.info(
@@ -376,10 +383,27 @@ object ExecuTorchEngine {
                                     )
                                     false
                                 } else {
-                                    val executorchLib = extractedByName["libexecutorch.so"]
+                                    fun tryLoadExecutorchFromSystem(): Boolean {
+                                        return try {
+                                            System.loadLibrary("executorch")
+                                            logger.info(
+                                                "[ExecuTorch] Successfully loaded native ExecuTorch library " +
+                                                    "from system paths"
+                                            )
+                                            true
+                                        } catch (e: Throwable) {
+                                            logger.warn(
+                                                "[ExecuTorch] Failed to load libexecutorch.so from system paths: " +
+                                                    e.message
+                                            )
+                                            false
+                                        }
+                                    }
+
+                                    val executorchLib = extractedByName["libexecutorch.so"]?.firstOrNull()
                                     if (executorchLib == null) {
                                         logger.warn("[ExecuTorch] Failed to locate libexecutorch.so")
-                                        false
+                                        tryLoadExecutorchFromSystem()
                                     } else {
                                         try {
                                             logger.info(
@@ -396,7 +420,7 @@ object ExecuTorchEngine {
                                             logger.warn(
                                                 "[ExecuTorch] Failed to load ${executorchLib.name}: ${e.message}"
                                             )
-                                            false
+                                            tryLoadExecutorchFromSystem()
                                         }
                                     }
                                 }

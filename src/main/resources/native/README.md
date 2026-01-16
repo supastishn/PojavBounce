@@ -17,6 +17,8 @@ Libraries are organized by ABI under `native/<abi>/`:
 - `x86` / `armeabi-v7a`
   - `libfbjni.so` + `libc++_shared.so` (fbjni 0.7.0) for users who provide their own `libexecutorch.so`
 
+**ABI compatibility:** keep `libfbjni.so` and `libc++_shared.so` from the same fbjni release (0.7.0 here). Mixing versions or ABIs can lead to runtime link errors or failed library loads.
+
 ## Updating libc++_shared.so
 
 The bundled `libc++_shared.so` comes from the official fbjni 0.7.0 release. If you need to replace it (e.g., for a new ABI), obtain a matching version and place it in the corresponding ABI folder.

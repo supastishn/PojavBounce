@@ -5,7 +5,7 @@
  * The real implementation is in executorch-android AAR which is incompatible with PojavLauncher
  * This stub allows the native library to load without errors
  */
-package org.pytorch.executorch.;
+package org.pytorch.executorch;
 
 import com.facebook.jni.HybridData;
 

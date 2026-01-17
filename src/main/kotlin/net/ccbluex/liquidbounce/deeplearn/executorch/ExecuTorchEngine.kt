@@ -34,7 +34,7 @@ import java.util.*
  * Custom NativeLoaderDelegate that loads libraries from our custom native folder.
  * This is required because PojavLauncher doesn't have standard Android app structure.
  */
-class CustomNativeLoaderDelegate(private val nativeFolder: File) : NativeLoaderDelegate() {
+class CustomNativeLoaderDelegate(private val nativeFolder: File) : NativeLoaderDelegate {
     override fun loadLibrary(shortName: String, flags: Int): Boolean {
         val libFileName = "lib$shortName.so"
         val libFile = File(nativeFolder, libFileName)

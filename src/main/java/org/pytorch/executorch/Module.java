@@ -1,6 +1,6 @@
 package org.pytorch.executorch;
 
-import android.util.Log;
+
 import com.facebook.jni.HybridData;
 import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.soloader.nativeloader.NativeLoader;
@@ -94,7 +94,7 @@ public class Module {
         try {
             this.mLock.lock();
             if (!this.mHybridData.isValid()) {
-                Log.e("ExecuTorch", "Attempt to use a destroyed module");
+                // Log.e("ExecuTorch", "Attempt to use a destroyed module");
                 EValue[] eValueArr = new EValue[0];
                 this.mLock.unlock();
                 return eValueArr;
@@ -112,7 +112,7 @@ public class Module {
         try {
             this.mLock.lock();
             if (!this.mHybridData.isValid()) {
-                Log.e("ExecuTorch", "Attempt to use a destroyed module");
+                // Log.e("ExecuTorch", "Attempt to use a destroyed module");
                 return 2;
             }
             return loadMethodNative(methodName);
@@ -145,6 +145,6 @@ public class Module {
                 this.mLock.unlock();
             }
         }
-        Log.w("ExecuTorch", "Destroy was called while the module was in use. Resources will not be immediately released.");
+        // Log.w("ExecuTorch", "Destroy was called while the module was in use. Resources will not be immediately released.");
     }
 }

@@ -1,6 +1,6 @@
 package org.pytorch.executorch.training;
 
-import android.util.Log;
+
 import com.facebook.jni.HybridData;
 import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.soloader.nativeloader.NativeLoader;
@@ -62,7 +62,7 @@ public class TrainingModule {
 
     public EValue[] executeForwardBackward(String methodName, EValue... inputs) {
         if (!this.mHybridData.isValid()) {
-            Log.e("ExecuTorch", "Attempt to use a destroyed module");
+            // Log.e("ExecuTorch", "Attempt to use a destroyed module");
             return new EValue[0];
         }
         return executeForwardBackwardNative(methodName, inputs);
@@ -70,7 +70,7 @@ public class TrainingModule {
 
     public Map<String, Tensor> namedParameters(String methodName) {
         if (!this.mHybridData.isValid()) {
-            Log.e("ExecuTorch", "Attempt to use a destroyed module");
+            // Log.e("ExecuTorch", "Attempt to use a destroyed module");
             return new HashMap();
         }
         return namedParametersNative(methodName);
@@ -78,7 +78,7 @@ public class TrainingModule {
 
     public Map<String, Tensor> namedGradients(String methodName) {
         if (!this.mHybridData.isValid()) {
-            Log.e("ExecuTorch", "Attempt to use a destroyed module");
+            // Log.e("ExecuTorch", "Attempt to use a destroyed module");
             return new HashMap();
         }
         return namedGradientsNative(methodName);

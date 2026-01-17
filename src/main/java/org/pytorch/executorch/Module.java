@@ -16,6 +16,7 @@ public class Module {
     // Native method declarations that libexecutorch.so will provide
     // Signature from error: initHybrid(Ljava/lang/String;II)Lcom/facebook/jni/HybridData;
     private static native HybridData initHybrid(String modelPath, int loadMode, int debug);
+    private native EValue[] executeNative(String methodName, EValue[] inputs);
     private native Object forward(Object... inputs);
     private native void destroy();
 
@@ -39,6 +40,13 @@ public class Module {
      */
     public Object execute(Object... inputs) {
         return forward(inputs);
+    }
+
+    /**
+     * Execute a named method in the model
+     */
+    public EValue[] execute(String methodName, EValue[] inputs) {
+        return executeNative(methodName, inputs);
     }
 
     /**

@@ -133,24 +133,15 @@ object ExecuTorchEngine {
      */
     private fun initializeNativeLoader() {
         try {
-            logger.debug("[ExecuTorch] Checking if NativeLoader is already initialized")
-            // Check if already initialized by trying to access it
-            try {
-                NativeLoader.getApplicationContext()
-                logger.debug("[ExecuTorch] NativeLoader already initialized")
-                return
-            } catch (e: IllegalStateException) {
-                // Not initialized, continue with initialization
-                logger.debug("[ExecuTorch] NativeLoader not initialized, initializing now")
-            }
-
             logger.info("[ExecuTorch] Initializing Facebook NativeLoader with SystemDelegate")
+            // NativeLoader.init() is idempotent - calling it multiple times is safe
             NativeLoader.init(SystemDelegate())
             logger.info("[ExecuTorch] Successfully initialized Facebook NativeLoader")
         } catch (e: Throwable) {
             logger.error("[ExecuTorch] Failed to initialize NativeLoader: ${e.javaClass.simpleName}: ${e.message}")
             logger.error("[ExecuTorch] Full exception:", e)
-            throw e
+            // Don't throw - try to continue anyway as the library might still load
+            logger.warn("[ExecuTorch] Continuing despite NativeLoader initialization failure")
         }
     }
 

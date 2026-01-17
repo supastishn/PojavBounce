@@ -21,7 +21,7 @@
 package net.ccbluex.liquidbounce.deeplearn.executorch
 
 import com.facebook.soloader.nativeloader.NativeLoader
-import com.facebook.soloader.nativeloader.SystemDelegate
+import com.facebook.soloader.nativeloader.NativeLoaderDelegate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.ConfigSystem.rootFolder
@@ -29,6 +29,42 @@ import net.ccbluex.liquidbounce.integration.task.type.Task
 import net.ccbluex.liquidbounce.utils.client.logger
 import java.io.File
 import java.util.*
+
+/**
+ * Custom NativeLoaderDelegate that loads libraries from our custom native folder.
+ * This is required because PojavLauncher doesn't have standard Android app structure.
+ */
+class CustomNativeLoaderDelegate(private val nativeFolder: File) : NativeLoaderDelegate() {
+    override fun loadLibrary(shortName: String, flags: Int): Boolean {
+        val libFileName = "lib$shortName.so"
+        val libFile = File(nativeFolder, libFileName)
+
+        logger.debug("[CustomNativeLoader] Attempting to load $libFileName from ${nativeFolder.absolutePath}")
+
+        return if (libFile.exists() && libFile.isFile) {
+            try {
+                logger.debug("[CustomNativeLoader] Loading ${libFile.absolutePath}")
+                System.load(libFile.absolutePath)
+                logger.info("[CustomNativeLoader] Successfully loaded $libFileName")
+                true
+            } catch (e: Throwable) {
+                logger.error("[CustomNativeLoader] Failed to load ${libFile.absolutePath}: ${e.message}")
+                false
+            }
+        } else {
+            logger.debug("[CustomNativeLoader] Library $libFileName not found in ${nativeFolder.absolutePath}")
+            false
+        }
+    }
+
+    override fun getLibraryPath(libName: String): String? {
+        val libFileName = "lib$libName.so"
+        val libFile = File(nativeFolder, libFileName)
+        return if (libFile.exists()) libFile.absolutePath else null
+    }
+
+    override fun getSoSourcesVersion(): Int = 1
+}
 
 /**
  * ExecuTorch runtime engine for on-device PyTorch model inference on Android and mobile platforms.
@@ -133,9 +169,10 @@ object ExecuTorchEngine {
      */
     private fun initializeNativeLoader() {
         try {
-            logger.info("[ExecuTorch] Initializing Facebook NativeLoader with SystemDelegate")
-            // NativeLoader.init() is idempotent - calling it multiple times is safe
-            NativeLoader.init(SystemDelegate())
+            logger.info("[ExecuTorch] Initializing Facebook NativeLoader with CustomNativeLoaderDelegate")
+            logger.debug("[ExecuTorch] Native folder: ${nativeFolder.absolutePath}")
+            // Use custom delegate that loads from our native folder
+            NativeLoader.init(CustomNativeLoaderDelegate(nativeFolder))
             logger.info("[ExecuTorch] Successfully initialized Facebook NativeLoader")
         } catch (e: Throwable) {
             logger.error("[ExecuTorch] Failed to initialize NativeLoader: ${e.javaClass.simpleName}: ${e.message}")

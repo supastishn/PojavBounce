@@ -170,8 +170,8 @@ dependencies {
     includeDependency(libs.soloader)
 
     // executorch-android - Use the JAR classes directly (exclude native libs and Android dependencies)
-    // We extract the classes.jar from the AAR and use it as a compile-only dependency
-    compileOnly(files("libs/executorch-android-1.0.1-classes.jar"))
+    // We extract the classes.jar from the AAR and include it in the mod
+    includeDependency(files("libs/executorch-android-1.0.1-classes.jar"))
 
     // Note: ExecuTorch native libraries must be provided separately
     // The executorch-android dependency requires Android SDK which is not available in PojavLauncher

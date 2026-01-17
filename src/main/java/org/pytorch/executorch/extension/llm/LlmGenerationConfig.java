@@ -1,8 +1,6 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.pytorch.executorch.extension.llm;
 
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/extension/llm/LlmGenerationConfig.class */
 public class LlmGenerationConfig {
     private final boolean echo;
     private final int maxNewTokens;
@@ -42,6 +40,7 @@ public class LlmGenerationConfig {
         return this.temperature;
     }
 
+    /* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/extension/llm/LlmGenerationConfig$Builder.class */
     public static class Builder {
         private boolean echo = true;
         private int maxNewTokens = -1;

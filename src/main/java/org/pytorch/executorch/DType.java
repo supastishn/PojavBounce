@@ -1,11 +1,9 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.pytorch.executorch;
 
 import org.pytorch.executorch.annotations.Experimental;
 
 @Experimental
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/DType.class */
 public enum DType {
     UINT8(0),
     INT8(1),
@@ -33,14 +31,15 @@ public enum DType {
 
     final int jniCode;
 
-    private DType(int jniCode) {
+    DType(int jniCode) {
         this.jniCode = jniCode;
     }
 
     public static DType fromJniCode(int jniCode) {
-        for (DType dtype : DType.values()) {
-            if (dtype.jniCode != jniCode) continue;
-            return dtype;
+        for (DType dtype : values()) {
+            if (dtype.jniCode == jniCode) {
+                return dtype;
+            }
         }
         throw new IllegalArgumentException("No DType found for jniCode " + jniCode);
     }

@@ -1,15 +1,11 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.pytorch.executorch;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import org.pytorch.executorch.Module;
 
-public class ExecutorchRuntimeException
-extends RuntimeException {
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/ExecutorchRuntimeException.class */
+public class ExecutorchRuntimeException extends RuntimeException {
     public static final int OK = 0;
     public static final int INTERNAL = 1;
     public static final int INVALID_STATE = 2;
@@ -33,26 +29,8 @@ extends RuntimeException {
     private static final Map<Integer, String> ERROR_CODE_MESSAGES;
     private final int errorCode;
 
-    public ExecutorchRuntimeException(int errorCode, String details) {
-        super(ErrorHelper.formatMessage(errorCode, details));
-        this.errorCode = errorCode;
-    }
-
-    public int getErrorCode() {
-        return this.errorCode;
-    }
-
-    public static RuntimeException makeExecutorchException(int errorCode, String details) {
-        switch (errorCode) {
-            case 18: {
-                return new ExecutorchInvalidArgumentException(details);
-            }
-        }
-        return new ExecutorchRuntimeException(errorCode, details);
-    }
-
     static {
-        HashMap<Integer, String> map = new HashMap<Integer, String>();
+        Map<Integer, String> map = new HashMap<>();
         map.put(0, "Operation successful");
         map.put(1, "Internal error");
         map.put(2, "Invalid state");
@@ -76,6 +54,7 @@ extends RuntimeException {
         ERROR_CODE_MESSAGES = Collections.unmodifiableMap(map);
     }
 
+    /* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/ExecutorchRuntimeException$ErrorHelper.class */
     static class ErrorHelper {
         private static final boolean ENABLE_READ_LOG_BUFFER_LOGS = true;
         private static final StringBuilder sb = new StringBuilder();
@@ -83,14 +62,11 @@ extends RuntimeException {
         ErrorHelper() {
         }
 
-        /*
-         * WARNING - Removed try catching itself - possible behaviour change.
-         */
         static String formatMessage(int errorCode, String details) {
-            StringBuilder stringBuilder = sb;
-            synchronized (stringBuilder) {
+            String sb2;
+            synchronized (sb) {
                 sb.setLength(0);
-                String baseMessage = (String)ERROR_CODE_MESSAGES.get(errorCode);
+                String baseMessage = (String) ExecutorchRuntimeException.ERROR_CODE_MESSAGES.get(Integer.valueOf(errorCode));
                 if (baseMessage == null) {
                     baseMessage = "Unknown error code 0x" + Integer.toHexString(errorCode);
                 }
@@ -100,36 +76,55 @@ extends RuntimeException {
                     if (logEntries != null && logEntries.length > 0) {
                         sb.append("\n Detailed logs:\n");
                     }
-                    ErrorHelper.formatLogEntries(sb, logEntries);
-                }
-                catch (Exception e) {
+                    formatLogEntries(sb, logEntries);
+                } catch (Exception e) {
                     sb.append("Failed to retrieve detailed logs: ").append(e.getMessage());
                 }
-                return sb.toString();
+                sb2 = sb.toString();
             }
+            return sb2;
         }
 
-        private static void formatLogEntries(StringBuilder sb, String[] logEntries) {
+        private static void formatLogEntries(StringBuilder sb2, String[] logEntries) {
             if (logEntries == null || logEntries.length == 0) {
-                sb.append("No detailed logs available.");
+                sb2.append("No detailed logs available.");
                 return;
             }
             for (String entry : logEntries) {
-                sb.append(entry).append("\n");
+                sb2.append(entry).append("\n");
             }
         }
     }
 
-    public static class ExecutorchInvalidArgumentException
-    extends IllegalArgumentException {
+    public ExecutorchRuntimeException(int errorCode, String details) {
+        super(ErrorHelper.formatMessage(errorCode, details));
+        this.errorCode = errorCode;
+    }
+
+    public int getErrorCode() {
+        return this.errorCode;
+    }
+
+    /* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/ExecutorchRuntimeException$ExecutorchInvalidArgumentException.class */
+    public static class ExecutorchInvalidArgumentException extends IllegalArgumentException {
         private final int errorCode = 18;
 
         public ExecutorchInvalidArgumentException(String details) {
             super(ErrorHelper.formatMessage(18, details));
+            this.errorCode = 18;
         }
 
         public int getErrorCode() {
             return 18;
+        }
+    }
+
+    public static RuntimeException makeExecutorchException(int errorCode, String details) {
+        switch (errorCode) {
+            case INVALID_ARGUMENT /* 18 */:
+                return new ExecutorchInvalidArgumentException(details);
+            default:
+                return new ExecutorchRuntimeException(errorCode, details);
         }
     }
 }

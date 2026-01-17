@@ -1,21 +1,9 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  android.util.Log
- *  com.facebook.jni.HybridData
- *  com.facebook.jni.annotations.DoNotStrip
- *  com.facebook.soloader.nativeloader.NativeLoader
- *  com.facebook.soloader.nativeloader.NativeLoaderDelegate
- *  com.facebook.soloader.nativeloader.SystemDelegate
- */
 package org.pytorch.executorch.training;
 
 import android.util.Log;
 import com.facebook.jni.HybridData;
 import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.soloader.nativeloader.NativeLoader;
-import com.facebook.soloader.nativeloader.NativeLoaderDelegate;
 import com.facebook.soloader.nativeloader.SystemDelegate;
 import java.io.File;
 import java.util.HashMap;
@@ -25,14 +13,31 @@ import org.pytorch.executorch.Tensor;
 import org.pytorch.executorch.annotations.Experimental;
 
 @Experimental
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/training/TrainingModule.class */
 public class TrainingModule {
     private final HybridData mHybridData;
 
     @DoNotStrip
-    private static native HybridData initHybrid(String var0, String var1);
+    private static native HybridData initHybrid(String str, String str2);
+
+    @DoNotStrip
+    private native EValue[] executeForwardBackwardNative(String str, EValue... eValueArr);
+
+    @DoNotStrip
+    private native Map<String, Tensor> namedParametersNative(String str);
+
+    @DoNotStrip
+    private native Map<String, Tensor> namedGradientsNative(String str);
+
+    static {
+        if (!NativeLoader.isInitialized()) {
+            NativeLoader.init(new SystemDelegate());
+        }
+        NativeLoader.loadLibrary("executorch");
+    }
 
     private TrainingModule(String moduleAbsolutePath, String dataAbsolutePath) {
-        this.mHybridData = TrainingModule.initHybrid(moduleAbsolutePath, dataAbsolutePath);
+        this.mHybridData = initHybrid(moduleAbsolutePath, dataAbsolutePath);
     }
 
     public static TrainingModule load(String modelPath, String dataPath) {
@@ -55,43 +60,27 @@ public class TrainingModule {
         return new TrainingModule(modelPath, "");
     }
 
-    public EValue[] executeForwardBackward(String methodName, EValue ... inputs) {
+    public EValue[] executeForwardBackward(String methodName, EValue... inputs) {
         if (!this.mHybridData.isValid()) {
-            Log.e((String)"ExecuTorch", (String)"Attempt to use a destroyed module");
+            Log.e("ExecuTorch", "Attempt to use a destroyed module");
             return new EValue[0];
         }
-        return this.executeForwardBackwardNative(methodName, inputs);
+        return executeForwardBackwardNative(methodName, inputs);
     }
-
-    @DoNotStrip
-    private native EValue[] executeForwardBackwardNative(String var1, EValue ... var2);
 
     public Map<String, Tensor> namedParameters(String methodName) {
         if (!this.mHybridData.isValid()) {
-            Log.e((String)"ExecuTorch", (String)"Attempt to use a destroyed module");
-            return new HashMap<String, Tensor>();
+            Log.e("ExecuTorch", "Attempt to use a destroyed module");
+            return new HashMap();
         }
-        return this.namedParametersNative(methodName);
+        return namedParametersNative(methodName);
     }
-
-    @DoNotStrip
-    private native Map<String, Tensor> namedParametersNative(String var1);
 
     public Map<String, Tensor> namedGradients(String methodName) {
         if (!this.mHybridData.isValid()) {
-            Log.e((String)"ExecuTorch", (String)"Attempt to use a destroyed module");
-            return new HashMap<String, Tensor>();
+            Log.e("ExecuTorch", "Attempt to use a destroyed module");
+            return new HashMap();
         }
-        return this.namedGradientsNative(methodName);
-    }
-
-    @DoNotStrip
-    private native Map<String, Tensor> namedGradientsNative(String var1);
-
-    static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init((NativeLoaderDelegate)new SystemDelegate());
-        }
-        NativeLoader.loadLibrary((String)"executorch");
+        return namedGradientsNative(methodName);
     }
 }

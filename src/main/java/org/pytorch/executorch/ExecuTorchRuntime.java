@@ -1,28 +1,12 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.facebook.jni.annotations.DoNotStrip
- *  com.facebook.soloader.nativeloader.NativeLoader
- *  com.facebook.soloader.nativeloader.NativeLoaderDelegate
- *  com.facebook.soloader.nativeloader.SystemDelegate
- */
 package org.pytorch.executorch;
 
 import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.soloader.nativeloader.NativeLoader;
-import com.facebook.soloader.nativeloader.NativeLoaderDelegate;
 import com.facebook.soloader.nativeloader.SystemDelegate;
 
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/ExecuTorchRuntime.class */
 public class ExecuTorchRuntime {
     private static final ExecuTorchRuntime sInstance;
-
-    private ExecuTorchRuntime() {
-    }
-
-    public static ExecuTorchRuntime getRuntime() {
-        return sInstance;
-    }
 
     @DoNotStrip
     public static native String[] getRegisteredOps();
@@ -32,9 +16,16 @@ public class ExecuTorchRuntime {
 
     static {
         if (!NativeLoader.isInitialized()) {
-            NativeLoader.init((NativeLoaderDelegate)new SystemDelegate());
+            NativeLoader.init(new SystemDelegate());
         }
-        NativeLoader.loadLibrary((String)"executorch");
+        NativeLoader.loadLibrary("executorch");
         sInstance = new ExecuTorchRuntime();
+    }
+
+    private ExecuTorchRuntime() {
+    }
+
+    public static ExecuTorchRuntime getRuntime() {
+        return sInstance;
     }
 }

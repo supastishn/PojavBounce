@@ -1,8 +1,6 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.pytorch.executorch;
 
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/MethodMetadata.class */
 public class MethodMetadata {
     private String mName;
     private String[] mBackends;

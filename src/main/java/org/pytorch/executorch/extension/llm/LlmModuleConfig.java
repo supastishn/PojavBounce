@@ -1,8 +1,6 @@
-/*
- * Decompiled with CFR 0.152.
- */
 package org.pytorch.executorch.extension.llm;
 
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/extension/llm/LlmModuleConfig.class */
 public class LlmModuleConfig {
     private final String modulePath;
     private final String tokenizerPath;
@@ -45,6 +43,7 @@ public class LlmModuleConfig {
         return this.modelType;
     }
 
+    /* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/extension/llm/LlmModuleConfig$Builder.class */
     public static class Builder {
         private String modulePath;
         private String tokenizerPath;

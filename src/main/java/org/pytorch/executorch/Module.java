@@ -1,33 +1,19 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  android.util.Log
- *  com.facebook.jni.HybridData
- *  com.facebook.jni.annotations.DoNotStrip
- *  com.facebook.soloader.nativeloader.NativeLoader
- *  com.facebook.soloader.nativeloader.NativeLoaderDelegate
- *  com.facebook.soloader.nativeloader.SystemDelegate
- */
 package org.pytorch.executorch;
 
 import android.util.Log;
 import com.facebook.jni.HybridData;
 import com.facebook.jni.annotations.DoNotStrip;
 import com.facebook.soloader.nativeloader.NativeLoader;
-import com.facebook.soloader.nativeloader.NativeLoaderDelegate;
 import com.facebook.soloader.nativeloader.SystemDelegate;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import org.pytorch.executorch.EValue;
-import org.pytorch.executorch.ExecuTorchRuntime;
-import org.pytorch.executorch.MethodMetadata;
 import org.pytorch.executorch.annotations.Experimental;
 
 @Experimental
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/Module.class */
 public class Module {
     public static final int LOAD_MODE_FILE = 0;
     public static final int LOAD_MODE_MMAP = 1;
@@ -38,26 +24,54 @@ public class Module {
     private Lock mLock = new ReentrantLock();
 
     @DoNotStrip
-    private static native HybridData initHybrid(String var0, int var1, int var2);
+    private static native HybridData initHybrid(String str, int i, int i2);
+
+    @DoNotStrip
+    private native EValue[] executeNative(String str, EValue... eValueArr);
+
+    @DoNotStrip
+    private native int loadMethodNative(String str);
+
+    @DoNotStrip
+    private native String[] getUsedBackends(String str);
+
+    @DoNotStrip
+    public native String[] getMethods();
+
+    @DoNotStrip
+    private static native String[] readLogBufferStaticNative();
+
+    @DoNotStrip
+    private native String[] readLogBufferNative();
+
+    @DoNotStrip
+    @Experimental
+    public native boolean etdump();
+
+    static {
+        if (!NativeLoader.isInitialized()) {
+            NativeLoader.init(new SystemDelegate());
+        }
+        NativeLoader.loadLibrary("executorch");
+    }
 
     private Module(String moduleAbsolutePath, int loadMode, int numThreads) {
-        ExecuTorchRuntime runtime = ExecuTorchRuntime.getRuntime();
-        this.mHybridData = Module.initHybrid(moduleAbsolutePath, loadMode, numThreads);
-        this.mMethodMetadata = this.populateMethodMeta();
+        ExecuTorchRuntime.getRuntime();
+        this.mHybridData = initHybrid(moduleAbsolutePath, loadMode, numThreads);
+        this.mMethodMetadata = populateMethodMeta();
     }
 
     Map<String, MethodMetadata> populateMethodMeta() {
-        String[] methods = this.getMethods();
-        HashMap<String, MethodMetadata> metadata = new HashMap<String, MethodMetadata>();
-        for (int i = 0; i < methods.length; ++i) {
-            String name = methods[i];
+        String[] methods = getMethods();
+        Map<String, MethodMetadata> metadata = new HashMap<>();
+        for (String name : methods) {
             metadata.put(name, new MethodMetadata().setName(name));
         }
         return metadata;
     }
 
     public static Module load(String modelPath, int loadMode) {
-        return Module.load(modelPath, loadMode, 0);
+        return load(modelPath, loadMode, 0);
     }
 
     public static Module load(String modelPath, int loadMode, int numThreads) {
@@ -69,59 +83,43 @@ public class Module {
     }
 
     public static Module load(String modelPath) {
-        return Module.load(modelPath, 0);
+        return load(modelPath, 0);
     }
 
-    public EValue[] forward(EValue ... inputs) {
-        return this.execute("forward", inputs);
+    public EValue[] forward(EValue... inputs) {
+        return execute("forward", inputs);
     }
 
-    /*
-     * WARNING - Removed try catching itself - possible behaviour change.
-     */
-    public EValue[] execute(String methodName, EValue ... inputs) {
+    public EValue[] execute(String methodName, EValue... inputs) {
         try {
             this.mLock.lock();
             if (!this.mHybridData.isValid()) {
-                Log.e((String)"ExecuTorch", (String)"Attempt to use a destroyed module");
-                EValue[] eValueArray = new EValue[]{};
-                return eValueArray;
+                Log.e("ExecuTorch", "Attempt to use a destroyed module");
+                EValue[] eValueArr = new EValue[0];
+                this.mLock.unlock();
+                return eValueArr;
             }
-            EValue[] eValueArray = this.executeNative(methodName, inputs);
-            return eValueArray;
-        }
-        finally {
+            EValue[] executeNative = executeNative(methodName, inputs);
             this.mLock.unlock();
+            return executeNative;
+        } catch (Throwable th) {
+            this.mLock.unlock();
+            throw th;
         }
     }
-
-    @DoNotStrip
-    private native EValue[] executeNative(String var1, EValue ... var2);
 
     public int loadMethod(String methodName) {
         try {
             this.mLock.lock();
             if (!this.mHybridData.isValid()) {
-                Log.e((String)"ExecuTorch", (String)"Attempt to use a destroyed module");
-                int n = 2;
-                return n;
+                Log.e("ExecuTorch", "Attempt to use a destroyed module");
+                return 2;
             }
-            int n = this.loadMethodNative(methodName);
-            return n;
-        }
-        finally {
+            return loadMethodNative(methodName);
+        } finally {
             this.mLock.unlock();
         }
     }
-
-    @DoNotStrip
-    private native int loadMethodNative(String var1);
-
-    @DoNotStrip
-    private native String[] getUsedBackends(String var1);
-
-    @DoNotStrip
-    public native String[] getMethods();
 
     public MethodMetadata getMethodMetadata(String name) {
         if (!this.mMethodMetadata.containsKey(name)) {
@@ -130,41 +128,23 @@ public class Module {
         return this.mMethodMetadata.get(name);
     }
 
-    @DoNotStrip
-    private static native String[] readLogBufferStaticNative();
-
     public static String[] readLogBufferStatic() {
-        return Module.readLogBufferStaticNative();
+        return readLogBufferStaticNative();
     }
 
     public String[] readLogBuffer() {
-        return this.readLogBufferNative();
+        return readLogBufferNative();
     }
-
-    @DoNotStrip
-    private native String[] readLogBufferNative();
-
-    @Experimental
-    @DoNotStrip
-    public native boolean etdump();
 
     public void destroy() {
         if (this.mLock.tryLock()) {
             try {
                 this.mHybridData.resetNative();
-            }
-            finally {
+                return;
+            } finally {
                 this.mLock.unlock();
             }
-        } else {
-            Log.w((String)"ExecuTorch", (String)"Destroy was called while the module was in use. Resources will not be immediately released.");
         }
-    }
-
-    static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init((NativeLoaderDelegate)new SystemDelegate());
-        }
-        NativeLoader.loadLibrary((String)"executorch");
+        Log.w("ExecuTorch", "Destroy was called while the module was in use. Resources will not be immediately released.");
     }
 }

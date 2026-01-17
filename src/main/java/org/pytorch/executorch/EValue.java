@@ -1,20 +1,14 @@
-/*
- * Decompiled with CFR 0.152.
- * 
- * Could not load the following classes:
- *  com.facebook.jni.annotations.DoNotStrip
- */
 package org.pytorch.executorch;
 
 import com.facebook.jni.annotations.DoNotStrip;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Locale;
-import org.pytorch.executorch.Tensor;
 import org.pytorch.executorch.annotations.Experimental;
 
-@Experimental
 @DoNotStrip
+@Experimental
+/* loaded from: executorch-android-1.0.1.aar:classes.jar:org/pytorch/executorch/EValue.class */
 public class EValue {
     private static final int TYPE_CODE_NONE = 0;
     private static final int TYPE_CODE_TENSOR = 1;
@@ -22,9 +16,11 @@ public class EValue {
     private static final int TYPE_CODE_DOUBLE = 3;
     private static final int TYPE_CODE_INT = 4;
     private static final int TYPE_CODE_BOOL = 5;
-    private String[] TYPE_NAMES = new String[]{"None", "Tensor", "String", "Double", "Int", "Bool"};
+    private String[] TYPE_NAMES = {"None", "Tensor", "String", "Double", "Int", "Bool"};
+
     @DoNotStrip
     private final int mTypeCode;
+
     @DoNotStrip
     private Object mData;
 
@@ -45,12 +41,12 @@ public class EValue {
 
     @DoNotStrip
     public boolean isBool() {
-        return 5 == this.mTypeCode;
+        return TYPE_CODE_BOOL == this.mTypeCode;
     }
 
     @DoNotStrip
     public boolean isInt() {
-        return 4 == this.mTypeCode;
+        return TYPE_CODE_INT == this.mTypeCode;
     }
 
     @DoNotStrip
@@ -77,22 +73,22 @@ public class EValue {
 
     @DoNotStrip
     public static EValue from(boolean value) {
-        EValue iv = new EValue(5);
-        iv.mData = value;
+        EValue iv = new EValue(TYPE_CODE_BOOL);
+        iv.mData = Boolean.valueOf(value);
         return iv;
     }
 
     @DoNotStrip
     public static EValue from(long value) {
-        EValue iv = new EValue(4);
-        iv.mData = value;
+        EValue iv = new EValue(TYPE_CODE_INT);
+        iv.mData = Long.valueOf(value);
         return iv;
     }
 
     @DoNotStrip
     public static EValue from(double value) {
         EValue iv = new EValue(3);
-        iv.mData = value;
+        iv.mData = Double.valueOf(value);
         return iv;
     }
 
@@ -105,64 +101,64 @@ public class EValue {
 
     @DoNotStrip
     public Tensor toTensor() {
-        this.preconditionType(1, this.mTypeCode);
-        return (Tensor)this.mData;
+        preconditionType(1, this.mTypeCode);
+        return (Tensor) this.mData;
     }
 
     @DoNotStrip
     public boolean toBool() {
-        this.preconditionType(5, this.mTypeCode);
-        return (Boolean)this.mData;
+        preconditionType(TYPE_CODE_BOOL, this.mTypeCode);
+        return ((Boolean) this.mData).booleanValue();
     }
 
     @DoNotStrip
     public long toInt() {
-        this.preconditionType(4, this.mTypeCode);
-        return (Long)this.mData;
+        preconditionType(TYPE_CODE_INT, this.mTypeCode);
+        return ((Long) this.mData).longValue();
     }
 
     @DoNotStrip
     public double toDouble() {
-        this.preconditionType(3, this.mTypeCode);
-        return (Double)this.mData;
+        preconditionType(3, this.mTypeCode);
+        return ((Double) this.mData).doubleValue();
     }
 
     @DoNotStrip
     public String toStr() {
-        this.preconditionType(2, this.mTypeCode);
-        return (String)this.mData;
+        preconditionType(2, this.mTypeCode);
+        return (String) this.mData;
     }
 
     private void preconditionType(int typeCodeExpected, int typeCode) {
         if (typeCode != typeCodeExpected) {
-            throw new IllegalStateException(String.format(Locale.US, "Expected EValue type %s, actual type %s", this.getTypeName(typeCodeExpected), this.getTypeName(typeCode)));
+            throw new IllegalStateException(String.format(Locale.US, "Expected EValue type %s, actual type %s", getTypeName(typeCodeExpected), getTypeName(typeCode)));
         }
     }
 
     private String getTypeName(int typeCode) {
-        return typeCode >= 0 && typeCode < this.TYPE_NAMES.length ? this.TYPE_NAMES[typeCode] : "Unknown";
+        return (typeCode < 0 || typeCode >= this.TYPE_NAMES.length) ? "Unknown" : this.TYPE_NAMES[typeCode];
     }
 
     public byte[] toByteArray() {
-        if (this.isNone()) {
-            return ByteBuffer.allocate(1).put((byte)0).array();
+        if (isNone()) {
+            return ByteBuffer.allocate(1).put((byte) 0).array();
         }
-        if (this.isTensor()) {
-            Tensor t = this.toTensor();
+        if (isTensor()) {
+            Tensor t = toTensor();
             byte[] tByteArray = t.toByteArray();
-            return ByteBuffer.allocate(1 + tByteArray.length).put((byte)1).put(tByteArray).array();
+            return ByteBuffer.allocate(1 + tByteArray.length).put((byte) 1).put(tByteArray).array();
         }
-        if (this.isBool()) {
-            return ByteBuffer.allocate(2).put((byte)5).put((byte)(this.toBool() ? 1 : 0)).array();
+        if (isBool()) {
+            return ByteBuffer.allocate(2).put((byte) 5).put((byte) (toBool() ? 1 : 0)).array();
         }
-        if (this.isInt()) {
-            return ByteBuffer.allocate(9).put((byte)4).putLong(this.toInt()).array();
+        if (isInt()) {
+            return ByteBuffer.allocate(9).put((byte) 4).putLong(toInt()).array();
         }
-        if (this.isDouble()) {
-            return ByteBuffer.allocate(9).put((byte)3).putDouble(this.toDouble()).array();
+        if (isDouble()) {
+            return ByteBuffer.allocate(9).put((byte) 3).putDouble(toDouble()).array();
         }
-        if (this.isString()) {
-            return ByteBuffer.allocate(1 + this.toString().length()).put((byte)2).put(this.toString().getBytes()).array();
+        if (isString()) {
+            return ByteBuffer.allocate(1 + toString().length()).put((byte) 2).put(toString().getBytes()).array();
         }
         throw new IllegalArgumentException("Unknown Tensor dtype");
     }
@@ -175,28 +171,23 @@ public class EValue {
         if (!buffer.hasRemaining()) {
             throw new IllegalArgumentException("invalid buffer");
         }
-        byte typeCode = buffer.get();
+        int typeCode = buffer.get();
         switch (typeCode) {
-            case 0: {
+            case 0:
                 return new EValue(0);
-            }
-            case 1: {
+            case 1:
                 byte[] bufferArray = buffer.array();
-                return EValue.from(Tensor.fromByteArray(Arrays.copyOfRange(bufferArray, 1, bufferArray.length)));
-            }
-            case 2: {
+                return from(Tensor.fromByteArray(Arrays.copyOfRange(bufferArray, 1, bufferArray.length)));
+            case 2:
                 throw new IllegalArgumentException("TYPE_CODE_STRING is not supported");
-            }
-            case 3: {
-                return EValue.from(buffer.getDouble());
-            }
-            case 4: {
-                return EValue.from(buffer.getLong());
-            }
-            case 5: {
-                return EValue.from(buffer.get() != 0);
-            }
+            case 3:
+                return from(buffer.getDouble());
+            case TYPE_CODE_INT /* 4 */:
+                return from(buffer.getLong());
+            case TYPE_CODE_BOOL /* 5 */:
+                return from(buffer.get() != 0);
+            default:
+                throw new IllegalArgumentException("invalid type code: " + typeCode);
         }
-        throw new IllegalArgumentException("invalid type code: " + typeCode);
     }
 }

@@ -169,14 +169,9 @@ dependencies {
     // soloader/nativeloader - Required by fbjni for native library loading initialization
     includeDependency(libs.soloader)
 
-    // Note: executorch-android is an AAR (Android Archive) and not compatible with JVM target
-    // The AAR contains Java classes we need (org.pytorch.executorch.Module) but is packaged for Android
-    // We cannot use it directly in PojavLauncher environment
-    // Solution: Users must manually provide the Java classes or we stub them out
-    // For now, ExecuTorch will not be fully functional until we resolve this
-
-    // TODO: Extract Java classes from executorch-android AAR or create stubs
-    // includeDependency(libs.executorch.android)
+    // executorch-android - Use the JAR classes directly (exclude native libs and Android dependencies)
+    // We extract the classes.jar from the AAR and use it as a compile-only dependency
+    compileOnly(files("libs/executorch-android-1.0.1-classes.jar"))
 
     // Note: ExecuTorch native libraries must be provided separately
     // The executorch-android dependency requires Android SDK which is not available in PojavLauncher

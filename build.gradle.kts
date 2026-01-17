@@ -169,6 +169,11 @@ dependencies {
     // soloader/nativeloader - Required by fbjni for native library loading initialization
     includeDependency(libs.soloader)
 
+    // executorch-android - ExecuTorch Java classes (without native libraries)
+    // Provides org.pytorch.executorch.Module and other Java classes required by libexecutorch.so
+    // Native libraries are bundled separately or manually placed
+    includeDependency(libs.executorch.android)
+
     // Note: ExecuTorch native libraries must be provided separately
     // The executorch-android dependency requires Android SDK which is not available in PojavLauncher
     // Users must manually place libexecutorch.so in the native folder

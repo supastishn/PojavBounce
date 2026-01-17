@@ -20,6 +20,8 @@
  */
 package net.ccbluex.liquidbounce.deeplearn.executorch
 
+import com.facebook.soloader.nativeloader.NativeLoader
+import com.facebook.soloader.nativeloader.SystemDelegate
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.config.ConfigSystem.rootFolder
@@ -124,6 +126,33 @@ object ExecuTorchEngine {
 
     @JvmStatic
     var task: Task? = null
+
+    /**
+     * Initializes Facebook NativeLoader which is required by fbjni.
+     * This must be called before any fbjni library loading attempts.
+     */
+    private fun initializeNativeLoader() {
+        try {
+            logger.debug("[ExecuTorch] Checking if NativeLoader is already initialized")
+            // Check if already initialized by trying to access it
+            try {
+                NativeLoader.getApplicationContext()
+                logger.debug("[ExecuTorch] NativeLoader already initialized")
+                return
+            } catch (e: IllegalStateException) {
+                // Not initialized, continue with initialization
+                logger.debug("[ExecuTorch] NativeLoader not initialized, initializing now")
+            }
+
+            logger.info("[ExecuTorch] Initializing Facebook NativeLoader with SystemDelegate")
+            NativeLoader.init(SystemDelegate())
+            logger.info("[ExecuTorch] Successfully initialized Facebook NativeLoader")
+        } catch (e: Throwable) {
+            logger.error("[ExecuTorch] Failed to initialize NativeLoader: ${e.javaClass.simpleName}: ${e.message}")
+            logger.error("[ExecuTorch] Full exception:", e)
+            throw e
+        }
+    }
 
     /**
      * Attempts to preload Android system libraries required by libfbjni.so.
@@ -273,6 +302,10 @@ object ExecuTorchEngine {
                                 logger.debug("[ExecuTorch] Extracted libfbjni.so executable: ${extractedFbjni.canExecute()}")
 
                                 try {
+                                    // CRITICAL: Initialize Facebook NativeLoader before loading fbjni
+                                    logger.debug("[ExecuTorch] Step 0: Initializing Facebook NativeLoader")
+                                    initializeNativeLoader()
+
                                     // Preload Android system libraries first
                                     logger.debug("[ExecuTorch] Step 1: Preloading Android system libraries")
                                     tryLoadAndroidSystemLibs()

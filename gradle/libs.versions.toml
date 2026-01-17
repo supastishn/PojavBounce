@@ -25,6 +25,8 @@ executorch = "1.0.1"
 # fbjni - Facebook JNI library (required by ExecuTorch native library)
 # Version must match the native libfbjni.so in resources
 fbjni = "0.7.0"
+# soloader/nativeloader - Facebook native library loading system (required by fbjni)
+soloader = "0.12.1"
 # https://mvnrepository.com/artifact/com.squareup.okhttp3/okhttp
 okhttp = "5.3.2"
 
@@ -100,6 +102,8 @@ djl-android-pytorch-native = { group = "ai.djl.android", name = "pytorch-native"
 executorch-android = { group = "org.pytorch", name = "executorch-android", version.ref = "executorch" }
 # fbjni - Facebook JNI library (Java classes for native library)
 fbjni = { group = "com.facebook.fbjni", name = "fbjni-java-only", version.ref = "fbjni" }
+# soloader/nativeloader - Facebook native library loader (required by fbjni for initialization)
+soloader = { group = "com.facebook.soloader", name = "nativeloader", version.ref = "soloader" }
 
 # mods
 modmenu = { group = "maven.modrinth", name = "modmenu", version.ref = "modmenu" }

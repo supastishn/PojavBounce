@@ -28,3 +28,4 @@ Tested on Android device - libfbjni.so now loads successfully without ThreadScop
 
 ## Commits
 Total of 10 commits implementing the complete fix from f85c1e5c7 to 2ee1602be.
+# Trigger build

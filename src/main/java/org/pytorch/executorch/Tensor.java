@@ -1,6 +1,6 @@
 package org.pytorch.executorch;
 
-import android.util.Log;
+
 import com.facebook.jni.HybridData;
 import com.facebook.jni.annotations.DoNotStrip;
 import java.nio.Buffer;
@@ -434,7 +434,7 @@ public abstract class Tensor {
             super(shape);
             this.data = data;
             this.mDtype = dtype;
-            Log.e("ExecuTorch", toString() + " in Java. Please consider re-export the model with proper return type");
+            // Log.e("ExecuTorch", toString() + " in Java. Please consider re-export the model with proper return type");
         }
 
         @Override // org.pytorch.executorch.Tensor

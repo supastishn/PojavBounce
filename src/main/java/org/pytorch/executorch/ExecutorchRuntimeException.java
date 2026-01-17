@@ -111,7 +111,7 @@ public class ExecutorchRuntimeException extends RuntimeException {
 
         public ExecutorchInvalidArgumentException(String details) {
             super(ErrorHelper.formatMessage(18, details));
-            this.errorCode = 18;
+            // this.errorCode = 18;  // Removed: cannot assign to final field
         }
 
         public int getErrorCode() {

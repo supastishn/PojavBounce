@@ -1,0 +1,68 @@
+name: Convert Models to ExecuTorch
+
+on:
+  workflow_dispatch:  # Allow manual trigger
+  push:
+    paths:
+      - 'src/main/resources/resources/liquidbounce/models/*.params'
+      - 'src/main/resources/scripts/executorch/export_minarai.py'
+      - '.github/workflows/convert-models.yml'
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # Install ExecuTorch from source (PyPI doesn't have it yet)
+          pip install git+https://github.com/pytorch/executorch.git
+
+      - name: Convert models to ExecuTorch
+        run: |
+          cd src/main/resources/scripts/executorch
+          python export_minarai.py --export-all --output-dir ../../resources/liquidbounce/models/executorch
+
+      - name: List converted models
+        run: |
+          echo "Converted models:"
+          ls -lh src/main/resources/resources/liquidbounce/models/executorch/
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: executorch-models
+          path: src/main/resources/resources/liquidbounce/models/executorch/*.pte
+          retention-days: 90
+
+      - name: Create Pull Request with converted models
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Add ExecuTorch converted models"
+          title: "Add ExecuTorch model conversions"
+          body: |
+            ## ExecuTorch Model Conversion
+
+            This PR adds ExecuTorch `.pte` format models converted from DJL format.
+
+            ### Models converted:
+            - 21KC11KP
+            - 19KC8KP
+
+            ### Changes:
+            - Adds `.pte` files to `src/main/resources/resources/liquidbounce/models/executorch/`
+            - These models can be used on Android via ExecuTorch backend
+
+            **Note**: These models use the architecture but may have random weights if the DJL parameters couldn't be loaded. They may need retraining.
+          branch: executorch-models
+          delete-branch: true

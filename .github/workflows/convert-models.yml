@@ -3,9 +3,8 @@ name: Convert Models to ExecuTorch
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'src/main/resources/resources/liquidbounce/models/*.params'
-      - '.github/workflows/convert-models.yml'
+    branches:
+      - nextgen
 
 jobs:
   convert:

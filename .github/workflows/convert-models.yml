@@ -29,6 +29,8 @@ jobs:
           # Install and configure mxnet with numpy <2.0
           pip install 'numpy<2.0'
           pip install mxnet
+          # Install ONNX dependencies for model export
+          pip install onnx onnxscript
 
           # Restore numpy <2.0 for mxnet (if it was upgraded)
           pip install --force-reinstall 'numpy<2.0'

@@ -120,7 +120,7 @@ def convert_to_executorch(model_name, params_path, output_path):
     model = build_minarai_model(mx_weights)
 
     # Prepare for export
-    example_input = torch.ransom(1, 4)
+    example_input = torch.randn(1, 4)
 
     print(f"\nExporting with input shape: {example_input.shape}")
 

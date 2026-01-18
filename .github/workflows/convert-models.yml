@@ -29,7 +29,7 @@ jobs:
           # Clone ExecuTorch to correctly-named directory (CMake requires exact name)
           # See: https://github.com/pytorch/executorch/issues/6475
           mkdir -p /tmp/executorch_build
-          git clone --depth 1 https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
+          git clone --depth 1 --recurse-submodules https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
           cd /tmp/executorch_build/executorch && pip install -e . && cd -
 
       - name: Convert models to ExecuTorch

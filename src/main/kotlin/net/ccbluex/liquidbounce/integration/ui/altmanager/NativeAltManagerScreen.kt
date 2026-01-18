@@ -82,7 +82,7 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
         addWidget(usernameField!!)
 
         // Calculate button positions
-        val totalWidth = buttonWidth * 4 + spacing * 3
+        val totalWidth = buttonWidth * 5 + spacing * 4
         var xPos = width / 2 - totalWidth / 2
 
         // Add cracked account button
@@ -98,6 +98,16 @@ class NativeAltManagerScreen(private val parent: Screen?) : Screen("Alt Manager"
                     statusMessage = "Enter a username first!"
                     statusColor = COLOR_RED
                 }
+            }.bounds(xPos, buttonY, buttonWidth, buttonHeight).build()
+        )
+        xPos += buttonWidth + spacing
+
+        // Random account button
+        addRenderableWidget(
+            Button.builder("Random".asPlainText()) {
+                AccountManager.loginRandomCrackedAccount()
+                statusMessage = "Generating random account..."
+                statusColor = COLOR_YELLOW
             }.bounds(xPos, buttonY, buttonWidth, buttonHeight).build()
         )
         xPos += buttonWidth + spacing

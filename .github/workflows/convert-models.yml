@@ -5,7 +5,7 @@ on:
   push:
     paths:
       - 'src/main/resources/resources/liquidbounce/models/*.params'
-      - 'src/main/resources/scripts/executorch/export_minarai.py'
+      - 'src/main/resources/scripts/executorch/*.py'
       - '.github/workflows/convert-models.yml'
 
 jobs:

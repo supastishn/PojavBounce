@@ -49,10 +49,9 @@ public class Module {
     public native boolean etdump();
 
     static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init(new SystemDelegate());
-        }
-        NativeLoader.loadLibrary("executorch");
+        // NOTE: Native library loading is handled by ExecuTorchEngine.kt
+        // The library must be loaded AFTER NativeLoader is initialized with the correct delegate
+        // Do not load the library here - it will be loaded by ExecuTorchEngine before Module is used
     }
 
     private Module(String moduleAbsolutePath, int loadMode, int numThreads) {

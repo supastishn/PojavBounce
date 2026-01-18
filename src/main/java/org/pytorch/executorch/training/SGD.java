@@ -20,10 +20,9 @@ public class SGD {
     private native void stepNative(Map<String, Tensor> map);
 
     static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init(new SystemDelegate());
-        }
-        NativeLoader.loadLibrary("executorch");
+        // NOTE: Native library loading is handled by ExecuTorchEngine.kt
+        // The library must be loaded AFTER NativeLoader is initialized with the correct delegate
+        // Do not load the library here - it will be loaded by ExecuTorchEngine before SGD is used
     }
 
     private SGD(Map<String, Tensor> namedParameters, double learningRate, double momentum, double dampening, double weightDecay, boolean nesterov) {

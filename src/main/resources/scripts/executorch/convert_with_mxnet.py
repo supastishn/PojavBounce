@@ -167,7 +167,8 @@ def convert_to_executorch(model_name, params_path, output_path):
 def main():
     # Use script's directory as base for relative paths
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    models_dir = os.path.normpath(os.path.join(script_dir, '../../../resources/liquidbounce/models'))
+    # Path: src/main/resources/scripts/executorch -> go up to src/main/resources -> resources/liquidbounce/models
+    models_dir = os.path.normpath(os.path.join(script_dir, '../../../../resources/liquidbounce/models'))
 
     models = [
         ("21KC11KP", os.path.join(models_dir, "21kc11kp.params")),

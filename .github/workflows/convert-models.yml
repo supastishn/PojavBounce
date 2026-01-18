@@ -46,14 +46,73 @@ jobs:
           # Use the simple conversion script that works without ExecuTorch
           python convert_models_simple.py
 
+      - name: Install ExecuTorch
+        run: |
+          echo "Installing ExecuTorch..."
+          pip install executorch --no-cache-dir
+          echo "ExecuTorch installation complete"
+
+      - name: Convert TorchScript to ExecuTorch (.pte)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_API_KEY: REDACTED
+        run: |
+          echo "Starting ExecuTorch conversion with enhanced logging..."
+          python convert_to_executorch_with_logging.py
+          echo "[GitHub Actions Log] ExecuTorch conversion completed" >&2
+
       - name: List converted models
         run: |
           echo "Converted models:"
           ls -lh converted_models/
+          echo ""
+          echo "All model files:"
+          find converted_models -type f -exec ls -lh {} \; 2>/dev/null || true
 
-      - name: Upload artifacts
+      - name: Verify .pte files
+        run: |
+          echo "Verifying .pte file existence and sizes..."
+          if ls converted_models/*.pte 1> /dev/null 2>&1; then
+            echo "✓ .pte files found:"
+            ls -lh converted_models/*.pte
+          else
+            echo "⚠️ No .pte files found"
+            echo "Files in converted_models:"
+            ls -la converted_models/
+          fi
+
+      - name: Upload converted models artifacts
         uses: actions/upload-artifact@v4
         with:
           name: converted-models
           path: converted_models/*
           retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload .pte artifacts specifically
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: executorch-models-pte
+          path: converted_models/*.pte
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Upload conversion logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conversion-logs
+          path: conversion_logs/*.log
+          retention-days: 90
+          if-no-files-found: ignore
+
+      - name: Save GitHub Actions run info
+        if: always()
+        run: |
+          mkdir -p conversion_logs
+          echo "Run ID: ${{ github.run_id }}" >> conversion_logs/github_run_info.txt
+          echo "Run Number: ${{ github.run_number }}" >> conversion_logs/github_run_info.txt
+          echo "Actor: ${{ github.actor }}" >> conversion_logs/github_run_info.txt
+          echo "Ref: ${{ github.ref }}" >> conversion_logs/github_run_info.txt
+          cat conversion_logs/github_run_info.txt

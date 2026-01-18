@@ -50,17 +50,11 @@ jobs:
           echo "Verifying .pt files..."
           ls -lh converted_models/*.pt || exit 1
 
-      - name: Step 3 - Install ExecuTorch
+      - name: Step 3 - Convert .pt to .pte using torch.export
         run: |
-          echo "Installing ExecuTorch..."
-          pip install executorch 2>&1 || echo "ExecuTorch pip install failed, trying alternative..."
-          python -c "from executorch.exir import to_edge; print('ExecuTorch available')" || echo "ExecuTorch not available via pip"
-
-      - name: Step 4 - Convert .pt to .pte
-        run: |
-          echo "Starting Step 4..."
-          python convert_to_executorch_with_logging.py 2>&1 | tee conversion_logs/step4.log
-          echo "Step 4 complete"
+          echo "Starting conversion to ExecuTorch format..."
+          python convert_pt_to_pte_torch_export.py 2>&1 | tee conversion_logs/step3.log
+          echo "Conversion complete"
 
       - name: Step 5 - List all files
         if: always()

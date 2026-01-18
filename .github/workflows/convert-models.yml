@@ -24,6 +24,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
+          # Constrain NumPy to <2.0 for MXNet compatibility
+          pip install 'numpy<2.0'
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install mxnet  # For reading .params files
           # Install ExecuTorch from pre-built wheels if available, otherwise from source

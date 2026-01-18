@@ -1,16 +1,18 @@
 name: Convert Models to ExecuTorch
 
 on:
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
   push:
     paths:
       - 'src/main/resources/resources/liquidbounce/models/*.params'
-      - 'src/main/resources/scripts/executorch/*.py'
       - '.github/workflows/convert-models.yml'
 
 jobs:
   convert:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout repository
@@ -24,95 +26,72 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          # Install torch first
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          # Install and configure mxnet with numpy <2.0
           pip install 'numpy<2.0'
           pip install mxnet
-          # Install ONNX dependencies for model export
-          pip install onnx onnxscript
-
-          # Restore numpy <2.0 for mxnet (if it was upgraded)
           pip install --force-reinstall 'numpy<2.0'
+          pip install executorch
 
-          # Note: ExecuTorch has CMake requirements that make installation
-          # on GitHub Actions challenging. Models will be converted using
-          # TorchScript/ONNX formats instead, which are fully compatible
-          # with mobile deployment. ExecuTorch conversion can be done locally
-          # if needed using: executorch-exporter -m model.pt -o model.pte
-
-      - name: Convert models to TorchScript and ONNX
+      - name: Create conversion directories
         run: |
-          # Use the simple conversion script that works without ExecuTorch
-          python convert_models_simple.py
+          mkdir -p converted_models
+          mkdir -p conversion_logs
 
-      - name: Install ExecuTorch
+      - name: Step 1: Convert .params to .pt (TorchScript)
         run: |
-          echo "Installing ExecuTorch..."
-          pip install executorch --no-cache-dir
-          echo "ExecuTorch installation complete"
-
-      - name: Convert TorchScript to ExecuTorch (.pte)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_API_KEY: REDACTED
-        run: |
-          echo "Starting ExecuTorch conversion with enhanced logging..."
-          python convert_to_executorch_with_logging.py
-          echo "[GitHub Actions Log] ExecuTorch conversion completed" >&2
-
-      - name: List converted models
-        run: |
-          echo "Converted models:"
+          python convert_models_simple.py 2>&1 | tee conversion_logs/step1_params_to_pt.log
+          echo "Step 1 completed"
           ls -lh converted_models/
-          echo ""
-          echo "All model files:"
-          find converted_models -type f -exec ls -lh {} \; 2>/dev/null || true
 
-      - name: Verify .pte files
+      - name: Step 2: Verify .pt files exist
         run: |
-          echo "Verifying .pte file existence and sizes..."
+          echo "Checking for .pt files..."
+          if ls converted_models/*.pt 1> /dev/null 2>&1; then
+            echo "✓ .pt files found"
+            ls -lh converted_models/*.pt
+          else
+            echo "✗ No .pt files found"
+            exit 1
+          fi
+
+      - name: Step 3: Convert .pt to .pte (ExecuTorch)
+        run: |
+          python convert_to_executorch_with_logging.py 2>&1 | tee conversion_logs/step3_pt_to_pte.log
+          echo "Step 3 completed"
+
+      - name: Step 4: Verify .pte files exist
+        run: |
+          echo "Checking for .pte files..."
           if ls converted_models/*.pte 1> /dev/null 2>&1; then
             echo "✓ .pte files found:"
             ls -lh converted_models/*.pte
           else
-            echo "⚠️ No .pte files found"
+            echo "✗ No .pte files found"
             echo "Files in converted_models:"
             ls -la converted_models/
+            exit 1
           fi
 
-      - name: Upload converted models artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: converted-models
-          path: converted_models/*
-          retention-days: 90
-          if-no-files-found: warn
+      - name: List all converted models
+        if: always()
+        run: |
+          echo "=== All converted models ==="
+          find converted_models -type f -exec ls -lh {} \;
 
-      - name: Upload .pte artifacts specifically
+      - name: Upload .pte artifacts
         if: success()
         uses: actions/upload-artifact@v4
         with:
           name: executorch-models-pte
           path: converted_models/*.pte
           retention-days: 90
-          if-no-files-found: ignore
+          if-no-files-found: error
 
       - name: Upload conversion logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: conversion-logs
-          path: conversion_logs/*.log
-          retention-days: 90
-          if-no-files-found: ignore
-
-      - name: Save GitHub Actions run info
-        if: always()
-        run: |
-          mkdir -p conversion_logs
-          echo "Run ID: ${{ github.run_id }}" >> conversion_logs/github_run_info.txt
-          echo "Run Number: ${{ github.run_number }}" >> conversion_logs/github_run_info.txt
-          echo "Actor: ${{ github.actor }}" >> conversion_logs/github_run_info.txt
-          echo "Ref: ${{ github.ref }}" >> conversion_logs/github_run_info.txt
-          cat conversion_logs/github_run_info.txt
+          path: conversion_logs/
+          retention-days: 30
+          if-no-files-found: warn

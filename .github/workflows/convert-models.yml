@@ -26,8 +26,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install mxnet  # For reading .params files
-          # Install ExecuTorch from source (PyPI doesn't have it yet)
-          pip install git+https://github.com/pytorch/executorch.git
+          # Clone ExecuTorch to correctly-named directory (CMake requires exact name)
+          # See: https://github.com/pytorch/executorch/issues/6475
+          mkdir -p /tmp/executorch_build
+          git clone --depth 1 https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
+          cd /tmp/executorch_build/executorch && pip install -e . && cd -
 
       - name: Convert models to ExecuTorch
         run: |

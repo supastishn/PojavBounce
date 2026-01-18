@@ -23,14 +23,21 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip setuptools wheel
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install mxnet  # For reading .params files
-          # Clone ExecuTorch to correctly-named directory (CMake requires exact name)
-          # See: https://github.com/pytorch/executorch/issues/6475
-          mkdir -p /tmp/executorch_build
-          git clone --depth 1 --recurse-submodules https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
-          cd /tmp/executorch_build/executorch && pip install -e . && cd -
+          # Install ExecuTorch from pre-built wheels if available, otherwise from source
+          # First try PyPI
+          pip install executorch 2>/dev/null || {
+            # If PyPI version not available, build from source with proper setup
+            mkdir -p /tmp/executorch_build
+            git clone --depth 1 --recurse-submodules https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
+            cd /tmp/executorch_build/executorch
+            # Set environment variables for better CMake torch detection
+            export TORCH_HOME="$(python -c 'import torch; print(torch.__path__[0])')"
+            python setup.py develop
+            cd -
+          }
 
       - name: Convert models to ExecuTorch
         run: |

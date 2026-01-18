@@ -30,10 +30,9 @@ public class TrainingModule {
     private native Map<String, Tensor> namedGradientsNative(String str);
 
     static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init(new SystemDelegate());
-        }
-        NativeLoader.loadLibrary("executorch");
+        // NOTE: Native library loading is handled by ExecuTorchEngine.kt
+        // The library must be loaded AFTER NativeLoader is initialized with the correct delegate
+        // Do not load the library here - it will be loaded by ExecuTorchEngine before TrainingModule is used
     }
 
     private TrainingModule(String moduleAbsolutePath, String dataAbsolutePath) {

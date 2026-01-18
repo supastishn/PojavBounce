@@ -15,10 +15,9 @@ public class ExecuTorchRuntime {
     public static native String[] getRegisteredBackends();
 
     static {
-        if (!NativeLoader.isInitialized()) {
-            NativeLoader.init(new SystemDelegate());
-        }
-        NativeLoader.loadLibrary("executorch");
+        // NOTE: Native library loading is handled by ExecuTorchEngine.kt
+        // The library must be loaded AFTER NativeLoader is initialized with the correct delegate
+        // Do not load the library here - it will be loaded by ExecuTorchEngine before Runtime is used
         sInstance = new ExecuTorchRuntime();
     }
 

@@ -352,19 +352,14 @@ object ExecuTorchEngine {
                                     logger.debug("[ExecuTorch] Is native folder in java.library.path: ${libPath.contains(nativeFolder.absolutePath)}")
 
                                     try {
-                                        logger.debug("[ExecuTorch] Attempting System.loadLibrary(\"fbjni\")")
-                                        System.loadLibrary("fbjni")
-                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so using System.loadLibrary()")
+                                        logger.debug("[ExecuTorch] Attempting NativeLoader.loadLibrary(\"fbjni\")")
+                                        NativeLoader.loadLibrary("fbjni")
+                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so using NativeLoader.loadLibrary()")
                                         fbjniLoaded = true
                                     } catch (e1: Throwable) {
-                                        logger.warn("[ExecuTorch] System.loadLibrary(\"fbjni\") failed: ${e1.javaClass.simpleName}: ${e1.message}")
-                                        logger.debug("[ExecuTorch] Full exception for System.loadLibrary:", e1)
-                                        logger.debug("[ExecuTorch] Falling back to System.load() with absolute path")
-
-                                        logger.debug("[ExecuTorch] Attempting System.load(\"${extractedFbjni.absolutePath}\")")
-                                        System.load(extractedFbjni.absolutePath)
-                                        logger.info("[ExecuTorch] Successfully loaded libfbjni.so from JAR using System.load()")
-                                        fbjniLoaded = true
+                                        logger.error("[ExecuTorch] NativeLoader.loadLibrary(\"fbjni\") failed: ${e1.javaClass.simpleName}: ${e1.message}")
+                                        logger.error("[ExecuTorch] Full exception for NativeLoader.loadLibrary:", e1)
+                                        throw e1
                                     }
                                 } catch (e: Throwable) {
                                     logger.error(
@@ -477,11 +472,12 @@ object ExecuTorchEngine {
                             logger.debug("[ExecuTorch] Manual libexecutorch.so executable: ${manualLibExecutorch.canExecute()}")
 
                             try {
-                                logger.debug("[ExecuTorch] Attempting System.load(\"${manualLibExecutorch.absolutePath}\")")
-                                System.load(manualLibExecutorch.absolutePath)
+                                logger.debug("[ExecuTorch] Attempting to load libexecutorch.so via NativeLoader")
+                                logger.debug("[ExecuTorch] This will use the CustomNativeLoaderDelegate")
+                                NativeLoader.loadLibrary("executorch")
                                 logger.info(
                                     "[ExecuTorch] Successfully loaded native ExecuTorch library " +
-                                        "from manual placement"
+                                        "from manual placement via NativeLoader"
                                 )
                             } catch (e: Throwable) {
                                 logger.error("[ExecuTorch] Failed to load libexecutorch.so: ${e.javaClass.simpleName}: ${e.message}")

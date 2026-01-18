@@ -72,11 +72,25 @@ class MinaraiModel(
                 return it.predict(input)
             }
         }
-        
+
         // Use DJL on PC or as fallback
         return super.predict(input)
     }
-    
+
+    override fun load(name: String) {
+        // On Android (ExecuTorch only), skip DJL model loading
+        // The ExecuTorch model will be loaded lazily on first predict() call
+        if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
+            net.ccbluex.liquidbounce.utils.client.logger.info(
+                "[MinaraiModel] Skipping DJL load for '$name' on Android - ExecuTorch will load on demand"
+            )
+            return
+        }
+
+        // On PC, use standard DJL loading
+        super.load(name)
+    }
+
     override fun close() {
         execuTorchModel?.close()
         execuTorchModel = null

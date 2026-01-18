@@ -24,6 +24,7 @@ package net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.custom;
 import net.ccbluex.liquidbounce.features.misc.HideAppearance;
 import net.ccbluex.liquidbounce.injection.mixins.minecraft.gui.MixinScreen;
 import net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
@@ -49,7 +50,7 @@ public abstract class MixinTitleScreen extends MixinScreen {
         int x = this.width - 110;
         int y = 10;
         altManagerButton = Button.builder(Component.literal("Alt Manager"), 
-                button -> this.minecraft.setScreen(new NativeAltManagerScreen((TitleScreen) (Object) this)))
+                button -> this.minecraft.setScreen(new NativeAltManagerScreen((Screen) (Object) this)))
             .bounds(x, y, 100, 20)
             .build();
         addRenderableWidget(altManagerButton);

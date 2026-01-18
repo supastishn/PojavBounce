@@ -55,6 +55,8 @@ jobs:
           fi
 
       - name: Step 3: Convert .pt to .pte (ExecuTorch)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           python convert_to_executorch_with_logging.py 2>&1 | tee conversion_logs/step3_pt_to_pte.log
           echo "Step 3 completed"

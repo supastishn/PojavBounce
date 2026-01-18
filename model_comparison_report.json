@@ -1,0 +1,82 @@
+{
+  "21KC11KP": {
+    "params_exists": true,
+    "pt_exists": true,
+    "params_file": "src/main/resources/resources/liquidbounce/models/21kc11kp.params",
+    "pt_file": "converted_models/21kc11kp.pt",
+    "params_info": {
+      "version": 1,
+      "format": "tf",
+      "file_size": 50775,
+      "est_params": 12693
+    },
+    "pt_info": {
+      "total_params": 11490,
+      "input_shape": [
+        1,
+        4
+      ],
+      "output_shape": [
+        1,
+        2
+      ],
+      "output_min": -0.198655366897583,
+      "output_max": -0.002884899266064167,
+      "valid": true
+    },
+    "inference_test": {
+      "success": true,
+      "num_tests": 100,
+      "output_shape": [
+        100,
+        2
+      ],
+      "output_min": -0.2680656611919403,
+      "output_max": 0.07784871011972427,
+      "output_mean": -0.10370967537164688,
+      "output_std": 0.0985763818025589,
+      "nan_count": 0,
+      "inf_count": 0
+    }
+  },
+  "19KC8KP": {
+    "params_exists": true,
+    "pt_exists": true,
+    "params_file": "src/main/resources/resources/liquidbounce/models/19kc8kp.params",
+    "pt_file": "converted_models/19kc8kp.pt",
+    "params_info": {
+      "version": 1,
+      "format": "tf",
+      "file_size": 50775,
+      "est_params": 12693
+    },
+    "pt_info": {
+      "total_params": 11490,
+      "input_shape": [
+        1,
+        4
+      ],
+      "output_shape": [
+        1,
+        2
+      ],
+      "output_min": -0.14907439053058624,
+      "output_max": 0.13201069831848145,
+      "valid": true
+    },
+    "inference_test": {
+      "success": true,
+      "num_tests": 100,
+      "output_shape": [
+        100,
+        2
+      ],
+      "output_min": -0.1997441202402115,
+      "output_max": 0.17294420301914215,
+      "output_mean": -0.016995029523968697,
+      "output_std": 0.13994847238063812,
+      "nan_count": 0,
+      "inf_count": 0
+    }
+  }
+}

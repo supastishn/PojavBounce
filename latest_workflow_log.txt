@@ -1,0 +1,309 @@
+﻿2026-01-18T12:29:29.6002458Z Current runner version: '2.331.0'
+2026-01-18T12:29:29.6026887Z ##[group]Runner Image Provisioner
+2026-01-18T12:29:29.6027691Z Hosted Compute Agent
+2026-01-18T12:29:29.6028194Z Version: 20251211.462
+2026-01-18T12:29:29.6028827Z Commit: 6cbad8c2bb55d58165063d031ccabf57e2d2db61
+2026-01-18T12:29:29.6029504Z Build Date: 2025-12-11T16:28:49Z
+2026-01-18T12:29:29.6030407Z Worker ID: {220d8742-f0bf-441b-b850-4f40ac9d052f}
+2026-01-18T12:29:29.6031111Z ##[endgroup]
+2026-01-18T12:29:29.6031723Z ##[group]Operating System
+2026-01-18T12:29:29.6032275Z Ubuntu
+2026-01-18T12:29:29.6032723Z 24.04.3
+2026-01-18T12:29:29.6033236Z LTS
+2026-01-18T12:29:29.6033674Z ##[endgroup]
+2026-01-18T12:29:29.6034178Z ##[group]Runner Image
+2026-01-18T12:29:29.6034732Z Image: ubuntu-24.04
+2026-01-18T12:29:29.6035222Z Version: 20260111.209.1
+2026-01-18T12:29:29.6036174Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260111.209/images/ubuntu/Ubuntu2404-Readme.md
+2026-01-18T12:29:29.6037750Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260111.209
+2026-01-18T12:29:29.6038699Z ##[endgroup]
+2026-01-18T12:29:29.6041524Z ##[group]GITHUB_TOKEN Permissions
+2026-01-18T12:29:29.6043740Z Actions: write
+2026-01-18T12:29:29.6044370Z ArtifactMetadata: write
+2026-01-18T12:29:29.6044873Z Attestations: write
+2026-01-18T12:29:29.6045368Z Checks: write
+2026-01-18T12:29:29.6045842Z Contents: write
+2026-01-18T12:29:29.6046344Z Deployments: write
+2026-01-18T12:29:29.6046843Z Discussions: write
+2026-01-18T12:29:29.6047365Z Issues: write
+2026-01-18T12:29:29.6047849Z Metadata: read
+2026-01-18T12:29:29.6048290Z Models: read
+2026-01-18T12:29:29.6048793Z Packages: write
+2026-01-18T12:29:29.6049270Z Pages: write
+2026-01-18T12:29:29.6049784Z PullRequests: write
+2026-01-18T12:29:29.6050651Z RepositoryProjects: write
+2026-01-18T12:29:29.6051348Z SecurityEvents: write
+2026-01-18T12:29:29.6051861Z Statuses: write
+2026-01-18T12:29:29.6052316Z ##[endgroup]
+2026-01-18T12:29:29.6054981Z Secret source: Actions
+2026-01-18T12:29:29.6055942Z Prepare workflow directory
+2026-01-18T12:29:29.6393559Z Prepare all required actions
+2026-01-18T12:29:29.6435365Z Getting action download info
+2026-01-18T12:29:30.0384438Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-01-18T12:29:30.1542967Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-01-18T12:29:30.2737897Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-01-18T12:29:30.3883132Z Download action repository 'peter-evans/create-pull-request@v6' (SHA:c5a7806660adbe173f04e3e038b0ccdcd758773c)
+2026-01-18T12:29:30.9509575Z Complete job name: convert
+2026-01-18T12:29:31.0234436Z ##[group]Run actions/checkout@v4
+2026-01-18T12:29:31.0235326Z with:
+2026-01-18T12:29:31.0235769Z   repository: supastishn/PojavBounce
+2026-01-18T12:29:31.0236488Z   token: ***
+2026-01-18T12:29:31.0236891Z   ssh-strict: true
+2026-01-18T12:29:31.0237302Z   ssh-user: git
+2026-01-18T12:29:31.0237751Z   persist-credentials: true
+2026-01-18T12:29:31.0238246Z   clean: true
+2026-01-18T12:29:31.0238665Z   sparse-checkout-cone-mode: true
+2026-01-18T12:29:31.0239178Z   fetch-depth: 1
+2026-01-18T12:29:31.0239593Z   fetch-tags: false
+2026-01-18T12:29:31.0240017Z   show-progress: true
+2026-01-18T12:29:31.0240615Z   lfs: false
+2026-01-18T12:29:31.0241015Z   submodules: false
+2026-01-18T12:29:31.0241439Z   set-safe-directory: true
+2026-01-18T12:29:31.0242241Z ##[endgroup]
+2026-01-18T12:29:31.1340532Z Syncing repository: supastishn/PojavBounce
+2026-01-18T12:29:31.1343401Z ##[group]Getting Git version info
+2026-01-18T12:29:31.1344908Z Working directory is '/home/runner/work/PojavBounce/PojavBounce'
+2026-01-18T12:29:31.1347032Z [command]/usr/bin/git version
+2026-01-18T12:29:31.1418469Z git version 2.52.0
+2026-01-18T12:29:31.1445594Z ##[endgroup]
+2026-01-18T12:29:31.1468233Z Temporarily overriding HOME='/home/runner/work/_temp/88d78872-1f7b-4a21-9a24-4e84bdd685a1' before making global git config changes
+2026-01-18T12:29:31.1471541Z Adding repository directory to the temporary git global config as a safe directory
+2026-01-18T12:29:31.1474788Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T12:29:31.1514875Z Deleting the contents of '/home/runner/work/PojavBounce/PojavBounce'
+2026-01-18T12:29:31.1518855Z ##[group]Initializing the repository
+2026-01-18T12:29:31.1523762Z [command]/usr/bin/git init /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T12:29:31.1645460Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-01-18T12:29:31.1647134Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-01-18T12:29:31.1648725Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-01-18T12:29:31.1649661Z hint: call:
+2026-01-18T12:29:31.1650508Z hint:
+2026-01-18T12:29:31.1651474Z hint: 	git config --global init.defaultBranch <name>
+2026-01-18T12:29:31.1652703Z hint:
+2026-01-18T12:29:31.1653823Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-01-18T12:29:31.1655663Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-01-18T12:29:31.1657121Z hint:
+2026-01-18T12:29:31.1657823Z hint: 	git branch -m <name>
+2026-01-18T12:29:31.1658689Z hint:
+2026-01-18T12:29:31.1659810Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-01-18T12:29:31.1662180Z Initialized empty Git repository in /home/runner/work/PojavBounce/PojavBounce/.git/
+2026-01-18T12:29:31.1665404Z [command]/usr/bin/git remote add origin https://github.com/supastishn/PojavBounce
+2026-01-18T12:29:31.1697428Z ##[endgroup]
+2026-01-18T12:29:31.1698760Z ##[group]Disabling automatic garbage collection
+2026-01-18T12:29:31.1702560Z [command]/usr/bin/git config --local gc.auto 0
+2026-01-18T12:29:31.1731194Z ##[endgroup]
+2026-01-18T12:29:31.1732581Z ##[group]Setting up auth
+2026-01-18T12:29:31.1738840Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-01-18T12:29:31.1769082Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-01-18T12:29:31.2116329Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-01-18T12:29:31.2146783Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-01-18T12:29:31.2362302Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-01-18T12:29:31.2394890Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-01-18T12:29:31.2612608Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-01-18T12:29:31.2644914Z ##[endgroup]
+2026-01-18T12:29:31.2645746Z ##[group]Fetching the repository
+2026-01-18T12:29:31.2653629Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ad1ffb6b8d565a2a5575e898fe305593cc9c7778:refs/remotes/origin/nextgen
+2026-01-18T12:29:33.3806826Z From https://github.com/supastishn/PojavBounce
+2026-01-18T12:29:33.3808392Z  * [new ref]         ad1ffb6b8d565a2a5575e898fe305593cc9c7778 -> origin/nextgen
+2026-01-18T12:29:33.3840760Z ##[endgroup]
+2026-01-18T12:29:33.3841238Z ##[group]Determining the checkout info
+2026-01-18T12:29:33.3843139Z ##[endgroup]
+2026-01-18T12:29:33.3848209Z [command]/usr/bin/git sparse-checkout disable
+2026-01-18T12:29:33.3888402Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-01-18T12:29:33.3913289Z ##[group]Checking out the ref
+2026-01-18T12:29:33.3918508Z [command]/usr/bin/git checkout --progress --force -B nextgen refs/remotes/origin/nextgen
+2026-01-18T12:29:33.6744972Z Switched to a new branch 'nextgen'
+2026-01-18T12:29:33.6745677Z branch 'nextgen' set up to track 'origin/nextgen'.
+2026-01-18T12:29:33.6765207Z ##[endgroup]
+2026-01-18T12:29:33.6804228Z [command]/usr/bin/git log -1 --format=%H
+2026-01-18T12:29:33.6826540Z ad1ffb6b8d565a2a5575e898fe305593cc9c7778
+2026-01-18T12:29:33.7062604Z ##[group]Run actions/setup-python@v5
+2026-01-18T12:29:33.7062950Z with:
+2026-01-18T12:29:33.7063168Z   python-version: 3.11
+2026-01-18T12:29:33.7063410Z   check-latest: false
+2026-01-18T12:29:33.7063781Z   token: ***
+2026-01-18T12:29:33.7064005Z   update-environment: true
+2026-01-18T12:29:33.7064267Z   allow-prereleases: false
+2026-01-18T12:29:33.7064513Z   freethreaded: false
+2026-01-18T12:29:33.7064734Z ##[endgroup]
+2026-01-18T12:29:33.8740340Z ##[group]Installed versions
+2026-01-18T12:29:33.8850745Z Successfully set up CPython (3.11.14)
+2026-01-18T12:29:33.8851574Z ##[endgroup]
+2026-01-18T12:29:33.9027602Z ##[group]Run python -m pip install --upgrade pip setuptools wheel
+2026-01-18T12:29:33.9028246Z [36;1mpython -m pip install --upgrade pip setuptools wheel[0m
+2026-01-18T12:29:33.9028617Z [36;1m# Install torch first[0m
+2026-01-18T12:29:33.9029217Z [36;1mpip install torch --index-url https://download.pytorch.org/whl/cpu[0m
+2026-01-18T12:29:33.9029746Z [36;1m# Install and configure mxnet with numpy <2.0[0m
+2026-01-18T12:29:33.9030081Z [36;1mpip install 'numpy<2.0'[0m
+2026-01-18T12:29:33.9030594Z [36;1mpip install mxnet[0m
+2026-01-18T12:29:33.9030832Z [36;1m[0m
+2026-01-18T12:29:33.9031134Z [36;1m# Install ExecuTorch with proper directory naming for CMake[0m
+2026-01-18T12:29:33.9031600Z [36;1m# (ExecuTorch requires directory to be named exactly 'executorch')[0m
+2026-01-18T12:29:33.9032169Z [36;1mgit clone --depth 1 https://github.com/pytorch/executorch.git /tmp/executorch[0m
+2026-01-18T12:29:33.9032609Z [36;1mcd /tmp/executorch[0m
+2026-01-18T12:29:33.9032909Z [36;1mpip install -e . 2>&1 | tail -20[0m
+2026-01-18T12:29:33.9033190Z [36;1mcd -[0m
+2026-01-18T12:29:33.9033413Z [36;1mrm -rf /tmp/executorch[0m
+2026-01-18T12:29:33.9033663Z [36;1m[0m
+2026-01-18T12:29:33.9033923Z [36;1m# Restore numpy <2.0 for mxnet (if it was upgraded)[0m
+2026-01-18T12:29:33.9034300Z [36;1mpip install --force-reinstall 'numpy<2.0'[0m
+2026-01-18T12:29:33.9126793Z shell: /usr/bin/bash -e {0}
+2026-01-18T12:29:33.9127083Z env:
+2026-01-18T12:29:33.9127370Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:29:33.9127836Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2026-01-18T12:29:33.9128295Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:29:33.9128687Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:29:33.9129070Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:29:33.9129463Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2026-01-18T12:29:33.9129804Z ##[endgroup]
+2026-01-18T12:29:36.0316369Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (25.3)
+2026-01-18T12:29:36.1687490Z Requirement already satisfied: setuptools in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (79.0.1)
+2026-01-18T12:29:36.3293103Z Collecting setuptools
+2026-01-18T12:29:36.4085475Z   Downloading setuptools-80.9.0-py3-none-any.whl.metadata (6.6 kB)
+2026-01-18T12:29:36.4507915Z Collecting wheel
+2026-01-18T12:29:36.4618932Z   Downloading wheel-0.45.1-py3-none-any.whl.metadata (2.3 kB)
+2026-01-18T12:29:36.4820658Z Downloading setuptools-80.9.0-py3-none-any.whl (1.2 MB)
+2026-01-18T12:29:36.6142169Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 10.7 MB/s  0:00:00
+2026-01-18T12:29:36.6250900Z Downloading wheel-0.45.1-py3-none-any.whl (72 kB)
+2026-01-18T12:29:36.6574623Z Installing collected packages: wheel, setuptools
+2026-01-18T12:29:36.7009811Z   Attempting uninstall: setuptools
+2026-01-18T12:29:36.7026225Z     Found existing installation: setuptools 79.0.1
+2026-01-18T12:29:36.9276454Z     Uninstalling setuptools-79.0.1:
+2026-01-18T12:29:36.9525577Z       Successfully uninstalled setuptools-79.0.1
+2026-01-18T12:29:37.6505937Z 
+2026-01-18T12:29:37.6515469Z Successfully installed setuptools-80.9.0 wheel-0.45.1
+2026-01-18T12:29:38.1259228Z Looking in indexes: https://download.pytorch.org/whl/cpu
+2026-01-18T12:29:38.6386015Z Collecting torch
+2026-01-18T12:29:38.6509821Z   Downloading https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+2026-01-18T12:29:38.7475090Z Collecting filelock (from torch)
+2026-01-18T12:29:38.8389001Z   Downloading filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2026-01-18T12:29:38.9044160Z Collecting typing-extensions>=4.10.0 (from torch)
+2026-01-18T12:29:38.9169140Z   Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-01-18T12:29:39.0055932Z Collecting sympy>=1.13.3 (from torch)
+2026-01-18T12:29:39.0233074Z   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+2026-01-18T12:29:39.1425324Z Collecting networkx>=2.5.1 (from torch)
+2026-01-18T12:29:39.1589029Z   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+2026-01-18T12:29:39.2248210Z Collecting jinja2 (from torch)
+2026-01-18T12:29:39.2363374Z   Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-01-18T12:29:39.3345189Z Collecting fsspec>=0.8.5 (from torch)
+2026-01-18T12:29:39.3510930Z   Downloading fsspec-2025.12.0-py3-none-any.whl.metadata (10 kB)
+2026-01-18T12:29:39.4408015Z Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch)
+2026-01-18T12:29:39.4571267Z   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+2026-01-18T12:29:39.5263979Z Collecting MarkupSafe>=2.0 (from jinja2->torch)
+2026-01-18T12:29:39.5385603Z   Downloading https://download.pytorch.org/whl/MarkupSafe-2.1.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (28 kB)
+2026-01-18T12:29:39.5560423Z Downloading https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl (184.5 MB)
+2026-01-18T12:29:40.4962331Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 184.5/184.5 MB 199.1 MB/s  0:00:00
+2026-01-18T12:29:40.5137415Z Downloading fsspec-2025.12.0-py3-none-any.whl (201 kB)
+2026-01-18T12:29:40.5657556Z Downloading networkx-3.6.1-py3-none-any.whl (2.1 MB)
+2026-01-18T12:29:40.6190854Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 47.8 MB/s  0:00:00
+2026-01-18T12:29:40.6354207Z Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-01-18T12:29:40.6710888Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 181.7 MB/s  0:00:00
+2026-01-18T12:29:40.6877864Z Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-01-18T12:29:40.6938306Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 76.5 MB/s  0:00:00
+2026-01-18T12:29:40.7054054Z Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-01-18T12:29:40.7236216Z Downloading filelock-3.20.0-py3-none-any.whl (16 kB)
+2026-01-18T12:29:40.7373420Z Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-01-18T12:29:40.9080551Z Installing collected packages: mpmath, typing-extensions, sympy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch
+2026-01-18T12:29:56.9960518Z 
+2026-01-18T12:29:56.9973777Z Successfully installed MarkupSafe-2.1.5 filelock-3.20.0 fsspec-2025.12.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.6.1 sympy-1.14.0 torch-2.9.1+cpu typing-extensions-4.15.0
+2026-01-18T12:29:57.7233292Z Collecting numpy<2.0
+2026-01-18T12:29:57.8114542Z   Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+2026-01-18T12:29:57.8604628Z Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.3 MB)
+2026-01-18T12:29:58.5349494Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.3/18.3 MB 28.5 MB/s  0:00:00
+2026-01-18T12:29:58.5915817Z Installing collected packages: numpy
+2026-01-18T12:30:00.4295802Z Successfully installed numpy-1.26.4
+2026-01-18T12:30:00.9304378Z Collecting mxnet
+2026-01-18T12:30:01.0059536Z   Downloading mxnet-1.9.1-py3-none-manylinux2014_x86_64.whl.metadata (3.4 kB)
+2026-01-18T12:30:01.0105332Z Requirement already satisfied: numpy<2.0.0,>1.16.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mxnet) (1.26.4)
+2026-01-18T12:30:01.0497855Z Collecting requests<3,>=2.20.0 (from mxnet)
+2026-01-18T12:30:01.0604746Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2026-01-18T12:30:01.0917291Z Collecting graphviz<0.9.0,>=0.8.1 (from mxnet)
+2026-01-18T12:30:01.1031072Z   Downloading graphviz-0.8.4-py2.py3-none-any.whl.metadata (6.4 kB)
+2026-01-18T12:30:01.2341464Z Collecting charset_normalizer<4,>=2 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T12:30:01.2459942Z   Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2026-01-18T12:30:01.2811848Z Collecting idna<4,>=2.5 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T12:30:01.2916181Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2026-01-18T12:30:01.3319680Z Collecting urllib3<3,>=1.21.1 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T12:30:01.3428034Z   Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+2026-01-18T12:30:01.3786492Z Collecting certifi>=2017.4.17 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T12:30:01.3895337Z   Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+2026-01-18T12:30:01.4063355Z Downloading mxnet-1.9.1-py3-none-manylinux2014_x86_64.whl (49.1 MB)
+2026-01-18T12:30:01.6226723Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 49.1/49.1 MB 247.6 MB/s  0:00:00
+2026-01-18T12:30:01.6338742Z Downloading graphviz-0.8.4-py2.py3-none-any.whl (16 kB)
+2026-01-18T12:30:01.6467740Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2026-01-18T12:30:01.6593811Z Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2026-01-18T12:30:01.6724278Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2026-01-18T12:30:01.6861770Z Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+2026-01-18T12:30:01.6992375Z Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+2026-01-18T12:30:01.7835368Z Installing collected packages: urllib3, idna, graphviz, charset_normalizer, certifi, requests, mxnet
+2026-01-18T12:30:03.2893296Z 
+2026-01-18T12:30:03.2908794Z Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 graphviz-0.8.4 idna-3.11 mxnet-1.9.1 requests-2.32.5 urllib3-2.6.3
+2026-01-18T12:30:03.3535597Z Cloning into '/tmp/executorch'...
+2026-01-18T12:30:19.3423778Z         File "<string>", line 698, in run
+2026-01-18T12:30:19.3424435Z         File "/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/subprocess.py", line 571, in run
+2026-01-18T12:30:19.3424977Z           raise CalledProcessError(retcode, process.args,
+2026-01-18T12:30:19.3426340Z       subprocess.CalledProcessError: Command '['cmake', '-DPYTHON_EXECUTABLE=/opt/hostedtoolcache/Python/3.11.14/x64/bin/python', '-DCMAKE_PREFIX_PATH=/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages', '-DCMAKE_BUILD_TYPE=Release', '--preset', 'pybind', '-B', '/tmp/tmpljlb5fa_.build-temp/cmake-out']' returned non-zero exit status 1.
+2026-01-18T12:30:19.3427720Z       An error occurred when building editable wheel for executorch.
+2026-01-18T12:30:19.3428298Z       See debugging tips in: https://setuptools.pypa.io/en/latest/userguide/development_mode.html#debugging-tips
+2026-01-18T12:30:19.3428792Z       [end of output]
+2026-01-18T12:30:19.3428978Z   
+2026-01-18T12:30:19.3429290Z   note: This error originates from a subprocess, and is likely not a problem with pip.
+2026-01-18T12:30:19.3429708Z   ERROR: Failed building editable for executorch
+2026-01-18T12:30:19.3430083Z   Building wheel for antlr4-python3-runtime (pyproject.toml): started
+2026-01-18T12:30:19.3431034Z   Building wheel for antlr4-python3-runtime (pyproject.toml): finished with status 'done'
+2026-01-18T12:30:19.3431945Z   Created wheel for antlr4-python3-runtime: filename=antlr4_python3_runtime-4.9.3-py3-none-any.whl size=144591 sha256=aa0a0fc172a5b517d22fb29f62ecbb9d0938b7dfa939b14f12c35c643a877261
+2026-01-18T12:30:19.3433188Z   Stored in directory: /home/runner/.cache/pip/wheels/1a/97/32/461f837398029ad76911109f07047fde1d7b661a147c7c56d1
+2026-01-18T12:30:19.3433689Z Successfully built antlr4-python3-runtime
+2026-01-18T12:30:19.3433962Z Failed to build executorch
+2026-01-18T12:30:19.3434193Z error: failed-wheel-build-for-install
+2026-01-18T12:30:19.3434371Z 
+2026-01-18T12:30:19.3434793Z × Failed to build installable wheels for some pyproject.toml based projects
+2026-01-18T12:30:19.3435199Z ╰─> executorch
+2026-01-18T12:30:19.3435404Z /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T12:30:20.1129280Z Collecting numpy<2.0
+2026-01-18T12:30:20.1147185Z   Using cached numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+2026-01-18T12:30:20.1272429Z Using cached numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.3 MB)
+2026-01-18T12:30:20.2048515Z Installing collected packages: numpy
+2026-01-18T12:30:20.2049581Z   Attempting uninstall: numpy
+2026-01-18T12:30:20.2110581Z     Found existing installation: numpy 1.26.4
+2026-01-18T12:30:20.2584103Z     Uninstalling numpy-1.26.4:
+2026-01-18T12:30:20.2658872Z       Successfully uninstalled numpy-1.26.4
+2026-01-18T12:30:22.1577028Z Successfully installed numpy-1.26.4
+2026-01-18T12:30:22.2201983Z ##[group]Run cd src/main/resources/scripts/executorch
+2026-01-18T12:30:22.2202376Z [36;1mcd src/main/resources/scripts/executorch[0m
+2026-01-18T12:30:22.2202668Z [36;1m# Use the MXNet-based converter[0m
+2026-01-18T12:30:22.2202935Z [36;1mpython convert_with_mxnet.py[0m
+2026-01-18T12:30:22.2234572Z shell: /usr/bin/bash -e {0}
+2026-01-18T12:30:22.2234789Z env:
+2026-01-18T12:30:22.2235029Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:30:22.2235432Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2026-01-18T12:30:22.2235841Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:30:22.2236196Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:30:22.2236552Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T12:30:22.2236907Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2026-01-18T12:30:22.2237196Z ##[endgroup]
+2026-01-18T12:30:22.3865991Z /home/runner/work/PojavBounce/PojavBounce/src/main/resources/scripts/executorch/convert_with_mxnet.py:11: FutureWarning: In the future `np.bool` will be defined as the corresponding NumPy scalar.
+2026-01-18T12:30:22.3867592Z   if not hasattr(np, 'bool'):
+2026-01-18T12:30:22.3869076Z /home/runner/work/PojavBounce/PojavBounce/src/main/resources/scripts/executorch/convert_with_mxnet.py:19: FutureWarning: In the future `np.object` will be defined as the corresponding NumPy scalar.
+2026-01-18T12:30:22.3870899Z   if not hasattr(np, 'object'):
+2026-01-18T12:30:22.3872302Z /home/runner/work/PojavBounce/PojavBounce/src/main/resources/scripts/executorch/convert_with_mxnet.py:21: FutureWarning: In the future `np.str` will be defined as the corresponding NumPy scalar.
+2026-01-18T12:30:22.3873786Z   if not hasattr(np, 'str'):
+2026-01-18T12:30:24.7844395Z Traceback (most recent call last):
+2026-01-18T12:30:24.7845646Z   File "/home/runner/work/PojavBounce/PojavBounce/src/main/resources/scripts/executorch/convert_with_mxnet.py", line 27, in <module>
+2026-01-18T12:30:24.7846635Z     from executorch.exir import to_edge
+2026-01-18T12:30:24.7847089Z ModuleNotFoundError: No module named 'executorch'
+2026-01-18T12:30:25.0832998Z ##[error]Process completed with exit code 1.
+2026-01-18T12:30:25.0945816Z Post job cleanup.
+2026-01-18T12:30:25.1877378Z [command]/usr/bin/git version
+2026-01-18T12:30:25.1918788Z git version 2.52.0
+2026-01-18T12:30:25.1963041Z Temporarily overriding HOME='/home/runner/work/_temp/a600671c-841c-429d-8504-10cf2c6fc04d' before making global git config changes
+2026-01-18T12:30:25.1964748Z Adding repository directory to the temporary git global config as a safe directory
+2026-01-18T12:30:25.1969564Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T12:30:25.2007463Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-01-18T12:30:25.2040583Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-01-18T12:30:25.2308078Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-01-18T12:30:25.2332089Z http.https://github.com/.extraheader
+2026-01-18T12:30:25.2344809Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-01-18T12:30:25.2378172Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-01-18T12:30:25.2626613Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-01-18T12:30:25.2661424Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-01-18T12:30:25.3025365Z Cleaning up orphan processes

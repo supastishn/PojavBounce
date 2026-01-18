@@ -24,19 +24,21 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          # Constrain NumPy to <2.0 for MXNet compatibility
-          pip install 'numpy<2.0'
           pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install mxnet  # For reading .params files
+          # Install mxnet without numpy 2.0 upgrade
+          pip install 'numpy<2.0'
+          pip install mxnet --no-deps
           # Install ExecuTorch from pre-built wheels if available, otherwise from source
           # First try PyPI
-          pip install executorch 2>/dev/null || {
-            # If PyPI version not available, build from source with proper setup
+          pip install 'executorch==1.1.0' --no-deps 2>/dev/null || {
+            # If specific version not available, build from source with proper setup
             mkdir -p /tmp/executorch_build
             git clone --depth 1 --recurse-submodules https://github.com/pytorch/executorch.git /tmp/executorch_build/executorch
             cd /tmp/executorch_build/executorch
             # Set environment variables for better CMake torch detection
             export TORCH_HOME="$(python -c 'import torch; print(torch.__path__[0])')"
+            # Constrain numpy before build
+            pip install 'numpy<2.0'
             python setup.py develop
             cd -
           }

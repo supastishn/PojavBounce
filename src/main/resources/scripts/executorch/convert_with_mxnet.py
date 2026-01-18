@@ -165,12 +165,16 @@ def convert_to_executorch(model_name, params_path, output_path):
 
 
 def main():
+    # Use script's directory as base for relative paths
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.normpath(os.path.join(script_dir, '../../../resources/liquidbounce/models'))
+
     models = [
-        ("21KC11KP", "../../../resources/liquidbounce/models/21kc11kp.params"),
-        ("19KC8KP", "../../../resources/liquidbounce/models/19kc8kp.params"),
+        ("21KC11KP", os.path.join(models_dir, "21kc11kp.params")),
+        ("19KC8KP", os.path.join(models_dir, "19kc8kp.params")),
     ]
 
-    output_dir = "../../../resources/liquidbounce/models/executorch"
+    output_dir = os.path.join(models_dir, "executorch")
     os.makedirs(output_dir, exist_ok=True)
 
     print("\nMinarai Model Converter: MXNet → ExecuTorch")

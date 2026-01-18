@@ -1,0 +1,10 @@
+{
+  "model_name": "19KC8KP",
+  "input_features": 4,
+  "output_features": 2,
+  "architecture": "MLP with 3 hidden layers (128, 64, 32)",
+  "formats": [
+    "torchscript",
+    "onnx"
+  ]
+}

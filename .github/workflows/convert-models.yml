@@ -29,13 +29,15 @@ jobs:
           # Install and configure mxnet with numpy <2.0
           pip install 'numpy<2.0'
           pip install mxnet
-          # Install ExecuTorch - may upgrade numpy to 2.0 temporarily
-          pip install executorch 2>/dev/null || {
-            # Fallback: install from GitHub releases if PyPI not available
-            pip install 'https://github.com/pytorch/executorch/releases/download/v1.1.0/executorch-1.1.0-py3-none-any.whl' 2>/dev/null || {
-              echo "ExecuTorch wheel not available, skipping source build (CMake compatibility issues)"
-            }
-          }
+
+          # Install ExecuTorch with proper directory naming for CMake
+          # (ExecuTorch requires directory to be named exactly 'executorch')
+          git clone --depth 1 https://github.com/pytorch/executorch.git /tmp/executorch
+          cd /tmp/executorch
+          pip install -e . 2>&1 | tail -20
+          cd -
+          rm -rf /tmp/executorch
+
           # Restore numpy <2.0 for mxnet (if it was upgraded)
           pip install --force-reinstall 'numpy<2.0'
 

@@ -1,0 +1,649 @@
+﻿2026-01-18T11:05:19.5218743Z Current runner version: '2.331.0'
+2026-01-18T11:05:19.5244057Z ##[group]Runner Image Provisioner
+2026-01-18T11:05:19.5244953Z Hosted Compute Agent
+2026-01-18T11:05:19.5245473Z Version: 20251211.462
+2026-01-18T11:05:19.5246187Z Commit: 6cbad8c2bb55d58165063d031ccabf57e2d2db61
+2026-01-18T11:05:19.5246848Z Build Date: 2025-12-11T16:28:49Z
+2026-01-18T11:05:19.5247494Z Worker ID: {5622aaff-8067-4994-a35f-687e90cf007d}
+2026-01-18T11:05:19.5248204Z ##[endgroup]
+2026-01-18T11:05:19.5248776Z ##[group]Operating System
+2026-01-18T11:05:19.5249302Z Ubuntu
+2026-01-18T11:05:19.5249840Z 24.04.3
+2026-01-18T11:05:19.5250278Z LTS
+2026-01-18T11:05:19.5250748Z ##[endgroup]
+2026-01-18T11:05:19.5251324Z ##[group]Runner Image
+2026-01-18T11:05:19.5251834Z Image: ubuntu-24.04
+2026-01-18T11:05:19.5252549Z Version: 20260111.209.1
+2026-01-18T11:05:19.5253574Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260111.209/images/ubuntu/Ubuntu2404-Readme.md
+2026-01-18T11:05:19.5255118Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260111.209
+2026-01-18T11:05:19.5256186Z ##[endgroup]
+2026-01-18T11:05:19.5258841Z ##[group]GITHUB_TOKEN Permissions
+2026-01-18T11:05:19.5261066Z Actions: write
+2026-01-18T11:05:19.5261670Z ArtifactMetadata: write
+2026-01-18T11:05:19.5262603Z Attestations: write
+2026-01-18T11:05:19.5263205Z Checks: write
+2026-01-18T11:05:19.5263704Z Contents: write
+2026-01-18T11:05:19.5264214Z Deployments: write
+2026-01-18T11:05:19.5264724Z Discussions: write
+2026-01-18T11:05:19.5265300Z Issues: write
+2026-01-18T11:05:19.5265751Z Metadata: read
+2026-01-18T11:05:19.5266238Z Models: read
+2026-01-18T11:05:19.5266819Z Packages: write
+2026-01-18T11:05:19.5267294Z Pages: write
+2026-01-18T11:05:19.5267816Z PullRequests: write
+2026-01-18T11:05:19.5268506Z RepositoryProjects: write
+2026-01-18T11:05:19.5269097Z SecurityEvents: write
+2026-01-18T11:05:19.5269595Z Statuses: write
+2026-01-18T11:05:19.5270169Z ##[endgroup]
+2026-01-18T11:05:19.5272515Z Secret source: Actions
+2026-01-18T11:05:19.5273255Z Prepare workflow directory
+2026-01-18T11:05:19.5660685Z Prepare all required actions
+2026-01-18T11:05:19.5699199Z Getting action download info
+2026-01-18T11:05:19.9465024Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2026-01-18T11:05:20.0616036Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2026-01-18T11:05:20.1456622Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-01-18T11:05:20.2620718Z Download action repository 'peter-evans/create-pull-request@v6' (SHA:c5a7806660adbe173f04e3e038b0ccdcd758773c)
+2026-01-18T11:05:21.1315238Z Complete job name: convert
+2026-01-18T11:05:21.2137787Z ##[group]Run actions/checkout@v4
+2026-01-18T11:05:21.2139080Z with:
+2026-01-18T11:05:21.2139862Z   repository: supastishn/PojavBounce
+2026-01-18T11:05:21.2141165Z   token: ***
+2026-01-18T11:05:21.2142072Z   ssh-strict: true
+2026-01-18T11:05:21.2142844Z   ssh-user: git
+2026-01-18T11:05:21.2143673Z   persist-credentials: true
+2026-01-18T11:05:21.2144547Z   clean: true
+2026-01-18T11:05:21.2145345Z   sparse-checkout-cone-mode: true
+2026-01-18T11:05:21.2146316Z   fetch-depth: 1
+2026-01-18T11:05:21.2147090Z   fetch-tags: false
+2026-01-18T11:05:21.2147883Z   show-progress: true
+2026-01-18T11:05:21.2148687Z   lfs: false
+2026-01-18T11:05:21.2149416Z   submodules: false
+2026-01-18T11:05:21.2150224Z   set-safe-directory: true
+2026-01-18T11:05:21.2151401Z ##[endgroup]
+2026-01-18T11:05:21.3279419Z Syncing repository: supastishn/PojavBounce
+2026-01-18T11:05:21.3283613Z ##[group]Getting Git version info
+2026-01-18T11:05:21.3285113Z Working directory is '/home/runner/work/PojavBounce/PojavBounce'
+2026-01-18T11:05:21.3287052Z [command]/usr/bin/git version
+2026-01-18T11:05:21.3387247Z git version 2.52.0
+2026-01-18T11:05:21.3415524Z ##[endgroup]
+2026-01-18T11:05:21.3432057Z Temporarily overriding HOME='/home/runner/work/_temp/3cb24f62-95f9-4354-bd8c-fa9d1f76ba0b' before making global git config changes
+2026-01-18T11:05:21.3437146Z Adding repository directory to the temporary git global config as a safe directory
+2026-01-18T11:05:21.3446597Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T11:05:21.3490870Z Deleting the contents of '/home/runner/work/PojavBounce/PojavBounce'
+2026-01-18T11:05:21.3494309Z ##[group]Initializing the repository
+2026-01-18T11:05:21.3498196Z [command]/usr/bin/git init /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T11:05:21.3624065Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-01-18T11:05:21.3627188Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-01-18T11:05:21.3630175Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-01-18T11:05:21.3631649Z hint: call:
+2026-01-18T11:05:21.3632596Z hint:
+2026-01-18T11:05:21.3633511Z hint: 	git config --global init.defaultBranch <name>
+2026-01-18T11:05:21.3635165Z hint:
+2026-01-18T11:05:21.3636248Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-01-18T11:05:21.3638241Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-01-18T11:05:21.3640141Z hint:
+2026-01-18T11:05:21.3640889Z hint: 	git branch -m <name>
+2026-01-18T11:05:21.3641760Z hint:
+2026-01-18T11:05:21.3643155Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-01-18T11:05:21.3645186Z Initialized empty Git repository in /home/runner/work/PojavBounce/PojavBounce/.git/
+2026-01-18T11:05:21.3648359Z [command]/usr/bin/git remote add origin https://github.com/supastishn/PojavBounce
+2026-01-18T11:05:21.3681246Z ##[endgroup]
+2026-01-18T11:05:21.3682889Z ##[group]Disabling automatic garbage collection
+2026-01-18T11:05:21.3684705Z [command]/usr/bin/git config --local gc.auto 0
+2026-01-18T11:05:21.3712713Z ##[endgroup]
+2026-01-18T11:05:21.3713985Z ##[group]Setting up auth
+2026-01-18T11:05:21.3719314Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-01-18T11:05:21.3748609Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-01-18T11:05:21.4127148Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-01-18T11:05:21.4156406Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-01-18T11:05:21.4372777Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-01-18T11:05:21.4404651Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-01-18T11:05:21.4636840Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-01-18T11:05:21.4674564Z ##[endgroup]
+2026-01-18T11:05:21.4676815Z ##[group]Fetching the repository
+2026-01-18T11:05:21.4686334Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +75bdad31ab8e70f3f418c366907fd5075bdb6e7b:refs/remotes/origin/nextgen
+2026-01-18T11:05:23.7601241Z From https://github.com/supastishn/PojavBounce
+2026-01-18T11:05:23.7607077Z  * [new ref]         75bdad31ab8e70f3f418c366907fd5075bdb6e7b -> origin/nextgen
+2026-01-18T11:05:23.7636724Z ##[endgroup]
+2026-01-18T11:05:23.7637242Z ##[group]Determining the checkout info
+2026-01-18T11:05:23.7639046Z ##[endgroup]
+2026-01-18T11:05:23.7644716Z [command]/usr/bin/git sparse-checkout disable
+2026-01-18T11:05:23.7689828Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2026-01-18T11:05:23.7716142Z ##[group]Checking out the ref
+2026-01-18T11:05:23.7720950Z [command]/usr/bin/git checkout --progress --force -B nextgen refs/remotes/origin/nextgen
+2026-01-18T11:05:24.0527508Z Switched to a new branch 'nextgen'
+2026-01-18T11:05:24.0528295Z branch 'nextgen' set up to track 'origin/nextgen'.
+2026-01-18T11:05:24.0548554Z ##[endgroup]
+2026-01-18T11:05:24.0592139Z [command]/usr/bin/git log -1 --format=%H
+2026-01-18T11:05:24.0616601Z 75bdad31ab8e70f3f418c366907fd5075bdb6e7b
+2026-01-18T11:05:24.0854053Z ##[group]Run actions/setup-python@v5
+2026-01-18T11:05:24.0854387Z with:
+2026-01-18T11:05:24.0854582Z   python-version: 3.11
+2026-01-18T11:05:24.0854802Z   check-latest: false
+2026-01-18T11:05:24.0855150Z   token: ***
+2026-01-18T11:05:24.0855356Z   update-environment: true
+2026-01-18T11:05:24.0855591Z   allow-prereleases: false
+2026-01-18T11:05:24.0855811Z   freethreaded: false
+2026-01-18T11:05:24.0856010Z ##[endgroup]
+2026-01-18T11:05:24.2503508Z ##[group]Installed versions
+2026-01-18T11:05:24.2624776Z Successfully set up CPython (3.11.14)
+2026-01-18T11:05:24.2625436Z ##[endgroup]
+2026-01-18T11:05:24.2808875Z ##[group]Run python -m pip install --upgrade pip
+2026-01-18T11:05:24.2809344Z [36;1mpython -m pip install --upgrade pip[0m
+2026-01-18T11:05:24.2809802Z [36;1mpip install torch --index-url https://download.pytorch.org/whl/cpu[0m
+2026-01-18T11:05:24.2810274Z [36;1mpip install mxnet  # For reading .params files[0m
+2026-01-18T11:05:24.2810700Z [36;1m# Install ExecuTorch from source (PyPI doesn't have it yet)[0m
+2026-01-18T11:05:24.2811152Z [36;1mpip install git+https://github.com/pytorch/executorch.git[0m
+2026-01-18T11:05:24.2860449Z shell: /usr/bin/bash -e {0}
+2026-01-18T11:05:24.2860721Z env:
+2026-01-18T11:05:24.2860977Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T11:05:24.2861435Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2026-01-18T11:05:24.2861848Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T11:05:24.2862457Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T11:05:24.2862864Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2026-01-18T11:05:24.2863238Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2026-01-18T11:05:24.2863544Z ##[endgroup]
+2026-01-18T11:05:25.3734114Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (25.3)
+2026-01-18T11:05:26.4118589Z Looking in indexes: https://download.pytorch.org/whl/cpu
+2026-01-18T11:05:27.2495010Z Collecting torch
+2026-01-18T11:05:27.2626300Z   Downloading https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (29 kB)
+2026-01-18T11:05:27.3826943Z Collecting filelock (from torch)
+2026-01-18T11:05:27.4596531Z   Downloading filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2026-01-18T11:05:27.5681757Z Collecting typing-extensions>=4.10.0 (from torch)
+2026-01-18T11:05:27.5810818Z   Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2026-01-18T11:05:27.7546638Z Collecting sympy>=1.13.3 (from torch)
+2026-01-18T11:05:27.7649983Z   Downloading sympy-1.14.0-py3-none-any.whl.metadata (12 kB)
+2026-01-18T11:05:27.8995900Z Collecting networkx>=2.5.1 (from torch)
+2026-01-18T11:05:27.9099487Z   Downloading networkx-3.6.1-py3-none-any.whl.metadata (6.8 kB)
+2026-01-18T11:05:28.0205577Z Collecting jinja2 (from torch)
+2026-01-18T11:05:28.0334409Z   Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2026-01-18T11:05:28.1533690Z Collecting fsspec>=0.8.5 (from torch)
+2026-01-18T11:05:28.1637375Z   Downloading fsspec-2025.12.0-py3-none-any.whl.metadata (10 kB)
+2026-01-18T11:05:28.4243236Z Collecting mpmath<1.4,>=1.1.0 (from sympy>=1.13.3->torch)
+2026-01-18T11:05:28.4351817Z   Downloading mpmath-1.3.0-py3-none-any.whl.metadata (8.6 kB)
+2026-01-18T11:05:28.6807088Z Collecting MarkupSafe>=2.0 (from jinja2->torch)
+2026-01-18T11:05:28.6935233Z   Downloading https://download.pytorch.org/whl/MarkupSafe-2.1.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (28 kB)
+2026-01-18T11:05:28.7126458Z Downloading https://download.pytorch.org/whl/cpu/torch-2.9.1%2Bcpu-cp311-cp311-manylinux_2_28_x86_64.whl (184.5 MB)
+2026-01-18T11:05:29.5520621Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 184.5/184.5 MB 222.5 MB/s  0:00:00
+2026-01-18T11:05:29.5627251Z Downloading fsspec-2025.12.0-py3-none-any.whl (201 kB)
+2026-01-18T11:05:29.5941119Z Downloading networkx-3.6.1-py3-none-any.whl (2.1 MB)
+2026-01-18T11:05:29.6310914Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 66.7 MB/s  0:00:00
+2026-01-18T11:05:29.6412777Z Downloading sympy-1.14.0-py3-none-any.whl (6.3 MB)
+2026-01-18T11:05:29.6721280Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.3/6.3 MB 212.9 MB/s  0:00:00
+2026-01-18T11:05:29.6824017Z Downloading mpmath-1.3.0-py3-none-any.whl (536 kB)
+2026-01-18T11:05:29.6883429Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 536.2/536.2 kB 73.5 MB/s  0:00:00
+2026-01-18T11:05:29.7008870Z Downloading https://download.pytorch.org/whl/typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2026-01-18T11:05:29.7137371Z Downloading filelock-3.20.0-py3-none-any.whl (16 kB)
+2026-01-18T11:05:29.7287219Z Downloading https://download.pytorch.org/whl/jinja2-3.1.6-py3-none-any.whl (134 kB)
+2026-01-18T11:05:29.9009116Z Installing collected packages: mpmath, typing-extensions, sympy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch
+2026-01-18T11:05:45.7121431Z 
+2026-01-18T11:05:45.7134301Z Successfully installed MarkupSafe-2.1.5 filelock-3.20.0 fsspec-2025.12.0 jinja2-3.1.6 mpmath-1.3.0 networkx-3.6.1 sympy-1.14.0 torch-2.9.1+cpu typing-extensions-4.15.0
+2026-01-18T11:05:46.7689898Z Collecting mxnet
+2026-01-18T11:05:46.8478155Z   Downloading mxnet-1.9.1-py3-none-manylinux2014_x86_64.whl.metadata (3.4 kB)
+2026-01-18T11:05:47.0892504Z Collecting numpy<2.0.0,>1.16.0 (from mxnet)
+2026-01-18T11:05:47.1004353Z   Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (61 kB)
+2026-01-18T11:05:47.1653166Z Collecting requests<3,>=2.20.0 (from mxnet)
+2026-01-18T11:05:47.1756259Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2026-01-18T11:05:47.2014654Z Collecting graphviz<0.9.0,>=0.8.1 (from mxnet)
+2026-01-18T11:05:47.2127513Z   Downloading graphviz-0.8.4-py2.py3-none-any.whl.metadata (6.4 kB)
+2026-01-18T11:05:47.3123922Z Collecting charset_normalizer<4,>=2 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T11:05:47.3233329Z   Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2026-01-18T11:05:47.3505020Z Collecting idna<4,>=2.5 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T11:05:47.3606305Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2026-01-18T11:05:47.3959084Z Collecting urllib3<3,>=1.21.1 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T11:05:47.4062618Z   Downloading urllib3-2.6.3-py3-none-any.whl.metadata (6.9 kB)
+2026-01-18T11:05:47.4352939Z Collecting certifi>=2017.4.17 (from requests<3,>=2.20.0->mxnet)
+2026-01-18T11:05:47.4455775Z   Downloading certifi-2026.1.4-py3-none-any.whl.metadata (2.5 kB)
+2026-01-18T11:05:47.4641810Z Downloading mxnet-1.9.1-py3-none-manylinux2014_x86_64.whl (49.1 MB)
+2026-01-18T11:05:48.2293219Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 49.1/49.1 MB 67.0 MB/s  0:00:00
+2026-01-18T11:05:48.2404957Z Downloading graphviz-0.8.4-py2.py3-none-any.whl (16 kB)
+2026-01-18T11:05:48.2533829Z Downloading numpy-1.26.4-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.3 MB)
+2026-01-18T11:05:48.3374842Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.3/18.3 MB 221.0 MB/s  0:00:00
+2026-01-18T11:05:48.3480571Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2026-01-18T11:05:48.3609963Z Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2026-01-18T11:05:48.3739949Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2026-01-18T11:05:48.3877719Z Downloading urllib3-2.6.3-py3-none-any.whl (131 kB)
+2026-01-18T11:05:48.4016114Z Downloading certifi-2026.1.4-py3-none-any.whl (152 kB)
+2026-01-18T11:05:48.5128467Z Installing collected packages: urllib3, numpy, idna, graphviz, charset_normalizer, certifi, requests, mxnet
+2026-01-18T11:05:51.7132713Z 
+2026-01-18T11:05:51.7148241Z Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 graphviz-0.8.4 idna-3.11 mxnet-1.9.1 numpy-1.26.4 requests-2.32.5 urllib3-2.6.3
+2026-01-18T11:05:52.5626106Z Collecting git+https://github.com/pytorch/executorch.git
+2026-01-18T11:05:52.5630893Z   Cloning https://github.com/pytorch/executorch.git to /tmp/pip-req-build-1l_41c3o
+2026-01-18T11:05:52.5652603Z   Running command git clone --filter=blob:none --quiet https://github.com/pytorch/executorch.git /tmp/pip-req-build-1l_41c3o
+2026-01-18T11:05:59.6587030Z   Resolved https://github.com/pytorch/executorch.git to commit 7492d0d9da7772fdb1b25862d4905c9fa4f6a484
+2026-01-18T11:05:59.6588202Z   Running command git submodule update --init --recursive -q
+2026-01-18T11:07:39.1897446Z   Installing build dependencies: started
+2026-01-18T11:07:42.2778217Z   Installing build dependencies: finished with status 'done'
+2026-01-18T11:07:42.2783667Z   Getting requirements to build wheel: started
+2026-01-18T11:07:43.4535109Z   Getting requirements to build wheel: finished with status 'done'
+2026-01-18T11:07:43.4544270Z   Preparing metadata (pyproject.toml): started
+2026-01-18T11:07:44.2354858Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-01-18T11:07:44.3900464Z Collecting expecttest (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:44.4647912Z   Downloading expecttest-0.3.0-py3-none-any.whl.metadata (3.8 kB)
+2026-01-18T11:07:44.4937421Z Collecting flatbuffers (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:44.5043253Z   Downloading flatbuffers-25.12.19-py2.py3-none-any.whl.metadata (1.0 kB)
+2026-01-18T11:07:44.8290736Z Collecting hypothesis (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:44.8396865Z   Downloading hypothesis-6.150.2-py3-none-any.whl.metadata (5.6 kB)
+2026-01-18T11:07:44.8747212Z Collecting kgb (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:44.8859855Z   Downloading kgb-7.3-py2.py3-none-any.whl.metadata (21 kB)
+2026-01-18T11:07:44.8976400Z Requirement already satisfied: mpmath==1.3.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from executorch==1.1.0a0+7492d0d) (1.3.0)
+2026-01-18T11:07:45.0788156Z Collecting numpy>=2.0.0 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.0894964Z   Downloading numpy-2.4.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (6.6 kB)
+2026-01-18T11:07:45.1133498Z Collecting packaging (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.1147313Z   Using cached packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2026-01-18T11:07:45.2559070Z Collecting pandas>=2.2.2 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.2670337Z   Downloading pandas-2.3.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (91 kB)
+2026-01-18T11:07:45.3298816Z Collecting parameterized (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.3408026Z   Downloading parameterized-0.9.0-py2.py3-none-any.whl.metadata (18 kB)
+2026-01-18T11:07:45.3877722Z Collecting pytest<9.0 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.3981833Z   Downloading pytest-8.4.2-py3-none-any.whl.metadata (7.7 kB)
+2026-01-18T11:07:45.4249992Z Collecting pytest-xdist (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.4354788Z   Downloading pytest_xdist-3.8.0-py3-none-any.whl.metadata (3.0 kB)
+2026-01-18T11:07:45.4592763Z Collecting pytest-rerunfailures==15.1 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.4700773Z   Downloading pytest_rerunfailures-15.1-py3-none-any.whl.metadata (20 kB)
+2026-01-18T11:07:45.4921567Z Collecting pytest-json-report (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.5030688Z   Downloading pytest_json_report-1.5.0-py3-none-any.whl.metadata (15 kB)
+2026-01-18T11:07:45.5804479Z Collecting pytorch-tokenizers (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.5914490Z   Downloading pytorch_tokenizers-1.0.1-cp311-cp311-manylinux_2_34_x86_64.whl.metadata (4.9 kB)
+2026-01-18T11:07:45.6349182Z Collecting pyyaml (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.6364438Z   Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2026-01-18T11:07:45.7876411Z Collecting ruamel.yaml (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.7989200Z   Downloading ruamel_yaml-0.19.1-py3-none-any.whl.metadata (16 kB)
+2026-01-18T11:07:45.8042925Z Requirement already satisfied: sympy in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from executorch==1.1.0a0+7492d0d) (1.14.0)
+2026-01-18T11:07:45.8195899Z Collecting tabulate (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.8302170Z   Downloading tabulate-0.9.0-py3-none-any.whl.metadata (34 kB)
+2026-01-18T11:07:45.8364560Z Requirement already satisfied: typing-extensions>=4.10.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from executorch==1.1.0a0+7492d0d) (4.15.0)
+2026-01-18T11:07:45.9501053Z Collecting coremltools==9.0 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:45.9611049Z   Downloading coremltools-9.0-cp311-none-manylinux1_x86_64.whl.metadata (2.7 kB)
+2026-01-18T11:07:46.0558478Z Collecting scikit-learn==1.7.1 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.0670668Z   Downloading scikit_learn-1.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (11 kB)
+2026-01-18T11:07:46.0990975Z Collecting hydra-core>=1.3.0 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.1093560Z   Downloading hydra_core-1.3.2-py3-none-any.whl.metadata (5.5 kB)
+2026-01-18T11:07:46.1445544Z Collecting omegaconf>=2.3.0 (from executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.1549773Z   Downloading omegaconf-2.3.0-py3-none-any.whl.metadata (3.9 kB)
+2026-01-18T11:07:46.3640854Z Collecting protobuf>=3.1.0 (from coremltools==9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.3745731Z   Downloading protobuf-6.33.4-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+2026-01-18T11:07:46.4141563Z Collecting tqdm (from coremltools==9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.4244346Z   Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2026-01-18T11:07:46.4502571Z Collecting attrs>=21.3.0 (from coremltools==9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.4603449Z   Downloading attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+2026-01-18T11:07:46.4837278Z Collecting cattrs (from coremltools==9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.4941646Z   Downloading cattrs-25.3.0-py3-none-any.whl.metadata (8.4 kB)
+2026-01-18T11:07:46.5213185Z Collecting pyaml (from coremltools==9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.5321559Z   Downloading pyaml-25.7.0-py3-none-any.whl.metadata (12 kB)
+2026-01-18T11:07:46.7003926Z Collecting scipy>=1.8.0 (from scikit-learn==1.7.1->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.7115485Z   Downloading scipy-1.17.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2026-01-18T11:07:46.7523284Z Collecting joblib>=1.2.0 (from scikit-learn==1.7.1->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.7632547Z   Downloading joblib-1.5.3-py3-none-any.whl.metadata (5.5 kB)
+2026-01-18T11:07:46.7833687Z Collecting threadpoolctl>=3.1.0 (from scikit-learn==1.7.1->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.7940266Z   Downloading threadpoolctl-3.6.0-py3-none-any.whl.metadata (13 kB)
+2026-01-18T11:07:46.8167856Z Collecting iniconfig>=1 (from pytest<9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.8272214Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2026-01-18T11:07:46.8517976Z Collecting pluggy<2,>=1.5 (from pytest<9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.8620564Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2026-01-18T11:07:46.8893866Z Collecting pygments>=2.7.2 (from pytest<9.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.9002686Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2026-01-18T11:07:46.9268312Z Collecting antlr4-python3-runtime==4.9.* (from hydra-core>=1.3.0->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:46.9372447Z   Downloading antlr4-python3-runtime-4.9.3.tar.gz (117 kB)
+2026-01-18T11:07:46.9641086Z   Installing build dependencies: started
+2026-01-18T11:07:48.1153572Z   Installing build dependencies: finished with status 'done'
+2026-01-18T11:07:48.1159405Z   Getting requirements to build wheel: started
+2026-01-18T11:07:48.4161735Z   Getting requirements to build wheel: finished with status 'done'
+2026-01-18T11:07:48.4169661Z   Preparing metadata (pyproject.toml): started
+2026-01-18T11:07:48.5820812Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2026-01-18T11:07:48.6167177Z Collecting python-dateutil>=2.8.2 (from pandas>=2.2.2->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.6271263Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2026-01-18T11:07:48.6711171Z Collecting pytz>=2020.1 (from pandas>=2.2.2->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.6816414Z   Downloading pytz-2025.2-py2.py3-none-any.whl.metadata (22 kB)
+2026-01-18T11:07:48.7056154Z Collecting tzdata>=2022.7 (from pandas>=2.2.2->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.7160249Z   Downloading tzdata-2025.3-py2.py3-none-any.whl.metadata (1.4 kB)
+2026-01-18T11:07:48.7399354Z Collecting six>=1.5 (from python-dateutil>=2.8.2->pandas>=2.2.2->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.7500574Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2026-01-18T11:07:48.7942568Z Collecting sortedcontainers<3.0.0,>=2.1.0 (from hypothesis->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.8045046Z   Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl.metadata (10 kB)
+2026-01-18T11:07:48.8466283Z Collecting pytest-metadata (from pytest-json-report->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.8567072Z   Downloading pytest_metadata-3.1.1-py3-none-any.whl.metadata (8.6 kB)
+2026-01-18T11:07:48.8949432Z Collecting execnet>=2.1 (from pytest-xdist->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.9051268Z   Downloading execnet-2.1.2-py3-none-any.whl.metadata (2.9 kB)
+2026-01-18T11:07:48.9537382Z Collecting tiktoken (from pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:48.9647558Z   Downloading tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2026-01-18T11:07:49.1644553Z Collecting tokenizers (from pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.1753118Z   Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+2026-01-18T11:07:49.2328806Z Collecting sentencepiece (from pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.2441019Z   Downloading sentencepiece-0.2.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (10 kB)
+2026-01-18T11:07:49.6688471Z Collecting regex>=2022.1.18 (from tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.6797552Z   Downloading regex-2026.1.15-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2026-01-18T11:07:49.6850112Z Requirement already satisfied: requests>=2.26.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (2.32.5)
+2026-01-18T11:07:49.6877457Z Requirement already satisfied: charset_normalizer<4,>=2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests>=2.26.0->tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (3.4.4)
+2026-01-18T11:07:49.6883304Z Requirement already satisfied: idna<4,>=2.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests>=2.26.0->tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (3.11)
+2026-01-18T11:07:49.6889207Z Requirement already satisfied: urllib3<3,>=1.21.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests>=2.26.0->tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (2.6.3)
+2026-01-18T11:07:49.6894366Z Requirement already satisfied: certifi>=2017.4.17 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests>=2.26.0->tiktoken->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (2026.1.4)
+2026-01-18T11:07:49.7483218Z Collecting huggingface-hub<2.0,>=0.16.4 (from tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.7591159Z   Downloading huggingface_hub-1.3.2-py3-none-any.whl.metadata (13 kB)
+2026-01-18T11:07:49.7795701Z Requirement already satisfied: filelock in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (3.20.0)
+2026-01-18T11:07:49.7799947Z Requirement already satisfied: fsspec>=2023.5.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d) (2025.12.0)
+2026-01-18T11:07:49.8224840Z Collecting hf-xet<2.0.0,>=1.2.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.8327575Z   Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2026-01-18T11:07:49.8614215Z Collecting httpx<1,>=0.23.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.8718228Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2026-01-18T11:07:49.8993348Z Collecting shellingham (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.9096926Z   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2026-01-18T11:07:49.9430100Z Collecting typer-slim (from huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.9534200Z   Downloading typer_slim-0.21.1-py3-none-any.whl.metadata (16 kB)
+2026-01-18T11:07:49.9859812Z Collecting anyio (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:49.9962417Z   Downloading anyio-4.12.1-py3-none-any.whl.metadata (4.3 kB)
+2026-01-18T11:07:50.0224982Z Collecting httpcore==1.* (from httpx<1,>=0.23.0->huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:50.0328925Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2026-01-18T11:07:50.0551040Z Collecting h11>=0.16 (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:50.0651793Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2026-01-18T11:07:50.1073200Z Collecting click>=8.0.0 (from typer-slim->huggingface-hub<2.0,>=0.16.4->tokenizers->pytorch-tokenizers->executorch==1.1.0a0+7492d0d)
+2026-01-18T11:07:50.1174269Z   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2026-01-18T11:07:50.1345689Z Downloading coremltools-9.0-cp311-none-manylinux1_x86_64.whl (2.3 MB)
+2026-01-18T11:07:50.1694769Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 85.5 MB/s  0:00:00
+2026-01-18T11:07:50.1801345Z Downloading pytest_rerunfailures-15.1-py3-none-any.whl (13 kB)
+2026-01-18T11:07:50.1952437Z Downloading scikit_learn-1.7.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.7 MB)
+2026-01-18T11:07:50.2428278Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 MB 213.4 MB/s  0:00:00
+2026-01-18T11:07:50.2533402Z Downloading pytest-8.4.2-py3-none-any.whl (365 kB)
+2026-01-18T11:07:50.2682963Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2026-01-18T11:07:50.2822930Z Downloading attrs-25.4.0-py3-none-any.whl (67 kB)
+2026-01-18T11:07:50.2950805Z Downloading hydra_core-1.3.2-py3-none-any.whl (154 kB)
+2026-01-18T11:07:50.3087248Z Downloading omegaconf-2.3.0-py3-none-any.whl (79 kB)
+2026-01-18T11:07:50.3214375Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2026-01-18T11:07:50.3335853Z Downloading joblib-1.5.3-py3-none-any.whl (309 kB)
+2026-01-18T11:07:50.3469187Z Downloading numpy-2.4.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.7 MB)
+2026-01-18T11:07:50.4166394Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.7/16.7 MB 244.3 MB/s  0:00:00
+2026-01-18T11:07:50.4180111Z Using cached packaging-25.0-py3-none-any.whl (66 kB)
+2026-01-18T11:07:50.4289888Z Downloading pandas-2.3.3-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)
+2026-01-18T11:07:50.4855594Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 235.1 MB/s  0:00:00
+2026-01-18T11:07:50.4963390Z Downloading protobuf-6.33.4-cp39-abi3-manylinux2014_x86_64.whl (323 kB)
+2026-01-18T11:07:50.5111823Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2026-01-18T11:07:50.5204109Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 146.0 MB/s  0:00:00
+2026-01-18T11:07:50.5309561Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2026-01-18T11:07:50.5437887Z Downloading pytz-2025.2-py2.py3-none-any.whl (509 kB)
+2026-01-18T11:07:50.5495794Z Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2026-01-18T11:07:50.5609396Z Downloading scipy-1.17.0-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (35.1 MB)
+2026-01-18T11:07:50.7109917Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.1/35.1 MB 236.4 MB/s  0:00:00
+2026-01-18T11:07:50.7220500Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2026-01-18T11:07:50.7348981Z Downloading threadpoolctl-3.6.0-py3-none-any.whl (18 kB)
+2026-01-18T11:07:50.7482437Z Downloading tzdata-2025.3-py2.py3-none-any.whl (348 kB)
+2026-01-18T11:07:50.7625652Z Downloading cattrs-25.3.0-py3-none-any.whl (70 kB)
+2026-01-18T11:07:50.7764118Z Downloading expecttest-0.3.0-py3-none-any.whl (8.2 kB)
+2026-01-18T11:07:50.7889222Z Downloading flatbuffers-25.12.19-py2.py3-none-any.whl (26 kB)
+2026-01-18T11:07:50.8032473Z Downloading hypothesis-6.150.2-py3-none-any.whl (542 kB)
+2026-01-18T11:07:50.8093149Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 542.7/542.7 kB 73.9 MB/s  0:00:00
+2026-01-18T11:07:50.8197672Z Downloading sortedcontainers-2.4.0-py2.py3-none-any.whl (29 kB)
+2026-01-18T11:07:50.8320515Z Downloading kgb-7.3-py2.py3-none-any.whl (59 kB)
+2026-01-18T11:07:50.8446049Z Downloading parameterized-0.9.0-py2.py3-none-any.whl (20 kB)
+2026-01-18T11:07:50.8575492Z Downloading pyaml-25.7.0-py3-none-any.whl (26 kB)
+2026-01-18T11:07:50.8700168Z Downloading pytest_json_report-1.5.0-py3-none-any.whl (13 kB)
+2026-01-18T11:07:50.8823628Z Downloading pytest_metadata-3.1.1-py3-none-any.whl (11 kB)
+2026-01-18T11:07:50.8947552Z Downloading pytest_xdist-3.8.0-py3-none-any.whl (46 kB)
+2026-01-18T11:07:50.9074307Z Downloading execnet-2.1.2-py3-none-any.whl (40 kB)
+2026-01-18T11:07:50.9945222Z Downloading pytorch_tokenizers-1.0.1-cp311-cp311-manylinux_2_34_x86_64.whl (1.4 MB)
+2026-01-18T11:07:51.0045953Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 167.1 MB/s  0:00:00
+2026-01-18T11:07:51.0150737Z Downloading ruamel_yaml-0.19.1-py3-none-any.whl (118 kB)
+2026-01-18T11:07:51.0290264Z Downloading sentencepiece-0.2.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (1.4 MB)
+2026-01-18T11:07:51.0377655Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.4/1.4 MB 175.3 MB/s  0:00:00
+2026-01-18T11:07:51.0481782Z Downloading tabulate-0.9.0-py3-none-any.whl (35 kB)
+2026-01-18T11:07:51.0628004Z Downloading tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl (1.2 MB)
+2026-01-18T11:07:51.0710198Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 148.8 MB/s  0:00:00
+2026-01-18T11:07:51.0819092Z Downloading regex-2026.1.15-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (800 kB)
+2026-01-18T11:07:51.0907446Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 800.5/800.5 kB 92.6 MB/s  0:00:00
+2026-01-18T11:07:51.1010202Z Downloading tokenizers-0.22.2-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2026-01-18T11:07:51.1219259Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 168.2 MB/s  0:00:00
+2026-01-18T11:07:51.1322241Z Downloading huggingface_hub-1.3.2-py3-none-any.whl (534 kB)
+2026-01-18T11:07:51.1391387Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 534.5/534.5 kB 65.6 MB/s  0:00:00
+2026-01-18T11:07:51.1496475Z Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2026-01-18T11:07:51.1682301Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 199.8 MB/s  0:00:00
+2026-01-18T11:07:51.1792327Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2026-01-18T11:07:51.1918328Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2026-01-18T11:07:51.2041529Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2026-01-18T11:07:51.2167023Z Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+2026-01-18T11:07:51.2296610Z Downloading anyio-4.12.1-py3-none-any.whl (113 kB)
+2026-01-18T11:07:51.2422062Z Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2026-01-18T11:07:51.2550658Z Downloading typer_slim-0.21.1-py3-none-any.whl (47 kB)
+2026-01-18T11:07:51.2677705Z Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2026-01-18T11:07:51.3992676Z Building wheels for collected packages: executorch, antlr4-python3-runtime
+2026-01-18T11:07:51.4000814Z   Building wheel for executorch (pyproject.toml): started
+2026-01-18T11:08:00.4029416Z   Building wheel for executorch (pyproject.toml): finished with status 'error'
+2026-01-18T11:08:00.4114783Z   error: subprocess-exited-with-error
+2026-01-18T11:08:00.4115246Z   
+2026-01-18T11:08:00.4116043Z   × Building wheel for executorch (pyproject.toml) did not run successfully.
+2026-01-18T11:08:00.4116721Z   │ exit code: 1
+2026-01-18T11:08:00.4117124Z   ╰─> [206 lines of output]
+2026-01-18T11:08:00.4118526Z       /tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:82: SetuptoolsDeprecationWarning: `project.license` as a TOML table is deprecated
+2026-01-18T11:08:00.4119967Z       !!
+2026-01-18T11:08:00.4120251Z       
+2026-01-18T11:08:00.4120644Z               ********************************************************************************
+2026-01-18T11:08:00.4122107Z               Please use a simple string containing a SPDX expression for `project.license`. You can also use `project.license-files`. (Both options available on setuptools>=77.0.0).
+2026-01-18T11:08:00.4123255Z       
+2026-01-18T11:08:00.4123768Z               By 2026-Feb-18, you need to update your project and remove deprecated calls
+2026-01-18T11:08:00.4124492Z               or your builds will no longer be supported.
+2026-01-18T11:08:00.4124953Z       
+2026-01-18T11:08:00.4125625Z               See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license for details.
+2026-01-18T11:08:00.4126540Z               ********************************************************************************
+2026-01-18T11:08:00.4127048Z       
+2026-01-18T11:08:00.4127313Z       !!
+2026-01-18T11:08:00.4127613Z         corresp(dist, value, root_dir)
+2026-01-18T11:08:00.4129419Z       /tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/config/_apply_pyprojecttoml.py:55: SetuptoolsDeprecationWarning: 'tool.setuptools.license-files' is deprecated in favor of 'project.license-files' (available on setuptools>=77.0.0).
+2026-01-18T11:08:00.4131827Z       !!
+2026-01-18T11:08:00.4132307Z       
+2026-01-18T11:08:00.4132669Z               ********************************************************************************
+2026-01-18T11:08:00.4133191Z       
+2026-01-18T11:08:00.4133700Z               By 2026-Feb-18, you need to update your project and remove deprecated calls
+2026-01-18T11:08:00.4134489Z               or your builds will no longer be supported.
+2026-01-18T11:08:00.4134934Z       
+2026-01-18T11:08:00.4135448Z               See https://packaging.python.org/en/latest/guides/writing-pyproject-toml/#license-files for details.
+2026-01-18T11:08:00.4136007Z               ********************************************************************************
+2026-01-18T11:08:00.4136294Z       
+2026-01-18T11:08:00.4136911Z       !!
+2026-01-18T11:08:00.4137281Z         _apply_tool_table(dist, config, filename)
+2026-01-18T11:08:00.4137726Z       2026-01-18 11:07:51,599 [INFO] running bdist_wheel
+2026-01-18T11:08:00.4138076Z       2026-01-18 11:07:51,602 [INFO] running build
+2026-01-18T11:08:00.4138411Z       2026-01-18 11:07:51,602 [INFO] command options for 'CustomBuild':
+2026-01-18T11:08:00.4138765Z       2026-01-18 11:07:51,602 [INFO]   build_base = pip-out
+2026-01-18T11:08:00.4139114Z       2026-01-18 11:07:51,602 [INFO]   build_purelib = pip-out/lib
+2026-01-18T11:08:00.4139528Z       2026-01-18 11:07:51,602 [INFO]   build_platlib = pip-out/lib.linux-x86_64-cpython-311
+2026-01-18T11:08:00.4139997Z       2026-01-18 11:07:51,603 [INFO]   build_lib = pip-out/lib.linux-x86_64-cpython-311
+2026-01-18T11:08:00.4140422Z       2026-01-18 11:07:51,603 [INFO]   build_scripts = pip-out/scripts-3.11
+2026-01-18T11:08:00.4140850Z       2026-01-18 11:07:51,603 [INFO]   build_temp = pip-out/temp.linux-x86_64-cpython-311
+2026-01-18T11:08:00.4141270Z       2026-01-18 11:07:51,603 [INFO]   plat_name = linux-x86_64
+2026-01-18T11:08:00.4141594Z       2026-01-18 11:07:51,603 [INFO]   compiler = None
+2026-01-18T11:08:00.4142111Z       2026-01-18 11:07:51,603 [INFO]   parallel = None
+2026-01-18T11:08:00.4142423Z       2026-01-18 11:07:51,603 [INFO]   debug = None
+2026-01-18T11:08:00.4142703Z       2026-01-18 11:07:51,603 [INFO]   force = None
+2026-01-18T11:08:00.4143114Z       2026-01-18 11:07:51,603 [INFO]   executable = /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2026-01-18T11:08:00.4143761Z       2026-01-18 11:07:51,603 [INFO] creating /tmp/pip-req-build-1l_41c3o/pip-out/temp.linux-x86_64-cpython-311/cmake-out
+2026-01-18T11:08:00.4144451Z       2026-01-18 11:07:51,603 [INFO] clearing /tmp/pip-req-build-1l_41c3o/pip-out/temp.linux-x86_64-cpython-311/cmake-out
+2026-01-18T11:08:00.4144924Z       Preset CMake variables:
+2026-01-18T11:08:00.4145136Z       
+2026-01-18T11:08:00.4145318Z         CMAKE_OSX_DEPLOYMENT_TARGET="12.0"
+2026-01-18T11:08:00.4145755Z         EXECUTORCH_BUILD_PRESET_FILE="/tmp/pip-req-build-1l_41c3o/tools/cmake/preset/pybind.cmake"
+2026-01-18T11:08:00.4146175Z       
+2026-01-18T11:08:00.4146387Z       -- The C compiler identification is GNU 13.3.0
+2026-01-18T11:08:00.4146724Z       -- The CXX compiler identification is GNU 13.3.0
+2026-01-18T11:08:00.4147009Z       -- Detecting C compiler ABI info
+2026-01-18T11:08:00.4147282Z       -- Detecting C compiler ABI info - done
+2026-01-18T11:08:00.4147594Z       -- Check for working C compiler: /usr/bin/cc - skipped
+2026-01-18T11:08:00.4147900Z       -- Detecting C compile features
+2026-01-18T11:08:00.4148163Z       -- Detecting C compile features - done
+2026-01-18T11:08:00.4148425Z       -- Detecting CXX compiler ABI info
+2026-01-18T11:08:00.4148699Z       -- Detecting CXX compiler ABI info - done
+2026-01-18T11:08:00.4149017Z       -- Check for working CXX compiler: /usr/bin/c++ - skipped
+2026-01-18T11:08:00.4149419Z       -- Detecting CXX compile features
+2026-01-18T11:08:00.4149727Z       -- Detecting CXX compile features - done
+2026-01-18T11:08:00.4150303Z       -- Loading build preset: /tmp/pip-req-build-1l_41c3o/tools/cmake/preset/pybind.cmake
+2026-01-18T11:08:00.4150750Z       -- ccache not found, builds will not be cached
+2026-01-18T11:08:00.4151183Z       -- Using the multi-header code from /tmp/pip-req-build-1l_41c3o/third-party/json/include/
+2026-01-18T11:08:00.4151771Z       CMake Deprecation Warning at third-party/gflags/CMakeLists.txt:73 (cmake_minimum_required):
+2026-01-18T11:08:00.4152523Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4152871Z         CMake.
+2026-01-18T11:08:00.4153043Z       
+2026-01-18T11:08:00.4153319Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4153786Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4154321Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4154612Z       
+2026-01-18T11:08:00.4154765Z       
+2026-01-18T11:08:00.4154944Z       -- Looking for C++ include unistd.h
+2026-01-18T11:08:00.4155232Z       -- Looking for C++ include unistd.h - found
+2026-01-18T11:08:00.4155503Z       -- Looking for C++ include stdint.h
+2026-01-18T11:08:00.4155771Z       -- Looking for C++ include stdint.h - found
+2026-01-18T11:08:00.4156043Z       -- Looking for C++ include inttypes.h
+2026-01-18T11:08:00.4156327Z       -- Looking for C++ include inttypes.h - found
+2026-01-18T11:08:00.4156608Z       -- Looking for C++ include sys/types.h
+2026-01-18T11:08:00.4156897Z       -- Looking for C++ include sys/types.h - found
+2026-01-18T11:08:00.4157175Z       -- Looking for C++ include sys/stat.h
+2026-01-18T11:08:00.4157450Z       -- Looking for C++ include sys/stat.h - found
+2026-01-18T11:08:00.4157726Z       -- Looking for C++ include fnmatch.h
+2026-01-18T11:08:00.4157998Z       -- Looking for C++ include fnmatch.h - found
+2026-01-18T11:08:00.4158282Z       -- Looking for C++ include stddef.h
+2026-01-18T11:08:00.4158555Z       -- Looking for C++ include stddef.h - found
+2026-01-18T11:08:00.4158829Z       -- Check size of uint32_t
+2026-01-18T11:08:00.4159058Z       -- Check size of uint32_t - done
+2026-01-18T11:08:00.4159304Z       -- Looking for strtoll
+2026-01-18T11:08:00.4159525Z       -- Looking for strtoll - found
+2026-01-18T11:08:00.4159949Z       CMake Deprecation Warning at third-party/pybind11/CMakeLists.txt:13 (cmake_minimum_required):
+2026-01-18T11:08:00.4160495Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4160834Z         CMake.
+2026-01-18T11:08:00.4160999Z       
+2026-01-18T11:08:00.4161269Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4161736Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4162351Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4162639Z       
+2026-01-18T11:08:00.4162792Z       
+2026-01-18T11:08:00.4162958Z       -- pybind11 v2.13.6
+2026-01-18T11:08:00.4163497Z       -- Found PythonInterp: /opt/hostedtoolcache/Python/3.11.14/x64/bin/python (found suitable version "3.11.14", minimum required is "3.7")
+2026-01-18T11:08:00.4164185Z       -- Found PythonLibs: /opt/hostedtoolcache/Python/3.11.14/x64/lib/libpython3.11.so
+2026-01-18T11:08:00.4164753Z       -- Performing Test HAS_FLTO
+2026-01-18T11:08:00.4165041Z       -- Performing Test HAS_FLTO - Success
+2026-01-18T11:08:00.4165472Z       CMake Deprecation Warning at third-party/flatcc/CMakeLists.txt:2 (cmake_minimum_required):
+2026-01-18T11:08:00.4166007Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4166344Z         CMake.
+2026-01-18T11:08:00.4166508Z       
+2026-01-18T11:08:00.4166773Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4167241Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4167784Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4168063Z       
+2026-01-18T11:08:00.4168208Z       
+2026-01-18T11:08:00.4168463Z       -- dist install dir /tmp/pip-req-build-1l_41c3o/third-party/flatcc
+2026-01-18T11:08:00.4168891Z       -- lib install dir /tmp/pip-req-build-1l_41c3o/third-party/flatcc/lib
+2026-01-18T11:08:00.4169275Z       -- Setting GNU C compiler options with c11 and Posix
+2026-01-18T11:08:00.4169589Z       -- Disabling -pedantic for GCC >= 8.0
+2026-01-18T11:08:00.4169979Z       -- Disabling GNU C compiler warnings: -Wstringop-truncation -Wno-format-overflow
+2026-01-18T11:08:00.4170367Z       -- GCC_VERSION: 13
+2026-01-18T11:08:00.4170554Z       
+2026-01-18T11:08:00.4171471Z       -- Configured C_FLAGS:  -DFLATCC_REFLECTION=0 -std=c11 -Wall -Wextra -Wno-stringop-truncation -Wno-format-overflow -Wno-misleading-indentation -DPORTABLE_POSIX_MEMALIGN=1 -Werror -Wno-unused-function -Wsign-conversion
+2026-01-18T11:08:00.4172831Z       CMake Deprecation Warning at backends/xnnpack/third-party/FXdiv/CMakeLists.txt:1 (CMAKE_MINIMUM_REQUIRED):
+2026-01-18T11:08:00.4173435Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4173780Z         CMake.
+2026-01-18T11:08:00.4173945Z       
+2026-01-18T11:08:00.4174221Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4174684Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4175082Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4175360Z       
+2026-01-18T11:08:00.4175505Z       
+2026-01-18T11:08:00.4175900Z       CMake Deprecation Warning at backends/xnnpack/third-party/cpuinfo/CMakeLists.txt:1 (CMAKE_MINIMUM_REQUIRED):
+2026-01-18T11:08:00.4176485Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4176840Z         CMake.
+2026-01-18T11:08:00.4177005Z       
+2026-01-18T11:08:00.4177284Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4177750Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4178150Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4178428Z       
+2026-01-18T11:08:00.4178570Z       
+2026-01-18T11:08:00.4178761Z       -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+2026-01-18T11:08:00.4179073Z       -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+2026-01-18T11:08:00.4179365Z       -- Found Threads: TRUE
+2026-01-18T11:08:00.4179845Z       CMake Deprecation Warning at backends/xnnpack/third-party/pthreadpool/CMakeLists.txt:10 (CMAKE_MINIMUM_REQUIRED):
+2026-01-18T11:08:00.4180458Z         Compatibility with CMake < 3.10 will be removed from a future version of
+2026-01-18T11:08:00.4180803Z         CMake.
+2026-01-18T11:08:00.4180962Z       
+2026-01-18T11:08:00.4181236Z         Update the VERSION argument <min> value.  Or, use the <min>...<max> syntax
+2026-01-18T11:08:00.4181692Z         to tell CMake that the project requires at least <min> but has been updated
+2026-01-18T11:08:00.4182309Z         to work with policies introduced by <max> or earlier.
+2026-01-18T11:08:00.4182589Z       
+2026-01-18T11:08:00.4182731Z       
+2026-01-18T11:08:00.4182923Z       CMake Error at CMakeLists.txt:298 (message):
+2026-01-18T11:08:00.4183274Z         The ExecuTorch repo must be cloned into a directory named exactly
+2026-01-18T11:08:00.4183657Z         `executorch`; found `pip-req-build-1l_41c3o`.  See
+2026-01-18T11:08:00.4184065Z         https://github.com/pytorch/executorch/issues/6475 for progress on a fix for
+2026-01-18T11:08:00.4184439Z         this restriction.
+2026-01-18T11:08:00.4184630Z       
+2026-01-18T11:08:00.4184778Z       
+2026-01-18T11:08:00.4184975Z       -- Configuring incomplete, errors occurred!
+2026-01-18T11:08:00.4185251Z       Traceback (most recent call last):
+2026-01-18T11:08:00.4190606Z         File "/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 389, in <module>
+2026-01-18T11:08:00.4191463Z           main()
+2026-01-18T11:08:00.4192331Z         File "/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 373, in main
+2026-01-18T11:08:00.4193032Z           json_out["return_val"] = hook(**hook_input["kwargs"])
+2026-01-18T11:08:00.4193351Z                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4194053Z         File "/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/pip/_vendor/pyproject_hooks/_in_process/_in_process.py", line 280, in build_wheel
+2026-01-18T11:08:00.4194738Z           return _build_backend().build_wheel(
+2026-01-18T11:08:00.4194996Z                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4195678Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/build_meta.py", line 435, in build_wheel
+2026-01-18T11:08:00.4196342Z           return _build(['bdist_wheel', '--dist-info-dir', str(metadata_directory)])
+2026-01-18T11:08:00.4196734Z                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4197311Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/build_meta.py", line 423, in _build
+2026-01-18T11:08:00.4197862Z           return self._build_with_temp_dir(
+2026-01-18T11:08:00.4198108Z                  ^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4198705Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/build_meta.py", line 404, in _build_with_temp_dir
+2026-01-18T11:08:00.4199275Z           self.run_setup()
+2026-01-18T11:08:00.4199794Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/build_meta.py", line 317, in run_setup
+2026-01-18T11:08:00.4200324Z           exec(code, locals())
+2026-01-18T11:08:00.4200579Z         File "<string>", line 775, in <module>
+2026-01-18T11:08:00.4201136Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/__init__.py", line 115, in setup
+2026-01-18T11:08:00.4201655Z           return distutils.core.setup(**attrs)
+2026-01-18T11:08:00.4202084Z                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4202637Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/core.py", line 186, in setup
+2026-01-18T11:08:00.4203166Z           return run_commands(dist)
+2026-01-18T11:08:00.4203394Z                  ^^^^^^^^^^^^^^^^^^
+2026-01-18T11:08:00.4203937Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/core.py", line 202, in run_commands
+2026-01-18T11:08:00.4204510Z           dist.run_commands()
+2026-01-18T11:08:00.4205059Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1002, in run_commands
+2026-01-18T11:08:00.4205611Z           self.run_command(cmd)
+2026-01-18T11:08:00.4206111Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/dist.py", line 1102, in run_command
+2026-01-18T11:08:00.4206623Z           super().run_command(command)
+2026-01-18T11:08:00.4207190Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1021, in run_command
+2026-01-18T11:08:00.4207729Z           cmd_obj.run()
+2026-01-18T11:08:00.4208231Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/command/bdist_wheel.py", line 370, in run
+2026-01-18T11:08:00.4208771Z           self.run_command("build")
+2026-01-18T11:08:00.4209311Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/cmd.py", line 357, in run_command
+2026-01-18T11:08:00.4209890Z           self.distribution.run_command(command)
+2026-01-18T11:08:00.4210459Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/dist.py", line 1102, in run_command
+2026-01-18T11:08:00.4211112Z           super().run_command(command)
+2026-01-18T11:08:00.4211670Z         File "/tmp/pip-build-env-f9r9sis8/overlay/lib/python3.11/site-packages/setuptools/_distutils/dist.py", line 1021, in run_command
+2026-01-18T11:08:00.4212459Z           cmd_obj.run()
+2026-01-18T11:08:00.4212690Z         File "<string>", line 698, in run
+2026-01-18T11:08:00.4213131Z         File "/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/subprocess.py", line 571, in run
+2026-01-18T11:08:00.4213633Z           raise CalledProcessError(retcode, process.args,
+2026-01-18T11:08:00.4215194Z       subprocess.CalledProcessError: Command '['cmake', '-DPYTHON_EXECUTABLE=/opt/hostedtoolcache/Python/3.11.14/x64/bin/python', '-DCMAKE_PREFIX_PATH=/opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages', '-DCMAKE_BUILD_TYPE=Release', '--preset', 'pybind', '-B', '/tmp/pip-req-build-1l_41c3o/pip-out/temp.linux-x86_64-cpython-311/cmake-out']' returned non-zero exit status 1.
+2026-01-18T11:08:00.4216601Z       [end of output]
+2026-01-18T11:08:00.4216788Z   
+2026-01-18T11:08:00.4217086Z   note: This error originates from a subprocess, and is likely not a problem with pip.
+2026-01-18T11:08:00.4217499Z   ERROR: Failed building wheel for executorch
+2026-01-18T11:08:00.4217866Z   Building wheel for antlr4-python3-runtime (pyproject.toml): started
+2026-01-18T11:08:00.6558044Z   Building wheel for antlr4-python3-runtime (pyproject.toml): finished with status 'done'
+2026-01-18T11:08:00.6565061Z   Created wheel for antlr4-python3-runtime: filename=antlr4_python3_runtime-4.9.3-py3-none-any.whl size=144591 sha256=504a3515301eef5e8f14717f4ebbff82c00060075c4dd6e8ab38fb0e6de0f463
+2026-01-18T11:08:00.6566825Z   Stored in directory: /home/runner/.cache/pip/wheels/1a/97/32/461f837398029ad76911109f07047fde1d7b661a147c7c56d1
+2026-01-18T11:08:00.6585380Z Successfully built antlr4-python3-runtime
+2026-01-18T11:08:00.6586667Z Failed to build executorch
+2026-01-18T11:08:00.6618589Z error: failed-wheel-build-for-install
+2026-01-18T11:08:00.6618927Z 
+2026-01-18T11:08:00.6619571Z × Failed to build installable wheels for some pyproject.toml based projects
+2026-01-18T11:08:00.6620231Z ╰─> executorch
+2026-01-18T11:08:02.5843981Z ##[error]Process completed with exit code 1.
+2026-01-18T11:08:02.5958627Z Post job cleanup.
+2026-01-18T11:08:02.6940741Z [command]/usr/bin/git version
+2026-01-18T11:08:02.6977662Z git version 2.52.0
+2026-01-18T11:08:02.7021094Z Temporarily overriding HOME='/home/runner/work/_temp/057e8bf0-dab7-4838-bf01-58ea7fb77951' before making global git config changes
+2026-01-18T11:08:02.7022502Z Adding repository directory to the temporary git global config as a safe directory
+2026-01-18T11:08:02.7027229Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/PojavBounce/PojavBounce
+2026-01-18T11:08:02.7063949Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-01-18T11:08:02.7096325Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-01-18T11:08:02.7329968Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-01-18T11:08:02.7352237Z http.https://github.com/.extraheader
+2026-01-18T11:08:02.7365436Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-01-18T11:08:02.7398838Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-01-18T11:08:02.7629501Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-01-18T11:08:02.7662661Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-01-18T11:08:02.8022924Z Cleaning up orphan processes

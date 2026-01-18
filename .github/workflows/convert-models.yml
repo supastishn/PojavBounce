@@ -25,13 +25,15 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install mxnet  # For reading .params files
           # Install ExecuTorch from source (PyPI doesn't have it yet)
           pip install git+https://github.com/pytorch/executorch.git
 
       - name: Convert models to ExecuTorch
         run: |
           cd src/main/resources/scripts/executorch
-          python export_minarai.py --export-all --output-dir ../../resources/liquidbounce/models/executorch
+          # Use the MXNet-based converter
+          python convert_with_mxnet.py
 
       - name: List converted models
         run: |

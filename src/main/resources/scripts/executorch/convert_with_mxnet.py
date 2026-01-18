@@ -166,11 +166,11 @@ def convert_to_executorch(model_name, params_path, output_path):
 
 def main():
     models = [
-        ("21KC11KP", "../../resources/liquidbounce/models/21kc11kp.params"),
-        ("19KC8KP", "../../resources/liquidbounce/models/19kc8kp.params"),
+        ("21KC11KP", "../../../resources/liquidbounce/models/21kc11kp.params"),
+        ("19KC8KP", "../../../resources/liquidbounce/models/19kc8kp.params"),
     ]
 
-    output_dir = "../../resources/liquidbounce/models/executorch"
+    output_dir = "../../../resources/liquidbounce/models/executorch"
     os.makedirs(output_dir, exist_ok=True)
 
     print("\nMinarai Model Converter: MXNet → ExecuTorch")

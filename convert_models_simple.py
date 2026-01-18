@@ -73,19 +73,23 @@ def convert_model(model_name: str, output_dir: str):
 
     # Save as ONNX (optional, for compatibility)
     print("\nSaving as ONNX...")
-    onnx_path = os.path.join(output_dir, f"{model_name.lower()}.onnx")
-    torch.onnx.export(
-        model,
-        example_input,
-        onnx_path,
-        export_params=True,
-        opset_version=11,
-        do_constant_folding=True,
-        input_names=['input'],
-        output_names=['output'],
-        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
-    )
-    print(f"✓ Saved ONNX: {onnx_path}")
+    try:
+        onnx_path = os.path.join(output_dir, f"{model_name.lower()}.onnx")
+        torch.onnx.export(
+            model,
+            example_input,
+            onnx_path,
+            export_params=True,
+            opset_version=11,
+            do_constant_folding=True,
+            input_names=['input'],
+            output_names=['output'],
+            dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+        )
+        print(f"✓ Saved ONNX: {onnx_path}")
+    except Exception as e:
+        print(f"⚠️  ONNX export skipped: {e}")
+        print("   TorchScript format is still available for deployment")
 
     # Save model info
     metadata = {

@@ -6,6 +6,21 @@ This script reads MXNet .params files, infers the architecture from weight shape
 and converts to ExecuTorch format for Android deployment.
 """
 
+# Workaround for MXNet numpy 2.0 compatibility issue
+import numpy as np
+if not hasattr(np, 'bool'):
+    np.bool = bool
+if not hasattr(np, 'int'):
+    np.int = int
+if not hasattr(np, 'float'):
+    np.float = float
+if not hasattr(np, 'complex'):
+    np.complex = complex
+if not hasattr(np, 'object'):
+    np.object = object
+if not hasattr(np, 'str'):
+    np.str = str
+
 import mxnet as mx
 import torch
 import torch.nn as nn

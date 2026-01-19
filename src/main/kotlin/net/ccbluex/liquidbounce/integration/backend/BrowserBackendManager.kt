@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,7 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.BrowserReadyEvent
 import net.ccbluex.liquidbounce.event.events.GameRenderEvent
 import net.ccbluex.liquidbounce.event.handler
-// import net.ccbluex.liquidbounce.integration.backend.backends.cef.CefBrowserBackend
-import net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend
+import net.ccbluex.liquidbounce.integration.backend.backends.cef.CefBrowserBackend
 import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
 import net.ccbluex.liquidbounce.integration.interop.persistant.PersistentLocalStorage
 import net.ccbluex.liquidbounce.integration.task.TaskManager
@@ -35,12 +34,10 @@ import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIOR
 
 object BrowserBackendManager : EventListener {
 
-    // Replace CefBrowserBackend with MinecraftGuiBrowserBackend to remove JCEF/MCEF dependency
-    val browserBackend: BrowserBackend = MinecraftGuiBrowserBackend()
-    // val browserBackend: BrowserBackend = CefBrowserBackend() // OLD CEF BACKEND - UNUSED
+    val browserBackend: BrowserBackend = CefBrowserBackend()
 
-    // Skip browser by default on native-only builds (no JCEF/web support)
-    val isSkippingBrowser = true
+    val isSkippingBrowser = System.getenv("LB_SKIP_BROWSER") == "true"
+        || System.getProperty("net.ccbluex.liquidbounce.skip.browser") == "true"
 
     fun init() {
         PersistentLocalStorage

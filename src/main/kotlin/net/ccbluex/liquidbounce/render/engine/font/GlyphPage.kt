@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
  */
 package net.ccbluex.liquidbounce.render.engine.font
 
-import net.ccbluex.liquidbounce.render.FontManager
+import net.ccbluex.liquidbounce.render.engine.FontId
 import net.ccbluex.liquidbounce.render.engine.type.UV2f
 import net.minecraft.client.renderer.texture.DynamicTexture
 import org.lwjgl.opengl.GL11
@@ -275,5 +275,5 @@ abstract class GlyphPage {
 }
 
 @JvmRecord
-data class FontGlyph(val codepoint: Char, val font: FontManager.FontId)
+data class FontGlyph(val codepoint: Char, val font: FontId)
 

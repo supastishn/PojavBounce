@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
 
 package net.ccbluex.liquidbounce.integration.theme.component
@@ -33,22 +31,16 @@ object HudComponentManager {
     val nativeComponents = listOf(MinimapHudComponent)
 
     val components: List<HudComponent>
-        get() = nativeComponents + (ThemeManager.theme?.components ?: emptyList())
+        get() = nativeComponents + ThemeManager.theme.components
 
     @JvmStatic
-    fun isTweakEnabled(tweak: HudComponentTweak): Boolean {
-        // Tweaks are only active when theme is loaded and ModuleHud is running
-        if (!ThemeManager.isThemeAvailable) return false
-        if (!ModuleHud.running || HideAppearance.isHidingNow) return false
-
-        return components.any { component ->
+    fun isTweakEnabled(tweak: HudComponentTweak) = ModuleHud.running && !HideAppearance.isHidingNow &&
+        components.any { component ->
             component.enabled && component.tweaks.contains(tweak)
         }
-    }
 
     @JvmStatic
     fun getComponentWithTweak(tweak: HudComponentTweak): HudComponent? {
-        if (!ThemeManager.isThemeAvailable) return null
         if (!ModuleHud.running || HideAppearance.isHidingNow) {
             return null
         }
@@ -68,8 +60,9 @@ object HudComponentManager {
     }
 
     fun updateComponents() {
-        val currentTheme = ThemeManager.theme ?: return
-        EventManager.callEvent(ComponentsUpdateEvent(currentTheme.metadata.id, currentTheme.components))
+        // Might be necessary later on.
+        // EventManager.callEvent(ComponentsUpdate(null, components))
+        EventManager.callEvent(ComponentsUpdateEvent(ThemeManager.theme.metadata.id, ThemeManager.theme.components))
     }
 
 }

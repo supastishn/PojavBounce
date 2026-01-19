@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,16 +18,15 @@
  */
 package net.ccbluex.liquidbounce.utils.input
 
+import com.mojang.blaze3d.platform.InputConstants
 import com.mojang.brigadier.StringReader
 import net.ccbluex.liquidbounce.features.module.ClientModule
 import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
-import com.mojang.blaze3d.platform.InputConstants
 import net.minecraft.core.Registry
 import net.minecraft.resources.Identifier
-import java.awt.Color
 import java.io.File
-import java.util.*
+import java.util.Locale
 import kotlin.jvm.optionals.getOrNull
 
 object HumanInputDeserializer {

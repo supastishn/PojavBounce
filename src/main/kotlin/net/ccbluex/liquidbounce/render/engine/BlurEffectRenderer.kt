@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.render.engine
 
+import com.mojang.blaze3d.pipeline.TextureTarget
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.textures.FilterMode
 import net.ccbluex.liquidbounce.LiquidBounce
@@ -35,7 +36,6 @@ import net.ccbluex.liquidbounce.utils.math.Easing
 import net.ccbluex.liquidbounce.utils.render.clearColorAndDepth
 import net.ccbluex.liquidbounce.utils.render.createUbo
 import net.ccbluex.liquidbounce.utils.render.writeStd140
-import com.mojang.blaze3d.pipeline.TextureTarget
 import net.minecraft.client.gui.screens.ChatScreen
 
 object BlurEffectRenderer : MinecraftShortcuts, EventListener {
@@ -83,12 +83,11 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
     private fun hasNoFullScreen(): Boolean =
         mc.screen == null || mc.screen is ChatScreen || FeatureSilentScreen.shouldHide
 
-    fun shouldDrawBlur(): Boolean = false // Disabled on native-only builds
-    // Original: inGame && hasNoFullScreen() && ModuleHud.running && ModuleHud.isBlurEffectActive
+    fun shouldDrawBlur(): Boolean = inGame && hasNoFullScreen() &&
+        ModuleHud.running && ModuleHud.isBlurEffectActive
 
     fun blitBlurOverlay() {
-        if (!isDrawingHudFramebuffer || !shouldDrawBlur()) {
-            isDrawingHudFramebuffer = false
+        if (!isDrawingHudFramebuffer) {
             return
         }
         isDrawingHudFramebuffer = false
@@ -113,27 +112,21 @@ object BlurEffectRenderer : MinecraftShortcuts, EventListener {
     }
 
     /**
-     * Draws a blit using the browser-compatible blending pipeline.
+     * Draws a blit using a custom JCEF-compatible blending pipeline.
      * Replaces the call to `overlayFramebuffer.drawBlit(mc.framebuffer.colorAttachment)`.
      *
      * @see net.minecraft.client.gl.Framebuffer.drawBlit
      */
     private fun drawOverlayBlit() {
-        // TODO: Fix for Minecraft 1.21 rendering API
-        // The vertex/index buffer API has changed in Minecraft 1.21
-        // This code needs to be updated to use the new rendering pipeline
-
-        /*
         mc.mainRenderTarget.colorTextureView!!.createRenderPass(
             { "GUI blur overlay blit pass" },
         ).use { renderPass ->
-            renderPass.setPipeline(ClientRenderPipelines.BROWSER.Blit)
-            renderPass.setVertexBuffer(0, vertexBuffer)
-            renderPass.setIndexBuffer(indexBuffer, shapeIndexBuffer.indexType)
-            renderPass.bindSampler("InSampler", overlayFramebuffer.colorAttachment)
-            renderPass.drawIndexed(0, 6)
+            renderPass.setPipeline(ClientRenderPipelines.JCEF.Blit)
+            RenderSystem.bindDefaultUniforms(renderPass)
+
+            renderPass.bindTexture("InSampler", overlayFramebuffer.colorTextureView, overlaySampler)
+            renderPass.draw(0, 3)
         }
-        */
     }
 
     private fun getBlurRadiusFactor(): Float {

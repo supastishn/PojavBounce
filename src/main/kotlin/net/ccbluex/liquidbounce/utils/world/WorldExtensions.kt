@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,9 @@
 
 package net.ccbluex.liquidbounce.utils.world
 
-import net.minecraft.world.level.Level
 import net.minecraft.world.attribute.BedRule
 import net.minecraft.world.attribute.EnvironmentAttributes
+import net.minecraft.world.level.Level
 
 /**
  * @return if water and ice evaporates in this world (e.g. nether)

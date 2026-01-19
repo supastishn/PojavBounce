@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@ package net.ccbluex.liquidbounce.utils.client
 
 import net.ccbluex.liquidbounce.interfaces.GuiMessageAddition
 import net.ccbluex.liquidbounce.interfaces.GuiMessageLineAddition
-import net.minecraft.client.gui.components.ChatComponent
 import net.minecraft.client.GuiMessage
 import net.minecraft.client.GuiMessageTag
+import net.minecraft.client.gui.components.ChatComponent
 import net.minecraft.network.chat.Component
 
 /**

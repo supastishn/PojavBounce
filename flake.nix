@@ -7,6 +7,13 @@
     let
       system = "x86_64-linux";
       pkgs = nixpkgs.legacyPackages.${system};
+      jcef_src = pkgs.fetchFromGitHub {
+        owner = "CCBlueX";
+        repo = "java-cef";
+        rev = "94489ce55f5b599c6c8b73189539687ccdf02a91";
+        hash = "sha256-IZbgA1o/g8RgZ6gj3oO1IUjSOR+e8MVBY+/r33HrH14=";
+      };
+      jcef = pkgs.callPackage jcef_src { };
       libs = with pkgs; [
         temurin-bin
         pciutils
@@ -57,6 +64,7 @@
         buildInputs = libs;
 
         LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath libs;
+        PROVIDED_JCEF_PATH = "${jcef}";
       };
     };
   nixConfig.bash-prompt-suffix = "[liquidbounce] ";

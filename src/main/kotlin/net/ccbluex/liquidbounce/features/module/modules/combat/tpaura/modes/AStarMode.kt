@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 package net.ccbluex.liquidbounce.features.module.modules.combat.tpaura.modes
@@ -46,15 +45,15 @@ import net.ccbluex.liquidbounce.utils.client.markAsError
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.math.set
 import net.ccbluex.liquidbounce.utils.math.sq
-import net.ccbluex.liquidbounce.utils.math.toVec3f
 import net.ccbluex.liquidbounce.utils.math.toVec3d
-import net.minecraft.world.entity.LivingEntity
+import net.ccbluex.liquidbounce.utils.math.toVec3f
+import net.minecraft.core.BlockPos
+import net.minecraft.core.Vec3i
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Pos
-import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket
-import net.minecraft.core.BlockPos
+import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.phys.AABB
-import net.minecraft.core.Vec3i
 
 object AStarMode : TpAuraChoice("AStar"), AStarPathBuilder {
 

@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,7 +61,7 @@ class AuthMiddleware : Middleware.OnRequest, Middleware.OnResponse,
 
         // Check if the authentication code is valid or if the request is already authenticated.
         if (codeParam != null && codeParam == AUTH_CODE || isAuthenticated(context.headers) ||
-            ThemeManager.theme?.origin?.external == true) {
+            ThemeManager.theme.origin.external) {
             // Allow the request to proceed.
             return null
         }
@@ -103,7 +103,7 @@ class AuthMiddleware : Middleware.OnRequest, Middleware.OnResponse,
         ctx: ChannelHandlerContext,
         request: HttpRequest
     ): FullHttpResponse? {
-        if (!isAuthenticated(request.headers()) && ThemeManager.theme?.origin?.external != true) {
+        if (!isAuthenticated(request.headers()) && !ThemeManager.theme.origin.external) {
             logger.warn("[Interop] Unauthenticated web socket upgrade request")
             return httpUnauthorized("Authentication required")
         }

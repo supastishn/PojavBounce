@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,13 +15,14 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package net.ccbluex.liquidbounce.integration.theme
 
 import com.mojang.blaze3d.pipeline.BlendFunction
 import com.mojang.blaze3d.pipeline.RenderPipeline
 import com.mojang.blaze3d.platform.DepthTestFunction
+import com.mojang.blaze3d.platform.NativeImage
+import com.mojang.blaze3d.shaders.UniformType
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.textures.FilterMode
 import com.mojang.blaze3d.textures.GpuTexture
@@ -30,6 +31,7 @@ import com.mojang.blaze3d.textures.TextureFormat
 import net.ccbluex.liquidbounce.LiquidBounce
 import net.ccbluex.liquidbounce.render.ClientRenderPipelines.screenQuad
 import net.ccbluex.liquidbounce.render.createRenderPass
+import net.ccbluex.liquidbounce.render.drawBlitOnCurrentLayer
 import net.ccbluex.liquidbounce.render.drawTexQuad
 import net.ccbluex.liquidbounce.utils.client.gpuDevice
 import net.ccbluex.liquidbounce.utils.client.mc
@@ -38,14 +40,11 @@ import net.ccbluex.liquidbounce.utils.render.asView
 import net.ccbluex.liquidbounce.utils.render.createUbo
 import net.ccbluex.liquidbounce.utils.render.textureSetup
 import net.ccbluex.liquidbounce.utils.render.writeStd140
-import com.mojang.blaze3d.shaders.UniformType
 import net.minecraft.client.gui.GuiGraphics
-import com.mojang.blaze3d.platform.NativeImage
-import net.ccbluex.liquidbounce.render.drawBlitOnCurrentLayer
 import net.minecraft.client.gui.render.TextureSetup
 import net.minecraft.resources.Identifier
 import java.io.Closeable
-import java.util.*
+import java.util.Locale
 
 sealed interface ThemeBackground : Closeable {
 

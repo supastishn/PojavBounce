@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@
 
 package net.ccbluex.liquidbounce.utils.math
 
-import net.minecraft.world.phys.AABB
 import net.minecraft.core.Direction
 import net.minecraft.core.Position
-import net.minecraft.world.phys.Vec3
 import net.minecraft.core.Vec3i
+import net.minecraft.world.phys.AABB
+import net.minecraft.world.phys.Vec3
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.max
 import kotlin.math.min

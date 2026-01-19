@@ -19,8 +19,8 @@
 
 import com.github.gradle.node.npm.task.NpmTask
 import com.github.gradle.node.task.NodeTask
+import dev.detekt.gradle.DetektCreateBaselineTask
 import groovy.json.JsonOutput
-import io.gitlab.arturbosch.detekt.DetektCreateBaselineTask
 import org.gradle.kotlin.dsl.support.listFilesOrdered
 
 plugins {
@@ -38,22 +38,10 @@ base {
     group = project.property("maven_group") as String
 }
 
-/** Includes non-mod dependency recursively in the JAR file */
-val includeDependency: Configuration by configurations.creating
+/** Includes dependency recursively in the JAR file */
+val jij: Configuration by configurations.creating
 
-/** Includes native-only dependency in the JAR file */
-val includeNative: Configuration by configurations.creating
-
-includeDependency.excludeProvidedLibs()
-
-configurations {
-    include.configure {
-        extendsFrom(includeNative)
-    }
-    runtimeOnly.configure {
-        extendsFrom(includeNative)
-    }
-}
+jij.excludeProvidedLibs()
 
 allprojects {
     repositories {
@@ -137,78 +125,50 @@ dependencies {
     modRuntimeOnly(libs.exploitPreventer)
 
     // Minecraft Authlib
-    includeDependency(libs.mcAuthlib)
+    jij(libs.mcAuthlib)
 
-    includeDependency("net.ccbluex:netty-httpserver:2.4.2")
-    // MacOS native (Linux native is included in game)
-    includeDependency("io.netty:netty-transport-classes-kqueue:${project.property("netty_version")}")
-    includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-aarch_64")
-    includeNative("io.netty:netty-transport-native-kqueue:${project.property("netty_version")}:osx-x86_64")
-
+    // JCEF Support
+    modApi(libs.mcef)
+    include(libs.mcef)
+    jij(libs.httpServer)
 
     // Discord RPC Support
-    includeDependency(libs.discordIpc)
+    jij(libs.discordIpc)
 
     // ScriptAPI
-    includeDependency("net.fabricmc:tiny-mappings-parser:0.3.0+build.17")
-    includeDependency(libs.polyglot)
-    includeDependency(libs.polyglot.js)
-    includeDependency(libs.polyglot.tools)
+    jij("net.fabricmc:tiny-mappings-parser:0.3.0+build.17")
+    jij(libs.polyglot)
+    jij(libs.polyglot.js)
+    jij(libs.polyglot.tools)
 
-    // Machine Learning - DJL
-    // Using standard desktop DJL libraries which work in PojavLauncher's JVM environment
-    // BOM (Bill of Materials) for version management
-    includeDependency(platform("ai.djl:bom:${libs.versions.djl.get()}"))
-    includeDependency("ai.djl:api")
-    includeDependency("ai.djl.pytorch:pytorch-engine")
-
-    // fbjni - Facebook JNI library (required by ExecuTorch)
-    // Provides Java classes required by libfbjni.so native library (e.g., com.facebook.jni.HybridData)
-    // The native libfbjni.so is bundled in resources and will be extracted at runtime
-    includeDependency(libs.fbjni)
-    // soloader/nativeloader - Required by fbjni for native library loading initialization
-    includeDependency(libs.soloader)
-
-    // executorch-android - Use the JAR classes directly (exclude native libs and Android dependencies)
-    // We extract the classes.jar from the AAR and include it in the mod
-    includeDependency(files("libs/executorch-android-1.0.1-classes.jar"))
-
-    // Note: ExecuTorch native libraries must be provided separately
-    // The executorch-android dependency requires Android SDK which is not available in PojavLauncher
-    // Users must manually place libexecutorch.so in the native folder
+    // Machine Learning
+    jij(libs.djl.api)
+    jij(libs.djl.pytorch)
 
     // HTTP library
-    includeDependency(libs.bundles.okhttp)
+    jij(libs.bundles.okhttp)
 
     // SOCKS5 & HTTP Proxy Support
-    includeDependency(libs.netty.handler.proxy)
+    jij(libs.netty.handler.proxy)
 
     // Update Checker
-    includeDependency(libs.semver4j)
+    jij(libs.semver4j)
 
     // Name Protect
-    includeDependency(libs.ahocorasick)
+    jij(libs.ahocorasick)
 
     // External utils
     compileOnlyApi(libs.fastutil4k.extensionsOnly)
-    includeDependency(libs.fastutil4k.moreCollections)
+    jij(libs.fastutil4k.moreCollections)
 
     // Test libraries
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
 //    testImplementation(libs.fabric.loader.junit)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-
-    afterEvaluate {
-        includeDependency.incoming.resolutionResult.allDependencies.forEach {
-            val apiDependency = dependencies.api(it.requested.toString()) {
-                isTransitive = false
-            }
-
-            dependencies.include(apiDependency)
-        }
-    }
 }
+
+addResolvedDependencies(jij, "compileOnly", "include", "api")
 
 tasks.processResources {
     dependsOn("bundleTheme")

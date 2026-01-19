@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
 
 package net.ccbluex.liquidbounce.integration.task
@@ -24,20 +22,16 @@ package net.ccbluex.liquidbounce.integration.task
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
 import net.ccbluex.liquidbounce.integration.task.type.ResourceTask
 import net.ccbluex.liquidbounce.integration.task.type.Task
-import net.ccbluex.liquidbounce.render.FontManager
-import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
-import net.ccbluex.liquidbounce.render.engine.type.Color4b
-import net.ccbluex.liquidbounce.utils.client.PlainText
 import net.ccbluex.liquidbounce.utils.client.asPlainText
-import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.formatAsCapacity
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.collection.Pools
+import net.ccbluex.liquidbounce.utils.text.PlainText
+import net.minecraft.ChatFormatting
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
 import net.minecraft.network.chat.Component
-import net.minecraft.ChatFormatting
 import net.minecraft.util.ARGB
 import java.text.DecimalFormat
 
@@ -50,19 +44,9 @@ class TaskProgressScreen(
 ) : Screen(title.asPlainText()) {
 
     private val percentFormat = DecimalFormat("0.0")
-    private val fontRenderer: FontRenderer get() = FontManager.FONT_RENDERER
-    private val fontScale = 0.22f
-
-    companion object {
-        private val COLOR_WHITE = Color4b(255, 255, 255, 255)
-        private val COLOR_GOLD = Color4b(255, 215, 0, 255)
-        private val COLOR_GRAY = Color4b(170, 170, 170, 255)
-    }
 
     override fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, partialTick: Float) {
-        // Use solid background instead of blur to avoid "can only blur once per frame" error
-        context.fill(0, 0, width, height, ARGB.color(255, 24, 26, 27))
-
+        renderBackground(context, mouseX, mouseY, partialTick)
         val cx = width / 2.0
         val cy = height / 2.0
 
@@ -75,20 +59,32 @@ class TaskProgressScreen(
         val textLines = getTaskLines(progress)
 
         // Draw text
-        val textHeight = textLines.size * 15
+        val textHeight = textLines.size * (font.lineHeight + 2)
         var yOffset = (cy - textHeight / 2).toInt() - 40
 
         // Draw title
-        drawText(context, title.string, (cx - getTextWidth(title.string) / 2).toFloat(), yOffset.toFloat(), COLOR_GOLD)
+        context.drawString(
+            font,
+            title.string.asPlainText(ChatFormatting.GOLD),
+            (cx - font.width(title.string) / 2).toInt(),
+            yOffset,
+            -1,
+            true
+        )
 
-        yOffset += 18
+        yOffset += font.lineHeight + 10
 
         // Draw task information
-        for ((index, line) in textLines.withIndex()) {
-            val lineStr = line.string
-            val color = if (index == 0) COLOR_WHITE else COLOR_GRAY
-            drawText(context, lineStr, (cx - getTextWidth(lineStr) / 2).toFloat(), yOffset.toFloat(), color)
-            yOffset += 14
+        for (line in textLines) {
+            context.drawString(
+                font,
+                line,
+                (cx - font.width(line) / 2).toInt(),
+                yOffset,
+                -1,
+                false
+            )
+            yOffset += font.lineHeight + 2
         }
 
         val progressBarHeight = 14
@@ -118,23 +114,6 @@ class TaskProgressScreen(
             -1
         )
         poseStack.popMatrix()
-    }
-
-    private fun drawText(context: GuiGraphics, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true) {
-        val processedText = fontRenderer.process(text.asText(), color)
-        with(context) {
-            fontRenderer.draw(processedText) {
-                this.x = x
-                this.y = y
-                this.scale = fontScale
-                this.shadow = shadow
-            }
-        }
-    }
-
-    private fun getTextWidth(text: String): Float {
-        val processedText = fontRenderer.process(text.asText(), COLOR_WHITE)
-        return fontRenderer.getStringWidth(processedText, shadow = true) * fontScale
     }
 
     private fun getTaskLines(progress: Float): List<Component> {

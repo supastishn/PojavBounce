@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,25 +41,25 @@ import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.kotlin.toDouble
 import net.minecraft.client.CameraType
 import net.minecraft.client.multiplayer.ClientLevel
-import net.minecraft.world.entity.Attackable
-import net.minecraft.world.entity.Entity
-import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.entity.ai.attributes.Attributes
-import net.minecraft.world.entity.NeutralMob
-import net.minecraft.world.entity.monster.Monster
-import net.minecraft.world.entity.monster.Enemy
-import net.minecraft.world.entity.animal.fish.WaterAnimal
-import net.minecraft.world.entity.animal.allay.Allay
-import net.minecraft.world.entity.ambient.Bat
-import net.minecraft.world.entity.AgeableMob
-import net.minecraft.world.entity.player.Player
 import net.minecraft.network.protocol.game.ServerboundInteractPacket
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.world.InteractionHand
+import net.minecraft.world.entity.AgeableMob
+import net.minecraft.world.entity.Attackable
+import net.minecraft.world.entity.Entity
+import net.minecraft.world.entity.LivingEntity
+import net.minecraft.world.entity.NeutralMob
+import net.minecraft.world.entity.ai.attributes.Attributes
+import net.minecraft.world.entity.ambient.Bat
+import net.minecraft.world.entity.animal.allay.Allay
+import net.minecraft.world.entity.animal.fish.WaterAnimal
+import net.minecraft.world.entity.monster.Enemy
+import net.minecraft.world.entity.monster.Monster
+import net.minecraft.world.entity.player.Player
+import net.minecraft.world.level.GameType
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
-import net.minecraft.world.level.GameType
-import java.util.*
+import java.util.EnumSet
 import java.util.function.Predicate
 
 /**

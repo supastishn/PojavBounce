@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,8 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
 
 @file:Suppress("LongMethod")
@@ -34,17 +32,17 @@ import net.ccbluex.liquidbounce.utils.network.packetRegistry
 import net.ccbluex.netty.http.model.RequestObject
 import net.ccbluex.netty.http.util.httpForbidden
 import net.ccbluex.netty.http.util.httpOk
-import net.minecraft.world.item.BlockItem
-import net.minecraft.world.item.Items
-import net.minecraft.network.protocol.PacketFlow
+import net.minecraft.core.BlockPos
 import net.minecraft.core.DefaultedRegistry
 import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.protocol.PacketFlow
+import net.minecraft.resources.Identifier
 import net.minecraft.tags.BlockTags
 import net.minecraft.tags.ItemTags
 import net.minecraft.tags.TagKey
-import net.minecraft.resources.Identifier
-import net.minecraft.core.BlockPos
-import java.util.*
+import net.minecraft.world.item.BlockItem
+import net.minecraft.world.item.Items
+import java.util.Locale
 import kotlin.jvm.optionals.getOrNull
 
 private val ACCEPTED_ITEM_TAGS =

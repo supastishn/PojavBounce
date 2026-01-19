@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 package net.ccbluex.liquidbounce.utils.render.trajectory
@@ -25,15 +24,15 @@ import net.ccbluex.liquidbounce.utils.client.player
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.entity.projectile.arrow.AbstractArrow
-import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball
 import net.minecraft.world.entity.projectile.arrow.Arrow
 import net.minecraft.world.entity.projectile.arrow.ThrownTrident
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle
+import net.minecraft.world.entity.projectile.hurtingprojectile.Fireball
 import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion
 import net.minecraft.world.entity.projectile.throwableitemprojectile.Snowball
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrowableItemProjectile
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEgg
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle
 import net.minecraft.world.item.BowItem
 import net.minecraft.world.item.CrossbowItem
 import net.minecraft.world.item.EggItem

@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 package net.ccbluex.liquidbounce.event.events
@@ -25,12 +24,12 @@ import net.ccbluex.liquidbounce.event.CancellableEvent
 import net.ccbluex.liquidbounce.event.Event
 import net.ccbluex.liquidbounce.event.EventState
 import net.ccbluex.liquidbounce.integration.interop.protocol.event.WebSocketEvent
+import net.minecraft.tags.TagKey
+import net.minecraft.world.InteractionHand
+import net.minecraft.world.InteractionResult
 import net.minecraft.world.entity.MoverType
 import net.minecraft.world.entity.player.Player
 import net.minecraft.world.level.material.Fluid
-import net.minecraft.tags.TagKey
-import net.minecraft.world.InteractionResult
-import net.minecraft.world.InteractionHand
 import net.minecraft.world.phys.Vec3
 
 // Entity events bound to client-user entity

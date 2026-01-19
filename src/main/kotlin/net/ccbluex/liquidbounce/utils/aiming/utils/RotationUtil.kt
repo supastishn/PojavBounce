@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,8 +24,8 @@ import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.entity.box
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.minecraft.client.player.LocalPlayer
-import net.minecraft.world.entity.Entity
 import net.minecraft.util.Mth
+import net.minecraft.world.entity.Entity
 
 fun LocalPlayer.setRotation(rotation: Rotation) {
     rotation.normalize().let { normalizedRotation ->

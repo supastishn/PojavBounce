@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package net.ccbluex.liquidbounce.integration.interop
 
@@ -51,26 +50,22 @@ object ClientInteropServer {
     suspend fun start() {
         runCatching {
             // RestAPI
-            // TODO: Fix routing DSL - netty-httpserver API may have changed
-            // httpServer.apply {
-            //     routing {
-            //         get("/", ::getRootResponse)
-            //         registerInteropFunctions()
-            //
-            //         LiquidBounce.resource("themes/liquidbounce.zip").use { stream ->
-            //             zip("/resource/liquidbounce", stream)
-            //         }
-            //         file("/local", ThemeManager.themesFolder)
-            //         file("/marketplace", MarketplaceManager.marketplaceRoot)
-            //     }
-            //
-            //     // Add CORS and auth middleware
-            //     middleware(CorsMiddleware())
-            //     middleware(AuthMiddleware())
-            // }
+            httpServer.apply {
+                routing {
+                    get("/", ::getRootResponse)
+                    registerInteropFunctions()
 
-            // Temporary: Register simple root endpoint
-            // The routing DSL needs to be fixed once netty-httpserver API is clarified
+                    LiquidBounce.resource("themes/liquidbounce.zip").use { stream ->
+                        zip("/resource/liquidbounce", stream)
+                    }
+                    file("/local", ThemeManager.themesFolder)
+                    file("/marketplace", MarketplaceManager.marketplaceRoot)
+                }
+
+                // Add CORS and auth middleware
+                middleware(CorsMiddleware())
+                middleware(AuthMiddleware())
+            }
         }.onFailure {
             ErrorHandler.fatal(it, additionalMessage = "Register endpoints")
         }

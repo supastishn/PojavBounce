@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@ import net.ccbluex.liquidbounce.event.tickConditional
 import net.ccbluex.liquidbounce.utils.inventory.getSlotsInContainer
 import net.ccbluex.liquidbounce.utils.inventory.syncId
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
-import net.minecraft.world.item.Items
 import net.minecraft.world.inventory.ClickType
+import net.minecraft.world.item.Items
 
 internal object ReportHelperAutoConfirm : ToggleableConfigurable(ModuleReportHelper, "AutoConfirm", false) {
 

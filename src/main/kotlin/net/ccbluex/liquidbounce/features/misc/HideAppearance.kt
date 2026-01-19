@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
  */
 package net.ccbluex.liquidbounce.features.misc
 
+import com.mojang.blaze3d.platform.IconSet
 import com.terraformersmc.modmenu.util.mod.Mod
 import kotlinx.coroutines.cancel
 import net.ccbluex.liquidbounce.api.core.ioScope
@@ -38,7 +39,6 @@ import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.modmenu.ModMenuCompatibility
 import net.fabricmc.loader.impl.FabricLoaderImpl
 import net.minecraft.SharedConstants
-import com.mojang.blaze3d.platform.IconSet
 import org.lwjgl.glfw.GLFW
 import java.lang.Thread.sleep
 import kotlin.concurrent.thread
@@ -65,7 +65,7 @@ object HideAppearance : EventListener {
      * And we'll provide the value after first removing the mod
      */
     private val modContainersToHide: MutableMap<String, Mod?> = arrayOf(
-        "liquidbounce"
+        "liquidbounce", "mcef"
     ).associateWith { null }.toMutableMap()
 
     private val shiftChronometer = Chronometer()

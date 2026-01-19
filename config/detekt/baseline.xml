@@ -2,122 +2,14 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>BracesOnIfStatements:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$if</ID>
-    <ID>BracesOnIfStatements:extensions.kt$if</ID>
-    <ID>CognitiveComplexMethod:AStarPathBuilder.kt$AStarPathBuilder$fun findPath(start: Vec3i, end: Vec3i, maxCost: Int): List&lt;Vec3i></ID>
-    <ID>CognitiveComplexMethod:BlockExtensions.kt$fun Block?.isInteractable(blockState: BlockState?): Boolean</ID>
-    <ID>CognitiveComplexMethod:Command.kt$Command$fun autoComplete( builder: SuggestionsBuilder, tokenizationResult: Pair&lt;List&lt;String>, List&lt;Int>>, commandIdx: Int, isNewParameter: Boolean )</ID>
-    <ID>CognitiveComplexMethod:CommandManager.kt$CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
-    <ID>CognitiveComplexMethod:DeepLearningEngine.kt$DeepLearningEngine$private fun collectDiagnosticInfo(): String</ID>
-    <ID>CognitiveComplexMethod:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private fun handleConfigurableClick( configurable: Configurable, mouseX: Double, mouseY: Double, button: Int, startY: Int, depth: Int ): Pair&lt;Boolean, Int></ID>
-    <ID>CognitiveComplexMethod:NativeCustomizeScreen.kt$NativeCustomizeScreen$override fun init()</ID>
-    <ID>CognitiveComplexMethod:NativeCustomizeScreen.kt$NativeCustomizeScreen$override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean</ID>
-    <ID>CognitiveComplexMethod:NativeCustomizeScreen.kt$NativeCustomizeScreen$private fun renderComponentRow(context: GuiGraphics, component: HudComponent, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>CognitiveComplexMethod:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$override fun init()</ID>
-    <ID>CognitiveComplexMethod:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$override fun init()</ID>
-    <ID>CognitiveComplexMethod:PlacementRenderHandler.kt$PlacementRenderHandler$fun render(event: WorldRenderEvent, time: Long)</ID>
-    <ID>CognitiveComplexMethod:extensions.kt$fun Task.getContributors(repoOwner: String, repoName: String): List&lt;String></ID>
-    <ID>EmptyFunctionBlock:ModuleFreeCam.kt$ModuleFreeCam.Navigation${ }</ID>
-    <ID>FunctionOnlyReturningConstant:BlurEffectRenderer.kt$BlurEffectRenderer$fun shouldDrawBlur(): Boolean</ID>
-    <ID>ImplicitDefaultLocale:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$String.format("%.1f", inner)</ID>
-    <ID>ImplicitDefaultLocale:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$String.format("%.1f", inner.endInclusive)</ID>
-    <ID>ImplicitDefaultLocale:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$String.format("%.1f", inner.start)</ID>
-    <ID>ImplicitDefaultLocale:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$String.format("%.2f", inner)</ID>
-    <ID>LargeClass:NativeClickGuiScreen.kt$NativeClickGuiScreen$CategoryPanel</ID>
-    <ID>LongMethod:CommandManager.kt$CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
-    <ID>LongMethod:NativeAltManagerScreen.kt$NativeAltManagerScreen$override fun init()</ID>
-    <ID>LongMethod:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private fun handleConfigurableClick( configurable: Configurable, mouseX: Double, mouseY: Double, button: Int, startY: Int, depth: Int ): Pair&lt;Boolean, Int></ID>
-    <ID>LongMethod:NativeCustomizeScreen.kt$NativeCustomizeScreen$override fun init()</ID>
-    <ID>LongMethod:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$override fun init()</ID>
-    <ID>LongMethod:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$override fun init()</ID>
-    <ID>LongParameterList:NativeAltManagerScreen.kt$NativeAltManagerScreen$(context: GuiGraphics, account: MinecraftAccount, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, choice: ChoiceConfigurable&lt;*>, startY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, configurable: Configurable, startY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, configurable: Configurable, startY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, module: ClientModule, moduleY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, expandState: ExpandState )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, module: ClientModule, startY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, toggleable: ToggleableConfigurable, startY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, depth: Int, indent: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( context: GuiGraphics, value: Value&lt;*>, settingY: Int, mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, indent: Int )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$( val category: Category, private val allModules: List&lt;ClientModule>, var x: Int, var y: Int, private val panelWidth: Int, initialExpanded: Boolean = true, initialScroll: Int = 0 )</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$(context: GuiGraphics, fr: FontRenderer, scale: Float, text: String, x: Float, y: Float, color: Color4b, shadow: Boolean = true)</ID>
-    <ID>LongParameterList:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, fr: FontRenderer, scale: Float, searchQuery: String)</ID>
-    <ID>LongParameterList:NativeCustomizeScreen.kt$NativeCustomizeScreen$(context: GuiGraphics, component: HudComponent, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>LongParameterList:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$(context: GuiGraphics, proxy: Proxy, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>LongParameterList:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$(context: GuiGraphics, script: PolyglotScript, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>LongParameterList:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$(context: GuiGraphics, theme: Theme, index: Int, x: Int, y: Int, w: Int, mouseX: Int, mouseY: Int)</ID>
-    <ID>LoopWithTooManyJumpStatements:ModuleProjectilePuncher.kt$ModuleProjectilePuncher$for</ID>
-    <ID>LoopWithTooManyJumpStatements:TargetFinding.kt$for</ID>
-    <ID>MatchingDeclarationName:tasks.kt$CompareJsonKeysTask : DefaultTask</ID>
-    <ID>MaxLineLength:DeepLearningEngine.kt$DeepLearningEngine$appendLine(" - ${file.name} (${if (file.isDirectory) "dir" else "file, ${file.length()} bytes"})")</ID>
-    <ID>MaxLineLength:IntegrationMenuScreen.kt$IntegrationMenuScreen$private</ID>
-    <ID>MaxLineLength:ModuleBookBot.kt$ModuleBookBot.BookBuilder$*</ID>
-    <ID>MaxLineLength:NativeAltManagerScreen.kt$NativeAltManagerScreen$context.fill(listX + listWidth - 5, scrollBarY, listX + listWidth - 2, scrollBarY + scrollBarHeight, ARGB.color(180, 100, 100, 120))</ID>
-    <ID>MaxLineLength:NativeAltManagerScreen.kt$NativeAltManagerScreen$drawText(context, noAccounts, listX + listWidth / 2f - getTextWidth(noAccounts) / 2, LIST_TOP + listHeight / 2f - 5, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeAltManagerScreen.kt$NativeAltManagerScreen$private</ID>
-    <ID>MaxLineLength:NativeAltManagerScreen.kt$NativeAltManagerScreen$val scrollBarHeight = (listHeight.toFloat() / (accounts.size * ACCOUNT_ROW_HEIGHT) * listHeight).toInt().coerceAtLeast(20)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen$private</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$context.fill(leftThumbX, sliderY - 1, leftThumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFF88CCFF.toInt())</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$context.fill(rightThumbX, sliderY - 1, rightThumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFFFFCC88.toInt())</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$context.fill(thumbX, sliderY - 1, thumbX + SLIDER_THUMB_WIDTH, sliderY + SLIDER_TRACK_HEIGHT + 1, 0xFFFFFFFF.toInt())</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$context.fill(x + panelWidth - 3, scrollBarY, x + panelWidth - 1, scrollBarY + scrollBarHeight, 0x80FFFFFF.toInt())</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderChoiceConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderConfigurableSettings(context, activeConfigurable, currentY, mouseX, mouseY, fr, scale, depth + 1)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderConfigurableSettings(context, configurable, currentY, mouseX, mouseY, fr, scale, depth + 1)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderConfigurableSettings(context, toggleable, currentY, mouseX, mouseY, fr, scale, depth + 1)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderNestedConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$currentY = renderToggleableConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, choiceText, x + panelWidth - choiceTextWidth - 16f, currentY + 1f, COLOR_LIGHT_CYAN, false)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, configurable.name, x + 6f + indent, currentY + 1f, COLOR_LIGHT_PURPLE, false)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, displayText, x + panelWidth - textW - 6f, moduleY + 2f, COLOR_DARK_GRAY)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, COLOR_CYAN, false)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, valueColor, false)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$drawPanelText(context, fr, scale, statusText, x + panelWidth - statusWidth - 20f, currentY + 1f, statusColor, false)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$else</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$fun</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$if (kotlin.math.abs(mouseX - startThumbX) &lt; kotlin.math.abs(mouseX - endThumbX)) 0 else 1</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$is ClosedFloatingPointRange&lt;*> -> "${String.format("%.1f", inner.start)}..${String.format("%.1f", inner.endInclusive)}"</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$val result = handleConfigurableClick(activeConfigurable, mouseX, mouseY, button, currentY, depth + 1)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$val scrollBarHeight = (visibleContentHeight.toFloat() / contentHeight * visibleContentHeight).toInt().coerceAtLeast(10)</ID>
-    <ID>MaxLineLength:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$val scrollBarY = contentY + (scrollOffset.toFloat() / maxScroll * (visibleContentHeight - scrollBarHeight)).toInt()</ID>
-    <ID>MaxLineLength:NativeCustomizeScreen.kt$NativeCustomizeScreen$context.fill(listX + listWidth - 5, scrollBarY, listX + listWidth - 2, scrollBarY + scrollBarHeight, ARGB.color(180, 140, 100, 160))</ID>
-    <ID>MaxLineLength:NativeCustomizeScreen.kt$NativeCustomizeScreen$drawText(context, noComponents, listX + listWidth / 2f - getTextWidth(noComponents) / 2, LIST_TOP + listHeight / 2f - 5, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeCustomizeScreen.kt$NativeCustomizeScreen$private</ID>
-    <ID>MaxLineLength:NativeCustomizeScreen.kt$NativeCustomizeScreen$val scrollBarHeight = (listHeight.toFloat() / (components.size * COMPONENT_ROW_HEIGHT) * listHeight).toInt().coerceAtLeast(20)</ID>
-    <ID>MaxLineLength:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$context.fill(listX + listWidth - 5, scrollBarY, listX + listWidth - 2, scrollBarY + scrollBarHeight, ARGB.color(180, 100, 120, 100))</ID>
-    <ID>MaxLineLength:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$drawText(context, noProxies, listX + listWidth / 2f - getTextWidth(noProxies) / 2, LIST_TOP + listHeight / 2f - 5, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$private</ID>
-    <ID>MaxLineLength:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$val scrollBarHeight = (listHeight.toFloat() / (proxies.size * PROXY_ROW_HEIGHT) * listHeight).toInt().coerceAtLeast(20)</ID>
-    <ID>MaxLineLength:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$context.fill(listX + listWidth - 5, scrollBarY, listX + listWidth - 2, scrollBarY + scrollBarHeight, ARGB.color(180, 120, 100, 140))</ID>
-    <ID>MaxLineLength:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$drawText(context, hint, listX + listWidth / 2f - getTextWidth(hint) / 2, LIST_TOP + listHeight / 2f + 5, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$drawText(context, noScripts, listX + listWidth / 2f - getTextWidth(noScripts) / 2, LIST_TOP + listHeight / 2f - 10, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$private</ID>
-    <ID>MaxLineLength:NativeScriptManagerScreen.kt$NativeScriptManagerScreen$val scrollBarHeight = (listHeight.toFloat() / (scripts.size * SCRIPT_ROW_HEIGHT) * listHeight).toInt().coerceAtLeast(20)</ID>
-    <ID>MaxLineLength:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$context.fill(listX + listWidth - 5, scrollBarY, listX + listWidth - 2, scrollBarY + scrollBarHeight, ARGB.color(180, 130, 100, 150))</ID>
-    <ID>MaxLineLength:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$drawText(context, hint, listX + listWidth / 2f - getTextWidth(hint) / 2, LIST_TOP + listHeight / 2f + 5, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$drawText(context, noThemes, listX + listWidth / 2f - getTextWidth(noThemes) / 2, LIST_TOP + listHeight / 2f - 10, COLOR_GRAY)</ID>
-    <ID>MaxLineLength:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$private</ID>
-    <ID>MaxLineLength:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$val scrollBarHeight = (listHeight.toFloat() / (themes.size * THEME_ROW_HEIGHT) * listHeight).toInt().coerceAtLeast(20)</ID>
-    <ID>MaxLineLength:TaskProgressScreen.kt$TaskProgressScreen$private</ID>
-    <ID>MaxLineLength:extensions.kt$logger.error("Failed to get GitHub API response for $repoOwner:$repoName (HTTP ${response.statusCode()}): ${response.body().bufferedReader().readText()}")</ID>
-    <ID>MayBeConst:BrowserBackendManager.kt$BrowserBackendManager$// Skip browser by default on native-only builds (no JCEF/web support) val isSkippingBrowser = true</ID>
-    <ID>NestedBlockDepth:AStarPathBuilder.kt$AStarPathBuilder$fun findPath(start: Vec3i, end: Vec3i, maxCost: Int): List&lt;Vec3i></ID>
-    <ID>NestedBlockDepth:NativeAltManagerScreen.kt$NativeAltManagerScreen$override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean</ID>
-    <ID>NestedBlockDepth:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private fun handleConfigurableClick( configurable: Configurable, mouseX: Double, mouseY: Double, button: Int, startY: Int, depth: Int ): Pair&lt;Boolean, Int></ID>
-    <ID>NestedBlockDepth:NativeCustomizeScreen.kt$NativeCustomizeScreen$override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean</ID>
-    <ID>NestedBlockDepth:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean</ID>
-    <ID>NestedBlockDepth:NativeThemeManagerScreen.kt$NativeThemeManagerScreen$override fun mouseClicked(click: net.minecraft.client.input.MouseButtonEvent, doubled: Boolean): Boolean</ID>
-    <ID>ReturnCount:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private fun handleConfigurableClick( configurable: Configurable, mouseX: Double, mouseY: Double, button: Int, startY: Int, depth: Int ): Pair&lt;Boolean, Int></ID>
-    <ID>SwallowedException:NativeProxyManagerScreen.kt$NativeProxyManagerScreen$e: Exception</ID>
-    <ID>ThrowsCount:CommandManager.kt$CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
-    <ID>TooManyFunctions:NativeClickGuiScreen.kt$NativeClickGuiScreen : Screen</ID>
-    <ID>TooManyFunctions:NativeClickGuiScreen.kt$NativeClickGuiScreen$CategoryPanel</ID>
-    <ID>UnusedParameter:NativeClickGuiScreen.kt$NativeClickGuiScreen$mouseX: Int</ID>
-    <ID>UnusedParameter:NativeClickGuiScreen.kt$NativeClickGuiScreen$mouseY: Int</ID>
-    <ID>UnusedParameter:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$delta: Float</ID>
-    <ID>UnusedParameter:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$depth: Int</ID>
-    <ID>UnusedPrivateMember:NativeClickGuiScreen.kt$NativeClickGuiScreen.CategoryPanel$private fun getValueColor(value: Value&lt;*>): Int</ID>
-    <ID>UnusedPrivateProperty:NativeScriptManagerScreen.kt$NativeScriptManagerScreen.Companion$private val COLOR_ORANGE = Color4b(255, 165, 0, 255)</ID>
-    <ID>UnusedPrivateProperty:NativeThemeManagerScreen.kt$NativeThemeManagerScreen.Companion$private val COLOR_PURPLE = Color4b(200, 150, 255, 255)</ID>
+    <ID>CognitiveComplexMethod:AStarPathBuilder.kt:AStarPathBuilder$fun findPath(start: Vec3i, end: Vec3i, maxCost: Int): List&lt;Vec3i></ID>
+    <ID>CognitiveComplexMethod:BlockExtensions.kt:fun Block?.isInteractable(blockState: BlockState?): Boolean</ID>
+    <ID>CognitiveComplexMethod:CommandManager.kt:CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
+    <ID>CognitiveComplexMethod:PlacementRenderHandler.kt:PlacementRenderHandler$fun render(event: WorldRenderEvent, time: Long)</ID>
+    <ID>LongMethod:CommandManager.kt:CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
+    <ID>LoopWithTooManyJumpStatements:ModuleProjectilePuncher.kt:ModuleProjectilePuncher$for</ID>
+    <ID>LoopWithTooManyJumpStatements:TargetFinding.kt:for</ID>
+    <ID>MaxLineLength:ModuleBookBot.kt:ModuleBookBot.BookBuilder$*</ID>
+    <ID>ThrowsCount:CommandManager.kt:CommandManager$@ScriptApiRequired @JvmName("execute") fun execute(cmd: String)</ID>
   </CurrentIssues>
 </SmellBaseline>

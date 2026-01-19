@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,17 +15,16 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 
 package net.ccbluex.liquidbounce.event.events
 
+import com.mojang.blaze3d.pipeline.RenderTarget
+import com.mojang.blaze3d.vertex.PoseStack
 import net.ccbluex.liquidbounce.annotations.Nameable
 import net.ccbluex.liquidbounce.event.Event
-import com.mojang.blaze3d.pipeline.RenderTarget
-import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.Camera
-import com.mojang.blaze3d.vertex.PoseStack
+import net.minecraft.client.gui.GuiGraphics
 
 @Nameable("gameRender")
 object GameRenderEvent : Event()
@@ -44,7 +43,7 @@ class WorldRenderEvent(val matrixStack: PoseStack, val camera: Camera, val parti
  */
 @Nameable("drawOutlines")
 class DrawOutlinesEvent(
-    val framebuffer: RenderTarget,
+    val renderTarget: RenderTarget,
     val matrixStack: PoseStack,
     val camera: Camera,
     val partialTicks: Float,

@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -61,8 +61,7 @@ public abstract class MixinLoadingOverlay {
     }
 
     @WrapWithCondition(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V"))
-    private boolean hideMojangLogo(GuiGraphics instance, RenderPipeline renderPipeline, Identifier sprite, int x, int y, float u, float v, int width, int height, int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
-        // Hide Mojang logo unless appearance is hidden (then show vanilla behavior)
+    private boolean drawMojangLogo(GuiGraphics instance, RenderPipeline renderPipeline, Identifier sprite, int x, int y, float u, float v, int width, int height, int regionWidth, int regionHeight, int textureWidth, int textureHeight, int color) {
         return HideAppearance.INSTANCE.isHidingNow();
     }
 
@@ -93,9 +92,9 @@ public abstract class MixinLoadingOverlay {
         int x = (screenWidth - displayWidth) / 2;
         int y = (screenHeight - displayHeight) / 2;
 
-        // Use GUI.TexturedQuads pipeline (compatible with mobile OpenGL ES)
+        // TODO: Draw as SVG instead of PNG
         context.blit(
-            ClientRenderPipelines.GUI.TexturedQuads,
+            ClientRenderPipelines.JCEF.SMOOTH_TEXTURE,
                 ClientLogoTexture.CLIENT_LOGO,
                 x,
                 y,

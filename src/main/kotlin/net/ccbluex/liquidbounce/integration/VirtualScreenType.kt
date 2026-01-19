@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,28 +15,26 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
- *
  */
 
 package net.ccbluex.liquidbounce.integration
 
 import com.google.common.base.Predicates
+import com.mojang.realmsclient.RealmsMainScreen
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.openVfpProtocolSelection
 import net.minecraft.client.gui.screens.DisconnectedScreen
 import net.minecraft.client.gui.screens.PauseScreen
 import net.minecraft.client.gui.screens.Screen
 import net.minecraft.client.gui.screens.TitleScreen
-import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
 import net.minecraft.client.gui.screens.inventory.ContainerScreen
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen
 import net.minecraft.client.gui.screens.multiplayer.SafetyScreen
 import net.minecraft.client.gui.screens.options.OptionsScreen
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen
-import com.mojang.realmsclient.RealmsMainScreen
 import java.util.function.Predicate
 
 /**
@@ -57,73 +55,9 @@ enum class VirtualScreenType(
 ) {
 
     HUD("hud", isInGame = true),
-    CLICK_GUI(
-        "clickgui",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen }
-    ),
-    ALT_MANAGER(
-        "altmanager",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen },
-        open = { 
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    PROXY_MANAGER(
-        "proxymanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    SCRIPT_MANAGER(
-        "scriptmanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    THEME_MANAGER(
-        "thememanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    CUSTOMIZE(
-        "customize",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
+    CLICK_GUI("clickgui"),
+    ALT_MANAGER("altmanager"),
+    PROXY_MANAGER("proxymanager"),
 
     TITLE(
         "title",
@@ -199,8 +133,7 @@ enum class VirtualScreenType(
     ),
 
     BROWSER("browser",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen },
-        open = { mc.setScreen(net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen()) }
+        recognizer = { it is BrowserScreen }
     );
 
     fun open() = mc.execute(open)

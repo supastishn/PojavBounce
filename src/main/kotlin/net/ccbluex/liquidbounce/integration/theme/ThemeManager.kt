@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,7 +15,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
- *
  */
 package net.ccbluex.liquidbounce.integration.theme
 
@@ -59,27 +58,22 @@ object ThemeManager : Configurable("theme") {
         }
     }
 
-    internal var includedTheme: Theme? = null
+    internal lateinit var includedTheme: Theme
         private set
-
-    val isThemeAvailable: Boolean
-        get() = includedTheme != null
-
     /**
      * Used for development.
      */
     private var temporaryTheme: Theme? = null
 
-    var theme: Theme?
+    var theme: Theme
         get() = temporaryTheme
             ?: themes.find { theme -> theme.metadata.id.equals(currentTheme, true) }
             ?: includedTheme
         set(value) {
-            if (value == null) return
             // When external, set as a temporary theme.
             if (value.origin.external) {
                 temporaryTheme = value
-                currentTheme = includedTheme?.metadata?.id ?: "liquidbounce"
+                currentTheme = includedTheme.metadata.id
             } else {
                 temporaryTheme = null
                 currentTheme = value.metadata.id
@@ -90,10 +84,10 @@ object ThemeManager : Configurable("theme") {
 
     var shaderEnabled by boolean("Shader", false)
         .onChange { enabled ->
-            if (enabled && isThemeAvailable) {
+            if (enabled) {
                 renderScope.launch {
-                    theme?.compileShader()
-                    includedTheme?.compileShader()
+                    theme.compileShader()
+                    includedTheme.compileShader()
                 }
             }
 
@@ -110,13 +104,8 @@ object ThemeManager : Configurable("theme") {
     }
 
     suspend fun init() {
-        // Load default theme - may fail if ClientInteropServer routes are not available
-        // (e.g., native-only builds without JCEF browser support)
-        runCatching {
-            includedTheme = Theme.load(Theme.Origin.RESOURCE, File("liquidbounce"))
-        }.onFailure {
-            logger.warn("Failed to load default theme - theme features will be unavailable", it)
-        }
+        // Load default theme
+        includedTheme = Theme.load(Theme.Origin.RESOURCE, File("liquidbounce"))
     }
 
     suspend fun load() {
@@ -157,7 +146,7 @@ object ThemeManager : Configurable("theme") {
             }
         }
 
-        includedTheme?.let { themes.add(it) }
+        themes.add(includedTheme)
 
         ModuleHud.updateThemes()
         if (LiquidBounce.isInitialized) {
@@ -207,32 +196,31 @@ object ThemeManager : Configurable("theme") {
     }
 
     fun getScreenLocation(virtualScreenType: VirtualScreenType? = null, markAsStatic: Boolean = false): ScreenLocation {
-        val selectedTheme = theme?.takeIf { t ->
-            virtualScreenType == null || t.isSupported(virtualScreenType.routeName)
-        } ?: includedTheme?.takeIf { t ->
-            virtualScreenType == null || t.isSupported(virtualScreenType.routeName)
+        val theme = theme.takeIf { theme ->
+            virtualScreenType == null || theme.isSupported(virtualScreenType.routeName)
+        } ?: includedTheme.takeIf { theme ->
+            virtualScreenType == null || theme.isSupported(virtualScreenType.routeName)
         } ?: error("No theme supports the route ${virtualScreenType?.routeName}")
 
         return ScreenLocation(
-            selectedTheme,
-            selectedTheme.getUrl(virtualScreenType?.routeName, markAsStatic)
+            theme,
+            theme.getUrl(virtualScreenType?.routeName, markAsStatic)
         )
     }
 
     fun loadBackground() = runBlocking {
-        theme?.loadBackgroundImage()
+        theme.loadBackgroundImage()
         if (shaderEnabled) {
-            theme?.compileShader()
+            theme.compileShader()
         }
     }
 
     @Suppress("LongParameterList")
     fun drawBackground(context: GuiGraphics, width: Int, height: Int, mouseX: Int, mouseY: Int, delta: Float): Boolean {
-        val currentTheme = theme ?: return false
         val background = if (shaderEnabled) {
-            currentTheme.themeBackgroundShader
+            theme.themeBackgroundShader
         } else {
-            currentTheme.themeBackgroundTexture
+            theme.themeBackgroundTexture
         } ?: return false
 
         background.draw(context, width, height, mouseX, mouseY, delta)

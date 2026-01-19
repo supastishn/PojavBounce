@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ import net.ccbluex.liquidbounce.deeplearn.listener.OverlayTrainingListener
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.file.Path
-import java.util.*
+import java.util.Locale
 
 private const val NUM_EPOCH = 100
 private const val BATCH_SIZE = 32
@@ -58,22 +58,14 @@ abstract class ModelWrapper<I, O>(
 ) : Choice(name), Closeable {
 
     private val model: Model by lazy {
-        require(DeepLearningEngine.isInitialized) {
-            "DeepLearningEngine is not initialized - cannot create DJL model"
-        }
         Model.newInstance(name).apply {
             block = createMlpBlock(outputs)
         }
     }
-    private val predictor: Predictor<I, O> by lazy { 
-        require(DeepLearningEngine.isInitialized) {
-            "DeepLearningEngine is not initialized - cannot create DJL predictor"
-        }
-        model.newPredictor(translator) 
-    }
+    private val predictor: Predictor<I, O> by lazy { model.newPredictor(translator) }
 
     @Throws(TranslateException::class)
-    open fun predict(input: I): O {
+    fun predict(input: I): O {
         require(DeepLearningEngine.isInitialized) { "DeepLearningEngine is not initialized" }
 
         return predictor.predict(input)
@@ -107,15 +99,15 @@ abstract class ModelWrapper<I, O>(
         EasyTrain.fit(trainer, NUM_EPOCH, trainingSet, null)
     }
 
-    open fun load(stream: InputStream) {
+    fun load(stream: InputStream) {
         model.load(stream)
     }
 
-    open fun load(path: Path) {
+    fun load(path: Path) {
         model.load(path, "tf")
     }
 
-    open fun load(name: String = this.name) {
+    fun load(name: String = this.name) {
         val folder = modelsFolder.resolve(name)
 
         if (folder.exists()) {
@@ -128,33 +120,22 @@ abstract class ModelWrapper<I, O>(
         }
     }
 
-    open fun save(path: Path) {
+    fun save(path: Path) {
         model.save(path, "tf")
     }
 
-    open fun save(name: String = this.name) {
+    fun save(name: String = this.name) {
         save(modelsFolder.resolve(name).toPath())
     }
 
-    open fun delete() {
+    fun delete() {
         close()
         modelsFolder.resolve(name).delete()
     }
 
     override fun close() {
-        // Only close if DJL was actually initialized and the lazy properties were accessed
-        try {
-            if (DeepLearningEngine.isInitialized) {
-                predictor.close()
-                model.close()
-            }
-        } catch (e: Exception) {
-            // Log cleanup errors at debug level for troubleshooting
-            net.ccbluex.liquidbounce.utils.client.logger.debug(
-                "Error during model cleanup (this is usually harmless)",
-                e
-            )
-        }
+        predictor.close()
+        model.close()
     }
 
 }

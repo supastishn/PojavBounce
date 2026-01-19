@@ -1,7 +1,7 @@
 /*
  * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
  *
- * Copyright (c) 2015 - 2025 CCBlueX
+ * Copyright (c) 2015 - 2026 CCBlueX
  *
  * LiquidBounce is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,13 @@
  */
 package net.ccbluex.liquidbounce.render
 
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.horizontalAnchor
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.scale
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.shadow
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.verticalAnchor
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.x
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.y
+import net.ccbluex.liquidbounce.render.AbstractFontRenderer.DrawParameters.z
 import net.ccbluex.liquidbounce.render.engine.font.HorizontalAnchor
 import net.ccbluex.liquidbounce.render.engine.font.VerticalAnchor
 import net.ccbluex.liquidbounce.render.engine.font.processor.ProcessedText

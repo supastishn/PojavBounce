@@ -31,7 +31,7 @@ class EffectsComponent(
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val player = mc.player ?: return
         var y = 10
         val x = mc.window.guiScaledWidth - 150

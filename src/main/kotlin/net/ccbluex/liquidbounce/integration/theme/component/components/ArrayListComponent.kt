@@ -38,7 +38,7 @@ class ArrayListComponent(
     @Suppress("unused")
     private val moduleSpacing = 2
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val enabledModules = ModuleManager
             .filter { it.enabled && !it.hidden }
             .sortedByDescending { mc.font.width(getModuleDisplayText(it)) }

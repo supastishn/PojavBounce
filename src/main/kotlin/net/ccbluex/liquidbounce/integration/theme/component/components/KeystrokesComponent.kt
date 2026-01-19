@@ -31,7 +31,7 @@ class KeystrokesComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val margin = 10
         val keySize = 12
         val spacing = 4

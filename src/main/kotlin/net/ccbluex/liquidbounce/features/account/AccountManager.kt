@@ -385,4 +385,25 @@ object AccountManager : Configurable("Accounts"), EventListener {
         EventManager.callEvent(AccountManagerAdditionResultEvent(username = profile.username))
     }
 
+    /**
+     * Login with a randomly generated cracked account username
+     */
+    fun loginRandomCrackedAccount() {
+        val username = generateRandomUsername()
+        logger.info("[RandomAlt] Generated username: $username")
+        loginCrackedAccount(username, online = false)
+    }
+
+    /**
+     * Generate a random Minecraft username (8-12 characters, letters + numbers)
+     */
+    private fun generateRandomUsername(): String {
+        val chars = ('a'..'z') + ('0'..'9')
+        val randomLength = kotlin.random.Random.nextInt(8, 13)
+        val username = (0 until randomLength).map { chars.random() }
+            .joinToString("")
+            .replaceFirstChar { it.uppercase() }
+        return username
+    }
+
 }

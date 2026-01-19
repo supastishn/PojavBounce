@@ -32,7 +32,7 @@ class WatermarkComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         try {
             val watermarkText = "LiquidBounce ${net.ccbluex.liquidbounce.LiquidBounce.clientVersion}"
             val textWidth = mc.font.width(watermarkText)

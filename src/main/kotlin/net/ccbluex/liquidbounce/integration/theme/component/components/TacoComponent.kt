@@ -34,7 +34,7 @@ class TacoComponent(
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val x = mc.window.guiScaledWidth - 50
         val y = mc.window.guiScaledHeight - 50
         context.fill(x, y, x + 40, y + 20, 0xFFAA4400.toInt())

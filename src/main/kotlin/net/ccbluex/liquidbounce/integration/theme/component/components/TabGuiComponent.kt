@@ -32,7 +32,7 @@ class TabGuiComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         // Basic tab GUI: show categories and first module in each category
         val categories = ModuleManager.groupBy { it.category }
         var y = 10

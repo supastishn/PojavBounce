@@ -32,7 +32,7 @@ class NotificationsComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val notifications = NotificationManager.getNotifications()
         val margin = 10
         var y = margin

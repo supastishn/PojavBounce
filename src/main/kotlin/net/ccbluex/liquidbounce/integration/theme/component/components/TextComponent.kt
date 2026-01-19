@@ -33,7 +33,7 @@ class TextComponent(
     val values: Array<JsonObject> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val textValue = values.find { it["name"]?.asString == "Text" }?.get("value")?.asString ?: return
         val colorValue = values.find { it["name"]?.asString == "Color" }?.get("value")?.asLong ?: 0xFFFFFFFF
 

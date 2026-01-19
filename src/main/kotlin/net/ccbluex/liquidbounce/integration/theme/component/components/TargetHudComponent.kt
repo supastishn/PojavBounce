@@ -33,7 +33,7 @@ class TargetHudComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val hit = mc.hitResult
         val entity = if (hit is EntityHitResult) hit.entity else null
 

@@ -30,7 +30,7 @@ class ArmorItemsComponent(
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         // TODO: Fix armor access for Minecraft 1.21
         // The inventory.armor API has changed
     }

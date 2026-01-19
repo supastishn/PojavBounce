@@ -31,7 +31,7 @@ class HotbarComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val player = mc.player ?: return
         val y = mc.window.guiScaledHeight - 50
         val x = (mc.window.guiScaledWidth / 2) - 90

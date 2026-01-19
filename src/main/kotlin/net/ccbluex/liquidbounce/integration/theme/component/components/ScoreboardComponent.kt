@@ -32,7 +32,7 @@ class ScoreboardComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         // TODO: Scoreboard API has changed in Minecraft 1.21
         // Simplified rendering that should compile
         val x = mc.window.guiScaledWidth - 150

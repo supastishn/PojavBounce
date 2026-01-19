@@ -32,7 +32,7 @@ class KeybindsComponent(
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val keyboundModules = ModuleManager.filter { !it.bind.isUnbound }
         var y = 10
         val x = 10

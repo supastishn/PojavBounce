@@ -30,7 +30,7 @@ class CraftingInventoryComponent(
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         val player = mc.player ?: return
         // Render a small 3x3 grid of crafting area on screen
         val x = mc.window.guiScaledWidth / 2 - 40

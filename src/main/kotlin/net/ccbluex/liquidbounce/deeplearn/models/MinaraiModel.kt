@@ -45,7 +45,7 @@ class MinaraiModel(
     private var execuTorchModel: ExecuTorchModel? = null
     
     @Suppress("SwallowedException")
-    override fun predict(input: FloatArray): FloatArray {
+    fun predict(input: FloatArray): FloatArray {
         // Use ExecuTorch when it's available and DJL is not (Android or PC fallback case)
         if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {
             if (execuTorchModel == null) {
@@ -77,7 +77,7 @@ class MinaraiModel(
         return super.predict(input)
     }
 
-    override fun load(name: String) {
+    fun load(name: String) {
         // On Android (ExecuTorch only), skip DJL model loading
         // The ExecuTorch model will be loaded lazily on first predict() call
         if (DeepLearningEngine.isExecuTorchAvailable && !DeepLearningEngine.isInitialized) {

@@ -33,7 +33,7 @@ class ImageComponent(
     val values: Array<JsonObject> = emptyArray()
 ) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    override fun render(context: GuiGraphics) {
+    fun render(context: GuiGraphics) {
         // Simple static image rendering for theme images. We'll parse the 'value' key for image path
         // TODO: Load the image from the theme's resource. For now, render a placeholder box.
         val x = 10

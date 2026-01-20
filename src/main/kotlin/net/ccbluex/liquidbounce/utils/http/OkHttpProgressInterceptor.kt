@@ -32,8 +32,7 @@ import java.io.IOException
  */
 class OkHttpProgressInterceptor(private val progressListener: ProgressListener) : Interceptor {
 
-    @FunctionalInterface
-    interface ProgressListener {
+    fun interface ProgressListener {
         fun update(bytesRead: Long, contentLength: Long, done: Boolean)
     }
 

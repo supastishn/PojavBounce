@@ -42,7 +42,7 @@ open class RotationsConfigurable(
     combatSpecific: Boolean = false
 ) : Configurable("Rotations") {
 
-    private val angleSmooth = choices(owner, "AngleSmooth", 0) {
+    internal val angleSmooth = choices(owner, "AngleSmooth", 0) {
         val linearAngleSmooth = LinearAngleSmooth(it)
         val interpolationAngleSmooth = if (combatSpecific) InterpolationAngleSmooth(it) else null
 

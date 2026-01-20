@@ -38,7 +38,7 @@ class TabGuiComponent(
         var y = 10
         val x = 10
         for ((category, modules) in categories) {
-            context.drawString(mc.font, category.name, x, y, 0xFFFFFF)
+            context.drawString(mc.font, category.choiceName, x, y, 0xFFFFFF)
             y += mc.font.lineHeight + 2
             val firstModule = modules.firstOrNull() ?: continue
             context.drawString(mc.font, "  ${firstModule.name}", x, y, 0xAAAAAA)

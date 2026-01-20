@@ -53,7 +53,7 @@ object CommandKillAuraAutoConfig : Command.Factory {
                     .optional()
                     .build()
             )
-            .handler { args ->
+            .handler {
                 val requestedMode = args.getOrNull(0) as String?
 
                 if (requestedMode == null) {

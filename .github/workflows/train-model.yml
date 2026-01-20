@@ -57,9 +57,13 @@ jobs:
       - name: Validate input method
         run: |
           METHODS=0
-          [[ -n "${{ inputs.artifact_run_id }}" ]] && ((METHODS++))
-          [[ -n "${{ inputs.training_data_url }}" ]] && ((METHODS++))
-          [[ -n "${{ inputs.training_data_base64 }}" ]] && ((METHODS++))
+          [[ -n "${{ inputs.artifact_run_id }}" ]] && METHODS=$((METHODS+1)) || true
+          [[ -n "${{ inputs.training_data_url }}" ]] && METHODS=$((METHODS+1)) || true
+          [[ -n "${{ inputs.training_data_base64 }}" ]] && METHODS=$((METHODS+1)) || true
+
+          echo "Input methods detected: $METHODS"
+          echo "  artifact_run_id: '${{ inputs.artifact_run_id }}'"
+          echo "  training_data_url: '${{ inputs.training_data_url }}'"
 
           if [[ $METHODS -eq 0 ]]; then
             echo "Error: Must provide training data via one of:"
@@ -95,7 +99,35 @@ jobs:
         if: inputs.artifact_run_id == '' && inputs.training_data_url != ''
         run: |
           echo "Downloading training data from URL..."
-          curl -L -o training_data.zip "${{ inputs.training_data_url }}"
+          echo "URL: ${{ inputs.training_data_url }}"
+
+          # Use curl with redirects, follow location, and show progress
+          curl -L -f --max-redirs 10 -o training_data.zip "${{ inputs.training_data_url }}"
+
+          # Verify download
+          if [[ ! -f "training_data.zip" ]]; then
+            echo "Error: Download failed - file not created"
+            exit 1
+          fi
+
+          FILE_SIZE=$(stat -c%s training_data.zip 2>/dev/null || stat -f%z training_data.zip 2>/dev/null || echo "0")
+          echo "Downloaded file size: $FILE_SIZE bytes"
+
+          if [[ "$FILE_SIZE" -lt 100 ]]; then
+            echo "Error: Downloaded file is too small (probably an error page)"
+            cat training_data.zip
+            exit 1
+          fi
+
+          # Verify it's a valid ZIP
+          if ! unzip -t training_data.zip > /dev/null 2>&1; then
+            echo "Error: Downloaded file is not a valid ZIP"
+            file training_data.zip
+            head -c 500 training_data.zip
+            exit 1
+          fi
+
+          echo "Download complete and validated"
 
       - name: Decode base64
         if: inputs.artifact_run_id == '' && inputs.training_data_url == '' && inputs.training_data_base64 != ''

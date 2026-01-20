@@ -438,8 +438,10 @@ jobs:
                   List<float[]> labels = new ArrayList<>();
                   Gson gson = new Gson();
 
-                  for (String dir : new String[]{"run/LiquidBounce/combat", "run/LiquidBounce/trainer"}) {
+                  // Paths are relative to parent directory since we run from trainer/
+                  for (String dir : new String[]{"../run/LiquidBounce/combat", "../run/LiquidBounce/trainer"}) {
                       File folder = new File(dir);
+                      System.out.println("Checking directory: " + folder.getAbsolutePath() + " exists=" + folder.exists());
                       if (folder.exists() && folder.listFiles() != null) {
                           for (File f : folder.listFiles()) {
                               if (f.getName().endsWith(".json")) {

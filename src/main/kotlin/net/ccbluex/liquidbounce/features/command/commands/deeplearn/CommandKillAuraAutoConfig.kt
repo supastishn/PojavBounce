@@ -31,8 +31,8 @@ import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.ana
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.modes.*
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatTrainerRecorder
+import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.chat
-import net.ccbluex.liquidbounce.utils.client.markAsError
 import kotlin.time.DurationUnit
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -60,12 +60,12 @@ object CommandKillAuraAutoConfig : Command.Factory {
                 val requestedMode = args.getOrNull(0) as String?
 
                 if (requestedMode == null) {
-                    throw CommandException("§cUsage: .killaura autoconfig [Linear|Sigmoid|Interpolation|Acceleration]")
+                    throw CommandException("§cUsage: .killaura autoconfig [Linear|Sigmoid|Interpolation|Acceleration]".asText())
                 }
 
                 val validModes = listOf("Linear", "Sigmoid", "Interpolation", "Acceleration")
                 if (requestedMode.lowercase() !in validModes.map { it.lowercase() }) {
-                    throw CommandException("§cInvalid mode. Valid modes: ${validModes.joinToString(", ")}")
+                    throw CommandException("§cInvalid mode. Valid modes: ${validModes.joinToString(", ")}".asText())
                 }
 
                 chat("§7Loading combat samples...")
@@ -78,7 +78,7 @@ object CommandKillAuraAutoConfig : Command.Factory {
                 }
 
                 if (samples.isEmpty()) {
-                    throw CommandException("§cNo combat samples found. Use DebugRecorder to collect data first.")
+                    throw CommandException("§cNo combat samples found. Use DebugRecorder to collect data first.".asText())
                 }
 
                 chat("§a✓ Loaded ${samples.size} samples in ${sampleTime.toString(DurationUnit.SECONDS, decimals = 2)}s")

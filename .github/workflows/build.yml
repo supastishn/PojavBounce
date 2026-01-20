@@ -129,8 +129,9 @@ jobs:
           retention-days: 30
 
       - name: Upload to LiquidBounce API (optional)
-        if: ${{ secrets.NIGHTLY_PASS != '' }}
+        continue-on-error: true
         env:
+          NIGHTLY_PASS: ${{ secrets.NIGHTLY_PASS }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           JDK_VERSION: ${{ needs.extract-versions.outputs.jdk_version }}
           LB_VERSION: ${{ needs.extract-versions.outputs.lb_version }}
@@ -140,9 +141,13 @@ jobs:
           KOTLIN_VERSION: ${{ needs.extract-versions.outputs.kotlin_version }}
           FABRIC_KOTLIN_VERSION: ${{ needs.extract-versions.outputs.fabric_kotlin_version }}
         run: |
+          if [ -z "$NIGHTLY_PASS" ]; then
+            echo "NIGHTLY_PASS not set, skipping LiquidBounce API upload"
+            exit 0
+          fi
           cd build/libs/zip
           curl --connect-timeout 30 -m 300 -X POST -F "artifact=@liquidbounce.zip" \
-            -H "Authorization: ${{ secrets.NIGHTLY_PASS }}" \
+            -H "Authorization: $NIGHTLY_PASS" \
             -F "gh_id=${{ github.event.head_commit.id }}" \
             -F "gh_ref=${{ github.ref }}" \
             -F "gh_message=${COMMIT_MESSAGE}" \

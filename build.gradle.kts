@@ -127,9 +127,9 @@ dependencies {
     // Minecraft Authlib
     jij(libs.mcAuthlib)
 
-    // JCEF Support
-    modApi(libs.mcef)
-    include(libs.mcef)
+    // JCEF Support - DISABLED for PojavBounce (Android compatibility)
+    // modApi(libs.mcef)
+    // include(libs.mcef)
     jij(libs.httpServer)
 
     // Discord RPC Support

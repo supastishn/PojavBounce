@@ -16,6 +16,11 @@
  * You should have received a copy of the GNU General Public License
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
+
+// CEF Browser Backend - DISABLED for PojavBounce (Android compatibility)
+// MCEF/JCEF native libraries do not work on Android, use MinecraftGuiBrowserBackend instead.
+
+/*
 package net.ccbluex.liquidbounce.integration.backend.backends.cef
 
 import com.mojang.blaze3d.systems.RenderSystem
@@ -255,3 +260,4 @@ class CefBrowserBackend : BrowserBackend, EventListener {
         }
     }
 }
+*/

@@ -24,7 +24,7 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.BrowserReadyEvent
 import net.ccbluex.liquidbounce.event.events.GameRenderEvent
 import net.ccbluex.liquidbounce.event.handler
-import net.ccbluex.liquidbounce.integration.backend.backends.cef.CefBrowserBackend
+import net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend
 import net.ccbluex.liquidbounce.integration.backend.browser.GlobalBrowserSettings
 import net.ccbluex.liquidbounce.integration.interop.persistant.PersistentLocalStorage
 import net.ccbluex.liquidbounce.integration.task.TaskManager
@@ -34,7 +34,7 @@ import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIOR
 
 object BrowserBackendManager : EventListener {
 
-    val browserBackend: BrowserBackend = CefBrowserBackend()
+    val browserBackend: BrowserBackend = MinecraftGuiBrowserBackend()
 
     val isSkippingBrowser = System.getenv("LB_SKIP_BROWSER") == "true"
         || System.getProperty("net.ccbluex.liquidbounce.skip.browser") == "true"

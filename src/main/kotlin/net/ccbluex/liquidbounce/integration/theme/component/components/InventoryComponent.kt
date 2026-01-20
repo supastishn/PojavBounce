@@ -19,22 +19,24 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class InventoryComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
-
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
+    override fun render(context: GuiGraphics) {
+        val player = mc.player ?: return
+        val x = 10
+        val y = 100
+        for (i in 0 until 9) {
+            val stack = player.inventory.getItem(i)
+            context.renderItem(stack, x + i * 18, y)
+        }
+    }
 }

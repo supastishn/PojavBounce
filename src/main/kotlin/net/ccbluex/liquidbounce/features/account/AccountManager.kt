@@ -36,9 +36,11 @@ import net.ccbluex.liquidbounce.event.events.AccountManagerAdditionResultEvent
 import net.ccbluex.liquidbounce.event.events.AccountManagerLoginResultEvent
 import net.ccbluex.liquidbounce.event.events.AccountManagerRemovalResultEvent
 import net.ccbluex.liquidbounce.event.events.SessionEvent
+import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.client.with
+import kotlin.random.Random
 import net.minecraft.client.multiplayer.ProfileKeyPairManager
 import java.net.Proxy
 import java.util.Optional
@@ -383,6 +385,25 @@ object AccountManager : Configurable("Accounts"), EventListener {
         accounts += account
         ConfigSystem.store(this@AccountManager)
         EventManager.callEvent(AccountManagerAdditionResultEvent(username = profile.username))
+    }
+
+    fun loginRandomCrackedAccount() {
+        val username = generateRandomUsername()
+        logger.info("[RandomAlt] Generated username: $username")
+        chat("Logging into random account: $username")
+        loginCrackedAccount(username, online = false)
+    }
+
+    /**
+     * Generate a random Minecraft username (8-12 characters, letters + numbers)
+     */
+    private fun generateRandomUsername(): String {
+        val chars = ('a'..'z') + ('0'..'9')
+        val randomLength = Random.nextInt(8, 13)
+        val username = (0 until randomLength).map { chars.random() }
+            .joinToString("")
+            .replaceFirstChar { it.uppercase() }
+        return username
     }
 
 }

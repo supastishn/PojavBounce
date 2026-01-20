@@ -19,22 +19,42 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.logger
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class WatermarkComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        try {
+            val watermarkText = "LiquidBounce ${net.ccbluex.liquidbounce.LiquidBounce.clientVersion}"
+            val textWidth = mc.font.width(watermarkText)
+
+            val margin = 4
+            context.fill(
+                margin - 2,
+                margin,
+                margin + textWidth + 2,
+                margin + mc.font.lineHeight + 2,
+                java.awt.Color(0, 0, 0, 120).rgb
+            )
+
+            context.drawString(
+                mc.font,
+                watermarkText,
+                margin,
+                margin + 1,
+                java.awt.Color.HSBtoRGB(((System.currentTimeMillis() % 3600L) / 3600.0f), 0.8f, 1f)
+            )
+        } catch (e: Exception) {
+            logger.error("Failed to render watermark component", e)
+        }
+    }
 }

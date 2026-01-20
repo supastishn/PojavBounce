@@ -19,22 +19,27 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class TextComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
-    tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+    tweaks: Array<HudComponentTweak> = emptyArray(),
+    val values: Array<JsonObject> = emptyArray()
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        val textValue = values.find { it["name"]?.asString == "Text" }?.get("value")?.asString ?: return
+        val colorValue = values.find { it["name"]?.asString == "Color" }?.get("value")?.asLong ?: 0xFFFFFFFF
+
+        // Basic drawing, ignoring font and size for now
+        val x = 10
+        val y = 10
+        context.drawString(mc.font, textValue, x, y, colorValue.toInt())
+    }
 }

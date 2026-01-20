@@ -19,22 +19,34 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
+import net.minecraft.world.phys.EntityHitResult
 
-abstract class NativeHudComponent(
+// TODO: Fix for Minecraft 1.21 - API changes required
+class TargetHudComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        val hit = mc.hitResult
+        val entity = if (hit is EntityHitResult) hit.entity else null
+
+        if (entity is net.minecraft.world.entity.LivingEntity) {
+            val displayName = entity.name.string
+            val healthString = "Health: ${entity.health}"
+
+            // Render at top-left
+            val x = 10
+            val y = 30
+            context.fill(x, y, x + 140, y + 30, 0xAA000000.toInt())
+            context.drawString(mc.font, displayName, x + 4, y + 4, 0xFFFFFFFF.toInt())
+            context.drawString(mc.font, healthString, x + 4, y + 14, 0xFFAAAAAA.toInt())
+        }
+    }
 }

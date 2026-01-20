@@ -19,22 +19,30 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.integration.ui.hud.NotificationManager
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class NotificationsComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        val notifications = NotificationManager.getNotifications()
+        val margin = 10
+        var y = margin
+        val width = 200
+
+        for (n in notifications) {
+            context.fill(margin, y, margin + width, y + mc.font.lineHeight + 6, 0xAA000000.toInt())
+            context.drawString(mc.font, n.title, margin + 4, y + 2, 0xFFFFFFFF.toInt())
+            context.drawString(mc.font, n.message, margin + 4, y + 2 + mc.font.lineHeight, 0xFFAAAAAA.toInt())
+            y += mc.font.lineHeight + 8
+        }
+    }
 }

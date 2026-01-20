@@ -19,22 +19,27 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class HotbarComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        val player = mc.player ?: return
+        val y = mc.window.guiScaledHeight - 50
+        val x = (mc.window.guiScaledWidth / 2) - 90
+
+        // Draw 9 hotbar items
+        for (i in 0 until 9) {
+            val stack = player.inventory.getItem(i)
+            context.renderItem(stack, x + i * 20, y)
+        }
+    }
 }

@@ -58,6 +58,9 @@ enum class VirtualScreenType(
     CLICK_GUI("clickgui"),
     ALT_MANAGER("altmanager"),
     PROXY_MANAGER("proxymanager"),
+    SCRIPT_MANAGER("scriptmanager"),
+    THEME_MANAGER("thememanager"),
+    CUSTOMIZE("customize"),
 
     TITLE(
         "title",

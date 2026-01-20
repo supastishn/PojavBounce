@@ -19,22 +19,30 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import net.ccbluex.liquidbounce.features.module.ModuleManager
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class TabGuiComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        // Basic tab GUI: show categories and first module in each category
+        val categories = ModuleManager.groupBy { it.category }
+        var y = 10
+        val x = 10
+        for ((category, modules) in categories) {
+            context.drawString(mc.font, category.name, x, y, 0xFFFFFF)
+            y += mc.font.lineHeight + 2
+            val firstModule = modules.firstOrNull() ?: continue
+            context.drawString(mc.font, "  ${firstModule.name}", x, y, 0xAAAAAA)
+            y += mc.font.lineHeight + 6
+        }
+    }
 }

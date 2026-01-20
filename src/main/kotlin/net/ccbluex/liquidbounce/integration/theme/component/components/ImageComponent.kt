@@ -19,22 +19,28 @@
 
 package net.ccbluex.liquidbounce.integration.theme.component.components
 
-import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
+import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
+import net.ccbluex.liquidbounce.utils.client.mc
 import net.ccbluex.liquidbounce.utils.render.Alignment
 import net.minecraft.client.gui.GuiGraphics
 
-abstract class NativeHudComponent(
+class ImageComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
-    tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks) {
+    tweaks: Array<HudComponentTweak> = emptyArray(),
+    val values: Array<JsonObject> = emptyArray()
+) : NativeHudComponent(name, enabled, alignment, tweaks) {
 
-    /**
-     * Renders this component to the screen using native Minecraft rendering.
-     *
-     * @param context GuiGraphics context for drawing
-     */
-    abstract fun render(context: GuiGraphics)
+    override fun render(context: GuiGraphics) {
+        // Simple static image rendering for theme images. We'll parse the 'value' key for image path
+        // TODO: Load the image from the theme's resource. For now, render a placeholder box.
+        val x = 10
+        val y = 80
+        val width = 80
+        val height = 80
+        context.fill(x, y, x + width, y + height, 0xFF444444.toInt())
+        context.drawString(mc.font, "Image", x + 4, y + 4, 0xFFFFFFFF.toInt())
+    }
 }

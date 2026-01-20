@@ -19,12 +19,9 @@
 
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
-import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.*
@@ -56,7 +53,7 @@ object CommandKillAuraAutoConfig : Command.Factory {
                     .optional()
                     .build()
             )
-            .suspendHandler {
+            .handler {
                 val requestedMode = args.getOrNull(0) as String?
 
                 if (requestedMode == null) {
@@ -83,14 +80,12 @@ object CommandKillAuraAutoConfig : Command.Factory {
 
                 chat("§a✓ Loaded ${samples.size} samples in ${sampleTime.toString(DurationUnit.SECONDS, decimals = 2)}s")
 
-                withContext(Dispatchers.Default) {
-                    analyzeAndApplyForMode(samples, requestedMode)
-                }
+                analyzeAndApplyForMode(samples, requestedMode)
             }
             .build()
     }
 
-    private suspend fun analyzeAndApplyForMode(samples: List<CombatSample>, mode: String) {
+    private fun analyzeAndApplyForMode(samples: List<CombatSample>, mode: String) {
         val baseAnalyzers = listOf(
             ErrorAnalyzer,
             RangeAnalyzer,
@@ -110,6 +105,7 @@ object CommandKillAuraAutoConfig : Command.Factory {
 
         val results = mutableListOf<AnalysisResult>()
 
+        // Run analysis and apply synchronously on main thread
         val analysisTime = measureTime {
             for (analyzer in allAnalyzers) {
                 val result = analyzer.analyze(samples)

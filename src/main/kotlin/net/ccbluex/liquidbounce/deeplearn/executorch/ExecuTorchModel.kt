@@ -18,11 +18,9 @@
  */
 package net.ccbluex.liquidbounce.deeplearn.executorch
 
+import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
-import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine.modelsFolder
-import net.ccbluex.liquidbounce.deeplearn.models.ModelWrapper
-import net.ccbluex.liquidbounce.deeplearn.translators.FloatArrayInAndOutTranslator
 import java.io.Closeable
 import java.io.InputStream
 import java.nio.file.Path
@@ -46,16 +44,14 @@ import java.util.*
  * is loaded at runtime on Android devices via PojavLauncher.
  *
  * @param name Model name (without .pte extension)
- * @param translator Translator for converting between FloatArray input/output and model tensors
  * @param outputs Number of output features from the model
  * @param parent Parent choice configurable for integration into the config system
  */
 class ExecuTorchModel(
     name: String,
-    translator: FloatArrayInAndOutTranslator = FloatArrayInAndOutTranslator(),
-    outputs: Long = 2,
-    parent: ChoiceConfigurable<*>
-) : ModelWrapper<FloatArray, FloatArray>(name, translator, outputs, parent) {
+    @Suppress("unused") val outputs: Long = 2,
+    override val parent: ChoiceConfigurable<*>
+) : Choice(name), Closeable {
 
     private var module: ExecuTorchModule? = null
 
@@ -63,15 +59,12 @@ class ExecuTorchModel(
      * Performs inference on input using the loaded ExecuTorch model.
      * Requires ExecuTorchEngine to be initialized.
      *
-     * This method shadows the parent class predict method but does not override it
-     * since ModelWrapper.predict is not marked as open.
-     *
      * @param input FloatArray of input features
      * @return FloatArray of output predictions
      * @throws IllegalStateException if ExecuTorchEngine is not initialized
      * @throws IllegalStateException if model is not loaded
      */
-    override fun predict(input: FloatArray): FloatArray {
+    fun predict(input: FloatArray): FloatArray {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
         require(module != null) { "ExecuTorch model is not loaded" }
 
@@ -80,11 +73,10 @@ class ExecuTorchModel(
 
     /**
      * Loads the ExecuTorch model from an input stream.
-     * This method shadows the parent class load method.
      *
      * @param stream InputStream containing .pte model data
      */
-    override fun load(stream: InputStream) {
+    fun load(stream: InputStream) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
         try {
@@ -96,11 +88,10 @@ class ExecuTorchModel(
 
     /**
      * Loads the ExecuTorch model from a file path.
-     * This method shadows the parent class load method.
      *
      * @param path Path to .pte model file
      */
-    override fun load(path: Path) {
+    fun load(path: Path) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
         try {
@@ -114,24 +105,23 @@ class ExecuTorchModel(
     /**
      * Loads the ExecuTorch model by name.
      * First checks the models folder, then falls back to JAR resources.
-     * This method shadows the parent class load method.
      *
-     * @param name Model name (without .pte extension)
+     * @param modelName Model name (without .pte extension)
      */
-    override fun load(name: String) {
+    fun load(modelName: String = name) {
         require(ExecuTorchEngine.isInitialized) { "ExecuTorchEngine is not initialized" }
 
-        val folder = modelsFolder.resolve(name)
-        val pteFile = folder.resolve("$name.pte")
+        val folder = modelsFolder.resolve(modelName)
+        val pteFile = folder.resolve("$modelName.pte")
 
         if (pteFile.exists()) {
             load(pteFile.toPath())
         } else {
             // Fall back to JAR resource
-            val lowercaseName = name.lowercase(Locale.ENGLISH)
+            val lowercaseName = modelName.lowercase(Locale.ENGLISH)
             val resourcePath = "/resources/liquidbounce/models/executorch/${lowercaseName}.pte"
             val resource = javaClass.getResourceAsStream(resourcePath)
-                ?: throw IllegalArgumentException("ExecuTorch model '$name' not found in resources or models folder")
+                ?: throw IllegalArgumentException("ExecuTorch model '$modelName' not found in resources or models folder")
 
             resource.use { stream ->
                 load(stream)
@@ -142,11 +132,10 @@ class ExecuTorchModel(
     /**
      * Saves the ExecuTorch model to a file path.
      * Note: This saves the in-memory model state, not the .pte binary.
-     * This method shadows the parent class save method.
      *
      * @param path Path to save model to
      */
-    override fun save(path: Path) {
+    fun save(path: Path) {
         require(module != null) { "No model loaded to save" }
 
         try {
@@ -159,20 +148,18 @@ class ExecuTorchModel(
 
     /**
      * Saves the ExecuTorch model to the models folder.
-     * This method shadows the parent class save method.
      *
-     * @param name Model name (without .pte extension)
+     * @param modelName Model name (without .pte extension)
      */
-    override fun save(name: String) {
-        val folder = modelsFolder.resolve(name).apply { mkdirs() }
-        save(folder.resolve("$name.pte").toPath())
+    fun save(modelName: String = name) {
+        val folder = modelsFolder.resolve(modelName).apply { mkdirs() }
+        save(folder.resolve("$modelName.pte").toPath())
     }
 
     /**
      * Deletes the model file and releases resources.
-     * This method shadows the parent class delete method.
      */
-    override fun delete() {
+    fun delete() {
         close()
         modelsFolder.resolve(name).deleteRecursively()
     }
@@ -244,4 +231,3 @@ class ModelLoadException(message: String, cause: Throwable? = null) : Exception(
  * Exception thrown when ExecuTorch model saving fails.
  */
 class ModelSaveException(message: String, cause: Throwable? = null) : Exception(message, cause)
-

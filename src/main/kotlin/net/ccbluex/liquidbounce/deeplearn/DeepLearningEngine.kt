@@ -31,6 +31,18 @@ object DeepLearningEngine {
     var isInitialized = false
         private set
 
+    /**
+     * Indicates whether ExecuTorch is available as a fallback ML engine.
+     * This is true on Android or when DJL fails to initialize.
+     */
+    val isExecuTorchAvailable: Boolean
+        get() = try {
+            Class.forName("org.pytorch.executorch.Module")
+            true
+        } catch (e: ClassNotFoundException) {
+            false
+        }
+
     private val deepLearningFolder = rootFolder.resolve("deeplearning").apply {
         mkdirs()
     }

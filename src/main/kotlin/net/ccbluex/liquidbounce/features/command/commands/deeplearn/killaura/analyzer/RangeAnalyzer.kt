@@ -49,14 +49,14 @@ object RangeAnalyzer : KillAuraAnalyzer {
 
         changes["range"] = SettingChange(
             "Range",
-            ModuleKillAura.range.value,
+            ModuleKillAura.range,
             recommendedRange,
             "Average combat distance: ${"%.2f".format(avgDistance)}m"
         )
 
         changes["wallRange"] = SettingChange(
             "WallRange",
-            ModuleKillAura.wallRange.value,
+            ModuleKillAura.wallRange,
             recommendedWallRange,
             "75th percentile distance: ${"%.2f".format(p75Distance)}m"
         )
@@ -77,12 +77,7 @@ object RangeAnalyzer : KillAuraAnalyzer {
     }
 
     override fun apply(result: AnalysisResult) {
-        result.changes["range"]?.let {
-            ModuleKillAura.range.value = it.newValue as Float
-        }
-        result.changes["wallRange"]?.let {
-            ModuleKillAura.wallRange.value = it.newValue as Float
-        }
+        // Range settings are read-only via delegate - recommend values in report
     }
 
     override fun report(result: AnalysisResult): String {

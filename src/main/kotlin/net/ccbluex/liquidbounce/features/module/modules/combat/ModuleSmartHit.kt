@@ -251,9 +251,10 @@ object ModuleSmartHit : ClientModule("SmartHit", ModuleCategories.COMBAT) {
         val knockbackModifier = KnockbackSimulation.horizontalKnockback.random()
 
         // Calculate knockback direction based on target rotation
-        val knockbackX = -Mth.sin(target.yRot * (PI.toFloat() / 180f)) * knockbackModifier * 0.5f
+        val angle = target.yRot.toDouble() * (PI / 180.0)
+        val knockbackX = -Mth.sin(angle) * knockbackModifier * 0.5f
         val knockbackY = KnockbackSimulation.verticalKnockback.random()
-        val knockbackZ = Mth.cos(target.yRot * (PI.toFloat() / 180f)) * knockbackModifier * 0.5f
+        val knockbackZ = Mth.cos(angle) * knockbackModifier * 0.5f
 
         // Apply knockback to simulated velocity
         simPlayer.velocity = simPlayer.velocity.add(

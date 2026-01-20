@@ -397,6 +397,32 @@ jobs:
           import java.nio.file.*;
           import java.util.*;
 
+          /**
+           * Minarai Model Trainer
+           *
+           * Parses CombatSample JSON format:
+           * - "a": currentVector (Vec3 with x, y, z)
+           * - "b": previousVector (Vec3)
+           * - "c": targetVector (Vec3)
+           * - "d": velocityDelta (Vec2 with x, y) - this is the OUTPUT
+           * - "e": hurtTime (int)
+           * - "f": age (int)
+           * - "g": playerDiff (Vec3)
+           * - "h": targetDiff (Vec3)
+           * - "i": distance (float)
+           *
+           * Input features (6):
+           *   - totalDelta.yaw (computed from current/target rotation)
+           *   - totalDelta.pitch
+           *   - prevVelocityDelta.yaw (computed from prev/current rotation)
+           *   - prevVelocityDelta.pitch
+           *   - speed (horizontal distance of targetDiff + playerDiff)
+           *   - distance
+           *
+           * Output (2):
+           *   - velocityDelta.x
+           *   - velocityDelta.y
+           */
           public class TrainModel {
               public static void main(String[] args) throws Exception {
                   String modelName = System.getenv("MODEL_NAME");
@@ -414,31 +440,88 @@ jobs:
 
                   for (String dir : new String[]{"run/LiquidBounce/combat", "run/LiquidBounce/trainer"}) {
                       File folder = new File(dir);
-                      if (folder.exists()) {
+                      if (folder.exists() && folder.listFiles() != null) {
                           for (File f : folder.listFiles()) {
                               if (f.getName().endsWith(".json")) {
+                                  System.out.println("Parsing: " + f.getName());
                                   try {
-                                      JsonObject json = gson.fromJson(new FileReader(f), JsonObject.class);
-                                      JsonArray entries = json.getAsJsonArray("entries");
-                                      if (entries != null) {
-                                          for (JsonElement e : entries) {
+                                      // JSON is array of CombatSample objects
+                                      JsonArray samples = gson.fromJson(new FileReader(f), JsonArray.class);
+                                      if (samples != null) {
+                                          int count = 0;
+                                          for (JsonElement e : samples) {
                                               JsonObject obj = e.getAsJsonObject();
+
+                                              // Parse vectors
+                                              JsonObject currentVec = obj.getAsJsonObject("a"); // currentVector
+                                              JsonObject prevVec = obj.getAsJsonObject("b");    // previousVector
+                                              JsonObject targetVec = obj.getAsJsonObject("c");  // targetVector
+                                              JsonObject velDelta = obj.getAsJsonObject("d");   // velocityDelta (output)
+                                              JsonObject playerDiff = obj.getAsJsonObject("g"); // playerDiff
+                                              JsonObject targetDiff = obj.getAsJsonObject("h"); // targetDiff
+                                              float distance = getFloat(obj, "i");              // distance
+
+                                              if (currentVec == null || prevVec == null || targetVec == null ||
+                                                  velDelta == null || playerDiff == null || targetDiff == null) {
+                                                  continue;
+                                              }
+
+                                              // Compute rotations from direction vectors
+                                              float[] currentRot = vecToRotation(
+                                                  getFloat(currentVec, "x"),
+                                                  getFloat(currentVec, "y"),
+                                                  getFloat(currentVec, "z")
+                                              );
+                                              float[] prevRot = vecToRotation(
+                                                  getFloat(prevVec, "x"),
+                                                  getFloat(prevVec, "y"),
+                                                  getFloat(prevVec, "z")
+                                              );
+                                              float[] targetRot = vecToRotation(
+                                                  getFloat(targetVec, "x"),
+                                                  getFloat(targetVec, "y"),
+                                                  getFloat(targetVec, "z")
+                                              );
+
+                                              // Compute deltas
+                                              float totalDeltaYaw = wrapDegrees(targetRot[0] - currentRot[0]);
+                                              float totalDeltaPitch = targetRot[1] - currentRot[1];
+                                              float prevDeltaYaw = wrapDegrees(currentRot[0] - prevRot[0]);
+                                              float prevDeltaPitch = currentRot[1] - prevRot[1];
+
+                                              // Compute speed (horizontal distance)
+                                              float playerHorizDist = (float) Math.sqrt(
+                                                  getFloat(playerDiff, "x") * getFloat(playerDiff, "x") +
+                                                  getFloat(playerDiff, "z") * getFloat(playerDiff, "z")
+                                              );
+                                              float targetHorizDist = (float) Math.sqrt(
+                                                  getFloat(targetDiff, "x") * getFloat(targetDiff, "x") +
+                                                  getFloat(targetDiff, "z") * getFloat(targetDiff, "z")
+                                              );
+                                              float speed = playerHorizDist + targetHorizDist;
+
+                                              // Input: 6 features
                                               features.add(new float[]{
-                                                  getFloat(obj, "distance"),
-                                                  getFloat(obj, "deltaX"),
-                                                  getFloat(obj, "deltaY"),
-                                                  getFloat(obj, "deltaZ"),
-                                                  getFloat(obj, "hSpeed"),
-                                                  getFloat(obj, "vSpeed")
+                                                  totalDeltaYaw,
+                                                  totalDeltaPitch,
+                                                  prevDeltaYaw,
+                                                  prevDeltaPitch,
+                                                  speed,
+                                                  distance
                                               });
+
+                                              // Output: velocityDelta (x, y)
                                               labels.add(new float[]{
-                                                  getFloat(obj, "yaw"),
-                                                  getFloat(obj, "pitch")
+                                                  getFloat(velDelta, "x"),
+                                                  getFloat(velDelta, "y")
                                               });
+                                              count++;
                                           }
+                                          System.out.println("  -> " + count + " samples");
                                       }
                                   } catch (Exception ex) {
                                       System.out.println("Warning: " + f.getName() + ": " + ex.getMessage());
+                                      ex.printStackTrace();
                                   }
                               }
                           }
@@ -492,6 +575,27 @@ jobs:
               static float getFloat(JsonObject obj, String key) {
                   JsonElement e = obj.get(key);
                   return e != null ? e.getAsFloat() : 0f;
+              }
+
+              /**
+               * Convert direction vector to yaw/pitch rotation (degrees)
+               * Based on Minecraft's rotation system
+               */
+              static float[] vecToRotation(float x, float y, float z) {
+                  double horizontalLength = Math.sqrt(x * x + z * z);
+                  float yaw = (float) Math.toDegrees(Math.atan2(-x, z));
+                  float pitch = (float) Math.toDegrees(-Math.atan2(y, horizontalLength));
+                  return new float[]{yaw, pitch};
+              }
+
+              /**
+               * Wrap degrees to -180..180 range
+               */
+              static float wrapDegrees(float degrees) {
+                  float wrapped = degrees % 360.0f;
+                  if (wrapped >= 180.0f) wrapped -= 360.0f;
+                  if (wrapped < -180.0f) wrapped += 360.0f;
+                  return wrapped;
               }
 
               static SequentialBlock createMlpBlock(long outputs) {

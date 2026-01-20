@@ -99,7 +99,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
     val targetTracker = tree(KillAuraTargetTracker)
 
     // Rotation
-    private val rotations = tree(KillAuraRotationsConfigurable)
+    internal val rotations = tree(KillAuraRotationsConfigurable)
     private val pointTracker = tree(PointTracker(this))
 
     private val requires by multiEnumChoice<KillAuraRequirements>("Requires")

@@ -31,8 +31,10 @@ import net.ccbluex.liquidbounce.utils.entity.SimulatedPlayer
 import net.ccbluex.liquidbounce.utils.entity.box
 import net.ccbluex.liquidbounce.utils.entity.isCloseToEdge
 import net.ccbluex.liquidbounce.utils.entity.lastPos
+import net.ccbluex.liquidbounce.utils.entity.onGroundTicks
 import net.ccbluex.liquidbounce.utils.entity.ping
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
+import net.ccbluex.liquidbounce.utils.kotlin.random
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
 import net.minecraft.util.Mth
 import net.minecraft.world.entity.Entity
@@ -301,8 +303,4 @@ object ModuleSmartHit : ClientModule("SmartHit", ModuleCategories.COMBAT) {
 
     private val Entity.rotation: Rotation
         get() = Rotation(this.yRot, this.xRot)
-
-    private val LocalPlayer.onGroundTicks: Int
-        get() = (this as? net.ccbluex.liquidbounce.interfaces.LocalPlayerAddition)
-            ?.`liquid_bounce$getOnGroundTicks`() ?: 0
 }

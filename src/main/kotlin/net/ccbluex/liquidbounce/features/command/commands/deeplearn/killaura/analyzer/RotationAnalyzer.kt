@@ -90,6 +90,7 @@ object RotationAnalyzer : KillAuraAnalyzer {
         val avgYaw = result.stats["avgYawDelta"]?.let { "%.2f".format(it) } ?: "?"
         val avgPitch = result.stats["avgPitchDelta"]?.let { "%.2f".format(it) } ?: "?"
         val variance = result.stats["totalVariance"]?.let { "%.2f".format(it) } ?: "?"
+        val varianceValue = result.stats["totalVariance"] ?: 0.0
         val yawAccel = result.stats["avgYawAccel"]?.let { "%.3f".format(it) } ?: "?"
         val pitchAccel = result.stats["avgPitchAccel"]?.let { "%.3f".format(it) } ?: "?"
 
@@ -99,8 +100,8 @@ object RotationAnalyzer : KillAuraAnalyzer {
             "  • Avg Acceleration: Yaw=${yawAccel}, Pitch=${pitchAccel}\n" +
             "  • Recommendation: " +
             when {
-                variance > 10.0 -> "High variance - try Acceleration mode"
-                variance > 5.0 -> "Medium variance - Sigmoid or Interpolation recommended"
+                varianceValue > 10.0 -> "High variance - try Acceleration mode"
+                varianceValue > 5.0 -> "Medium variance - Sigmoid or Interpolation recommended"
                 else -> "Low variance - Linear mode suitable"
             }
     }

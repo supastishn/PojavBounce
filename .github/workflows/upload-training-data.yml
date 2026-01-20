@@ -1,0 +1,80 @@
+name: Upload Training Data
+
+on:
+  workflow_dispatch:
+    inputs:
+      data_name:
+        description: 'Name for the training data (alphanumeric and hyphens only)'
+        required: true
+        type: string
+      training_data_base64:
+        description: 'Base64-encoded training data ZIP (for small files < 10MB)'
+        required: false
+        type: string
+      training_data_url:
+        description: 'URL to download training data ZIP (for larger files - supports direct URLs)'
+        required: false
+        type: string
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate inputs
+        run: |
+          if [[ -z "${{ inputs.training_data_base64 }}" && -z "${{ inputs.training_data_url }}" ]]; then
+            echo "Error: Must provide either training_data_base64 or training_data_url"
+            exit 1
+          fi
+          if [[ ! "${{ inputs.data_name }}" =~ ^[a-zA-Z0-9-]+$ ]]; then
+            echo "Error: Data name must contain only alphanumeric characters and hyphens"
+            exit 1
+          fi
+
+      - name: Download/Decode training data
+        run: |
+          mkdir -p training_data
+
+          if [[ -n "${{ inputs.training_data_url }}" ]]; then
+            echo "Downloading from URL..."
+            curl -L -o training_data.zip "${{ inputs.training_data_url }}"
+          else
+            echo "Decoding base64..."
+            echo "${{ inputs.training_data_base64 }}" | base64 -d > training_data.zip
+          fi
+
+          # Validate ZIP
+          if ! unzip -t training_data.zip; then
+            echo "Error: Invalid ZIP file"
+            exit 1
+          fi
+
+          # Extract and show contents
+          unzip -o training_data.zip -d training_data/
+          echo "=== Training data contents ==="
+          find training_data -type f -name "*.json" | head -20
+          echo "Total JSON files: $(find training_data -type f -name "*.json" | wc -l)"
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: training-data-${{ inputs.data_name }}
+          path: training_data.zip
+          retention-days: 90
+
+      - name: Output run ID
+        run: |
+          echo "## Training Data Uploaded!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Data Name:** ${{ inputs.data_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### How to use with Train Minarai Model:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Go to **Train Minarai Model** workflow" >> $GITHUB_STEP_SUMMARY
+          echo "2. Set **artifact_run_id** to: \`${{ github.run_id }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "3. Set **artifact_name** to: \`training-data-${{ inputs.data_name }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Or use this command:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "gh workflow run train-model.yml -f model_name=my-model -f artifact_run_id=${{ github.run_id }} -f artifact_name=training-data-${{ inputs.data_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

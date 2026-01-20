@@ -12,9 +12,24 @@ on:
         required: false
         type: boolean
         default: true
-      training_data:
-        description: 'Base64-encoded training data ZIP (combat recordings)'
-        required: true
+      # Option 1: Use artifact from previous upload workflow
+      artifact_run_id:
+        description: 'Run ID from "Upload Training Data" workflow (preferred for large files)'
+        required: false
+        type: string
+      artifact_name:
+        description: 'Artifact name (e.g., training-data-my-dataset)'
+        required: false
+        type: string
+      # Option 2: Direct URL download
+      training_data_url:
+        description: 'URL to download training data ZIP directly'
+        required: false
+        type: string
+      # Option 3: Base64 (legacy, for small files only)
+      training_data_base64:
+        description: 'Base64-encoded training data ZIP (legacy, small files only)'
+        required: false
         type: string
       epochs:
         description: 'Number of training epochs'
@@ -39,6 +54,25 @@ jobs:
           fi
           echo "Model name validated: ${{ inputs.model_name }}"
 
+      - name: Validate input method
+        run: |
+          METHODS=0
+          [[ -n "${{ inputs.artifact_run_id }}" ]] && ((METHODS++))
+          [[ -n "${{ inputs.training_data_url }}" ]] && ((METHODS++))
+          [[ -n "${{ inputs.training_data_base64 }}" ]] && ((METHODS++))
+
+          if [[ $METHODS -eq 0 ]]; then
+            echo "Error: Must provide training data via one of:"
+            echo "  - artifact_run_id + artifact_name (recommended for large files)"
+            echo "  - training_data_url"
+            echo "  - training_data_base64 (small files only)"
+            exit 1
+          fi
+
+          if [[ $METHODS -gt 1 ]]; then
+            echo "Warning: Multiple input methods provided, using priority: artifact > url > base64"
+          fi
+
       - name: Setup JDK 21
         uses: actions/setup-java@v4
         with:
@@ -48,11 +82,41 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Decode and extract training data
+      - name: Download from artifact
+        if: inputs.artifact_run_id != ''
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: .
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ inputs.artifact_run_id }}
+
+      - name: Download from URL
+        if: inputs.artifact_run_id == '' && inputs.training_data_url != ''
+        run: |
+          echo "Downloading training data from URL..."
+          curl -L -o training_data.zip "${{ inputs.training_data_url }}"
+
+      - name: Decode base64
+        if: inputs.artifact_run_id == '' && inputs.training_data_url == '' && inputs.training_data_base64 != ''
+        run: |
+          echo "Decoding base64 training data..."
+          echo "${{ inputs.training_data_base64 }}" | base64 -d > training_data.zip
+
+      - name: Extract training data
         run: |
           mkdir -p training_data
-          echo "${{ inputs.training_data }}" | base64 -d > training_data.zip
-          unzip -o training_data.zip -d training_data/
+
+          # Handle artifact download (may extract directly or as zip)
+          if [[ -f "training_data.zip" ]]; then
+            unzip -o training_data.zip -d training_data/
+          elif [[ -d "training_data" ]]; then
+            echo "Training data already extracted from artifact"
+          else
+            echo "Error: No training data found"
+            exit 1
+          fi
+
           echo "Training data extracted:"
           find training_data -type f -name "*.json" | wc -l
           echo "JSON files found"
@@ -458,11 +522,20 @@ jobs:
 
       - name: Summary
         run: |
-          echo "## Training Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "## Training Complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Model Name:** ${{ inputs.model_name }}" >> $GITHUB_STEP_SUMMARY
           echo "**Epochs:** ${{ inputs.epochs }}" >> $GITHUB_STEP_SUMMARY
           echo "**Improved from existing:** ${{ inputs.improve_existing }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Input Method Used" >> $GITHUB_STEP_SUMMARY
+          if [[ -n "${{ inputs.artifact_run_id }}" ]]; then
+            echo "- Artifact from run: ${{ inputs.artifact_run_id }}" >> $GITHUB_STEP_SUMMARY
+          elif [[ -n "${{ inputs.training_data_url }}" ]]; then
+            echo "- URL download" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Base64 encoded" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Download Instructions" >> $GITHUB_STEP_SUMMARY
           echo "1. Download the artifact from the Actions run" >> $GITHUB_STEP_SUMMARY

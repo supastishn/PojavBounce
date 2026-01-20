@@ -28,8 +28,18 @@ echo "Response saved to $RESP (size: $(wc -c < "$RESP") bytes)"
 echo "Response headers:"
 sed -n '1,20p' "$HDRS" || true
 
-# Parse artifact URL
-URL=$(python3 -c 'import sys, json; j=json.load(open(sys.argv[1])); a=j.get("artifacts",[]); print(a[0].get("archive_download_url","") if a else "")' "$RESP")
+# Parse artifact URL - filter for Build workflow artifacts (named "liquidbounce-*")
+URL=$(python3 -c '
+import sys, json
+j = json.load(open(sys.argv[1]))
+artifacts = j.get("artifacts", [])
+# Filter for Build workflow artifacts (liquidbounce-*), not Convert Models artifacts
+build_artifacts = [a for a in artifacts if a.get("name", "").startswith("liquidbounce")]
+if build_artifacts:
+    print(build_artifacts[0].get("archive_download_url", ""))
+else:
+    print("")
+' "$RESP")
 
 if [ -z "$URL" ]; then
   echo "No artifacts found for $REPO or failed to parse URL" >&2

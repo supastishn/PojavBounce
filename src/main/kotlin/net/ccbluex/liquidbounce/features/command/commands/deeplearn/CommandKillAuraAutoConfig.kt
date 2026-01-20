@@ -141,10 +141,9 @@ object CommandKillAuraAutoConfig : Command.Factory {
         }
 
         chat("§6Mode-Specific Tuning for §b$mode§6:")
-        chat("  §7• Set Rotation Mode: §b$mode")
-        chat("  §7• Apply mode-specific settings above")
-        chat("  §7• Fine-tune in ClickGUI → KillAura → Rotations")
+        chat("  §a✓ Rotation mode and settings have been applied automatically!")
+        chat("  §7• Fine-tune in ClickGUI → KillAura → Rotations if needed")
         chat("")
-        chat("§a✓ AutoConfig finished!")
+        chat("§a✓ AutoConfig finished! Settings applied.")
     }
 }

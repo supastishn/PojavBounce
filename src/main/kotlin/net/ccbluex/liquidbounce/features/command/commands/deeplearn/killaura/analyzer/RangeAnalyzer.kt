@@ -77,7 +77,10 @@ object RangeAnalyzer : KillAuraAnalyzer {
     }
 
     override fun apply(result: AnalysisResult) {
-        // Range settings are read-only via delegate - recommend values in report
+        // Range settings are NOT automatically applied because:
+        // 1. WallRange requires raycast/wall collision data we don't have
+        // 2. Range is server-dependent and may cause issues if set incorrectly
+        // User should manually adjust these based on recommendations in report
     }
 
     override fun report(result: AnalysisResult): String {
@@ -91,13 +94,15 @@ object RangeAnalyzer : KillAuraAnalyzer {
         val avgDist = result.stats["avgDistance"]?.let { "%.2f".format(it) } ?: "?"
 
         return buildString {
-            append("✓ Range Analysis (avg: ${avgDist}m)\n")
+            append("§e✓ Range Analysis §7(recommendations only - not auto-applied)\n")
+            append("§7  Average combat distance: ${avgDist}m\n")
             if (rangeChange != null) {
-                append("  • Range: ${rangeChange.oldValue} → ${rangeChange.newValue} (${rangeChange.reasoning})\n")
+                append("§7  • Suggested Range: §f${rangeChange.newValue} §7(${rangeChange.reasoning})\n")
             }
             if (wallRangeChange != null) {
-                append("  • WallRange: ${wallRangeChange.oldValue} → ${wallRangeChange.newValue} (${wallRangeChange.reasoning})")
+                append("§7  • Suggested WallRange: §f${wallRangeChange.newValue} §7(${wallRangeChange.reasoning})\n")
             }
+            append("§8  Note: Manually adjust in ClickGUI → KillAura")
         }
     }
 }

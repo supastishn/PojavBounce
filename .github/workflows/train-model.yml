@@ -646,7 +646,8 @@ jobs:
 
       - name: Package trained model
         run: |
-          cd output
+          # Output is in trainer/output since we run from trainer/
+          cd trainer/output
           zip -r "${{ inputs.model_name }}.zip" "${{ inputs.model_name }}/"
           echo "Model packaged: ${{ inputs.model_name }}.zip"
           ls -la
@@ -655,7 +656,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: trained-model-${{ inputs.model_name }}
-          path: output/${{ inputs.model_name }}.zip
+          path: trainer/output/${{ inputs.model_name }}.zip
           retention-days: 30
 
       - name: Summary

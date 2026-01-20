@@ -1,0 +1,80 @@
+name: Convert Models to ExecuTorch
+
+on:
+  push:
+    branches:
+      - nextgen
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Create directories
+        run: |
+          mkdir -p converted_models
+          mkdir -p conversion_logs
+          echo "Directories created"
+
+      - name: Install PyTorch
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          echo "PyTorch installed"
+          python -c "import torch; print(torch.__version__)"
+
+      - name: Install additional dependencies
+        run: |
+          pip install 'numpy<2.0'
+          pip install mxnet
+          pip install --force-reinstall 'numpy<2.0'
+          echo "Dependencies installed"
+
+      - name: Step 1 - Convert .params to .pt
+        run: |
+          echo "Starting Step 1..."
+          python convert_models_simple.py 2>&1 | tee conversion_logs/step1.log
+          echo "Step 1 complete"
+          ls -lh converted_models/ || true
+
+      - name: Step 2 - Verify .pt files
+        run: |
+          echo "Verifying .pt files..."
+          ls -lh converted_models/*.pt || exit 1
+
+      - name: Step 3 - Convert .pt to .pte using torch.export
+        run: |
+          echo "Starting conversion to ExecuTorch format..."
+          python convert_pt_to_pte_torch_export.py 2>&1 | tee conversion_logs/step3.log
+          echo "Conversion complete"
+
+      - name: Step 5 - List all files
+        if: always()
+        run: |
+          echo "All files in converted_models:"
+          find converted_models -type f -exec ls -lh {} \; || true
+
+      - name: Upload .pte artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: executorch-models-pte
+          path: converted_models/*.pte
+          retention-days: 90
+          if-no-files-found: warn
+
+      - name: Upload logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: conversion-logs
+          path: conversion_logs/
+          retention-days: 30

@@ -1,0 +1,471 @@
+name: Train Minarai Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_name:
+        description: 'Name for the trained model (alphanumeric and hyphens only)'
+        required: true
+        type: string
+      improve_existing:
+        description: 'Start from existing 21KC11KP model weights (recommended)'
+        required: false
+        type: boolean
+        default: true
+      training_data:
+        description: 'Base64-encoded training data ZIP (combat recordings)'
+        required: true
+        type: string
+      epochs:
+        description: 'Number of training epochs'
+        required: false
+        type: number
+        default: 100
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Validate model name
+        run: |
+          if [[ ! "${{ inputs.model_name }}" =~ ^[a-zA-Z0-9-]+$ ]]; then
+            echo "Error: Model name must contain only alphanumeric characters and hyphens"
+            exit 1
+          fi
+          echo "Model name validated: ${{ inputs.model_name }}"
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Decode and extract training data
+        run: |
+          mkdir -p training_data
+          echo "${{ inputs.training_data }}" | base64 -d > training_data.zip
+          unzip -o training_data.zip -d training_data/
+          echo "Training data extracted:"
+          find training_data -type f -name "*.json" | wc -l
+          echo "JSON files found"
+
+      - name: Prepare training environment
+        run: |
+          # Create the training data directories expected by the trainer
+          mkdir -p run/LiquidBounce/combat
+          mkdir -p run/LiquidBounce/trainer
+
+          # Copy training data to appropriate locations
+          if [ -d "training_data/combat" ]; then
+            cp -r training_data/combat/* run/LiquidBounce/combat/ 2>/dev/null || true
+          fi
+          if [ -d "training_data/trainer" ]; then
+            cp -r training_data/trainer/* run/LiquidBounce/trainer/ 2>/dev/null || true
+          fi
+
+          # If files are directly in training_data, copy them to combat folder
+          find training_data -maxdepth 1 -name "*.json" -exec cp {} run/LiquidBounce/combat/ \; 2>/dev/null || true
+
+          echo "Training data prepared in run/LiquidBounce/"
+          ls -la run/LiquidBounce/combat/ || echo "No combat data"
+          ls -la run/LiquidBounce/trainer/ || echo "No trainer data"
+
+      - name: Create training script
+        run: |
+          cat > train_model.kt << 'KOTLIN_SCRIPT'
+          @file:DependsOn("ai.djl:api:0.36.0")
+          @file:DependsOn("ai.djl.pytorch:pytorch-engine:0.36.0")
+          @file:DependsOn("com.google.code.gson:gson:2.10.1")
+
+          import ai.djl.Model
+          import ai.djl.ndarray.NDManager
+          import ai.djl.ndarray.types.Shape
+          import ai.djl.nn.Activation
+          import ai.djl.nn.Blocks
+          import ai.djl.nn.SequentialBlock
+          import ai.djl.nn.core.Linear
+          import ai.djl.nn.norm.BatchNorm
+          import ai.djl.training.DefaultTrainingConfig
+          import ai.djl.training.EasyTrain
+          import ai.djl.training.dataset.ArrayDataset
+          import ai.djl.training.initializer.XavierInitializer
+          import ai.djl.training.listener.TrainingListener
+          import ai.djl.training.loss.Loss
+          import ai.djl.training.optimizer.Adam
+          import ai.djl.training.tracker.Tracker
+          import com.google.gson.Gson
+          import com.google.gson.JsonObject
+          import java.io.File
+          import java.nio.file.Paths
+
+          data class Sample(val asInput: FloatArray, val asOutput: FloatArray)
+
+          fun loadSamples(combatDir: File, trainerDir: File): List<Sample> {
+              val samples = mutableListOf<Sample>()
+              val gson = Gson()
+
+              listOf(combatDir, trainerDir).forEach { dir ->
+                  if (dir.exists()) {
+                      dir.listFiles()?.filter { it.extension == "json" }?.forEach { file ->
+                          try {
+                              val json = gson.fromJson(file.readText(), JsonObject::class.java)
+                              // Parse combat/trainer JSON format
+                              val entries = json.getAsJsonArray("entries") ?: return@forEach
+                              entries.forEach { entry ->
+                                  val obj = entry.asJsonObject
+                                  val input = floatArrayOf(
+                                      obj.get("distance")?.asFloat ?: 0f,
+                                      obj.get("deltaX")?.asFloat ?: 0f,
+                                      obj.get("deltaY")?.asFloat ?: 0f,
+                                      obj.get("deltaZ")?.asFloat ?: 0f,
+                                      obj.get("hSpeed")?.asFloat ?: 0f,
+                                      obj.get("vSpeed")?.asFloat ?: 0f
+                                  )
+                                  val output = floatArrayOf(
+                                      obj.get("yaw")?.asFloat ?: 0f,
+                                      obj.get("pitch")?.asFloat ?: 0f
+                                  )
+                                  samples.add(Sample(input, output))
+                              }
+                          } catch (e: Exception) {
+                              println("Warning: Failed to parse ${file.name}: ${e.message}")
+                          }
+                      }
+                  }
+              }
+              return samples
+          }
+
+          fun createMlpBlock(outputs: Long) = SequentialBlock()
+              .add(Linear.builder().setUnits(128).build())
+              .add(Blocks.batchFlattenBlock())
+              .add(BatchNorm.builder().build())
+              .add(Activation.reluBlock())
+              .add(Linear.builder().setUnits(64).build())
+              .add(Blocks.batchFlattenBlock())
+              .add(BatchNorm.builder().build())
+              .add(Activation.reluBlock())
+              .add(Linear.builder().setUnits(32).build())
+              .add(Blocks.batchFlattenBlock())
+              .add(BatchNorm.builder().build())
+              .add(Activation.reluBlock())
+              .add(Linear.builder().setUnits(outputs).build())
+
+          fun main() {
+              val modelName = System.getenv("MODEL_NAME") ?: "trained-model"
+              val epochs = System.getenv("EPOCHS")?.toIntOrNull() ?: 100
+              val improveExisting = System.getenv("IMPROVE_EXISTING")?.toBoolean() ?: true
+              val outputDir = File("output/$modelName")
+
+              println("=== Minarai Model Trainer ===")
+              println("Model: $modelName")
+              println("Epochs: $epochs")
+              println("Improve existing: $improveExisting")
+
+              // Load training data
+              val combatDir = File("run/LiquidBounce/combat")
+              val trainerDir = File("run/LiquidBounce/trainer")
+              val samples = loadSamples(combatDir, trainerDir)
+
+              if (samples.isEmpty()) {
+                  println("ERROR: No training samples found!")
+                  System.exit(1)
+              }
+
+              println("Loaded ${samples.size} training samples")
+
+              // Create model
+              val model = Model.newInstance(modelName)
+              model.block = createMlpBlock(2) // X, Y output
+
+              // Load existing weights if improving
+              if (improveExisting) {
+                  val existingModel = File("src/main/resources/resources/liquidbounce/models/21kc11kp.params")
+                  if (existingModel.exists()) {
+                      println("Loading existing model weights from 21KC11KP...")
+                      model.load(existingModel.parentFile.toPath(), "21kc11kp")
+                  }
+              }
+
+              // Prepare training data
+              val features = samples.map { it.asInput }.toTypedArray()
+              val labels = samples.map { it.asOutput }.toTypedArray()
+
+              val manager = NDManager.newBaseManager()
+              val trainingSet = ArrayDataset.Builder()
+                  .setData(manager.create(features))
+                  .optLabels(manager.create(labels))
+                  .setSampling(32, true)
+                  .build()
+
+              // Training config
+              val config = DefaultTrainingConfig(Loss.l2Loss())
+                  .optInitializer(XavierInitializer(), "weight")
+                  .optOptimizer(Adam.builder().optLearningRateTracker(Tracker.fixed(0.001f)).build())
+                  .addTrainingListeners(*TrainingListener.Defaults.logging())
+
+              val trainer = model.newTrainer(config)
+              trainer.initialize(Shape(32, 6)) // batch size, input features
+
+              println("Starting training...")
+              EasyTrain.fit(trainer, epochs, trainingSet, null)
+
+              // Save model
+              outputDir.mkdirs()
+              model.save(outputDir.toPath(), "tf")
+
+              println("Model saved to: ${outputDir.absolutePath}")
+              println("Training complete!")
+
+              // Create metadata
+              File(outputDir, "model.json").writeText("""
+              {
+                  "name": "$modelName",
+                  "type": "minarai",
+                  "epochs": $epochs,
+                  "samples": ${samples.size},
+                  "improved_from": ${if (improveExisting) "\"21KC11KP\"" else "null"},
+                  "created": "${java.time.Instant.now()}"
+              }
+              """.trimIndent())
+          }
+
+          main()
+          KOTLIN_SCRIPT
+
+      - name: Build project for DJL dependencies
+        run: |
+          ./gradlew classes --no-daemon -x test || true
+
+      - name: Run training
+        env:
+          MODEL_NAME: ${{ inputs.model_name }}
+          EPOCHS: ${{ inputs.epochs }}
+          IMPROVE_EXISTING: ${{ inputs.improve_existing }}
+        run: |
+          # Use kotlinc to run the training script with DJL
+          # First, download kotlin scripting dependencies
+
+          # Alternative: Use gradle to run training
+          cat > build-train.gradle.kts << 'GRADLE'
+          plugins {
+              kotlin("jvm") version "2.1.0"
+              application
+          }
+
+          repositories {
+              mavenCentral()
+          }
+
+          dependencies {
+              implementation("ai.djl:api:0.36.0")
+              implementation("ai.djl.pytorch:pytorch-engine:0.36.0")
+              implementation("ai.djl.pytorch:pytorch-native-cpu:2.5.1")
+              implementation("com.google.code.gson:gson:2.10.1")
+          }
+
+          application {
+              mainClass.set("TrainModelKt")
+          }
+          GRADLE
+
+          # Create a simpler Java-based trainer
+          mkdir -p trainer/src/main/java
+          cat > trainer/src/main/java/TrainModel.java << 'JAVA'
+          import ai.djl.Model;
+          import ai.djl.ndarray.NDManager;
+          import ai.djl.ndarray.types.Shape;
+          import ai.djl.nn.Activation;
+          import ai.djl.nn.Blocks;
+          import ai.djl.nn.SequentialBlock;
+          import ai.djl.nn.core.Linear;
+          import ai.djl.nn.norm.BatchNorm;
+          import ai.djl.training.DefaultTrainingConfig;
+          import ai.djl.training.EasyTrain;
+          import ai.djl.training.dataset.ArrayDataset;
+          import ai.djl.training.initializer.XavierInitializer;
+          import ai.djl.training.listener.TrainingListener;
+          import ai.djl.training.loss.Loss;
+          import ai.djl.training.optimizer.Adam;
+          import ai.djl.training.tracker.Tracker;
+          import com.google.gson.*;
+          import java.io.*;
+          import java.nio.file.*;
+          import java.util.*;
+
+          public class TrainModel {
+              public static void main(String[] args) throws Exception {
+                  String modelName = System.getenv("MODEL_NAME");
+                  int epochs = Integer.parseInt(System.getenv().getOrDefault("EPOCHS", "100"));
+                  boolean improveExisting = Boolean.parseBoolean(System.getenv().getOrDefault("IMPROVE_EXISTING", "true"));
+
+                  System.out.println("=== Minarai Model Trainer ===");
+                  System.out.println("Model: " + modelName);
+                  System.out.println("Epochs: " + epochs);
+
+                  // Load samples
+                  List<float[]> features = new ArrayList<>();
+                  List<float[]> labels = new ArrayList<>();
+                  Gson gson = new Gson();
+
+                  for (String dir : new String[]{"run/LiquidBounce/combat", "run/LiquidBounce/trainer"}) {
+                      File folder = new File(dir);
+                      if (folder.exists()) {
+                          for (File f : folder.listFiles()) {
+                              if (f.getName().endsWith(".json")) {
+                                  try {
+                                      JsonObject json = gson.fromJson(new FileReader(f), JsonObject.class);
+                                      JsonArray entries = json.getAsJsonArray("entries");
+                                      if (entries != null) {
+                                          for (JsonElement e : entries) {
+                                              JsonObject obj = e.getAsJsonObject();
+                                              features.add(new float[]{
+                                                  getFloat(obj, "distance"),
+                                                  getFloat(obj, "deltaX"),
+                                                  getFloat(obj, "deltaY"),
+                                                  getFloat(obj, "deltaZ"),
+                                                  getFloat(obj, "hSpeed"),
+                                                  getFloat(obj, "vSpeed")
+                                              });
+                                              labels.add(new float[]{
+                                                  getFloat(obj, "yaw"),
+                                                  getFloat(obj, "pitch")
+                                              });
+                                          }
+                                      }
+                                  } catch (Exception ex) {
+                                      System.out.println("Warning: " + f.getName() + ": " + ex.getMessage());
+                                  }
+                              }
+                          }
+                      }
+                  }
+
+                  System.out.println("Loaded " + features.size() + " samples");
+                  if (features.isEmpty()) {
+                      System.err.println("ERROR: No training samples!");
+                      System.exit(1);
+                  }
+
+                  // Create model
+                  Model model = Model.newInstance(modelName);
+                  model.setBlock(createMlpBlock(2));
+
+                  // Training
+                  float[][] featArr = features.toArray(new float[0][]);
+                  float[][] labArr = labels.toArray(new float[0][]);
+
+                  NDManager manager = NDManager.newBaseManager();
+                  ArrayDataset dataset = new ArrayDataset.Builder()
+                      .setData(manager.create(featArr))
+                      .optLabels(manager.create(labArr))
+                      .setSampling(32, true)
+                      .build();
+
+                  DefaultTrainingConfig config = new DefaultTrainingConfig(Loss.l2Loss())
+                      .optInitializer(new XavierInitializer(), "weight")
+                      .optOptimizer(Adam.builder().optLearningRateTracker(Tracker.fixed(0.001f)).build())
+                      .addTrainingListeners(TrainingListener.Defaults.logging());
+
+                  var trainer = model.newTrainer(config);
+                  trainer.initialize(new Shape(32, 6));
+
+                  System.out.println("Training...");
+                  EasyTrain.fit(trainer, epochs, dataset, null);
+
+                  // Save
+                  Path outDir = Paths.get("output", modelName);
+                  Files.createDirectories(outDir);
+                  model.save(outDir, "tf");
+
+                  // Metadata
+                  Files.writeString(outDir.resolve("model.json"),
+                      "{\"name\":\"" + modelName + "\",\"samples\":" + features.size() + ",\"epochs\":" + epochs + "}");
+
+                  System.out.println("Saved to: " + outDir);
+              }
+
+              static float getFloat(JsonObject obj, String key) {
+                  JsonElement e = obj.get(key);
+                  return e != null ? e.getAsFloat() : 0f;
+              }
+
+              static SequentialBlock createMlpBlock(long outputs) {
+                  return new SequentialBlock()
+                      .add(Linear.builder().setUnits(128).build())
+                      .add(Blocks.batchFlattenBlock())
+                      .add(BatchNorm.builder().build())
+                      .add(Activation.reluBlock())
+                      .add(Linear.builder().setUnits(64).build())
+                      .add(Blocks.batchFlattenBlock())
+                      .add(BatchNorm.builder().build())
+                      .add(Activation.reluBlock())
+                      .add(Linear.builder().setUnits(32).build())
+                      .add(Blocks.batchFlattenBlock())
+                      .add(BatchNorm.builder().build())
+                      .add(Activation.reluBlock())
+                      .add(Linear.builder().setUnits(outputs).build());
+              }
+          }
+          JAVA
+
+          cat > trainer/build.gradle.kts << 'GRADLE'
+          plugins {
+              java
+              application
+          }
+          repositories {
+              mavenCentral()
+          }
+          dependencies {
+              implementation("ai.djl:api:0.36.0")
+              implementation("ai.djl.pytorch:pytorch-engine:0.36.0")
+              implementation("ai.djl.pytorch:pytorch-native-cpu:2.5.1")
+              implementation("com.google.code.gson:gson:2.10.1")
+          }
+          application {
+              mainClass.set("TrainModel")
+          }
+          GRADLE
+
+          cat > trainer/settings.gradle.kts << 'GRADLE'
+          rootProject.name = "trainer"
+          GRADLE
+
+          cd trainer && ../gradlew run --no-daemon
+
+      - name: Package trained model
+        run: |
+          cd output
+          zip -r "${{ inputs.model_name }}.zip" "${{ inputs.model_name }}/"
+          echo "Model packaged: ${{ inputs.model_name }}.zip"
+          ls -la
+
+      - name: Upload trained model
+        uses: actions/upload-artifact@v4
+        with:
+          name: trained-model-${{ inputs.model_name }}
+          path: output/${{ inputs.model_name }}.zip
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          echo "## Training Complete! 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Model Name:** ${{ inputs.model_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Epochs:** ${{ inputs.epochs }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Improved from existing:** ${{ inputs.improve_existing }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the artifact from the Actions run" >> $GITHUB_STEP_SUMMARY
+          echo "2. Extract the ZIP file" >> $GITHUB_STEP_SUMMARY
+          echo "3. Copy the model folder to: \`LiquidBounce/deeplearning/models/\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Restart LiquidBounce and select the model" >> $GITHUB_STEP_SUMMARY

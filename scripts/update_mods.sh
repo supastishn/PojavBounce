@@ -73,13 +73,56 @@ else
   exit 1
 fi
 
-echo "Syncing files to $DEST (overwriting)..."
-mkdir -p "$DEST"
-if command -v rsync >/dev/null 2>&1; then
-  rsync -a --delete "$TMPDIR/unpack/" "$DEST/"
+# GitHub Actions wraps the artifact in an outer zip
+# The actual mod is inside liquidbounce.zip which contains the .jar files
+INNER_ZIP=$(find "$TMPDIR/unpack" -name "liquidbounce*.zip" -type f | head -n1)
+if [ -n "$INNER_ZIP" ] && [ -f "$INNER_ZIP" ]; then
+  echo "Found inner zip: $INNER_ZIP"
+  echo "Extracting inner zip to get the .jar..."
+  mkdir -p "$TMPDIR/inner"
+  unzip -oq "$INNER_ZIP" -d "$TMPDIR/inner"
+
+  # Find the liquidbounce jar
+  JAR_FILE=$(find "$TMPDIR/inner" -name "liquidbounce*.jar" -type f | head -n1)
+  if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
+    echo "Found jar: $JAR_FILE"
+    JAR_NAME=$(basename "$JAR_FILE")
+
+    # Remove any old liquidbounce jars from mods folder
+    echo "Removing old liquidbounce jars and zips from $DEST..."
+    mkdir -p "$DEST"
+    find "$DEST" -maxdepth 1 -name "liquidbounce*" -delete 2>/dev/null || true
+
+    echo "Copying $JAR_NAME to $DEST..."
+    cp "$JAR_FILE" "$DEST/"
+    echo "Installed: $DEST/$JAR_NAME"
+  else
+    echo "ERROR: Could not find liquidbounce*.jar inside $INNER_ZIP"
+    ls -la "$TMPDIR/inner"
+    rm -rf "$TMPDIR"
+    exit 1
+  fi
 else
-  # Fallback to cp if rsync is not available
-  cp -a "$TMPDIR/unpack/." "$DEST/"
+  # Fallback: maybe the jar is directly in the artifact
+  JAR_FILE=$(find "$TMPDIR/unpack" -name "liquidbounce*.jar" -type f | head -n1)
+  if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
+    echo "Found jar directly in artifact: $JAR_FILE"
+    JAR_NAME=$(basename "$JAR_FILE")
+
+    echo "Removing old liquidbounce jars and zips from $DEST..."
+    mkdir -p "$DEST"
+    find "$DEST" -maxdepth 1 -name "liquidbounce*" -delete 2>/dev/null || true
+
+    echo "Copying $JAR_NAME to $DEST..."
+    cp "$JAR_FILE" "$DEST/"
+    echo "Installed: $DEST/$JAR_NAME"
+  else
+    echo "ERROR: Could not find liquidbounce*.jar or liquidbounce*.zip in artifact"
+    echo "Contents of artifact:"
+    find "$TMPDIR/unpack" -type f
+    rm -rf "$TMPDIR"
+    exit 1
+  fi
 fi
 
 echo "Cleaning up..."

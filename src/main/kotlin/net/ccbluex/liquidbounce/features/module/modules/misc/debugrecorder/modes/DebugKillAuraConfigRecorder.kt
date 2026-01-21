@@ -37,7 +37,6 @@ import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.entity.wouldBlockHit
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager.isInventoryOpen
-import net.ccbluex.liquidbounce.utils.item.isMace
 import net.ccbluex.liquidbounce.utils.math.times
 import net.minecraft.network.protocol.game.ServerboundInteractPacket
 import net.minecraft.sounds.SoundEvents
@@ -228,7 +227,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 val blockDuration = blockStartTime?.let { now - it } ?: 0L
 
                 // Calculate scan range (furthest entity we could target)
-                val allTargets = world.entities.getAll()
+                val allTargets = world.entitiesForRendering()
                     .filterIsInstance<LivingEntity>()
                     .filter { it.id != player.id && !it.isRemoved }
                 val scanRange = allTargets.maxOfOrNull { sqrt(player.squaredBoxedDistanceTo(it)).toFloat() } ?: 0f
@@ -320,7 +319,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
                 // Range exit prediction
                 val avgRange = 4.2f // Standard KillAura range
-                exitingRange = distance > avgRange * 0.9 && player.deltaMovement.horizontalDistanceSqr() > 0.01
+                exitingRange = distance.toFloat() > avgRange * 0.9 && player.deltaMovement.horizontalDistanceSqr() > 0.01
                 if (exitingRange && attackAttempted) {
                     attackedWhileExiting = true
                 }
@@ -530,8 +529,8 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         zombie.getAttribute(Attributes.ATTACK_DAMAGE)?.baseValue = 1.0
 
         // Add speed and jump boost for better maneuverability
-        zombie.addEffect(MobEffectInstance(MobEffects.MOVEMENT_SPEED, 999999, 1, false, false))
-        zombie.addEffect(MobEffectInstance(MobEffects.JUMP, 999999, 2, false, false))
+        zombie.addEffect(MobEffectInstance(MobEffects.SPEED, 999999, 1, false, false))
+        zombie.addEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 999999, 2, false, false))
 
         // Make zombie aggressive toward player
         zombie.setTarget(player)

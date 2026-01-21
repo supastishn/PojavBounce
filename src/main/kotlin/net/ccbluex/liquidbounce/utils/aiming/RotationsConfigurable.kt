@@ -58,7 +58,7 @@ open class RotationsConfigurable(
     private var shortStop = ShortStopRotationProcessor(owner).takeIf { combatSpecific }?.also { tree(it) }
     private val fail = FailRotationProcessor(owner).takeIf { combatSpecific }?.also { tree(it) }
 
-    private val movementCorrection by enumChoice("MovementCorrection", movementCorrection)
+    internal val movementCorrectionValue by enumChoice("MovementCorrection", movementCorrection)
     private val resetThreshold by float("ResetThreshold", 2f, 1f..180f)
     private val ticksUntilReset by int("TicksUntilReset", 5, 1..30, "ticks")
 
@@ -78,7 +78,7 @@ open class RotationsConfigurable(
         ticksUntilReset,
         resetThreshold,
         considerInventory,
-        movementCorrection,
+        movementCorrectionValue,
         whenReached
     )
 

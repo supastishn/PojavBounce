@@ -39,7 +39,8 @@ object ModelManager : EventListener, Configurable("AI") {
      */
     val combatModels = arrayOf(
         "21KC11KP",
-        "19KC8KP"
+        "19KC8KP",
+        "android-pte-final"
     )
 
     /**

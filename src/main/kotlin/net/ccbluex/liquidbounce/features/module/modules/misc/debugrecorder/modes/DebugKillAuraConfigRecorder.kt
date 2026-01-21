@@ -66,6 +66,9 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private val clickTimes = mutableListOf<Long>()
     private var attackAttempted = false
     private var attackSucceeded = false
+    private var wasCrit = false
+    private var wasSprintingBeforeHit = false
+    private var sprintingAfterHit = false
 
     // Blocking tracking
     private var blockStartTime: Long? = null
@@ -82,6 +85,9 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         clickTimes.clear()
         attackAttempted = false
         attackSucceeded = false
+        wasCrit = false
+        wasSprintingBeforeHit = false
+        sprintingAfterHit = false
         blockStartTime = null
         super.enable()
     }
@@ -153,6 +159,24 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
                 val blockDuration = blockStartTime?.let { now - it } ?: 0L
 
+                // Calculate scan range (furthest entity we could target)
+                val allTargets = world.entities()
+                    .filterIsInstance<LivingEntity>()
+                    .filter { it != player && it.isAlive }
+                val scanRange = allTargets.maxOfOrNull { sqrt(player.squaredBoxedDistanceTo(it)).toFloat() } ?: 0f
+                val closestDist = allTargets.minOfOrNull { sqrt(player.squaredBoxedDistanceTo(it)).toFloat() } ?: distance.toFloat()
+
+                // Check if target is in FOV (roughly 110 degrees)
+                val lookVec = current.directionVector
+                val toTarget = target.position().subtract(player.eyePosition).normalize()
+                val dot = lookVec.dot(toTarget)
+                val targetInFOV = dot > 0.4 // ~66 degree half-angle
+
+                // Check if this would be a miss (swing at air)
+                val raycastHit = raycastResult != null
+                val swingAtAir = !raycastHit && attackAttempted
+                val missDistance = if (swingAtAir) distance.toFloat() else 0f
+
                 recordPacket(
                     KillAuraConfigSample(
                         combatData = CombatSample(
@@ -179,17 +203,29 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         blockDuration = blockDuration,
                         attackAttempted = attackAttempted,
                         attackSucceeded = attackSucceeded,
-                        availableTargets = world.entities().count {
-                            it is LivingEntity && it != player && it.isAlive
-                        },
+                        availableTargets = allTargets.size,
                         targetHealth = target.health,
-                        targetArmorValue = target.armorValue.toFloat()
+                        targetArmorValue = target.armorValue.toFloat(),
+                        // New fields
+                        wasFalling = player.fallDistance > 0,
+                        fallDistance = player.fallDistance,
+                        onGround = player.onGround(),
+                        wasCriticalHit = wasCrit,
+                        wasSprinting = player.isSprinting,
+                        sprintingAfterHit = sprintingAfterHit,
+                        scanRange = scanRange,
+                        closestTargetDistance = closestDist,
+                        targetInFOV = targetInFOV,
+                        swingAtAir = swingAtAir,
+                        missDistance = missDistance
                     )
                 )
 
                 // Reset attack flags
                 attackAttempted = false
                 attackSucceeded = false
+                wasCrit = false
+                sprintingAfterHit = false
 
                 false
             }
@@ -211,8 +247,17 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 lastClickTime = now
                 clickTimes.add(now)
 
+                // Track sprint state before hit
+                wasSprintingBeforeHit = player.isSprinting
+
                 attackAttempted = true
                 attackSucceeded = targetEntity.hurtTime == 0 || targetEntity.hurtTime > 8
+
+                // Track if this was a critical hit (falling and not on ground)
+                wasCrit = player.fallDistance > 0 && !player.onGround()
+
+                // Schedule sprint check after hit
+                sprintingAfterHit = player.isSprinting
 
                 world.removeEntity(targetEntity.id, Entity.RemovalReason.DISCARDED)
                 target = null

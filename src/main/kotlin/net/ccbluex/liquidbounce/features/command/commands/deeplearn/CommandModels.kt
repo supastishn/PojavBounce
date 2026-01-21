@@ -25,7 +25,7 @@ import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine.modelsFolder
 import net.ccbluex.liquidbounce.deeplearn.ModelManager
 import net.ccbluex.liquidbounce.deeplearn.ModelManager.models
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
-import net.ccbluex.liquidbounce.deeplearn.models.TwoDimensionalRegressionModel
+import net.ccbluex.liquidbounce.deeplearn.models.MinaraiModel
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.CommandExecutor.suspendHandler
@@ -155,7 +155,7 @@ object CommandModels : Command.Factory {
             .build()
     }
 
-    private fun trainModel(command: Command, name: String, model: TwoDimensionalRegressionModel? = null) = runCatching {
+    private fun trainModel(command: Command, name: String, model: MinaraiModel? = null) = runCatching {
         val (samples, sampleTime) = measureTimedValue {
             CombatSample.parse(
                 // Combat data
@@ -184,7 +184,7 @@ object CommandModels : Command.Factory {
         chat(command.result("preparedData", datasetTime.toString(DurationUnit.SECONDS, decimals = 2)))
 
         val trainingTime = measureTime {
-            val model = model ?: TwoDimensionalRegressionModel(name, models).also { model -> models.choices.add(model) }
+            val model = model ?: MinaraiModel(name, models).also { model -> models.choices.add(model) }
             model.train(dataset.features, dataset.labels)
             model.save()
 

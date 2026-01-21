@@ -58,16 +58,20 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         // CRITICAL FIX: Calculate what % of remaining distance was covered each tick
         // InterpolationAngleSmooth expects percentage (1-100%) of remaining distance per tick
         // NOT degrees/tick divided by 180!
+        //
+        // IMPORTANT: Filter out samples where:
+        // 1. remaining < 1° (avoid division by small numbers)
+        // 2. moved < 0.1° (no significant movement, would add 0% and skew percentiles down)
         val yawPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
             val moved = kotlin.math.abs(sample.velocityDelta.x)
-            // Filter out samples where remaining distance is too small to avoid division issues
-            if (remaining > 1f) (moved / remaining * 100.0) else null
+            // Filter out samples with no significant movement or small remaining distance
+            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
         }
         val pitchPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
             val moved = kotlin.math.abs(sample.velocityDelta.y)
-            if (remaining > 1f) (moved / remaining * 100.0) else null
+            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
         }
 
         // Use percentiles from the calculated percentages
@@ -218,11 +222,11 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             append("§d╔ Interpolation Mode Configuration\n")
             if (hSpeed != null) {
                 append("§d║ HorizontalSpeed: §7${hSpeed.newValue}\n")
-                append("§d║   §8(${hSpeed.reason})\n")
+                append("§d║   §8(${hSpeed.reasoning})\n")
             }
             if (vSpeed != null) {
                 append("§d║ VerticalSpeed: §7${vSpeed.newValue}\n")
-                append("§d║   §8(${vSpeed.reason})\n")
+                append("§d║   §8(${vSpeed.reasoning})\n")
             }
             if (dcFactor != null) {
                 append("§d║ DirectionChangeFactor: §7${dcFactor.newValue}\n")

@@ -44,20 +44,26 @@ public abstract class MixinTitleScreen extends Screen {
 
     /**
      * Add the LiquidBounce button to the title screen after init.
-     * Position: below the main menu buttons, before Options/Quit
+     * Dynamically positions below all existing buttons to avoid overlap.
      */
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        // Add LiquidBounce button - same width as main menu buttons (200)
-        // Position it after the Mods button (if present) to avoid overlap
-        // Vanilla layout: Singleplayer (y+48), Multiplayer (y+72), Realms (y+96)
-        // Mod Menu adds "Mods" at y+96 or y+120
-        // Options is at y+132 (with 12px gap), Quit at y+156
-        // We put our button at y+108 (between Mods/Realms and Options)
+        // Find the lowest button Y position among existing widgets
+        int lowestY = 0;
+        for (var widget : this.children()) {
+            if (widget instanceof Button button) {
+                int buttonBottom = button.getY() + button.getHeight();
+                if (buttonBottom > lowestY) {
+                    lowestY = buttonBottom;
+                }
+            }
+        }
+
+        // Add LiquidBounce button below all existing buttons with 4px gap
         int buttonWidth = 200;
         int buttonHeight = 20;
         int centerX = this.width / 2 - buttonWidth / 2;
-        int buttonY = this.height / 4 + 108;
+        int buttonY = lowestY + 4;
 
         Button liquidBounceButton = Button.builder(
             Component.literal("LiquidBounce"),

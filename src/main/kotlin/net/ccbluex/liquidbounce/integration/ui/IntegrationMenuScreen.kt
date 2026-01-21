@@ -43,9 +43,18 @@ class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
 
     override fun init() {
         super.init()
-        // Build buttons for available routes
+        // Build buttons only for native screen implementations (skip browser-based screens)
+        val nativeScreenTypes = listOf(
+            VirtualScreenType.CLICK_GUI,
+            VirtualScreenType.ALT_MANAGER,
+            VirtualScreenType.PROXY_MANAGER,
+            VirtualScreenType.SCRIPT_MANAGER,
+            VirtualScreenType.THEME_MANAGER,
+            VirtualScreenType.CUSTOMIZE
+        )
+
         var y = 50
-        for (type in VirtualScreenType.entries) {
+        for (type in nativeScreenTypes) {
             val name = type.routeName.replaceFirstChar { it.uppercase() }
             val button = Button.builder(Component.literal(name)) { onOpen(type) }
                 .bounds(20, y, width - 40, 20)

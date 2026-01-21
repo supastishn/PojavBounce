@@ -38,6 +38,7 @@ import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
 import net.ccbluex.liquidbounce.utils.entity.wouldBlockHit
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager.isInventoryOpen
 import net.ccbluex.liquidbounce.utils.math.times
+import net.ccbluex.liquidbounce.utils.client.network
 import net.minecraft.network.protocol.game.ServerboundInteractPacket
 import net.minecraft.sounds.SoundEvents
 import net.minecraft.sounds.SoundSource
@@ -47,7 +48,6 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
-import net.minecraft.world.entity.monster.Slime
 import net.minecraft.world.entity.player.Player
 import java.util.UUID
 import kotlin.math.abs
@@ -55,7 +55,7 @@ import kotlin.math.sqrt
 import kotlin.random.Random
 
 /**
- * Advanced combat trainer that spawns buffed zombies moving at player speed.
+ * Advanced combat trainer that spawns zombies via commands and records combat data.
  * Records comprehensive data for full KillAura autoconfig.
  *
  * NOTE: This mode disables attack cooldown for realistic high-CPS training.
@@ -182,7 +182,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         // Track inventory state
         wasInventoryOpen = isInventoryOpen
 
-        target = spawnBuffedSlime()
+        spawnZombieViaCommand()
         if (isFirstRun) {
             tickUntil { target == null }
             isFirstRun = false
@@ -506,49 +506,36 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     }
 
     /**
-     * Spawns a buffed slime with player-like movement speed and maneuverability
+     * Spawns a zombie via /summon command with speed and targeting the player
      */
-    private fun spawnBuffedSlime(): LivingEntity {
-        val slime = Slime(EntityType.SLIME, world)
-        slime.setUUID(UUID.randomUUID())
-
+    private fun spawnZombieViaCommand() {
         val distance = Random.nextDouble() * 0.9 + 2.5
 
-        // Spawn in player's view range
+        // Calculate spawn position in player's view range
         val direction = Rotation(
             player.yRot + Random.nextDouble(-70.0, 70.0).toFloat(),
             Random.nextDouble(-25.0, 15.0).toFloat()
         ).directionVector * distance
 
         val position = player.eyePosition.add(direction)
-        slime.setPos(position)
+        val x = "%.2f".format(position.x)
+        val y = "%.2f".format(position.y)
+        val z = "%.2f".format(position.z)
 
-        // Buff slime to move like a player
-        slime.getAttribute(Attributes.MOVEMENT_SPEED)?.baseValue = 0.13 // Player speed
-        slime.getAttribute(Attributes.FOLLOW_RANGE)?.baseValue = 64.0
-        slime.getAttribute(Attributes.ATTACK_DAMAGE)?.baseValue = 1.0
+        // Summon zombie with movement speed buff
+        // The zombie will naturally target the player
+        network.sendCommand("summon minecraft:zombie $x $y $z {Attributes:[{Name:\"minecraft:movement_speed\",Base:0.35},{Name:\"minecraft:follow_range\",Base:64.0}],ActiveEffects:[{Id:1,Amplifier:1,Duration:999999,ShowParticles:0b},{Id:8,Amplifier:2,Duration:999999,ShowParticles:0b}]}")
 
-        // Add speed and jump boost for better maneuverability
-        slime.addEffect(MobEffectInstance(MobEffects.SPEED, 999999, 1, false, false))
-        slime.addEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 999999, 2, false, false))
+        // Find the newly spawned zombie
+        // We'll wait a tick and then find the closest zombie to the spawn position
+        mc.execute {
+            val spawnedZombie = world.entitiesForRendering().filterIsInstance<LivingEntity>()
+                .filter { it !is Player }
+                .minByOrNull { it.position().distanceToSqr(position) }
 
-        // Make slime aggressive toward player
-        slime.setTarget(player)
-
-        world.addEntity(slime)
-
-        // Play spawn sound
-        world.playLocalSound(
-            position.x,
-            position.y,
-            position.z,
-            SoundEvents.SLIME_SQUISH,
-            SoundSource.HOSTILE,
-            0.8f,
-            1.2f,
-            false
-        )
-
-        return slime
+            if (spawnedZombie != null) {
+                target = spawnedZombie
+            }
+        }
     }
 }

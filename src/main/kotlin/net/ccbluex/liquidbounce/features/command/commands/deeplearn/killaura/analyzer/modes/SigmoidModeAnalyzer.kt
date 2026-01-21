@@ -71,15 +71,19 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         val pitchP90 = sortedPitch[(sortedPitch.size * 0.90).toInt().coerceIn(0, sortedPitch.size - 1)]
 
         // IMPORTANT: Sigmoid mode multiplies TurnSpeed by sigmoid curve (0-1 factor)
-        // Average sigmoid factor ≈ 0.5-0.7 depending on steepness/midpoint
-        // To match actual training speeds, we need to compensate by dividing by avg factor
-        // Using 0.6 as typical average sigmoid dampening factor
-        val sigmoidDampening = 0.6f
+        // Calculate average sigmoid factor dynamically based on recommended steepness/midpoint
+        // instead of using a hardcoded 0.6
+        //
+        // Sigmoid formula: sigmoid = 1 / (1 + exp(-steepness * (scaledDiff - midpoint)))
+        // Average input t ≈ 0.3 (36° on 120° typical rotation, from scaledDifference = rotationDiff / 120f)
+        val avgScaledDiff = 0.3
+        val avgSigmoidFactor = (1.0 / (1.0 + kotlin.math.exp(-recommendedSteepness * (avgScaledDiff - recommendedMidpoint))))
+            .coerceIn(0.3, 0.9)
 
-        val horizontalSpeedStart = (yawP60 / sigmoidDampening).coerceIn(0.1, 180.0).toFloat()
-        val horizontalSpeed = (yawP90 / sigmoidDampening).coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
-        val verticalSpeedStart = (pitchP60 / sigmoidDampening).coerceIn(0.1, 180.0).toFloat()
-        val verticalSpeed = (pitchP90 / sigmoidDampening).coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
+        val horizontalSpeedStart = (yawP60 / avgSigmoidFactor).coerceIn(0.1, 180.0).toFloat()
+        val horizontalSpeed = (yawP90 / avgSigmoidFactor).coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
+        val verticalSpeedStart = (pitchP60 / avgSigmoidFactor).coerceIn(0.1, 180.0).toFloat()
+        val verticalSpeed = (pitchP90 / avgSigmoidFactor).coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -101,20 +105,21 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "HorizontalTurnSpeed",
             "Current",
             "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeed)}",
-            "From P60-P90 yaw: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick ÷ 0.6 sigmoid dampening"
+            "From P60-P90 yaw: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick ÷ ${"%.2f".format(avgSigmoidFactor)} sigmoid factor"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
             "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeed)}",
-            "From P60-P90 pitch: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick ÷ 0.6 sigmoid dampening"
+            "From P60-P90 pitch: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick ÷ ${"%.2f".format(avgSigmoidFactor)} sigmoid factor"
         )
 
         val stats = mapOf(
             "variance" to variance,
             "recommendedSteepness" to recommendedSteepness,
             "recommendedMidpoint" to recommendedMidpoint,
+            "avgSigmoidFactor" to avgSigmoidFactor,
             "horizontalSpeedStart" to horizontalSpeedStart.toDouble(),
             "horizontalSpeed" to horizontalSpeed.toDouble(),
             "verticalSpeedStart" to verticalSpeedStart.toDouble(),

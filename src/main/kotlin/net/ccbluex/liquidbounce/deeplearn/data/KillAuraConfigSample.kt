@@ -97,7 +97,53 @@ data class KillAuraConfigSample(
     @SerializedName("swing_at_air")
     val swingAtAir: Boolean = false,
     @SerializedName("miss_distance")
-    val missDistance: Float = 0f
+    val missDistance: Float = 0f,
+
+    // === AUTOBLOCK DATA ===
+    @SerializedName("block_before_hit")
+    val wasBlockingBeforeHit: Boolean = false,
+    @SerializedName("block_after_hit")
+    val blockingAfterHit: Boolean = false,
+    @SerializedName("ticks_blocked_before_hit")
+    val ticksBlockedBeforeHit: Int = 0,
+    @SerializedName("ticks_unblocked_before_hit")
+    val ticksUnblockedBeforeHit: Int = 0,
+    @SerializedName("block_on_scan_range")
+    val blockedOnScanRange: Boolean = false,
+
+    // === FAILSWING DATA ===
+    @SerializedName("failswing_range")
+    val failSwingRange: Float = 0f,
+    @SerializedName("swing_while_miss")
+    val swingWhileMiss: Boolean = false,
+
+    // === RAYCAST/TARGETING DATA ===
+    @SerializedName("raycast_mode_used")
+    val raycastModeUsed: String = "All",
+    @SerializedName("target_through_wall")
+    val targetThroughWall: Boolean = false,
+
+    // === TIMING DATA ===
+    @SerializedName("tick_count")
+    val tickCount: Int = 0,
+    @SerializedName("attack_cooldown_progress")
+    val attackCooldownProgress: Float = 1f,
+    @SerializedName("click_interval_ms")
+    val clickIntervalMs: Long = 0,
+
+    // === ROTATION TIMING DATA ===
+    @SerializedName("rotation_delta_yaw")
+    val rotationDeltaYaw: Float = 0f,
+    @SerializedName("rotation_delta_pitch")
+    val rotationDeltaPitch: Float = 0f,
+    @SerializedName("time_to_reach_target_rotation")
+    val timeToReachTargetRotation: Int = 0,
+
+    // === INVENTORY STATE ===
+    @SerializedName("inventory_open")
+    val inventoryOpen: Boolean = false,
+    @SerializedName("attacked_while_inventory_open")
+    val attackedWhileInventoryOpen: Boolean = false
 ) {
     companion object {
         /**

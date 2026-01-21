@@ -209,7 +209,6 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 val eyes = player.eyePosition
                 val raycastResult = raytraceBox(
                     eyes,
-                    eyes.add(current.directionVector * distance),
                     target.box,
                     range = distance.toDouble(),
                     wallsRange = distance.toDouble()
@@ -229,9 +228,9 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 val blockDuration = blockStartTime?.let { now - it } ?: 0L
 
                 // Calculate scan range (furthest entity we could target)
-                val allTargets = world.entities()
+                val allTargets = world.entities.getAll()
                     .filterIsInstance<LivingEntity>()
-                    .filter { it != player && it.isAlive }
+                    .filter { it.id != player.id && !it.isRemoved }
                 val scanRange = allTargets.maxOfOrNull { sqrt(player.squaredBoxedDistanceTo(it)).toFloat() } ?: 0f
                 val closestDist = allTargets.minOfOrNull { sqrt(player.squaredBoxedDistanceTo(it)).toFloat() } ?: distance.toFloat()
 
@@ -298,8 +297,8 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
                 // Aim point analysis
                 val targetBox = target.box
-                val aimPointY = raycastResult?.pos?.y ?: targetBox.center.y
-                val aimPointYRelative = (aimPointY - targetBox.minY).toFloat() / (targetBox.maxY - targetBox.minY).toFloat()
+                val aimPointY = raycastResult?.vec?.y ?: targetBox.center.y
+                val aimPointYRelative = ((aimPointY - targetBox.minY) / (targetBox.maxY - targetBox.minY)).toFloat()
 
                 aimPointYHistory.add(aimPointYRelative)
                 if (aimPointYHistory.size > 10) aimPointYHistory.removeAt(0)
@@ -333,7 +332,8 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 }
 
                 // Mace detection
-                usingMace = player.mainHandItem.isMace || player.offhandItem.isMace
+                usingMace = player.mainHandItem.item is net.minecraft.world.item.MaceItem ||
+                            player.offhandItem.item is net.minecraft.world.item.MaceItem
                 maceSmashPossible = usingMace && player.fallDistance > 1.5f
 
                 recordPacket(
@@ -359,7 +359,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         blockDuration = blockDuration,
                         attackAttempted = attackAttempted,
                         attackSucceeded = attackSucceeded,
-                        availableTargets = allTargets.size,
+                        availableTargets = allTargets.count(),
                         targetHealth = target.health,
                         targetArmorValue = target.armorValue.toFloat(),
                         // Criticals data
@@ -490,7 +490,6 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 val eyes = player.eyePosition
                 val raycastResult = raytraceBox(
                     eyes,
-                    eyes.add((RotationManager.currentRotation ?: player.rotation).directionVector * distance),
                     targetEntity.box,
                     range = distance.toDouble(),
                     wallsRange = distance.toDouble()

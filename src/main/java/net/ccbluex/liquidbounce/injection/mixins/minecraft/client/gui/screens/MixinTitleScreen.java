@@ -44,40 +44,23 @@ public abstract class MixinTitleScreen extends Screen {
 
     /**
      * Add the LiquidBounce button to the title screen after init.
-     * Inserts between the Mods button and Options button.
+     * Position: Top-right corner, below the Alts button.
      */
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        int buttonWidth = 200;
+        // Position in top-right corner, below the Alts button
+        // Alts button is at: x = width - 60 - 10, y = 10, width = 60, height = 20
+        int buttonWidth = 60;
         int buttonHeight = 20;
-        int centerX = this.width / 2 - buttonWidth / 2;
-
-        // Find the Options button to determine position
-        Button optionsButton = null;
-        var renderables = this.children();
-
-        for (var widget : renderables) {
-            if (widget instanceof Button button) {
-                // Find Options button by checking text content
-                String buttonText = button.getMessage().getString();
-                if (buttonText.contains("Options") || buttonText.contains("Settings")) {
-                    optionsButton = button;
-                    break;
-                }
-            }
-        }
-
-        // Position the button 24px above the Options button (standard button spacing)
-        int buttonY = optionsButton != null
-            ? optionsButton.getY() - buttonHeight - 4
-            : this.height / 4 + 108; // fallback position
+        int margin = 10;
+        int buttonX = this.width - buttonWidth - margin;
+        int buttonY = margin + 20 + 4; // Below Alts button with 4px gap
 
         Button liquidBounceButton = Button.builder(
-            Component.literal("LiquidBounce"),
+            Component.literal("LB"),
             button -> liquidbounce$openIntegrationMenu()
-        ).bounds(centerX, buttonY, buttonWidth, buttonHeight).build();
+        ).bounds(buttonX, buttonY, buttonWidth, buttonHeight).build();
 
-        // Add using the public method
         this.addRenderableWidget(liquidBounceButton);
     }
 

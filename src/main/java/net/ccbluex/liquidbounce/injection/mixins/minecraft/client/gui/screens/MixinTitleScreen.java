@@ -54,17 +54,14 @@ public abstract class MixinTitleScreen extends Screen {
 
         // Find the Options button to determine position
         Button optionsButton = null;
-        int optionsIndex = -1;
         var renderables = this.children();
 
-        for (int i = 0; i < renderables.size(); i++) {
-            var widget = renderables.get(i);
+        for (var widget : renderables) {
             if (widget instanceof Button button) {
                 // Find Options button by checking text content
                 String buttonText = button.getMessage().getString();
                 if (buttonText.contains("Options") || buttonText.contains("Settings")) {
                     optionsButton = button;
-                    optionsIndex = i;
                     break;
                 }
             }
@@ -80,13 +77,8 @@ public abstract class MixinTitleScreen extends Screen {
             button -> liquidbounce$openIntegrationMenu()
         ).bounds(centerX, buttonY, buttonWidth, buttonHeight).build();
 
-        // Insert before Options button if found, otherwise append
-        if (optionsIndex >= 0) {
-            this.renderables.add(optionsIndex, liquidBounceButton);
-            this.narratables.add(optionsIndex, liquidBounceButton);
-        } else {
-            this.addRenderableWidget(liquidBounceButton);
-        }
+        // Add using the public method
+        this.addRenderableWidget(liquidBounceButton);
     }
 
     /**

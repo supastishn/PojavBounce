@@ -24,6 +24,7 @@ import net.ccbluex.liquidbounce.config.types.nesting.Choice
 import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine
+import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchModel
 import net.ccbluex.liquidbounce.deeplearn.translators.FloatArrayInAndOutTranslator
 import net.ccbluex.liquidbounce.utils.client.logger
 import java.io.Closeable
@@ -51,19 +52,26 @@ class MinaraiModel(
         }
     }
 
+    // ExecuTorch model for Android
+    private var execuTorchModel: ExecuTorchModel? = null
+
     // Indicates if ExecuTorch should be used
     private val useExecuTorch: Boolean
-        get() = DeepLearningEngine.isExecuTorchAvailable &&
-                ExecuTorchEngine.isInitialized &&
-                !DeepLearningEngine.isInitialized
+        get() = DeepLearningEngine.isAndroid ||
+                (DeepLearningEngine.isExecuTorchAvailable &&
+                 ExecuTorchEngine.isInitialized &&
+                 !DeepLearningEngine.isInitialized)
 
     @Suppress("SwallowedException")
     fun predict(input: FloatArray): FloatArray {
         // Use ExecuTorch when it's available and DJL is not (Android or PC fallback case)
         if (useExecuTorch) {
             logger.debug("[MinaraiModel] Using ExecuTorch for prediction")
-            // ExecuTorch prediction is not yet implemented
-            // Return a default value for now
+            val model = execuTorchModel
+            if (model != null) {
+                return model.predict(input)
+            }
+            logger.warn("[MinaraiModel] ExecuTorch model not loaded")
             return floatArrayOf(0f, 0f)
         }
 
@@ -105,11 +113,18 @@ class MinaraiModel(
     }
 
     fun load(modelName: String = name) {
-        // On Android (ExecuTorch only), skip DJL model loading
+        // On Android, use ExecuTorch
         if (useExecuTorch) {
-            logger.info(
-                "[MinaraiModel] Skipping DJL load for '$modelName' on Android - ExecuTorch will load on demand"
-            )
+            logger.info("[MinaraiModel] Loading ExecuTorch model '$modelName' for Android")
+            try {
+                execuTorchModel = ExecuTorchModel(modelName, parent = parent).apply {
+                    load(modelName)
+                }
+                logger.info("[MinaraiModel] Successfully loaded ExecuTorch model '$modelName'")
+            } catch (e: Exception) {
+                logger.error("[MinaraiModel] Failed to load ExecuTorch model '$modelName': ${e.message}")
+                execuTorchModel = null
+            }
             return
         }
 
@@ -118,14 +133,24 @@ class MinaraiModel(
     }
 
     fun save(modelName: String = name) {
-        djlModel?.save(modelName)
+        if (useExecuTorch) {
+            execuTorchModel?.save(modelName)
+        } else {
+            djlModel?.save(modelName)
+        }
     }
 
     fun delete() {
-        djlModel?.delete()
+        if (useExecuTorch) {
+            execuTorchModel?.delete()
+        } else {
+            djlModel?.delete()
+        }
     }
 
     override fun close() {
+        execuTorchModel?.close()
+        execuTorchModel = null
         djlModel?.close()
     }
 

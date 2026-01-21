@@ -22,7 +22,7 @@ package net.ccbluex.liquidbounce.deeplearn
 import net.ccbluex.fastutil.mapToArray
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine.modelsFolder
-import net.ccbluex.liquidbounce.deeplearn.models.TwoDimensionalRegressionModel
+import net.ccbluex.liquidbounce.deeplearn.models.MinaraiModel
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.utils.client.logger
@@ -39,7 +39,8 @@ object ModelManager : EventListener, Configurable("AI") {
      */
     val combatModels = arrayOf(
         "21KC11KP",
-        "19KC8KP"
+        "19KC8KP",
+        "android-pte-final"
     )
 
     /**
@@ -57,7 +58,7 @@ object ModelManager : EventListener, Configurable("AI") {
         // Empty models for start-up initialization.
         // These will be replaced later on at [load].
         allCombatModels.mapToArray { name ->
-            TwoDimensionalRegressionModel(name, choiceConfigurable)
+            MinaraiModel(name, choiceConfigurable)
         }
     }
 
@@ -67,15 +68,9 @@ object ModelManager : EventListener, Configurable("AI") {
      * through the choice initialization.
      */
     fun load() {
-        // Skip DJL model loading on Android - DJL native libraries don't work there
-        if (DeepLearningEngine.isAndroid) {
-            logger.info("[AI] Skipping DJL model loading on Android (not supported)")
-            return
-        }
-
         logger.info("[AI] Loading models...")
         val choices = allCombatModels.mapToArray { name ->
-            TwoDimensionalRegressionModel(name, models)
+            MinaraiModel(name, models)
         }
 
         for (model in choices) {

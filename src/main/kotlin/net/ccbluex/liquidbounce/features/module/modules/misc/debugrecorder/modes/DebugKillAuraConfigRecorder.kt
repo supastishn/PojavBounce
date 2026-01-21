@@ -53,6 +53,8 @@ import kotlin.random.Random
 /**
  * Advanced combat trainer that spawns buffed zombies moving at player speed.
  * Records comprehensive data for full KillAura autoconfig.
+ *
+ * NOTE: This mode disables attack cooldown for realistic high-CPS training.
  */
 object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillAuraConfigSample>("KillAuraConfig") {
 
@@ -67,6 +69,12 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
     // Blocking tracking
     private var blockStartTime: Long? = null
+
+    /**
+     * Check if KillAuraConfig recorder is currently active
+     */
+    val isActive: Boolean
+        get() = isSelected && ModuleDebugRecorder.running
 
     override fun enable() {
         isFirstRun = true
@@ -88,6 +96,9 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private val tickHandler = tickHandler {
         var previous = RotationManager.currentRotation ?: player.rotation
 
+        // Disable attack cooldown for training
+        player.attackStrengthTicker = 1000
+
         // Track blocking state
         if (player.isUsingItem && player.useItem.item.toString().contains("sword")) {
             if (blockStartTime == null) {
@@ -101,7 +112,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         if (isFirstRun) {
             tickUntil { target == null }
             isFirstRun = false
-            chat("✧ Starting advanced KillAura training...")
+            chat("✧ Starting advanced KillAura training (cooldown disabled)...")
         } else {
             tickUntil {
                 val target = target ?: return@tickUntil true

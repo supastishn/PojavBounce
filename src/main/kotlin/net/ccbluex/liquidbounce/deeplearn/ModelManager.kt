@@ -39,8 +39,7 @@ object ModelManager : EventListener, Configurable("AI") {
      */
     val combatModels = arrayOf(
         "21KC11KP",
-        "19KC8KP",
-        "android-pte-final"
+        "19KC8KP"
     )
 
     /**
@@ -68,6 +67,12 @@ object ModelManager : EventListener, Configurable("AI") {
      * through the choice initialization.
      */
     fun load() {
+        // Skip DJL model loading on Android - DJL native libraries don't work there
+        if (DeepLearningEngine.isAndroid) {
+            logger.info("[AI] Skipping DJL model loading on Android (not supported)")
+            return
+        }
+
         logger.info("[AI] Loading models...")
         val choices = allCombatModels.mapToArray { name ->
             TwoDimensionalRegressionModel(name, models)

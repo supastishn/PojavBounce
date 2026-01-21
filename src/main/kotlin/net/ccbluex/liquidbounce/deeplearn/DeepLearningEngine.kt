@@ -47,7 +47,7 @@ object DeepLearningEngine {
      * Detects if running in an Android environment (e.g., PojavLauncher, Termux).
      * Android has different native library requirements and restrictions.
      */
-    private val isAndroid: Boolean = detectAndroid()
+    val isAndroid: Boolean = detectAndroid()
 
     /**
      * On Android, use app-private storage to avoid namespace isolation and SELinux restrictions.

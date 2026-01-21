@@ -61,7 +61,7 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         val yawSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.x.toDouble()) }
         val pitchSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.y.toDouble()) }
 
-        // Use P60 and P90 for more aggressive ranges
+        // Use P60 and P90 for ranges, exact values from training
         val sortedYaw = yawSpeeds.sorted()
         val sortedPitch = pitchSpeeds.sorted()
 
@@ -70,11 +70,11 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         val pitchP60 = sortedPitch[(sortedPitch.size * 0.60).toInt().coerceIn(0, sortedPitch.size - 1)]
         val pitchP90 = sortedPitch[(sortedPitch.size * 0.90).toInt().coerceIn(0, sortedPitch.size - 1)]
 
-        // Scale up for viable speeds (1.6x-2.0x multiplier with 20° minimum)
-        val horizontalSpeedStart = (yawP60 * 1.6).coerceIn(20.0, 180.0).toFloat()
-        val horizontalSpeed = (yawP90 * 2.0).coerceIn(horizontalSpeedStart.toDouble() + 15.0, 180.0).toFloat()
-        val verticalSpeedStart = (pitchP60 * 1.6).coerceIn(15.0, 180.0).toFloat()
-        val verticalSpeed = (pitchP90 * 2.0).coerceIn(verticalSpeedStart.toDouble() + 12.0, 180.0).toFloat()
+        // Use exact values from training data, no scaling
+        val horizontalSpeedStart = yawP60.coerceIn(0.1, 180.0).toFloat()
+        val horizontalSpeed = yawP90.coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
+        val verticalSpeedStart = pitchP60.coerceIn(0.1, 180.0).toFloat()
+        val verticalSpeed = pitchP90.coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -96,14 +96,14 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "HorizontalTurnSpeed",
             "Current",
             "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeed)}",
-            "From P60-P90 yaw speeds: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick (1.6x-2.0x scaled)"
+            "From P60-P90 yaw speeds: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick (exact)"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
             "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeed)}",
-            "From P60-P90 pitch speeds: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick (1.6x-2.0x scaled)"
+            "From P60-P90 pitch speeds: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick (exact)"
         )
 
         val stats = mapOf(

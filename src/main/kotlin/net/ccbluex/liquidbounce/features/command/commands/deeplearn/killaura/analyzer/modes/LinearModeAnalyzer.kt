@@ -57,29 +57,28 @@ object LinearModeAnalyzer : KillAuraAnalyzer {
         val pitchVar = pitchSpeeds.map { (it - avgPitchSpeed) * (it - avgPitchSpeed) }.average()
         val variance = kotlin.math.sqrt(yawVar + pitchVar)
 
-        // Horizontal turn speed: from P70 to P95, with minimum viable speed
-        // Scale up if values are too low (combat data might be from slow precise aiming)
-        val horizontalSpeedStart = (yawP70 * 1.5).coerceIn(15.0, 180.0).toFloat()
-        val horizontalSpeedEnd = (yawP95 * 1.8).coerceIn(horizontalSpeedStart.toDouble() + 10.0, 180.0).toFloat()
+        // Horizontal turn speed: exact values from training data (P70 to P95)
+        val horizontalSpeedStart = yawP70.coerceIn(0.1, 180.0).toFloat()
+        val horizontalSpeedEnd = yawP95.coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
 
-        // Vertical turn speed: from P70 to P95, with minimum viable speed
-        val verticalSpeedStart = (pitchP70 * 1.5).coerceIn(12.0, 180.0).toFloat()
-        val verticalSpeedEnd = (pitchP95 * 1.8).coerceIn(verticalSpeedStart.toDouble() + 10.0, 180.0).toFloat()
+        // Vertical turn speed: exact values from training data (P70 to P95)
+        val verticalSpeedStart = pitchP70.coerceIn(0.1, 180.0).toFloat()
+        val verticalSpeedEnd = pitchP95.coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
         changes["horizontalTurnSpeed"] = SettingChange(
             "HorizontalTurnSpeed",
             "Current",
-            "${"%1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeedEnd)}",
-            "From P70-P95 yaw speeds: ${"%.2f".format(yawP70)}-${"%.2f".format(yawP95)}°/tick (1.5x-1.8x scaled)"
+            "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeedEnd)}",
+            "From P70-P95 yaw speeds: ${"%.2f".format(yawP70)}-${"%.2f".format(yawP95)}°/tick (exact)"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
             "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeedEnd)}",
-            "From P70-P95 pitch speeds: ${"%.2f".format(pitchP70)}-${"%.2f".format(pitchP95)}°/tick (1.5x-1.8x scaled)"
+            "From P70-P95 pitch speeds: ${"%.2f".format(pitchP70)}-${"%.2f".format(pitchP95)}°/tick (exact)"
         )
 
         val stats = mapOf(

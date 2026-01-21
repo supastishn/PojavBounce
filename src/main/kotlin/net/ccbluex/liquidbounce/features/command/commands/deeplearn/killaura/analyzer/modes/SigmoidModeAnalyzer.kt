@@ -70,11 +70,16 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         val pitchP60 = sortedPitch[(sortedPitch.size * 0.60).toInt().coerceIn(0, sortedPitch.size - 1)]
         val pitchP90 = sortedPitch[(sortedPitch.size * 0.90).toInt().coerceIn(0, sortedPitch.size - 1)]
 
-        // Use exact values from training data, no scaling
-        val horizontalSpeedStart = yawP60.coerceIn(0.1, 180.0).toFloat()
-        val horizontalSpeed = yawP90.coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
-        val verticalSpeedStart = pitchP60.coerceIn(0.1, 180.0).toFloat()
-        val verticalSpeed = pitchP90.coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
+        // IMPORTANT: Sigmoid mode multiplies TurnSpeed by sigmoid curve (0-1 factor)
+        // Average sigmoid factor ≈ 0.5-0.7 depending on steepness/midpoint
+        // To match actual training speeds, we need to compensate by dividing by avg factor
+        // Using 0.6 as typical average sigmoid dampening factor
+        val sigmoidDampening = 0.6f
+
+        val horizontalSpeedStart = (yawP60 / sigmoidDampening).coerceIn(0.1, 180.0).toFloat()
+        val horizontalSpeed = (yawP90 / sigmoidDampening).coerceIn(horizontalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
+        val verticalSpeedStart = (pitchP60 / sigmoidDampening).coerceIn(0.1, 180.0).toFloat()
+        val verticalSpeed = (pitchP90 / sigmoidDampening).coerceIn(verticalSpeedStart.toDouble() + 0.5, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -96,14 +101,14 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "HorizontalTurnSpeed",
             "Current",
             "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeed)}",
-            "From P60-P90 yaw speeds: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick (exact)"
+            "From P60-P90 yaw: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick ÷ 0.6 sigmoid dampening"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
             "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeed)}",
-            "From P60-P90 pitch speeds: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick (exact)"
+            "From P60-P90 pitch: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick ÷ 0.6 sigmoid dampening"
         )
 
         val stats = mapOf(

@@ -28,7 +28,7 @@ object KillAuraRotationsConfigurable : RotationsConfigurable(ModuleKillAura, com
     val aimThroughWalls by boolean("ThroughWalls", false)
 
     // Only show this option when MovementCorrection is ChangeLook
-    val manualAim by boolean("ManualAim", false).listen {
+    val manualAim by boolean("ManualAim", false).onChanged {
         // Only enable this setting when movement correction is ChangeLook
         movementCorrectionValue == MovementCorrection.CHANGE_LOOK
     }

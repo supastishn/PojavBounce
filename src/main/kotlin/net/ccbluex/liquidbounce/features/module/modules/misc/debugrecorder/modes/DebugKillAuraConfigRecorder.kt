@@ -47,7 +47,7 @@ import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
-import net.minecraft.world.entity.monster.Zombie
+import net.minecraft.world.entity.monster.Slime
 import net.minecraft.world.entity.player.Player
 import java.util.UUID
 import kotlin.math.abs
@@ -182,7 +182,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         // Track inventory state
         wasInventoryOpen = isInventoryOpen
 
-        target = spawnBuffedZombie()
+        target = spawnBuffedSlime()
         if (isFirstRun) {
             tickUntil { target == null }
             isFirstRun = false
@@ -363,7 +363,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         targetArmorValue = target.armorValue.toFloat(),
                         // Criticals data
                         wasFalling = player.fallDistance > 0,
-                        fallDistance = player.fallDistance,
+                        fallDistance = player.fallDistance.toFloat(),
                         onGround = player.onGround(),
                         wasCriticalHit = wasCrit,
                         // Sprint data
@@ -506,11 +506,11 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     }
 
     /**
-     * Spawns a buffed zombie with player-like movement speed and maneuverability
+     * Spawns a buffed slime with player-like movement speed and maneuverability
      */
-    private fun spawnBuffedZombie(): LivingEntity {
-        val zombie = Zombie(EntityType.ZOMBIE, world)
-        zombie.setUUID(UUID.randomUUID())
+    private fun spawnBuffedSlime(): LivingEntity {
+        val slime = Slime(EntityType.SLIME, world)
+        slime.setUUID(UUID.randomUUID())
 
         val distance = Random.nextDouble() * 0.9 + 2.5
 
@@ -521,34 +521,34 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         ).directionVector * distance
 
         val position = player.eyePosition.add(direction)
-        zombie.setPos(position)
+        slime.setPos(position)
 
-        // Buff zombie to move like a player
-        zombie.getAttribute(Attributes.MOVEMENT_SPEED)?.baseValue = 0.13 // Player speed
-        zombie.getAttribute(Attributes.FOLLOW_RANGE)?.baseValue = 64.0
-        zombie.getAttribute(Attributes.ATTACK_DAMAGE)?.baseValue = 1.0
+        // Buff slime to move like a player
+        slime.getAttribute(Attributes.MOVEMENT_SPEED)?.baseValue = 0.13 // Player speed
+        slime.getAttribute(Attributes.FOLLOW_RANGE)?.baseValue = 64.0
+        slime.getAttribute(Attributes.ATTACK_DAMAGE)?.baseValue = 1.0
 
         // Add speed and jump boost for better maneuverability
-        zombie.addEffect(MobEffectInstance(MobEffects.SPEED, 999999, 1, false, false))
-        zombie.addEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 999999, 2, false, false))
+        slime.addEffect(MobEffectInstance(MobEffects.SPEED, 999999, 1, false, false))
+        slime.addEffect(MobEffectInstance(MobEffects.JUMP_BOOST, 999999, 2, false, false))
 
-        // Make zombie aggressive toward player
-        zombie.setTarget(player)
+        // Make slime aggressive toward player
+        slime.setTarget(player)
 
-        world.addEntity(zombie)
+        world.addEntity(slime)
 
         // Play spawn sound
         world.playLocalSound(
             position.x,
             position.y,
             position.z,
-            SoundEvents.ZOMBIE_AMBIENT,
+            SoundEvents.SLIME_SQUISH,
             SoundSource.HOSTILE,
             0.8f,
             1.2f,
             false
         )
 
-        return zombie
+        return slime
     }
 }

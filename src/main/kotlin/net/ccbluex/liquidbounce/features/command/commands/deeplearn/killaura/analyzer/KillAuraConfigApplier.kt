@@ -142,7 +142,7 @@ object KillAuraConfigApplier {
         val avgScanRange = if (scanRanges.isNotEmpty()) scanRanges.average().toFloat() else maxRange + 2f
         val maxScanRange = scanRanges.maxOrNull() ?: (maxRange + 3f)
         val scanExtraStart = (avgScanRange - avgRange).coerceIn(0f, 7f)
-        val scanExtraEnd = (maxScanRange - avgRange).coerceIn(scanExtraStart + 0.5f, 7f)
+        val scanExtraEnd = ((maxScanRange - avgRange).coerceAtLeast(scanExtraStart + 0.5f)).coerceIn(0f, 7f)
 
         // === CPS Analysis ===
         val cpsList = samples.mapNotNull { if (it.currentCPS > 0) it.currentCPS else null }

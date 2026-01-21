@@ -20,6 +20,8 @@
 package net.ccbluex.liquidbounce.deeplearn.data
 
 import com.google.gson.annotations.SerializedName
+import net.ccbluex.liquidbounce.config.gson.publicGson
+import java.io.File
 
 /**
  * Comprehensive combat sample that includes all data needed for full KillAura autoconfig
@@ -64,4 +66,28 @@ data class KillAuraConfigSample(
     val targetHealth: Float,
     @SerializedName("target_armor")
     val targetArmorValue: Float
-)
+) {
+    companion object {
+        /**
+         * Parse KillAuraConfigSample files from the debug-recorder/KillAuraConfig folder
+         */
+        fun parse(folder: File): List<KillAuraConfigSample> {
+            if (!folder.exists()) return emptyList()
+
+            return folder.listFiles()
+                ?.filter { it.extension == "json" }
+                ?.flatMap { file ->
+                    try {
+                        file.bufferedReader().use { reader ->
+                            publicGson.fromJson(
+                                reader,
+                                Array<KillAuraConfigSample>::class.java
+                            ).toList()
+                        }
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                } ?: emptyList()
+        }
+    }
+}

@@ -20,6 +20,7 @@
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn
 
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
+import net.ccbluex.liquidbounce.deeplearn.data.KillAuraConfigSample
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
@@ -28,6 +29,7 @@ import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.ana
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.modes.*
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatTrainerRecorder
+import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugKillAuraConfigRecorder
 import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.chat
 import kotlin.time.DurationUnit
@@ -67,25 +69,38 @@ object CommandKillAuraAutoConfig : Command.Factory {
 
                 chat("§7Loading combat samples...")
 
-                val (samples, sampleTime) = measureTimedValue {
+                // Try to load advanced KillAuraConfig samples first
+                val (advancedSamples, advancedTime) = measureTimedValue {
+                    KillAuraConfigSample.parse(DebugKillAuraConfigRecorder.folder)
+                }
+
+                // Also load basic combat samples
+                val (basicSamples, basicTime) = measureTimedValue {
                     CombatSample.parse(
                         DebugCombatRecorder.folder,
                         DebugCombatTrainerRecorder.folder
                     )
                 }
 
-                if (samples.isEmpty()) {
+                // Combine combat data from both sources
+                val allCombatSamples = basicSamples + advancedSamples.map { it.combatData }
+
+                if (allCombatSamples.isEmpty() && advancedSamples.isEmpty()) {
                     throw CommandException("§cNo combat samples found. Use DebugRecorder to collect data first.".asText())
                 }
 
-                chat("§a✓ Loaded ${samples.size} samples in ${sampleTime.toString(DurationUnit.SECONDS, decimals = 2)}s")
+                chat("§a✓ Loaded ${basicSamples.size} basic + ${advancedSamples.size} advanced samples")
 
-                analyzeAndApplyForMode(samples, requestedMode)
+                analyzeAndApplyForMode(allCombatSamples, advancedSamples, requestedMode)
             }
             .build()
     }
 
-    private fun analyzeAndApplyForMode(samples: List<CombatSample>, mode: String) {
+    private fun analyzeAndApplyForMode(
+        samples: List<CombatSample>,
+        advancedSamples: List<KillAuraConfigSample>,
+        mode: String
+    ) {
         val baseAnalyzers = listOf(
             ErrorAnalyzer,
             RangeAnalyzer,
@@ -136,9 +151,30 @@ object CommandKillAuraAutoConfig : Command.Factory {
             chat("")
         }
 
+        // Advanced analysis from KillAuraConfig data if available
+        if (advancedSamples.isNotEmpty()) {
+            chat("§6━━━━━ Advanced Analysis ━━━━━")
+            chat("")
+
+            // Click timing analysis
+            val clickResult = ClickTimingAnalyzer.analyze(advancedSamples)
+            chat(ClickTimingAnalyzer.report(clickResult))
+            chat("")
+
+            // Advanced range analysis with wall detection
+            val rangeResult = AdvancedRangeAnalyzer.analyze(advancedSamples)
+            chat(AdvancedRangeAnalyzer.report(rangeResult))
+            chat("")
+        }
+
         chat("§6Mode-Specific Tuning for §b$mode§6:")
         chat("  §a✓ Rotation mode and settings have been applied automatically!")
         chat("  §7• Fine-tune in ClickGUI → KillAura → Rotations if needed")
+        if (advancedSamples.isNotEmpty()) {
+            chat("  §7• Advanced range/click data analyzed from KillAuraConfig training")
+        } else {
+            chat("  §8• Tip: Use DebugRecorder → KillAuraConfig mode for more detailed analysis")
+        }
         chat("")
         chat("§a✓ AutoConfig finished! Settings applied.")
     }

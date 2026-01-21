@@ -171,11 +171,13 @@ object CommandKillAuraAutoConfig : Command.Factory {
         chat("§6Mode-Specific Tuning for §b$mode§6:")
         chat("  §a✓ Rotation mode and settings have been applied automatically!")
         if (advancedSamples.isNotEmpty()) {
-            chat("  §a✓ Range, WallRange, and combat style settings applied from training!")
+            chat("  §a✓ Range, WallRange, ScanExtraRange applied!")
+            chat("  §a✓ CPS, KeepSprint, FailSwing, AutoBlock applied!")
+            chat("  §a✓ IgnoreOpenInventory setting applied!")
         } else {
             chat("  §8• Tip: Use DebugRecorder → KillAuraConfig mode for comprehensive config")
         }
         chat("")
-        chat("§a✓ AutoConfig finished! Settings applied.")
+        chat("§a✓ AutoConfig finished! All settings applied.")
     }
 }

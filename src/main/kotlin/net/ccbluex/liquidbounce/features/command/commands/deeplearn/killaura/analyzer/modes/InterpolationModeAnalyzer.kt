@@ -152,7 +152,11 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "yawP75" to yawP75,
             "pitchP25" to pitchP25,
             "pitchP75" to pitchP75,
-            "avgRotationMag" to avgRotationMag
+            "avgRotationMag" to avgRotationMag,
+            // Debug stats to diagnose calculation issues
+            "totalSamples" to samples.size.toDouble(),
+            "validYawSamples" to yawPercentages.size.toDouble(),
+            "validPitchSamples" to pitchPercentages.size.toDouble()
         )
 
         return AnalysisResult("InterpolationMode", changes, stats, 0.75f)
@@ -206,14 +210,19 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val midpoint = result.changes["midpoint"]
         val avgVel = result.stats["avgVelocity"]?.let { "%.2f".format(it) } ?: "?"
         val maxVel = result.stats["maxVelocity"]?.let { "%.2f".format(it) } ?: "?"
+        val totalSamples = result.stats["totalSamples"]?.toInt() ?: 0
+        val validYaw = result.stats["validYawSamples"]?.toInt() ?: 0
+        val validPitch = result.stats["validPitchSamples"]?.toInt() ?: 0
 
         return buildString {
             append("§d╔ Interpolation Mode Configuration\n")
             if (hSpeed != null) {
                 append("§d║ HorizontalSpeed: §7${hSpeed.newValue}\n")
+                append("§d║   §8(${hSpeed.reason})\n")
             }
             if (vSpeed != null) {
                 append("§d║ VerticalSpeed: §7${vSpeed.newValue}\n")
+                append("§d║   §8(${vSpeed.reason})\n")
             }
             if (dcFactor != null) {
                 append("§d║ DirectionChangeFactor: §7${dcFactor.newValue}\n")
@@ -222,6 +231,7 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
                 append("§d║ Midpoint: §7${midpoint.newValue}\n")
             }
             append("§d║ Velocity: Avg=${avgVel}, Max=${maxVel}\n")
+            append("§d║ Samples: ${totalSamples} total, ${validYaw} valid yaw, ${validPitch} valid pitch\n")
             append("§d╚ Bezier/Sigmoid interpolation - smooth curved paths")
         }
     }

@@ -35,6 +35,7 @@ import net.ccbluex.liquidbounce.utils.entity.lastPos
 import net.ccbluex.liquidbounce.utils.entity.lastRotation
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
+import net.ccbluex.liquidbounce.utils.inventory.InventoryManager.isInventoryOpen
 import net.ccbluex.liquidbounce.utils.math.times
 import net.minecraft.network.protocol.game.ServerboundInteractPacket
 import net.minecraft.sounds.SoundEvents
@@ -72,6 +73,23 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
     // Blocking tracking
     private var blockStartTime: Long? = null
+    private var wasBlockingBeforeHit = false
+    private var blockingAfterHit = false
+    private var ticksBlocking = 0
+    private var ticksNotBlocking = 0
+    private var blockedOnScanRange = false
+
+    // FailSwing tracking
+    private var lastSwingWasMiss = false
+    private var missSwingRange = 0f
+
+    // Inventory tracking
+    private var wasInventoryOpen = false
+    private var attackedWhileInventoryOpen = false
+
+    // Rotation tracking
+    private var lastRotationDeltaYaw = 0f
+    private var lastRotationDeltaPitch = 0f
 
     /**
      * Check if KillAuraConfig recorder is currently active
@@ -89,6 +107,17 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         wasSprintingBeforeHit = false
         sprintingAfterHit = false
         blockStartTime = null
+        wasBlockingBeforeHit = false
+        blockingAfterHit = false
+        ticksBlocking = 0
+        ticksNotBlocking = 0
+        blockedOnScanRange = false
+        lastSwingWasMiss = false
+        missSwingRange = 0f
+        wasInventoryOpen = false
+        attackedWhileInventoryOpen = false
+        lastRotationDeltaYaw = 0f
+        lastRotationDeltaPitch = 0f
         super.enable()
     }
 
@@ -106,13 +135,21 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         player.attackStrengthTicker = 1000
 
         // Track blocking state
-        if (player.isUsingItem && player.useItem.item.toString().contains("sword")) {
+        val isCurrentlyBlocking = player.isUsingItem && player.useItem.item.toString().contains("sword")
+        if (isCurrentlyBlocking) {
             if (blockStartTime == null) {
                 blockStartTime = System.currentTimeMillis()
             }
+            ticksBlocking++
+            ticksNotBlocking = 0
         } else {
             blockStartTime = null
+            ticksNotBlocking++
+            ticksBlocking = 0
         }
+
+        // Track inventory state
+        wasInventoryOpen = isInventoryOpen
 
         target = spawnBuffedZombie()
         if (isFirstRun) {
@@ -177,16 +214,35 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 val swingAtAir = !raycastHit && attackAttempted
                 val missDistance = if (swingAtAir) distance.toFloat() else 0f
 
+                // Calculate rotation deltas
+                val rotationDelta = current.rotationDeltaTo(next)
+                lastRotationDeltaYaw = rotationDelta.deltaYaw
+                lastRotationDeltaPitch = rotationDelta.deltaPitch
+
+                // Calculate target rotation for time estimation
+                val targetRotation = Rotation.lookingAt(point = target.box.center, from = eyes)
+                val rotationDiff = current.rotationDeltaTo(targetRotation)
+                val estimatedTicks = (kotlin.math.max(
+                    kotlin.math.abs(rotationDiff.deltaYaw),
+                    kotlin.math.abs(rotationDiff.deltaPitch)
+                ) / 30f).toInt().coerceAtLeast(1) // Rough estimate at 30°/tick
+
+                // Check if blocking on scan range (outside attack range but within scan)
+                val inScanRange = distance > 4.2 && distance <= scanRange
+                if (isCurrentlyBlocking && inScanRange) {
+                    blockedOnScanRange = true
+                }
+
+                // Calculate click interval
+                val clickInterval = if (lastClickTime > 0) now - lastClickTime else 0L
+
                 recordPacket(
                     KillAuraConfigSample(
                         combatData = CombatSample(
                             currentVector = current.directionVector,
                             previousVector = previous.directionVector,
-                            targetVector = Rotation.lookingAt(
-                                point = target.box.center,
-                                from = eyes
-                            ).directionVector,
-                            velocityDelta = current.rotationDeltaTo(next).toVec2f(),
+                            targetVector = targetRotation.directionVector,
+                            velocityDelta = rotationDelta.toVec2f(),
                             playerDiff = player.position().subtract(player.lastPos),
                             targetDiff = target.position().subtract(target.lastPos),
                             age = target.tickCount,
@@ -197,7 +253,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         timeSinceLastClick = if (lastClickTime > 0) now - lastClickTime else 0,
                         currentCPS = currentCPS,
                         hasWallBetween = hasWall,
-                        raycastHit = raycastResult != null,
+                        raycastHit = raycastHit,
                         actualRange = distance.toFloat(),
                         wasBlocking = player.isBlocking,
                         blockDuration = blockDuration,
@@ -206,18 +262,44 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         availableTargets = allTargets.size,
                         targetHealth = target.health,
                         targetArmorValue = target.armorValue.toFloat(),
-                        // New fields
+                        // Criticals data
                         wasFalling = player.fallDistance > 0,
                         fallDistance = player.fallDistance,
                         onGround = player.onGround(),
                         wasCriticalHit = wasCrit,
+                        // Sprint data
                         wasSprinting = player.isSprinting,
                         sprintingAfterHit = sprintingAfterHit,
+                        // Scan/Target data
                         scanRange = scanRange,
                         closestTargetDistance = closestDist,
                         targetInFOV = targetInFOV,
+                        // Miss/FailSwing data
                         swingAtAir = swingAtAir,
-                        missDistance = missDistance
+                        missDistance = missDistance,
+                        // AutoBlock data
+                        wasBlockingBeforeHit = wasBlockingBeforeHit,
+                        blockingAfterHit = blockingAfterHit,
+                        ticksBlockedBeforeHit = ticksBlocking,
+                        ticksUnblockedBeforeHit = ticksNotBlocking,
+                        blockedOnScanRange = blockedOnScanRange,
+                        // FailSwing data
+                        failSwingRange = missSwingRange,
+                        swingWhileMiss = lastSwingWasMiss,
+                        // Raycast/Targeting data
+                        raycastModeUsed = "All",
+                        targetThroughWall = hasWall && raycastHit,
+                        // Timing data
+                        tickCount = player.tickCount,
+                        attackCooldownProgress = player.getAttackStrengthScale(0.5f),
+                        clickIntervalMs = clickInterval,
+                        // Rotation timing data
+                        rotationDeltaYaw = lastRotationDeltaYaw,
+                        rotationDeltaPitch = lastRotationDeltaPitch,
+                        timeToReachTargetRotation = estimatedTicks,
+                        // Inventory state
+                        inventoryOpen = wasInventoryOpen,
+                        attackedWhileInventoryOpen = attackedWhileInventoryOpen
                     )
                 )
 
@@ -226,6 +308,11 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 attackSucceeded = false
                 wasCrit = false
                 sprintingAfterHit = false
+                wasBlockingBeforeHit = false
+                blockingAfterHit = false
+                blockedOnScanRange = false
+                lastSwingWasMiss = false
+                attackedWhileInventoryOpen = false
 
                 false
             }
@@ -247,6 +334,9 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 lastClickTime = now
                 clickTimes.add(now)
 
+                // Track blocking state before hit
+                wasBlockingBeforeHit = player.isBlocking
+
                 // Track sprint state before hit
                 wasSprintingBeforeHit = player.isSprinting
 
@@ -256,8 +346,31 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 // Track if this was a critical hit (falling and not on ground)
                 wasCrit = player.fallDistance > 0 && !player.onGround()
 
-                // Schedule sprint check after hit
+                // Track sprint after hit (same tick for now, will be different next tick)
                 sprintingAfterHit = player.isSprinting
+
+                // Track blocking after hit
+                blockingAfterHit = player.isBlocking
+
+                // Track if attacked while inventory open
+                if (wasInventoryOpen) {
+                    attackedWhileInventoryOpen = true
+                }
+
+                // Track miss swing data
+                val distance = sqrt(player.squaredBoxedDistanceTo(targetEntity))
+                val eyes = player.eyePosition
+                val raycastResult = raytraceBox(
+                    eyes,
+                    eyes.add((RotationManager.currentRotation ?: player.rotation).directionVector * distance),
+                    targetEntity.box,
+                    range = distance.toDouble(),
+                    wallsRange = distance.toDouble()
+                )
+                if (raycastResult == null) {
+                    lastSwingWasMiss = true
+                    missSwingRange = distance.toFloat()
+                }
 
                 world.removeEntity(targetEntity.id, Entity.RemovalReason.DISCARDED)
                 target = null

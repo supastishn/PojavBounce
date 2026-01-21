@@ -117,13 +117,8 @@ object ModuleClickGui :
             return
         }
 
-        mc.setScreen(
-            if (clickGuiBrowser == null) {
-                VirtualDisplayScreen(VirtualScreenType.CLICK_GUI)
-            } else {
-                ClickScreen()
-            }
-        )
+        // Use native Minecraft GUI instead of browser-based UI (Android/PojavBounce compatibility)
+        mc.setScreen(net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen())
         super.onEnabled()
     }
 

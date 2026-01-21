@@ -44,27 +44,36 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             pitchDeltas.map { (it - avgPitch) * (it - avgPitch) }.average()
         )
 
-        // Sigmoid curve steepness based on variance (0-20 range)
-        val recommendedSteepness = when {
-            variance > 15.0 -> 15.0  // Steep curve for high variance
-            variance > 10.0 -> 12.0
-            variance > 5.0 -> 10.0   // Medium curve
-            else -> 8.0              // Gentle curve
-        }.coerceIn(0.0, 20.0)
+        // Sigmoid curve steepness: continuous mapping based on variance (0-20 range)
+        // Higher variance = steeper curve (faster transition)
+        // Map variance to steepness: 0 variance -> 5, 20 variance -> 18
+        val varianceNormalized = (variance / 20.0).coerceIn(0.0, 1.0)
+        val recommendedSteepness = (5.0 + (varianceNormalized * 13.0)).coerceIn(0.0, 20.0)
 
         // Midpoint based on average rotation magnitude (0-1 range)
+        // Higher rotation = higher midpoint (curve transitions later)
+        // Map avgMagnitude to midpoint: 0° -> 0.25, 60° -> 0.45
         val avgMagnitude = kotlin.math.sqrt(avgYaw * avgYaw + avgPitch * avgPitch)
-        val recommendedMidpoint = when {
-            avgMagnitude > 30.0 -> 0.4  // Higher midpoint for faster rotations
-            avgMagnitude > 15.0 -> 0.35
-            else -> 0.3                 // Lower midpoint for slower rotations
-        }.coerceIn(0.0, 1.0)
+        val magnitudeNormalized = (avgMagnitude / 60.0).coerceIn(0.0, 1.0)
+        val recommendedMidpoint = (0.25 + (magnitudeNormalized * 0.20)).coerceIn(0.0, 1.0)
 
-        // Turn speed recommendations
-        val avgSpeed = kotlin.math.sqrt(avgYaw * avgYaw + avgPitch * avgPitch).coerceIn(20.0, 180.0)
-        val horizontalSpeed = (avgSpeed * 1.1).coerceIn(30.0, 180.0)
-        val verticalSpeed = (avgSpeed * 0.9).coerceIn(20.0, 180.0)
-        val speedVariance = (variance * 0.4).coerceIn(5.0, 25.0)
+        // Turn speed based on actual velocity per tick
+        val yawSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.x.toDouble()) }
+        val pitchSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.y.toDouble()) }
+
+        // Use P40 and P80 for ranges
+        val sortedYaw = yawSpeeds.sorted()
+        val sortedPitch = pitchSpeeds.sorted()
+
+        val yawP40 = sortedYaw[(sortedYaw.size * 0.40).toInt().coerceIn(0, sortedYaw.size - 1)]
+        val yawP80 = sortedYaw[(sortedYaw.size * 0.80).toInt().coerceIn(0, sortedYaw.size - 1)]
+        val pitchP40 = sortedPitch[(sortedPitch.size * 0.40).toInt().coerceIn(0, sortedPitch.size - 1)]
+        val pitchP80 = sortedPitch[(sortedPitch.size * 0.80).toInt().coerceIn(0, sortedPitch.size - 1)]
+
+        val horizontalSpeedStart = yawP40.coerceIn(1.0, 180.0).toFloat()
+        val horizontalSpeed = yawP80.coerceIn(horizontalSpeedStart.toDouble() + 5.0, 180.0).toFloat()
+        val verticalSpeedStart = pitchP40.coerceIn(1.0, 180.0).toFloat()
+        val verticalSpeed = pitchP80.coerceIn(verticalSpeedStart.toDouble() + 5.0, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -72,37 +81,43 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "Steepness",
             "Current",
             "%.1f".format(recommendedSteepness),
-            "Variance: ${"%.2f".format(variance)}° → Steepness: ${recommendedSteepness}"
+            "Variance: ${"%.2f".format(variance)}° → continuous steepness"
         )
 
         changes["midpoint"] = SettingChange(
             "Midpoint",
             "Current",
             "%.2f".format(recommendedMidpoint),
-            "Avg magnitude: ${"%.2f".format(avgMagnitude)}°"
+            "Avg magnitude: ${"%.2f".format(avgMagnitude)}° → continuous midpoint"
         )
 
         changes["horizontalTurnSpeed"] = SettingChange(
             "HorizontalTurnSpeed",
             "Current",
-            "${horizontalSpeed - speedVariance}..${horizontalSpeed}",
-            "Based on avg yaw: ${"%.2f".format(avgYaw)}°"
+            "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeed)}",
+            "From P40-P80 yaw speeds: ${"%.2f".format(yawP40)}-${"%.2f".format(yawP80)}°/tick"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
-            "${verticalSpeed - speedVariance}..${verticalSpeed}",
-            "Based on avg pitch: ${"%.2f".format(avgPitch)}°"
+            "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeed)}",
+            "From P40-P80 pitch speeds: ${"%.2f".format(pitchP40)}-${"%.2f".format(pitchP80)}°/tick"
         )
 
         val stats = mapOf(
             "variance" to variance,
             "recommendedSteepness" to recommendedSteepness,
             "recommendedMidpoint" to recommendedMidpoint,
-            "horizontalSpeed" to horizontalSpeed,
-            "verticalSpeed" to verticalSpeed,
-            "speedVariance" to speedVariance
+            "horizontalSpeedStart" to horizontalSpeedStart.toDouble(),
+            "horizontalSpeed" to horizontalSpeed.toDouble(),
+            "verticalSpeedStart" to verticalSpeedStart.toDouble(),
+            "verticalSpeed" to verticalSpeed.toDouble(),
+            "yawP40" to yawP40,
+            "yawP80" to yawP80,
+            "pitchP40" to pitchP40,
+            "pitchP80" to pitchP80,
+            "avgMagnitude" to avgMagnitude
         )
 
         return AnalysisResult("SigmoidMode", changes, stats, 0.80f)
@@ -130,17 +145,18 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         }
 
         // Apply horizontal turn speed
+        val horizontalSpeedStart = result.stats["horizontalSpeedStart"]?.toFloat() ?: 30f
         val horizontalSpeed = result.stats["horizontalSpeed"]?.toFloat() ?: 60f
-        val speedVariance = result.stats["speedVariance"]?.toFloat() ?: 10f
-        val horizontalRange = (horizontalSpeed - speedVariance)..horizontalSpeed
+        val horizontalRange = horizontalSpeedStart..horizontalSpeed
 
         if (AutoConfigApplier.setFloatRangeValue("HorizontalTurnSpeed", horizontalRange)) {
             chat("§a  ✓ HorizontalTurnSpeed: ${"%.1f".format(horizontalRange.start)}..${"%.1f".format(horizontalRange.endInclusive)}")
         }
 
         // Apply vertical turn speed
+        val verticalSpeedStart = result.stats["verticalSpeedStart"]?.toFloat() ?: 20f
         val verticalSpeed = result.stats["verticalSpeed"]?.toFloat() ?: 40f
-        val verticalRange = (verticalSpeed - speedVariance)..verticalSpeed
+        val verticalRange = verticalSpeedStart..verticalSpeed
 
         if (AutoConfigApplier.setFloatRangeValue("VerticalTurnSpeed", verticalRange)) {
             chat("§a  ✓ VerticalTurnSpeed: ${"%.1f".format(verticalRange.start)}..${"%.1f".format(verticalRange.endInclusive)}")

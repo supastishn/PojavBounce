@@ -64,34 +64,39 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
 
         // Recommend parameters based on acceleration patterns
         // AccelerationAngleSmooth uses floatRange for YawAcceleration/PitchAcceleration (1-180)
-        val maxAccel = maxOf(maxYawAccel, maxPitchAccel)
 
-        val recommendedYawAccel = when {
-            maxAccel > 30.0 -> 25f..35f   // High accel = allow more acceleration
-            maxAccel > 15.0 -> 20f..28f
-            maxAccel > 8.0 -> 18f..25f    // Medium accel
-            else -> 15f..22f               // Low accel = gentle acceleration
-        }
+        // Use percentiles for acceleration ranges
+        val sortedYawAccel = yawAccelerations.map { abs(it) }.sorted()
+        val sortedPitchAccel = pitchAccelerations.map { abs(it) }.sorted()
 
-        val recommendedPitchAccel = when {
-            maxAccel > 30.0 -> 22f..32f
-            maxAccel > 15.0 -> 18f..26f
-            maxAccel > 8.0 -> 16f..23f
-            else -> 14f..20f
-        }
+        val yawP50 = if (sortedYawAccel.isNotEmpty())
+            sortedYawAccel[(sortedYawAccel.size * 0.50).toInt().coerceIn(0, sortedYawAccel.size - 1)]
+            else 20.0
+        val yawP85 = if (sortedYawAccel.isNotEmpty())
+            sortedYawAccel[(sortedYawAccel.size * 0.85).toInt().coerceIn(0, sortedYawAccel.size - 1)]
+            else 25.0
+        val pitchP50 = if (sortedPitchAccel.isNotEmpty())
+            sortedPitchAccel[(sortedPitchAccel.size * 0.50).toInt().coerceIn(0, sortedPitchAccel.size - 1)]
+            else 18.0
+        val pitchP85 = if (sortedPitchAccel.isNotEmpty())
+            sortedPitchAccel[(sortedPitchAccel.size * 0.85).toInt().coerceIn(0, sortedPitchAccel.size - 1)]
+            else 23.0
 
-        // Error settings based on jerk analysis
-        val recommendedAccelError = when {
-            avgJerk > 2.0 -> 0.15f     // High jerk = more error compensation
-            avgJerk > 1.0 -> 0.12f
-            else -> 0.10f              // Low jerk = less error needed
-        }
+        val recommendedYawAccelStart = yawP50.coerceIn(1.0, 180.0).toFloat()
+        val recommendedYawAccelEnd = yawP85.coerceIn(recommendedYawAccelStart.toDouble() + 3.0, 180.0).toFloat()
+        val recommendedYawAccel = recommendedYawAccelStart..recommendedYawAccelEnd
 
-        val recommendedConstantError = when {
-            avgJerk > 2.0 -> 0.12f
-            avgJerk > 1.0 -> 0.10f
-            else -> 0.08f
-        }
+        val recommendedPitchAccelStart = pitchP50.coerceIn(1.0, 180.0).toFloat()
+        val recommendedPitchAccelEnd = pitchP85.coerceIn(recommendedPitchAccelStart.toDouble() + 3.0, 180.0).toFloat()
+        val recommendedPitchAccel = recommendedPitchAccelStart..recommendedPitchAccelEnd
+
+        // Error settings: continuous mapping based on jerk
+        // Map avgJerk to accel error: 0 jerk -> 0.08, 3+ jerk -> 0.18
+        val jerkNormalized = (avgJerk / 3.0).coerceIn(0.0, 1.0)
+        val recommendedAccelError = (0.08 + (jerkNormalized * 0.10)).coerceIn(0.05, 0.20).toFloat()
+
+        // Map avgJerk to constant error: 0 jerk -> 0.06, 3+ jerk -> 0.14
+        val recommendedConstantError = (0.06 + (jerkNormalized * 0.08)).coerceIn(0.05, 0.20).toFloat()
 
         // ===== DynamicAccel Analysis =====
         // Analyze distance-based patterns to determine if DynamicAccel should be enabled
@@ -131,24 +136,19 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
 
         val enableSigmoidDecel = rotationVariance > 8.0 || avgJerk > 1.5
 
-        // Steepness: higher for more abrupt transitions, lower for smoother
-        val recommendedSigmoidSteepness = when {
-            rotationVariance > 15.0 -> 14f
-            rotationVariance > 10.0 -> 12f
-            rotationVariance > 5.0 -> 10f
-            else -> 8f
-        }
+        // Steepness: continuous mapping based on rotation variance (0-20 range)
+        // Map rotationVariance to steepness: 0 variance -> 6, 20 variance -> 16
+        val varianceNormalized = (rotationVariance / 20.0).coerceIn(0.0, 1.0)
+        val recommendedSigmoidSteepness = (6.0 + (varianceNormalized * 10.0)).coerceIn(0.0, 20.0).toFloat()
 
-        // Midpoint: where the sigmoid curve transitions
+        // Midpoint: continuous mapping based on avg rotation magnitude (0-1 range)
+        // Map avgRotationMagnitude to midpoint: 0° -> 0.25, 40° -> 0.45
         val avgRotationMagnitude = kotlin.math.sqrt(
             yawDeltas.average() * yawDeltas.average() +
             pitchDeltas.average() * pitchDeltas.average()
         )
-        val recommendedSigmoidMidpoint = when {
-            avgRotationMagnitude > 25.0 -> 0.4f
-            avgRotationMagnitude > 15.0 -> 0.35f
-            else -> 0.3f
-        }
+        val magnitudeNormalized = (avgRotationMagnitude / 40.0).coerceIn(0.0, 1.0)
+        val recommendedSigmoidMidpoint = (0.25 + (magnitudeNormalized * 0.20)).coerceIn(0.0, 1.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -156,28 +156,28 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
             "YawAcceleration",
             "Current",
             "${recommendedYawAccel.start}..${recommendedYawAccel.endInclusive}",
-            "Max yaw accel: ${"%.2f".format(maxYawAccel)}°/tick"
+            "From P50-P85 yaw accel: ${"%.2f".format(yawP50)}-${"%.2f".format(yawP85)}°/tick²"
         )
 
         changes["pitchAcceleration"] = SettingChange(
             "PitchAcceleration",
             "Current",
             "${recommendedPitchAccel.start}..${recommendedPitchAccel.endInclusive}",
-            "Max pitch accel: ${"%.2f".format(maxPitchAccel)}°/tick"
+            "From P50-P85 pitch accel: ${"%.2f".format(pitchP50)}-${"%.2f".format(pitchP85)}°/tick²"
         )
 
         changes["accelerationError"] = SettingChange(
             "AccelerationError",
             "Current",
             "%.2f".format(recommendedAccelError),
-            "Avg jerk: ${"%.3f".format(avgJerk)}"
+            "Avg jerk: ${"%.3f".format(avgJerk)} → continuous error"
         )
 
         changes["constantError"] = SettingChange(
             "ConstantError",
             "Current",
             "%.2f".format(recommendedConstantError),
-            "Compensates for systematic errors"
+            "Jerk-based continuous error compensation"
         )
 
         changes["dynamicAccel"] = SettingChange(
@@ -220,8 +220,11 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
             "avgPitchAccel" to avgPitchAccel,
             "maxYawAccel" to maxYawAccel,
             "maxPitchAccel" to maxPitchAccel,
-            "maxAccel" to maxAccel,
             "avgJerk" to avgJerk,
+            "yawP50" to yawP50,
+            "yawP85" to yawP85,
+            "pitchP50" to pitchP50,
+            "pitchP85" to pitchP85,
             "yawAccelStart" to recommendedYawAccel.start.toDouble(),
             "yawAccelEnd" to recommendedYawAccel.endInclusive.toDouble(),
             "pitchAccelStart" to recommendedPitchAccel.start.toDouble(),
@@ -237,7 +240,8 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
             "sigmoidSteepness" to recommendedSigmoidSteepness.toDouble(),
             "sigmoidMidpoint" to recommendedSigmoidMidpoint.toDouble(),
             "rotationVariance" to rotationVariance,
-            "distanceStdDev" to distanceStdDev
+            "distanceStdDev" to distanceStdDev,
+            "avgRotationMagnitude" to avgRotationMagnitude
         )
 
         return AnalysisResult("AccelerationMode", changes, stats, 0.90f)
@@ -366,7 +370,8 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
         val sigmoidDecel = result.changes["sigmoidDeceleration"]
         val sigmoidSteep = result.changes["sigmoidSteepness"]
         val sigmoidMid = result.changes["sigmoidMidpoint"]
-        val maxA = result.stats["maxAccel"]?.let { "%.2f".format(it) } ?: "?"
+        val maxYaw = result.stats["maxYawAccel"]?.let { "%.2f".format(it) } ?: "?"
+        val maxPitch = result.stats["maxPitchAccel"]?.let { "%.2f".format(it) } ?: "?"
         val avgJ = result.stats["avgJerk"]?.let { "%.3f".format(it) } ?: "?"
         val rotVar = result.stats["rotationVariance"]?.let { "%.2f".format(it) } ?: "?"
         val distStd = result.stats["distanceStdDev"]?.let { "%.2f".format(it) } ?: "?"
@@ -405,8 +410,9 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
                 append("§1║ Midpoint: §7${sigmoidMid.newValue}\n")
             }
             append("§1╠═══ Stats ═══\n")
-            append("§1║ Max Accel: §7${maxA}°/tick | Avg Jerk: §7${avgJ}\n")
-            append("§1║ Rotation Var: §7${rotVar}° | Distance StdDev: §7${distStd}\n")
+            append("§1║ Max Yaw Accel: §7${maxYaw}°/tick² | Max Pitch Accel: §7${maxPitch}°/tick²\n")
+            append("§1║ Avg Jerk: §7${avgJ} | Rotation Var: §7${rotVar}°\n")
+            append("§1║ Distance StdDev: §7${distStd}\n")
             append("§1╚ Acceleration-based smoothing - handles high variance")
         }
     }

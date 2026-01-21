@@ -18,7 +18,7 @@
  */
 package net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features
 
-import net.ccbluex.liquidbounce.config.types.ToggleableConfigurable
+import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleDebug.debugParameter
 import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
@@ -33,7 +33,7 @@ import kotlin.random.Random
  * - Reaction time: Delay before first attack on a new target (visual processing + muscle response)
  * - Micro-corrections: Small random aim adjustments like humans naturally make
  */
-object KillAuraHumanTargeting : ToggleableConfigurable(ModuleKillAura, "HumanTargeting", false) {
+internal object KillAuraHumanTargeting : ToggleableConfigurable(ModuleKillAura, "HumanTargeting", false) {
 
     // Reaction time simulation - delay before first attack on new target
     private val reactionTime by intRange("ReactionTime", 150..350, 0..1000, "ms")
@@ -65,15 +65,15 @@ object KillAuraHumanTargeting : ToggleableConfigurable(ModuleKillAura, "HumanTar
             targetAcquiredTime = now
             currentReactionDelay = reactionTime.random()
 
-            debugParameter("HumanTargeting", "NewTarget") { target.scoreboardName }
-            debugParameter("HumanTargeting", "ReactionDelay") { currentReactionDelay }
+            debugParameter(ModuleKillAura, "HT_NewTarget") { target.scoreboardName }
+            debugParameter(ModuleKillAura, "HT_ReactionDelay") { currentReactionDelay }
         }
 
         val timeSinceAcquired = now - targetAcquiredTime
         val shouldDelay = timeSinceAcquired < currentReactionDelay
 
-        debugParameter("HumanTargeting", "TimeSinceAcquired") { timeSinceAcquired }
-        debugParameter("HumanTargeting", "ShouldDelayAttack") { shouldDelay }
+        debugParameter(ModuleKillAura, "HT_TimeSinceAcquired") { timeSinceAcquired }
+        debugParameter(ModuleKillAura, "HT_ShouldDelayAttack") { shouldDelay }
 
         return shouldDelay
     }
@@ -97,8 +97,8 @@ object KillAuraHumanTargeting : ToggleableConfigurable(ModuleKillAura, "HumanTar
         // Random direction for pitch correction (usually smaller)
         val pitchCorrection = (Random.nextFloat() - 0.5f) * 2f * correctionAmount * 0.7f
 
-        debugParameter("HumanTargeting", "YawCorrection") { yawCorrection }
-        debugParameter("HumanTargeting", "PitchCorrection") { pitchCorrection }
+        debugParameter(ModuleKillAura, "HT_YawCorrection") { yawCorrection }
+        debugParameter(ModuleKillAura, "HT_PitchCorrection") { pitchCorrection }
 
         return Rotation(
             rotation.yaw + yawCorrection,

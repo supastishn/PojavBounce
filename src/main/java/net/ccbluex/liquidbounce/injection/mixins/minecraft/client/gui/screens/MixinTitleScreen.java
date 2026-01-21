@@ -44,33 +44,49 @@ public abstract class MixinTitleScreen extends Screen {
 
     /**
      * Add the LiquidBounce button to the title screen after init.
-     * Dynamically positions below all existing buttons to avoid overlap.
+     * Inserts between the Mods button and Options button.
      */
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
-        // Find the lowest button Y position among existing widgets
-        int lowestY = 0;
-        for (var widget : this.children()) {
+        int buttonWidth = 200;
+        int buttonHeight = 20;
+        int centerX = this.width / 2 - buttonWidth / 2;
+
+        // Find the Options button to determine position
+        Button optionsButton = null;
+        int optionsIndex = -1;
+        var renderables = this.children();
+
+        for (int i = 0; i < renderables.size(); i++) {
+            var widget = renderables.get(i);
             if (widget instanceof Button button) {
-                int buttonBottom = button.getY() + button.getHeight();
-                if (buttonBottom > lowestY) {
-                    lowestY = buttonBottom;
+                // Find Options button by checking text content
+                String buttonText = button.getMessage().getString();
+                if (buttonText.contains("Options") || buttonText.contains("Settings")) {
+                    optionsButton = button;
+                    optionsIndex = i;
+                    break;
                 }
             }
         }
 
-        // Add LiquidBounce button below all existing buttons with 4px gap
-        int buttonWidth = 200;
-        int buttonHeight = 20;
-        int centerX = this.width / 2 - buttonWidth / 2;
-        int buttonY = lowestY + 4;
+        // Position the button 24px above the Options button (standard button spacing)
+        int buttonY = optionsButton != null
+            ? optionsButton.getY() - buttonHeight - 4
+            : this.height / 4 + 108; // fallback position
 
         Button liquidBounceButton = Button.builder(
             Component.literal("LiquidBounce"),
             button -> liquidbounce$openIntegrationMenu()
         ).bounds(centerX, buttonY, buttonWidth, buttonHeight).build();
 
-        this.addRenderableWidget(liquidBounceButton);
+        // Insert before Options button if found, otherwise append
+        if (optionsIndex >= 0) {
+            this.renderables.add(optionsIndex, liquidBounceButton);
+            this.narratables.add(optionsIndex, liquidBounceButton);
+        } else {
+            this.addRenderableWidget(liquidBounceButton);
+        }
     }
 
     /**

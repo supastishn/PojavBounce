@@ -30,6 +30,7 @@ import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCPSRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatTrainerRecorder
+import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugKillAuraConfigRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.GenericDebugRecorder
 import net.ccbluex.liquidbounce.utils.client.asText
 import net.ccbluex.liquidbounce.utils.client.chat
@@ -53,6 +54,7 @@ object ModuleDebugRecorder : ClientModule("DebugRecorder", ModuleCategories.MISC
     val modes = choices("Mode", GenericDebugRecorder, arrayOf(
         DebugCombatRecorder,
         DebugCombatTrainerRecorder,
+        DebugKillAuraConfigRecorder,
 
         GenericDebugRecorder,
         DebugCPSRecorder,

@@ -19,16 +19,13 @@
 
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn
 
-import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
-import net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine
 import net.ccbluex.liquidbounce.features.command.Command
 import net.ccbluex.liquidbounce.features.command.CommandException
 import net.ccbluex.liquidbounce.features.command.builder.CommandBuilder
 import net.ccbluex.liquidbounce.features.command.builder.ParameterBuilder
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.*
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.modes.*
-import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraAIModel
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatRecorder
 import net.ccbluex.liquidbounce.features.module.modules.misc.debugrecorder.modes.DebugCombatTrainerRecorder
 import net.ccbluex.liquidbounce.utils.client.asText
@@ -44,100 +41,6 @@ object CommandKillAuraAutoConfig : Command.Factory {
             .begin("killaura")
             .hub()
             .subcommand(autoConfigCommand())
-            .subcommand(aiModelsCommand())
-            .build()
-    }
-
-    private fun aiModelsCommand(): Command {
-        return CommandBuilder
-            .begin("ai")
-            .hub()
-            .subcommand(aiScanCommand())
-            .subcommand(aiListCommand())
-            .subcommand(aiInfoCommand())
-            .build()
-    }
-
-    private fun aiScanCommand(): Command {
-        return CommandBuilder
-            .begin("scan")
-            .handler {
-                chat("§7Scanning for .pte models...")
-
-                val models = KillAuraAIModel.scanForModels()
-
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("§eKillAura AI Model Scanner")
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("")
-
-                if (models.isEmpty()) {
-                    chat("§cNo .pte models found!")
-                    chat("§7Place .pte files in: §f${ExecuTorchEngine.modelsFolder.absolutePath}")
-                } else {
-                    chat("§aFound ${models.size} .pte model(s):")
-                    chat("")
-                    for (model in models) {
-                        val isBundled = model in listOf("19kc8kp", "21kc11kp", "android-pte-final")
-                        val type = if (isBundled) "§7[bundled]" else "§a[user]"
-                        chat("  §b• $model $type")
-                    }
-                }
-
-                chat("")
-                chat("§7ExecuTorch available: ${if (DeepLearningEngine.isExecuTorchAvailable) "§aYes" else "§cNo"}")
-                chat("§7Models folder: §f${ExecuTorchEngine.modelsFolder.absolutePath}")
-            }
-            .build()
-    }
-
-    private fun aiListCommand(): Command {
-        return CommandBuilder
-            .begin("list")
-            .handler {
-                val models = KillAuraAIModel.getAvailableModels()
-
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("§eAvailable .pte Models")
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("")
-
-                if (models.isEmpty()) {
-                    chat("§cNo models available. Run §f.killaura ai scan §cto find models.")
-                } else {
-                    val currentModel = KillAuraAIModel.getLoadedModelName()
-                    for (model in models) {
-                        val isLoaded = model == currentModel
-                        val status = if (isLoaded) " §a[LOADED]" else ""
-                        chat("  §b• $model$status")
-                    }
-                    chat("")
-                    chat("§7Total: §f${models.size} model(s)")
-                }
-            }
-            .build()
-    }
-
-    private fun aiInfoCommand(): Command {
-        return CommandBuilder
-            .begin("info")
-            .handler {
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("§eKillAura AI Model Info")
-                chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
-                chat("")
-                chat("§7Feature enabled: ${if (KillAuraAIModel.running) "§aYes" else "§cNo"}")
-                chat("§7Model loaded: ${if (KillAuraAIModel.isModelLoaded()) "§aYes" else "§cNo"}")
-                chat("§7Current model: §f${KillAuraAIModel.getLoadedModelName().ifEmpty { "None" }}")
-                chat("")
-                chat("§7ExecuTorch status:")
-                chat("  §7• Available: ${if (DeepLearningEngine.isExecuTorchAvailable) "§aYes" else "§cNo"}")
-                chat("  §7• Initialized: ${if (ExecuTorchEngine.isInitialized) "§aYes" else "§cNo"}")
-                chat("")
-                chat("§7Paths:")
-                chat("  §7• Models: §f${ExecuTorchEngine.modelsFolder.absolutePath}")
-                chat("  §7• Cache: §f${ExecuTorchEngine.cacheFolder.absolutePath}")
-            }
             .build()
     }
 

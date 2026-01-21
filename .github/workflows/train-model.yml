@@ -644,6 +644,48 @@ jobs:
 
           cd trainer && ../gradlew run --no-daemon
 
+      - name: Convert to ExecuTorch (.pte)
+        run: |
+          echo "Converting trained model to ExecuTorch format..."
+
+          # Install PyTorch and ExecuTorch
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install executorch
+
+          # Copy export script
+          mkdir -p trainer/output
+          cp src/main/resources/scripts/executorch/export_minarai.py trainer/output/
+
+          # Move trained model to accessible location
+          if [ -d "trainer/output/${{ inputs.model_name }}" ]; then
+            echo "Model directory found: trainer/output/${{ inputs.model_name }}"
+
+            # Create models directory structure for export script
+            mkdir -p models/${{ inputs.model_name }}
+            cp trainer/output/${{ inputs.model_name }}/* models/${{ inputs.model_name }}/ 2>/dev/null || true
+
+            # Run conversion
+            cd trainer/output
+            python export_minarai.py \
+              --model-name "${{ inputs.model_name }}" \
+              --output-dir . \
+              2>&1 | tee conversion.log || echo "Conversion failed, continuing with DJL model"
+
+            # Check if .pte was created
+            if [ -f "${{ inputs.model_name }}.pte" ]; then
+              echo "✓ ExecuTorch model created: ${{ inputs.model_name }}.pte"
+              ls -lh "${{ inputs.model_name }}.pte"
+
+              # Copy .pte into the model directory for packaging
+              cp "${{ inputs.model_name }}.pte" "${{ inputs.model_name }}/"
+              cp "${{ inputs.model_name }}.json" "${{ inputs.model_name }}/" 2>/dev/null || true
+            else
+              echo "⚠ .pte conversion failed, model will use DJL format only"
+            fi
+          else
+            echo "Warning: Model directory not found"
+          fi
+
       - name: Package trained model
         run: |
           # Output is in trainer/output since we run from trainer/

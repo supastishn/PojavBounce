@@ -55,28 +55,46 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val pitchVar = pitchDeltas.map { (it - avgPitch) * (it - avgPitch) }.average()
         val variance = kotlin.math.sqrt(yawVar + pitchVar)
 
-        // Calculate actual rotation speeds from the data
-        val actualYawSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.x.toDouble()) }
-        val actualPitchSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.y.toDouble()) }
+        // CRITICAL FIX: Calculate what % of remaining distance was covered each tick
+        // InterpolationAngleSmooth expects percentage (1-100%) of remaining distance per tick
+        // NOT degrees/tick divided by 180!
+        val yawPercentages = samples.mapNotNull { sample ->
+            val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
+            val moved = kotlin.math.abs(sample.velocityDelta.x)
+            // Filter out samples where remaining distance is too small to avoid division issues
+            if (remaining > 1f) (moved / remaining * 100.0) else null
+        }
+        val pitchPercentages = samples.mapNotNull { sample ->
+            val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
+            val moved = kotlin.math.abs(sample.velocityDelta.y)
+            if (remaining > 1f) (moved / remaining * 100.0) else null
+        }
 
-        // Use percentiles to get representative values from actual data
-        val sortedYawSpeeds = actualYawSpeeds.sorted()
-        val sortedPitchSpeeds = actualPitchSpeeds.sorted()
+        // Use percentiles from the calculated percentages
+        val sortedYawPct = yawPercentages.sorted()
+        val sortedPitchPct = pitchPercentages.sorted()
 
-        // P25 and P75 for ranges
-        val yawP25 = sortedYawSpeeds[(sortedYawSpeeds.size * 0.25).toInt().coerceIn(0, sortedYawSpeeds.size - 1)]
-        val yawP75 = sortedYawSpeeds[(sortedYawSpeeds.size * 0.75).toInt().coerceIn(0, sortedYawSpeeds.size - 1)]
-        val pitchP25 = sortedPitchSpeeds[(sortedPitchSpeeds.size * 0.25).toInt().coerceIn(0, sortedPitchSpeeds.size - 1)]
-        val pitchP75 = sortedPitchSpeeds[(sortedPitchSpeeds.size * 0.75).toInt().coerceIn(0, sortedPitchSpeeds.size - 1)]
+        // P25 and P75 for ranges - these are now actual percentages of remaining distance
+        val yawP25 = if (sortedYawPct.isNotEmpty())
+            sortedYawPct[(sortedYawPct.size * 0.25).toInt().coerceIn(0, sortedYawPct.size - 1)]
+        else 30.0
+        val yawP75 = if (sortedYawPct.isNotEmpty())
+            sortedYawPct[(sortedYawPct.size * 0.75).toInt().coerceIn(0, sortedYawPct.size - 1)]
+        else 60.0
+        val pitchP25 = if (sortedPitchPct.isNotEmpty())
+            sortedPitchPct[(sortedPitchPct.size * 0.25).toInt().coerceIn(0, sortedPitchPct.size - 1)]
+        else 20.0
+        val pitchP75 = if (sortedPitchPct.isNotEmpty())
+            sortedPitchPct[(sortedPitchPct.size * 0.75).toInt().coerceIn(0, sortedPitchPct.size - 1)]
+        else 40.0
 
-        // Map actual rotation speeds to percentage (1-100)
-        // Assuming max reasonable rotation is ~180 deg/tick, scale accordingly
-        val horizontalSpeedStart = ((yawP25 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
-        val horizontalSpeedEnd = ((yawP75 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+        // These are now correctly scaled percentages (1-100%)
+        val horizontalSpeedStart = yawP25.coerceIn(1.0, 100.0).toInt()
+        val horizontalSpeedEnd = yawP75.coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(horizontalSpeedStart + 5) // Ensure range
 
-        val verticalSpeedStart = ((pitchP25 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
-        val verticalSpeedEnd = ((pitchP75 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedStart = pitchP25.coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedEnd = pitchP75.coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(verticalSpeedStart + 5)
 
         // Direction change factor based on variance - continuous calculation
@@ -95,14 +113,14 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "HorizontalSpeed",
             "Current",
             "${horizontalSpeedStart}..${horizontalSpeedEnd}%",
-            "From P25-P75 yaw speeds: ${"%.2f".format(yawP25)}-${"%.2f".format(yawP75)}°"
+            "From P25-P75 yaw %/tick: ${"%.1f".format(yawP25)}-${"%.1f".format(yawP75)}%"
         )
 
         changes["verticalSpeed"] = SettingChange(
             "VerticalSpeed",
             "Current",
             "${verticalSpeedStart}..${verticalSpeedEnd}%",
-            "From P25-P75 pitch speeds: ${"%.2f".format(pitchP25)}-${"%.2f".format(pitchP75)}°"
+            "From P25-P75 pitch %/tick: ${"%.1f".format(pitchP25)}-${"%.1f".format(pitchP75)}%"
         )
 
         changes["directionChangeFactor"] = SettingChange(

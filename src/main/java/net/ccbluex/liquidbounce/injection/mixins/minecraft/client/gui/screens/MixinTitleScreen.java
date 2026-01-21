@@ -49,7 +49,7 @@ public abstract class MixinTitleScreen extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
         // Position in top-right corner, below the Alts button
-        // Alts button is at: x = width - 60 - 10, y = 10, width = 60, height = 20
+        // Match the Alts button dimensions and position
         int buttonWidth = 60;
         int buttonHeight = 20;
         int margin = 10;

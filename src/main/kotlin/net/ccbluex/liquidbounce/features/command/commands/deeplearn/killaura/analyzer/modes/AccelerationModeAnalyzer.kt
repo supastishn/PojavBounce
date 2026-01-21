@@ -34,17 +34,38 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
             return AnalysisResult("AccelerationMode", emptyMap(), emptyMap(), 0f)
         }
 
+        // NOTE ON VARIABLE NAMING:
+        // - `totalDelta` = remaining distance to target (in degrees)
+        // - `velocityDelta` = actual rotation speed per tick (degrees/tick)
+        //
+        // IMPORTANT: AccelerationAngleSmooth limits how much the VELOCITY can change per tick.
+        // Its "YawAcceleration" parameter is the max change in velocity (acceleration limit).
+        //
+        // To calculate actual acceleration from training data, we SHOULD use:
+        //   acceleration = velocityDelta[i] - velocityDelta[i-1]
+        //
+        // However, for a stationary target: change in totalDelta ≈ -velocityDelta
+        // So the code below works by coincidence when calculating from totalDelta changes.
+        //
+        // We now calculate TRUE acceleration from velocityDelta for accuracy.
+
         val yawDeltas = samples.map { it.totalDelta.deltaYaw.toDouble() }
         val pitchDeltas = samples.map { it.totalDelta.deltaPitch.toDouble() }
         val distances = samples.map { it.distance.toDouble() }
 
-        // Calculate accelerations (1st derivative)
+        // Calculate TRUE accelerations from consecutive velocityDeltas (proper method)
+        // Acceleration = change in velocity per tick = velocityDelta[i] - velocityDelta[i-1]
         val yawAccelerations = mutableListOf<Double>()
         val pitchAccelerations = mutableListOf<Double>()
 
-        for (i in 1 until yawDeltas.size) {
-            yawAccelerations.add(yawDeltas[i] - yawDeltas[i - 1])
-            pitchAccelerations.add(pitchDeltas[i] - pitchDeltas[i - 1])
+        for (i in 1 until samples.size) {
+            val yawVelCurrent = samples[i].velocityDelta.x.toDouble()
+            val yawVelPrev = samples[i - 1].velocityDelta.x.toDouble()
+            val pitchVelCurrent = samples[i].velocityDelta.y.toDouble()
+            val pitchVelPrev = samples[i - 1].velocityDelta.y.toDouble()
+
+            yawAccelerations.add(yawVelCurrent - yawVelPrev)
+            pitchAccelerations.add(pitchVelCurrent - pitchVelPrev)
         }
 
         val avgYawAccel = yawAccelerations.average()
@@ -52,7 +73,8 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
         val maxYawAccel = yawAccelerations.map { abs(it) }.maxOrNull() ?: 0.0
         val maxPitchAccel = pitchAccelerations.map { abs(it) }.maxOrNull() ?: 0.0
 
-        // Jerk: 2nd derivative (rate of acceleration change)
+        // Jerk: 2nd derivative of position = 1st derivative of acceleration
+        // This measures how "jerky" or sudden the acceleration changes are
         val jerks = mutableListOf<Double>()
         for (i in 1 until yawAccelerations.size) {
             val yawJerk = abs((yawAccelerations[i] - yawAccelerations[i - 1]))
@@ -64,8 +86,9 @@ object AccelerationModeAnalyzer : KillAuraAnalyzer {
 
         // Recommend parameters based on acceleration patterns
         // AccelerationAngleSmooth uses floatRange for YawAcceleration/PitchAcceleration (1-180)
+        // These represent the MAX allowed change in velocity (degrees/tick²)
 
-        // Use percentiles for acceleration ranges
+        // Use percentiles for acceleration ranges - these are now TRUE accelerations
         val sortedYawAccel = yawAccelerations.map { abs(it) }.sorted()
         val sortedPitchAccel = pitchAccelerations.map { abs(it) }.sorted()
 

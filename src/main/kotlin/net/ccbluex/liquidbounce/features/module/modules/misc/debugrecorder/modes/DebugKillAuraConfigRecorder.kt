@@ -442,10 +442,10 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         totalSamplesRecorded++
 
         // Periodic logging
-        val now = System.currentTimeMillis()
-        if (now - lastLogTime >= LOG_INTERVAL_MS) {
+        val logTime = System.currentTimeMillis()
+        if (logTime - lastLogTime >= LOG_INTERVAL_MS) {
             chat("§7[Training] §f$totalSamplesRecorded§7 samples, §f$totalAttacksRecorded§7 attacks recorded")
-            lastLogTime = now
+            lastLogTime = logTime
         }
 
         // Reset per-tick attack flags

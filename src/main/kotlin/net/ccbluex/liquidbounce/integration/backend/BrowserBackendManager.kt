@@ -36,8 +36,8 @@ object BrowserBackendManager : EventListener {
 
     val browserBackend: BrowserBackend = MinecraftGuiBrowserBackend()
 
-    val isSkippingBrowser = System.getenv("LB_SKIP_BROWSER") == "true"
-        || System.getProperty("net.ccbluex.liquidbounce.skip.browser") == "true"
+    // Skip browser by default for Android/PojavBounce compatibility (no JCEF/web support)
+    val isSkippingBrowser = true
 
     fun init() {
         PersistentLocalStorage

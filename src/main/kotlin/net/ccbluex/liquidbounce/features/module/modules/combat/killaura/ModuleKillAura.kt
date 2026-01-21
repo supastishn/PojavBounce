@@ -321,14 +321,17 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         } else if (KillAuraFightBot.enabled) {
             KillAuraFightBot.updateTarget()
 
-            RotationManager.setRotationTarget(
-                rotations.toRotationTarget(
-                    KillAuraFightBot.getMovementRotation(),
-                    considerInventory = !ignoreOpenInventory
-                ),
-                priority = Priority.IMPORTANT_FOR_USAGE_2,
-                provider = ModuleKillAura
-            )
+            // Skip rotation when manual aim is enabled
+            if (!rotations.manualAim) {
+                RotationManager.setRotationTarget(
+                    rotations.toRotationTarget(
+                        KillAuraFightBot.getMovementRotation(),
+                        considerInventory = !ignoreOpenInventory
+                    ),
+                    priority = Priority.IMPORTANT_FOR_USAGE_2,
+                    provider = ModuleKillAura
+                )
+            }
         } else {
             targetTracker.reset()
         }
@@ -363,15 +366,18 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             }
         }
 
-        RotationManager.setRotationTarget(
-            rotations.toRotationTarget(
-                rotation,
-                entity,
-                considerInventory = !ignoreOpenInventory
-            ),
-            priority = Priority.IMPORTANT_FOR_USAGE_2,
-            provider = this@ModuleKillAura
-        )
+        // Skip rotation when manual aim is enabled
+        if (!rotations.manualAim) {
+            RotationManager.setRotationTarget(
+                rotations.toRotationTarget(
+                    rotation,
+                    entity,
+                    considerInventory = !ignoreOpenInventory
+                ),
+                priority = Priority.IMPORTANT_FOR_USAGE_2,
+                provider = this@ModuleKillAura
+            )
+        }
 
         return true
     }

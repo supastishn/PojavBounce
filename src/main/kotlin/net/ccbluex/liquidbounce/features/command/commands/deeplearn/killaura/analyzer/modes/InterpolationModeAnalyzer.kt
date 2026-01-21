@@ -55,75 +55,86 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val pitchVar = pitchDeltas.map { (it - avgPitch) * (it - avgPitch) }.average()
         val variance = kotlin.math.sqrt(yawVar + pitchVar)
 
-        // Horizontal speed (percentage based, 1-100)
-        val horizontalSpeed = when {
-            maxVelocity > 2.0 -> 90..95   // Fast movement = high speed
-            maxVelocity > 1.0 -> 80..90   // Medium movement
-            else -> 70..85                 // Slow movement
-        }
+        // Calculate actual rotation speeds from the data
+        val actualYawSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.x.toDouble()) }
+        val actualPitchSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.y.toDouble()) }
 
-        // Vertical speed (percentage based, 1-100) - generally slower than horizontal
-        val verticalSpeed = when {
-            maxVelocity > 2.0 -> 25..35
-            maxVelocity > 1.0 -> 20..30
-            else -> 15..25
-        }
+        // Use percentiles to get representative values from actual data
+        val sortedYawSpeeds = actualYawSpeeds.sorted()
+        val sortedPitchSpeeds = actualPitchSpeeds.sorted()
 
-        // Direction change factor based on variance
-        val directionChangeFactor = when {
-            variance > 10.0 -> 85..95    // High variance = need more factor
-            variance > 5.0 -> 90..98
-            else -> 95..100               // Low variance = full factor
-        }
+        // P25 and P75 for ranges
+        val yawP25 = sortedYawSpeeds[(sortedYawSpeeds.size * 0.25).toInt().coerceIn(0, sortedYawSpeeds.size - 1)]
+        val yawP75 = sortedYawSpeeds[(sortedYawSpeeds.size * 0.75).toInt().coerceIn(0, sortedYawSpeeds.size - 1)]
+        val pitchP25 = sortedPitchSpeeds[(sortedPitchSpeeds.size * 0.25).toInt().coerceIn(0, sortedPitchSpeeds.size - 1)]
+        val pitchP75 = sortedPitchSpeeds[(sortedPitchSpeeds.size * 0.75).toInt().coerceIn(0, sortedPitchSpeeds.size - 1)]
 
-        // Midpoint based on movement patterns (0-1)
-        val recommendedMidpoint = when {
-            avgVelocity > 1.5 -> 0.40f
-            avgVelocity > 0.8 -> 0.35f
-            else -> 0.30f
-        }
+        // Map actual rotation speeds to percentage (1-100)
+        // Assuming max reasonable rotation is ~180 deg/tick, scale accordingly
+        val horizontalSpeedStart = ((yawP25 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+        val horizontalSpeedEnd = ((yawP75 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+            .coerceAtLeast(horizontalSpeedStart + 5) // Ensure range
+
+        val verticalSpeedStart = ((pitchP25 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedEnd = ((pitchP75 / 180.0) * 100).coerceIn(1.0, 100.0).toInt()
+            .coerceAtLeast(verticalSpeedStart + 5)
+
+        // Direction change factor based on variance - continuous calculation
+        // High variance = lower factor (more correction needed)
+        val varianceNormalized = (variance / 50.0).coerceIn(0.0, 1.0) // Normalize to 0-1
+        val dcFactorBase = (100 - (varianceNormalized * 30)).toInt().coerceIn(70, 100)
+        val dcFactorEnd = (dcFactorBase + 5).coerceIn(dcFactorBase, 100)
+
+        // Midpoint based on average rotation magnitude - continuous
+        val avgRotationMag = kotlin.math.sqrt(avgYaw * avgYaw + avgPitch * avgPitch)
+        val recommendedMidpoint = (0.25 + (avgRotationMag / 180.0) * 0.25).coerceIn(0.2, 0.5).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
         changes["horizontalSpeed"] = SettingChange(
             "HorizontalSpeed",
             "Current",
-            "${horizontalSpeed.first}..${horizontalSpeed.last}%",
-            "Velocity: ${"%.2f".format(avgVelocity)}"
+            "${horizontalSpeedStart}..${horizontalSpeedEnd}%",
+            "From P25-P75 yaw speeds: ${"%.2f".format(yawP25)}-${"%.2f".format(yawP75)}°"
         )
 
         changes["verticalSpeed"] = SettingChange(
             "VerticalSpeed",
             "Current",
-            "${verticalSpeed.first}..${verticalSpeed.last}%",
-            "Based on pitch requirements"
+            "${verticalSpeedStart}..${verticalSpeedEnd}%",
+            "From P25-P75 pitch speeds: ${"%.2f".format(pitchP25)}-${"%.2f".format(pitchP75)}°"
         )
 
         changes["directionChangeFactor"] = SettingChange(
             "DirectionChangeFactor",
             "Current",
-            "${directionChangeFactor.first}..${directionChangeFactor.last}%",
-            "Variance: ${"%.2f".format(variance)}°"
+            "${dcFactorBase}..${dcFactorEnd}%",
+            "Variance: ${"%.2f".format(variance)}° → factor: ${dcFactorBase}%"
         )
 
         changes["midpoint"] = SettingChange(
             "Midpoint",
             "Current",
             "%.2f".format(recommendedMidpoint),
-            "Avg velocity: ${"%.2f".format(avgVelocity)}"
+            "Avg rotation: ${"%.2f".format(avgRotationMag)}°"
         )
 
         val stats = mapOf(
             "avgVelocity" to avgVelocity,
             "maxVelocity" to maxVelocity,
             "variance" to variance,
-            "horizontalSpeedStart" to horizontalSpeed.first.toDouble(),
-            "horizontalSpeedEnd" to horizontalSpeed.last.toDouble(),
-            "verticalSpeedStart" to verticalSpeed.first.toDouble(),
-            "verticalSpeedEnd" to verticalSpeed.last.toDouble(),
-            "directionChangeStart" to directionChangeFactor.first.toDouble(),
-            "directionChangeEnd" to directionChangeFactor.last.toDouble(),
-            "recommendedMidpoint" to recommendedMidpoint.toDouble()
+            "horizontalSpeedStart" to horizontalSpeedStart.toDouble(),
+            "horizontalSpeedEnd" to horizontalSpeedEnd.toDouble(),
+            "verticalSpeedStart" to verticalSpeedStart.toDouble(),
+            "verticalSpeedEnd" to verticalSpeedEnd.toDouble(),
+            "directionChangeStart" to dcFactorBase.toDouble(),
+            "directionChangeEnd" to dcFactorEnd.toDouble(),
+            "recommendedMidpoint" to recommendedMidpoint.toDouble(),
+            "yawP25" to yawP25,
+            "yawP75" to yawP75,
+            "pitchP25" to pitchP25,
+            "pitchP75" to pitchP75,
+            "avgRotationMag" to avgRotationMag
         )
 
         return AnalysisResult("InterpolationMode", changes, stats, 0.75f)

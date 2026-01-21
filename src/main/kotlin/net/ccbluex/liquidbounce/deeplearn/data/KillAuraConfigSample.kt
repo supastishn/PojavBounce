@@ -65,7 +65,39 @@ data class KillAuraConfigSample(
     @SerializedName("target_health")
     val targetHealth: Float,
     @SerializedName("target_armor")
-    val targetArmorValue: Float
+    val targetArmorValue: Float,
+
+    // === NEW FIELDS FOR COMPREHENSIVE CONFIG ===
+
+    // Criticals data
+    @SerializedName("falling")
+    val wasFalling: Boolean = false,
+    @SerializedName("fall_distance")
+    val fallDistance: Float = 0f,
+    @SerializedName("on_ground")
+    val onGround: Boolean = true,
+    @SerializedName("was_crit")
+    val wasCriticalHit: Boolean = false,
+
+    // Sprint data
+    @SerializedName("sprinting")
+    val wasSprinting: Boolean = false,
+    @SerializedName("sprint_after_hit")
+    val sprintingAfterHit: Boolean = false,
+
+    // Scan/Target selection data
+    @SerializedName("scan_range")
+    val scanRange: Float = 0f,
+    @SerializedName("closest_target_dist")
+    val closestTargetDistance: Float = 0f,
+    @SerializedName("target_in_fov")
+    val targetInFOV: Boolean = true,
+
+    // Miss/FailSwing data
+    @SerializedName("swing_at_air")
+    val swingAtAir: Boolean = false,
+    @SerializedName("miss_distance")
+    val missDistance: Float = 0f
 ) {
     companion object {
         /**

@@ -321,12 +321,15 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         } else if (KillAuraFightBot.enabled) {
             KillAuraFightBot.updateTarget()
 
+            // When manual aim is enabled, use lower priority so player can override
+            val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
+
             RotationManager.setRotationTarget(
                 rotations.toRotationTarget(
                     KillAuraFightBot.getMovementRotation(),
                     considerInventory = !ignoreOpenInventory
                 ),
-                priority = Priority.IMPORTANT_FOR_USAGE_2,
+                priority = priority,
                 provider = ModuleKillAura
             )
         } else {
@@ -363,13 +366,16 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             }
         }
 
+        // When manual aim is enabled, use lower priority so player can override
+        val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
+
         RotationManager.setRotationTarget(
             rotations.toRotationTarget(
                 rotation,
                 entity,
                 considerInventory = !ignoreOpenInventory
             ),
-            priority = Priority.IMPORTANT_FOR_USAGE_2,
+            priority = priority,
             provider = this@ModuleKillAura
         )
 

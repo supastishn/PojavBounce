@@ -1,0 +1,219 @@
+/*
+ * This file is part of LiquidBounce (https://github.com/CCBlueX/LiquidBounce)
+ *
+ * Copyright (c) 2015 - 2026 CCBlueX
+ *
+ * LiquidBounce is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LiquidBounce is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package net.ccbluex.liquidbounce.deeplearn.data
+
+import com.google.gson.annotations.SerializedName
+import net.ccbluex.liquidbounce.config.gson.publicGson
+import java.io.File
+
+/**
+ * Comprehensive combat sample that includes all data needed for full KillAura autoconfig
+ */
+data class KillAuraConfigSample(
+    // Base rotation data
+    @SerializedName("combat")
+    val combatData: CombatSample,
+
+    // Click timing data
+    @SerializedName("click_ts")
+    val clickTimestamp: Long,
+    @SerializedName("time_since_last_click")
+    val timeSinceLastClick: Long,
+    @SerializedName("cps")
+    val currentCPS: Float,
+
+    // Range/Raycast data
+    @SerializedName("wall_between")
+    val hasWallBetween: Boolean,
+    @SerializedName("raycast_hit")
+    val raycastHit: Boolean,
+    @SerializedName("actual_range")
+    val actualRange: Float,
+
+    // AutoBlock data
+    @SerializedName("blocking")
+    val wasBlocking: Boolean,
+    @SerializedName("block_duration")
+    val blockDuration: Long,
+
+    // Hit success tracking
+    @SerializedName("attack_attempted")
+    val attackAttempted: Boolean,
+    @SerializedName("attack_succeeded")
+    val attackSucceeded: Boolean,
+
+    // Target data
+    @SerializedName("available_targets")
+    val availableTargets: Int,
+    @SerializedName("target_health")
+    val targetHealth: Float,
+    @SerializedName("target_armor")
+    val targetArmorValue: Float,
+
+    // === NEW FIELDS FOR COMPREHENSIVE CONFIG ===
+
+    // Criticals data
+    @SerializedName("falling")
+    val wasFalling: Boolean = false,
+    @SerializedName("fall_distance")
+    val fallDistance: Float = 0f,
+    @SerializedName("on_ground")
+    val onGround: Boolean = true,
+    @SerializedName("was_crit")
+    val wasCriticalHit: Boolean = false,
+
+    // Sprint data
+    @SerializedName("sprinting")
+    val wasSprinting: Boolean = false,
+    @SerializedName("sprint_after_hit")
+    val sprintingAfterHit: Boolean = false,
+
+    // Scan/Target selection data
+    @SerializedName("scan_range")
+    val scanRange: Float = 0f,
+    @SerializedName("closest_target_dist")
+    val closestTargetDistance: Float = 0f,
+    @SerializedName("target_in_fov")
+    val targetInFOV: Boolean = true,
+
+    // Miss/FailSwing data
+    @SerializedName("swing_at_air")
+    val swingAtAir: Boolean = false,
+    @SerializedName("miss_distance")
+    val missDistance: Float = 0f,
+
+    // === AUTOBLOCK DATA ===
+    @SerializedName("block_before_hit")
+    val wasBlockingBeforeHit: Boolean = false,
+    @SerializedName("block_after_hit")
+    val blockingAfterHit: Boolean = false,
+    @SerializedName("ticks_blocked_before_hit")
+    val ticksBlockedBeforeHit: Int = 0,
+    @SerializedName("ticks_unblocked_before_hit")
+    val ticksUnblockedBeforeHit: Int = 0,
+    @SerializedName("block_on_scan_range")
+    val blockedOnScanRange: Boolean = false,
+
+    // === FAILSWING DATA ===
+    @SerializedName("failswing_range")
+    val failSwingRange: Float = 0f,
+    @SerializedName("swing_while_miss")
+    val swingWhileMiss: Boolean = false,
+
+    // === RAYCAST/TARGETING DATA ===
+    @SerializedName("raycast_mode_used")
+    val raycastModeUsed: String = "All",
+    @SerializedName("target_through_wall")
+    val targetThroughWall: Boolean = false,
+
+    // === TIMING DATA ===
+    @SerializedName("tick_count")
+    val tickCount: Int = 0,
+    @SerializedName("attack_cooldown_progress")
+    val attackCooldownProgress: Float = 1f,
+    @SerializedName("click_interval_ms")
+    val clickIntervalMs: Long = 0,
+
+    // === ROTATION TIMING DATA ===
+    @SerializedName("rotation_delta_yaw")
+    val rotationDeltaYaw: Float = 0f,
+    @SerializedName("rotation_delta_pitch")
+    val rotationDeltaPitch: Float = 0f,
+    @SerializedName("time_to_reach_target_rotation")
+    val timeToReachTargetRotation: Int = 0,
+
+    // === INVENTORY STATE ===
+    @SerializedName("inventory_open")
+    val inventoryOpen: Boolean = false,
+    @SerializedName("attacked_while_inventory_open")
+    val attackedWhileInventoryOpen: Boolean = false,
+
+    // === MOVEMENT CORRECTION DATA ===
+    @SerializedName("movement_yaw")
+    val movementYaw: Float = 0f,
+    @SerializedName("strafe_angle")
+    val strafeAngle: Float = 0f,
+    @SerializedName("movement_aligned_with_rotation")
+    val movementAlignedWithRotation: Boolean = false,
+
+    // === ROTATION RESET DATA ===
+    @SerializedName("rotation_reset_occurred")
+    val rotationResetOccurred: Boolean = false,
+    @SerializedName("ticks_since_last_target")
+    val ticksSinceLastTarget: Int = 0,
+    @SerializedName("rotation_diff_from_player")
+    val rotationDiffFromPlayer: Float = 0f,
+
+    // === AIM POINT DATA ===
+    @SerializedName("aim_point_y_relative")
+    val aimPointYRelative: Float = 0f,
+    @SerializedName("aimed_at_head")
+    val aimedAtHead: Boolean = false,
+    @SerializedName("aimed_at_body")
+    val aimedAtBody: Boolean = false,
+    @SerializedName("aimed_at_feet")
+    val aimedAtFeet: Boolean = false,
+    @SerializedName("aim_point_jitter")
+    val aimPointJitter: Float = 0f,
+    @SerializedName("aim_point_sticky")
+    val aimPointSticky: Boolean = false,
+
+    // === RANGE EXIT PREDICTION (for ignoreWhenExitingRange) ===
+    @SerializedName("exiting_range")
+    val exitingRange: Boolean = false,
+    @SerializedName("attacked_while_exiting")
+    val attackedWhileExiting: Boolean = false,
+
+    // === SHIELD DATA (for ignoreOnShieldBreak) ===
+    @SerializedName("target_blocking_with_shield")
+    val targetBlockingWithShield: Boolean = false,
+    @SerializedName("attacked_shielding_target")
+    val attackedShieldingTarget: Boolean = false,
+
+    // === MACE DATA (for ignoreOnMaceSmash) ===
+    @SerializedName("using_mace")
+    val usingMace: Boolean = false,
+    @SerializedName("mace_smash_possible")
+    val maceSmashPossible: Boolean = false
+) {
+    companion object {
+        /**
+         * Parse KillAuraConfigSample files from the debug-recorder/KillAuraConfig folder
+         */
+        fun parse(folder: File): List<KillAuraConfigSample> {
+            if (!folder.exists()) return emptyList()
+
+            return folder.listFiles()
+                ?.filter { it.extension == "json" }
+                ?.flatMap { file ->
+                    try {
+                        file.bufferedReader().use { reader ->
+                            publicGson.fromJson(
+                                reader,
+                                Array<KillAuraConfigSample>::class.java
+                            ).toList()
+                        }
+                    } catch (e: Exception) {
+                        emptyList()
+                    }
+                } ?: emptyList()
+        }
+    }
+}

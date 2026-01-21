@@ -222,11 +222,11 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             append("§d╔ Interpolation Mode Configuration\n")
             if (hSpeed != null) {
                 append("§d║ HorizontalSpeed: §7${hSpeed.newValue}\n")
-                append("§d║   §8(${hSpeed.reason})\n")
+                append("§d║   §8(${hSpeed.reasoning})\n")
             }
             if (vSpeed != null) {
                 append("§d║ VerticalSpeed: §7${vSpeed.newValue}\n")
-                append("§d║   §8(${vSpeed.reason})\n")
+                append("§d║   §8(${vSpeed.reasoning})\n")
             }
             if (dcFactor != null) {
                 append("§d║ DirectionChangeFactor: §7${dcFactor.newValue}\n")

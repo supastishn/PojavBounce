@@ -168,7 +168,7 @@ object KillAuraConfigApplier {
         val critMode = when {
             critRate > 0.5f -> "Always"
             critRate > 0.2f -> "Smart"
-            else -> "None"
+            else -> "Ignore"  // Don't wait for crits if player rarely uses them
         }
 
         // === Sprint Analysis ===

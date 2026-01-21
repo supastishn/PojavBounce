@@ -40,6 +40,7 @@ import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraFailSwing
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraFailSwing.dealWithFakeSwing
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraFightBot
+import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraHumanTargeting
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraNotifyWhenFail
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraNotifyWhenFail.failedHits
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraNotifyWhenFail.renderFailedHits
@@ -118,6 +119,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
     init {
         tree(KillAuraAutoBlock)
+        tree(KillAuraHumanTargeting)
         tree(TargetRenderer(this) {
             targetTracker.target?.takeUnless { ModuleElytraTarget.isSameTargetRendering(it) }
         })
@@ -131,6 +133,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         failedHits.clear()
         KillAuraAutoBlock.stopBlocking()
         KillAuraNotifyWhenFail.failedHitsIncrement = 0
+        KillAuraHumanTargeting.reset()
     }
 
     @Suppress("unused")
@@ -269,9 +272,18 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
         ModuleDebug.debugParameter(ModuleKillAura, "Valid Rotation", rotation)
 
+        // Apply micro-corrections to rotation for human-like aim
+        val finalRotation = KillAuraHumanTargeting.applyMicroCorrections(rotation)
+
+        // Check reaction time - delay attack on new targets
+        if (target is LivingEntity && KillAuraHumanTargeting.shouldDelayAttack(target)) {
+            KillAuraAutoBlock.startBlocking()
+            return
+        }
+
         // Attack enemy, according to the attack scheduler
         if (clickScheduler.isClickTick && validateAttack(target)) {
-            clickScheduler.attack(rotation) {
+            clickScheduler.attack(finalRotation) {
                 // On each click, we check if we are still ready to attack
                 if (!validateAttack(target)) {
                     return@attack false

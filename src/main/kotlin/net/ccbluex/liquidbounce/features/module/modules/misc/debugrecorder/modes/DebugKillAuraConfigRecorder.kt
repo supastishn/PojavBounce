@@ -35,7 +35,9 @@ import net.ccbluex.liquidbounce.utils.entity.lastPos
 import net.ccbluex.liquidbounce.utils.entity.lastRotation
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.entity.squaredBoxedDistanceTo
+import net.ccbluex.liquidbounce.utils.entity.wouldBlockHit
 import net.ccbluex.liquidbounce.utils.inventory.InventoryManager.isInventoryOpen
+import net.ccbluex.liquidbounce.utils.item.isMace
 import net.ccbluex.liquidbounce.utils.math.times
 import net.minecraft.network.protocol.game.ServerboundInteractPacket
 import net.minecraft.sounds.SoundEvents
@@ -47,7 +49,9 @@ import net.minecraft.world.entity.EntityType
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.entity.ai.attributes.Attributes
 import net.minecraft.world.entity.monster.Zombie
+import net.minecraft.world.entity.player.Player
 import java.util.UUID
+import kotlin.math.abs
 import kotlin.math.sqrt
 import kotlin.random.Random
 
@@ -91,6 +95,24 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private var lastRotationDeltaYaw = 0f
     private var lastRotationDeltaPitch = 0f
 
+    // Movement correction tracking
+    private var lastAimPointY = 0f
+    private var aimPointYHistory = mutableListOf<Float>()
+    private var ticksSinceLastTarget = 0
+    private var lastServerRotation: Rotation? = null
+
+    // Range exit tracking
+    private var exitingRange = false
+    private var attackedWhileExiting = false
+
+    // Shield tracking
+    private var targetHadShield = false
+    private var attackedShieldingTarget = false
+
+    // Mace tracking
+    private var usingMace = false
+    private var maceSmashPossible = false
+
     /**
      * Check if KillAuraConfig recorder is currently active
      */
@@ -118,6 +140,16 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         attackedWhileInventoryOpen = false
         lastRotationDeltaYaw = 0f
         lastRotationDeltaPitch = 0f
+        lastAimPointY = 0f
+        aimPointYHistory.clear()
+        ticksSinceLastTarget = 0
+        lastServerRotation = null
+        exitingRange = false
+        attackedWhileExiting = false
+        targetHadShield = false
+        attackedShieldingTarget = false
+        usingMace = false
+        maceSmashPossible = false
         super.enable()
     }
 
@@ -236,6 +268,74 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 // Calculate click interval
                 val clickInterval = if (lastClickTime > 0) now - lastClickTime else 0L
 
+                // === NEW DATA CALCULATIONS ===
+
+                // Movement correction data
+                val playerYaw = player.yRot
+                val movementYaw = if (player.deltaMovement.horizontalDistanceSqr() > 0.01) {
+                    kotlin.math.atan2(player.deltaMovement.z, player.deltaMovement.x).toFloat() * 180f / kotlin.math.PI.toFloat() - 90f
+                } else playerYaw
+                val strafeAngle = abs(playerYaw - movementYaw)
+                val movementAligned = strafeAngle < 15f
+
+                // Rotation reset tracking
+                val serverRotation = RotationManager.serverRotation
+                val rotationResetOccurred = if (lastServerRotation != null) {
+                    val diff = current.rotationDeltaTo(player.rotation)
+                    abs(diff.deltaYaw) + abs(diff.deltaPitch) > 45f
+                } else false
+                lastServerRotation = serverRotation
+
+                if (target != null) {
+                    ticksSinceLastTarget = 0
+                } else {
+                    ticksSinceLastTarget++
+                }
+
+                val rotationDiffFromPlayer = current.rotationDeltaTo(player.rotation).let {
+                    abs(it.deltaYaw) + abs(it.deltaPitch)
+                }
+
+                // Aim point analysis
+                val targetBox = target.box
+                val aimPointY = raycastResult?.pos?.y ?: targetBox.center.y
+                val aimPointYRelative = (aimPointY - targetBox.minY).toFloat() / (targetBox.maxY - targetBox.minY).toFloat()
+
+                aimPointYHistory.add(aimPointYRelative)
+                if (aimPointYHistory.size > 10) aimPointYHistory.removeAt(0)
+
+                val aimPointVariance = if (aimPointYHistory.size > 1) {
+                    val avg = aimPointYHistory.average()
+                    aimPointYHistory.map { (it - avg) * (it - avg) }.average().toFloat()
+                } else 0f
+
+                val aimedAtHead = aimPointYRelative > 0.75f
+                val aimedAtBody = aimPointYRelative in 0.3f..0.75f
+                val aimedAtFeet = aimPointYRelative < 0.3f
+
+                val aimPointJitter = if (aimPointYHistory.size >= 2) {
+                    abs(aimPointYHistory.last() - aimPointYHistory[aimPointYHistory.size - 2])
+                } else 0f
+
+                val aimPointSticky = aimPointVariance < 0.01f && aimPointYHistory.size >= 5
+
+                // Range exit prediction
+                val avgRange = 4.2f // Standard KillAura range
+                exitingRange = distance > avgRange * 0.9 && player.deltaMovement.horizontalDistanceSqr() > 0.01
+                if (exitingRange && attackAttempted) {
+                    attackedWhileExiting = true
+                }
+
+                // Shield detection
+                targetHadShield = target is Player && target.wouldBlockHit
+                if (targetHadShield && attackAttempted) {
+                    attackedShieldingTarget = true
+                }
+
+                // Mace detection
+                usingMace = player.mainHandItem.isMace || player.offhandItem.isMace
+                maceSmashPossible = usingMace && player.fallDistance > 1.5f
+
                 recordPacket(
                     KillAuraConfigSample(
                         combatData = CombatSample(
@@ -299,7 +399,31 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                         timeToReachTargetRotation = estimatedTicks,
                         // Inventory state
                         inventoryOpen = wasInventoryOpen,
-                        attackedWhileInventoryOpen = attackedWhileInventoryOpen
+                        attackedWhileInventoryOpen = attackedWhileInventoryOpen,
+                        // Movement correction
+                        movementYaw = movementYaw,
+                        strafeAngle = strafeAngle,
+                        movementAlignedWithRotation = movementAligned,
+                        // Rotation reset
+                        rotationResetOccurred = rotationResetOccurred,
+                        ticksSinceLastTarget = ticksSinceLastTarget,
+                        rotationDiffFromPlayer = rotationDiffFromPlayer,
+                        // Aim point
+                        aimPointYRelative = aimPointYRelative,
+                        aimedAtHead = aimedAtHead,
+                        aimedAtBody = aimedAtBody,
+                        aimedAtFeet = aimedAtFeet,
+                        aimPointJitter = aimPointJitter,
+                        aimPointSticky = aimPointSticky,
+                        // Range exit
+                        exitingRange = exitingRange,
+                        attackedWhileExiting = attackedWhileExiting,
+                        // Shield
+                        targetBlockingWithShield = targetHadShield,
+                        attackedShieldingTarget = attackedShieldingTarget,
+                        // Mace
+                        usingMace = usingMace,
+                        maceSmashPossible = maceSmashPossible
                     )
                 )
 
@@ -313,6 +437,10 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 blockedOnScanRange = false
                 lastSwingWasMiss = false
                 attackedWhileInventoryOpen = false
+                exitingRange = false
+                attackedWhileExiting = false
+                targetHadShield = false
+                attackedShieldingTarget = false
 
                 false
             }

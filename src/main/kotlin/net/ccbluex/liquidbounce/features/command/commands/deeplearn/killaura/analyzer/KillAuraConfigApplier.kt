@@ -19,17 +19,24 @@
 
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer
 
+import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.config.types.RangedValue
 import net.ccbluex.liquidbounce.config.types.Value
+import net.ccbluex.liquidbounce.config.types.nesting.ChoiceConfigurable
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.config.types.nesting.ToggleableConfigurable
 import net.ccbluex.liquidbounce.deeplearn.data.KillAuraConfigSample
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraClicker
+import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraRotationsConfigurable
+import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.KillAuraTargetTracker
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraAutoBlock
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraFailSwing
+import net.ccbluex.liquidbounce.features.module.modules.combat.criticals.ModuleCriticals
 import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.logger
+import kotlin.math.abs
+import kotlin.math.sqrt
 
 /**
  * Comprehensive analyzer and applier for ALL KillAura settings from KillAuraConfigSample data
@@ -45,6 +52,8 @@ object KillAuraConfigApplier {
         // Click timing
         val avgCPS: Float,
         val cpsRange: IntRange,
+        val clickPattern: String,
+        val attackCooldownEnabled: Boolean,
 
         // Criticals analysis
         val critRate: Float,
@@ -58,6 +67,8 @@ object KillAuraConfigApplier {
         // Wall/Raycast
         val wallHitRate: Float,
         val raycastSuccessRate: Float,
+        val raycastMode: String,
+        val aimThroughWalls: Boolean,
 
         // Miss analysis
         val missRate: Float,
@@ -71,9 +82,40 @@ object KillAuraConfigApplier {
         val tickOffRange: IntRange,
         val tickOnRange: IntRange,
         val blockRate: Float,
+        val autoBlockChance: Float,
 
         // Inventory
-        val ignoreOpenInventory: Boolean
+        val ignoreOpenInventory: Boolean,
+        val simulateInventoryClosing: Boolean,
+
+        // Rotation settings
+        val rotationTiming: String,
+        val avgRotationSpeed: Float,
+
+        // Target settings
+        val recommendedFOV: Float,
+        val recommendedHurtTime: Int,
+        val targetPriority: String,
+
+        // NEW: Movement correction
+        val movementCorrectionMode: String,
+        val strafeAngleAvg: Float,
+        val resetThreshold: Float,
+        val ticksUntilReset: Int,
+
+        // NEW: Aim point settings
+        val preferredAimPoint: String,
+        val aimPointJitterEnabled: Boolean,
+        val aimPointStickyEnabled: Boolean,
+
+        // NEW: Range exit ignoring
+        val ignoreWhenExitingRange: Boolean,
+
+        // NEW: Shield break ignoring
+        val ignoreOnShieldBreak: Boolean,
+
+        // NEW: Mace smash ignoring
+        val ignoreOnMaceSmash: Boolean
     )
 
     fun analyze(samples: List<KillAuraConfigSample>): ComprehensiveAnalysis? {
@@ -108,6 +150,14 @@ object KillAuraConfigApplier {
         val minCPS = (cpsList.minOrNull() ?: 8f).toInt().coerceIn(1, 20)
         val maxCPS = (cpsList.maxOrNull() ?: 15f).toInt().coerceIn(minCPS + 1, 20)
 
+        // Click pattern analysis
+        val clickIntervals = samples.filter { it.clickIntervalMs > 0 }.map { it.clickIntervalMs }
+        val clickPattern = analyzeClickPattern(clickIntervals)
+
+        // Attack cooldown analysis
+        val cooldownSamples = samples.filter { it.attackCooldownProgress < 1.0f }
+        val attackCooldownEnabled = cooldownSamples.size.toFloat() / samples.size < 0.3f // Uses cooldown if <30% attacks before ready
+
         // === Criticals Analysis ===
         val attackSamples = samples.filter { it.attackAttempted }
         val critSamples = attackSamples.filter { it.wasCriticalHit }
@@ -129,8 +179,14 @@ object KillAuraConfigApplier {
         val sprintAfterHitSamples = attackSamples.filter { it.sprintingAfterHit }
         val keepsSprint = sprintAfterHitSamples.size.toFloat() / attackSamples.size.coerceAtLeast(1) > 0.5f
 
-        // === Raycast Success ===
+        // === Raycast Analysis ===
         val raycastSuccessRate = samples.count { it.raycastHit }.toFloat() / samples.size
+        val wallHitSuccesses = samples.count { it.targetThroughWall && it.raycastHit }
+        val aimThroughWalls = wallHitSuccesses.toFloat() / samples.size.coerceAtLeast(1) > 0.1f
+
+        // Raycast mode from data
+        val raycastModes = samples.map { it.raycastModeUsed }.groupingBy { it }.eachCount()
+        val raycastMode = raycastModes.maxByOrNull { it.value }?.key ?: "All"
 
         // === Miss/FailSwing Analysis ===
         val missSamples = samples.filter { it.swingAtAir || it.swingWhileMiss }
@@ -167,9 +223,98 @@ object KillAuraConfigApplier {
         val tickOnMin = if (ticksAfterHit.isNotEmpty()) ticksAfterHit.minOrNull()?.coerceIn(0, 5) ?: 0 else 0
         val tickOnMax = if (ticksAfterHit.isNotEmpty()) ticksAfterHit.maxOrNull()?.coerceIn(tickOnMin, 5) ?: 0 else 0
 
+        // AutoBlock chance (how often does the player block when they could)
+        val autoBlockChance = if (blockingSamples.isNotEmpty()) {
+            (blockRate * 100).coerceIn(10f, 100f)
+        } else 100f
+
         // === Inventory Analysis ===
         val inventoryAttacks = attackSamples.filter { it.attackedWhileInventoryOpen }
         val ignoreOpenInventory = inventoryAttacks.size.toFloat() / attackSamples.size.coerceAtLeast(1) > 0.1f
+
+        // Simulate inventory closing - if attacking while inventory is open
+        val simulateInventoryClosing = ignoreOpenInventory && inventoryAttacks.isNotEmpty()
+
+        // === Rotation Analysis ===
+        val rotationDeltas = samples.filter { it.rotationDeltaYaw != 0f || it.rotationDeltaPitch != 0f }
+        val avgRotationSpeed = if (rotationDeltas.isNotEmpty()) {
+            rotationDeltas.map { sqrt(it.rotationDeltaYaw * it.rotationDeltaYaw + it.rotationDeltaPitch * it.rotationDeltaPitch) }
+                .average().toFloat()
+        } else 30f
+
+        // Rotation timing analysis
+        val instantRotations = samples.count { it.timeToReachTargetRotation <= 1 }
+        val rotationTiming = when {
+            instantRotations.toFloat() / samples.size > 0.7f -> "OnTick" // Mostly instant rotations
+            avgRotationSpeed > 45f -> "Snap" // Fast rotations
+            else -> "Normal"
+        }
+
+        // === Target Selection Analysis ===
+        val fovAngles = samples.filter { it.targetInFOV }.map { it.combatData.distance }
+        val targetInFovRate = samples.count { it.targetInFOV }.toFloat() / samples.size
+        val recommendedFOV = when {
+            targetInFovRate > 0.95f -> 180f // Attacks targets all around
+            targetInFovRate > 0.8f -> 120f
+            targetInFovRate > 0.6f -> 90f
+            else -> 60f
+        }
+
+        // HurtTime analysis
+        val hurtTimes = samples.map { it.combatData.hurtTime }.filter { it >= 0 }
+        val maxHurtTime = if (hurtTimes.isNotEmpty()) hurtTimes.maxOrNull()?.coerceIn(0, 10) ?: 10 else 10
+
+        // Target priority analysis (based on what targets were selected)
+        val targetPriority = analyzeTargetPriority(samples)
+
+        // === NEW: Movement Correction Analysis ===
+        val strafeAngles = samples.filter { it.strafeAngle > 0 }.map { it.strafeAngle }
+        val strafeAngleAvg = if (strafeAngles.isNotEmpty()) strafeAngles.average().toFloat() else 0f
+        val movementAlignedRate = samples.count { it.movementAlignedWithRotation }.toFloat() / samples.size
+        val movementCorrectionMode = when {
+            movementAlignedRate > 0.9f -> "Off" // Movement already aligned
+            strafeAngleAvg > 30f -> "Silent" // High strafe, use silent correction
+            else -> "Off"
+        }
+
+        // Rotation reset analysis
+        val resetOccurrences = samples.count { it.rotationResetOccurred }
+        val avgTicksSinceTarget = samples.filter { it.ticksSinceLastTarget > 0 }.map { it.ticksSinceLastTarget }.average()
+        val resetThreshold = samples.filter { it.rotationDiffFromPlayer > 0 }
+            .map { it.rotationDiffFromPlayer }
+            .maxOrNull() ?: 2f
+        val ticksUntilReset = if (avgTicksSinceTarget.isFinite()) avgTicksSinceTarget.toInt().coerceIn(1, 30) else 5
+
+        // === NEW: Aim Point Analysis ===
+        val headAimRate = samples.count { it.aimedAtHead }.toFloat() / samples.size
+        val bodyAimRate = samples.count { it.aimedAtBody }.toFloat() / samples.size
+        val feetAimRate = samples.count { it.aimedAtFeet }.toFloat() / samples.size
+
+        val preferredAimPoint = when {
+            headAimRate > 0.6f -> "Head"
+            feetAimRate > 0.4f -> "Feet"
+            else -> "Body"
+        }
+
+        val avgJitter = samples.filter { it.aimPointJitter > 0 }.map { it.aimPointJitter }.average()
+        val aimPointJitterEnabled = avgJitter > 0.05 && avgJitter.isFinite()
+
+        val stickyRate = samples.count { it.aimPointSticky }.toFloat() / samples.size
+        val aimPointStickyEnabled = stickyRate > 0.5f
+
+        // === NEW: Range Exit Analysis ===
+        val exitingSamples = samples.filter { it.exitingRange }
+        val attackedWhileExiting = exitingSamples.count { it.attackedWhileExiting }
+        val ignoreWhenExitingRange = attackedWhileExiting.toFloat() / exitingSamples.size.coerceAtLeast(1) > 0.3f
+
+        // === NEW: Shield Break Analysis ===
+        val shieldSamples = samples.filter { it.targetBlockingWithShield }
+        val attackedShielding = shieldSamples.count { it.attackedShieldingTarget }
+        val ignoreOnShieldBreak = attackedShielding.toFloat() / shieldSamples.size.coerceAtLeast(1) > 0.5f
+
+        // === NEW: Mace Smash Analysis ===
+        val maceSamples = samples.filter { it.usingMace && it.maceSmashPossible }
+        val ignoreOnMaceSmash = maceSamples.size.toFloat() / samples.size > 0.1f
 
         return ComprehensiveAnalysis(
             recommendedRange = avgRange.coerceIn(1f, 6f),
@@ -177,6 +322,8 @@ object KillAuraConfigApplier {
             recommendedScanExtraRange = scanExtraStart..scanExtraEnd,
             avgCPS = avgCPS,
             cpsRange = minCPS..maxCPS,
+            clickPattern = clickPattern,
+            attackCooldownEnabled = attackCooldownEnabled,
             critRate = critRate,
             usesCrits = usesCrits,
             critMode = critMode,
@@ -184,6 +331,8 @@ object KillAuraConfigApplier {
             sprintRate = sprintRate,
             wallHitRate = wallHitRate,
             raycastSuccessRate = raycastSuccessRate,
+            raycastMode = raycastMode,
+            aimThroughWalls = aimThroughWalls,
             missRate = missRate,
             avgMissDistance = avgMissDistance,
             failSwingEnabled = failSwingEnabled,
@@ -193,8 +342,69 @@ object KillAuraConfigApplier {
             tickOffRange = tickOffMin..tickOffMax,
             tickOnRange = tickOnMin..tickOnMax,
             blockRate = blockRate,
-            ignoreOpenInventory = ignoreOpenInventory
+            autoBlockChance = autoBlockChance,
+            ignoreOpenInventory = ignoreOpenInventory,
+            simulateInventoryClosing = simulateInventoryClosing,
+            rotationTiming = rotationTiming,
+            avgRotationSpeed = avgRotationSpeed,
+            recommendedFOV = recommendedFOV,
+            recommendedHurtTime = maxHurtTime,
+            targetPriority = targetPriority,
+            // New fields
+            movementCorrectionMode = movementCorrectionMode,
+            strafeAngleAvg = strafeAngleAvg,
+            resetThreshold = resetThreshold,
+            ticksUntilReset = ticksUntilReset,
+            preferredAimPoint = preferredAimPoint,
+            aimPointJitterEnabled = aimPointJitterEnabled,
+            aimPointStickyEnabled = aimPointStickyEnabled,
+            ignoreWhenExitingRange = ignoreWhenExitingRange,
+            ignoreOnShieldBreak = ignoreOnShieldBreak,
+            ignoreOnMaceSmash = ignoreOnMaceSmash
         )
+    }
+
+    private fun analyzeClickPattern(intervals: List<Long>): String {
+        if (intervals.size < 5) return "Stabilized"
+
+        val avg = intervals.average()
+        val variance = intervals.map { (it - avg) * (it - avg) }.average()
+        val stdDev = sqrt(variance)
+        val coefficientOfVariation = if (avg > 0) stdDev / avg else 0.0
+
+        // Check for double clicks (very short intervals followed by normal)
+        val shortIntervals = intervals.count { it < 30 }
+        val hasDoubleClicks = shortIntervals.toFloat() / intervals.size > 0.2f
+
+        // Check for bursts (clusters of fast clicks)
+        val burstCount = intervals.windowed(3).count { window ->
+            window.all { it < avg * 0.6 }
+        }
+        val hasBursts = burstCount.toFloat() / intervals.size > 0.1f
+
+        return when {
+            hasDoubleClicks -> "DoubleClick"
+            hasBursts -> "Butterfly"
+            coefficientOfVariation < 0.15 -> "Stabilized" // Very consistent
+            coefficientOfVariation < 0.25 -> "Efficient"
+            coefficientOfVariation > 0.4 -> "NormalDistribution" // High variance
+            else -> "Stabilized"
+        }
+    }
+
+    private fun analyzeTargetPriority(samples: List<KillAuraConfigSample>): String {
+        // Analyze what type of targets are being selected
+        val closestSelected = samples.count { it.closestTargetDistance <= it.actualRange * 1.1f }
+        val closestRate = closestSelected.toFloat() / samples.size
+
+        val lowHealthSelected = samples.count { it.targetHealth < 10f }
+        val lowHealthRate = lowHealthSelected.toFloat() / samples.size
+
+        return when {
+            closestRate > 0.8f -> "Distance"
+            lowHealthRate > 0.6f -> "Health"
+            else -> "Distance" // Default
+        }
     }
 
     @Suppress("UNCHECKED_CAST")
@@ -212,19 +422,48 @@ object KillAuraConfigApplier {
         applyFloatRangeValue(ModuleKillAura, "scanExtraRange", analysis.recommendedScanExtraRange)
         chat("§a  ✓ ScanExtraRange: §f${analysis.recommendedScanExtraRange.start.format()}..${analysis.recommendedScanExtraRange.endInclusive.format()}")
 
+        // === Apply Raycast Mode ===
+        chat("§e▸ Raycast:")
+        applyEnumValue(ModuleKillAura, "raycast", analysis.raycastMode)
+        chat("§a  ✓ Raycast: §f${analysis.raycastMode}")
+
         // === Apply Combat Style ===
         chat("§e▸ Combat Style:")
         applyBooleanValue(ModuleKillAura, "keepSprint", analysis.keepsSprint)
         chat("§a  ✓ KeepSprint: §f${analysis.keepsSprint} §8(${(analysis.sprintRate * 100).toInt()}% sprint rate)")
 
-        // Criticals mode
+        // Apply Criticals mode
+        applyEnumValue(ModuleKillAura, "criticals", analysis.critMode)
         chat("§a  ✓ Criticals: §f${analysis.critMode} §8(${(analysis.critRate * 100).toInt()}% crit rate)")
-        chat("§8    Note: Set Criticals mode manually in ClickGUI")
 
         // === Apply CPS Settings ===
         chat("§e▸ Click Timing:")
         applyIntRangeValue(KillAuraClicker, "cps", analysis.cpsRange)
         chat("§a  ✓ CPS: §f${analysis.cpsRange.first}-${analysis.cpsRange.last} §8(avg: ${analysis.avgCPS.toInt()})")
+
+        // Apply click pattern/technique
+        applyEnumValue(KillAuraClicker, "technique", analysis.clickPattern)
+        chat("§a  ✓ Technique: §f${analysis.clickPattern}")
+
+        // Apply attack cooldown
+        applyBooleanValue(KillAuraClicker, "attackCooldown", analysis.attackCooldownEnabled)
+        chat("§a  ✓ AttackCooldown: §f${analysis.attackCooldownEnabled}")
+
+        // === Apply Rotation Settings ===
+        chat("§e▸ Rotations:")
+        applyEnumValue(KillAuraRotationsConfigurable, "rotationTiming", analysis.rotationTiming)
+        chat("§a  ✓ RotationTiming: §f${analysis.rotationTiming}")
+
+        applyBooleanValue(KillAuraRotationsConfigurable, "throughWalls", analysis.aimThroughWalls)
+        chat("§a  ✓ ThroughWalls: §f${analysis.aimThroughWalls}")
+
+        // === Apply Target Settings ===
+        chat("§e▸ Target:")
+        applyFloatValue(KillAuraTargetTracker, "fov", analysis.recommendedFOV)
+        chat("§a  ✓ FOV: §f${analysis.recommendedFOV.toInt()}°")
+
+        applyIntValue(KillAuraTargetTracker, "hurtTime", analysis.recommendedHurtTime)
+        chat("§a  ✓ HurtTime: §f${analysis.recommendedHurtTime}")
 
         // === Apply FailSwing Settings ===
         chat("§e▸ FailSwing:")
@@ -245,10 +484,12 @@ object KillAuraConfigApplier {
             applyBooleanValue(KillAuraAutoBlock, "onScanRange", analysis.autoBlockOnScanRange)
             applyIntRangeValue(KillAuraAutoBlock, "tickOff", analysis.tickOffRange)
             applyIntRangeValue(KillAuraAutoBlock, "tickOn", analysis.tickOnRange)
+            applyFloatValue(KillAuraAutoBlock, "chance", analysis.autoBlockChance)
             chat("§a  ✓ AutoBlock: §fEnabled §8(${(analysis.blockRate * 100).toInt()}% block rate)")
             chat("§a  ✓ OnScanRange: §f${analysis.autoBlockOnScanRange}")
             chat("§a  ✓ TickOff: §f${analysis.tickOffRange.first}..${analysis.tickOffRange.last}")
             chat("§a  ✓ TickOn: §f${analysis.tickOnRange.first}..${analysis.tickOnRange.last}")
+            chat("§a  ✓ Chance: §f${analysis.autoBlockChance.toInt()}%")
         } else {
             KillAuraAutoBlock.enabled = false
             chat("§7  ✓ AutoBlock: §fDisabled §8(rarely blocks)")
@@ -259,6 +500,36 @@ object KillAuraConfigApplier {
         applyBooleanValue(ModuleKillAura, "ignoreOpenInventory", analysis.ignoreOpenInventory)
         chat("§a  ✓ IgnoreOpenInventory: §f${analysis.ignoreOpenInventory}")
 
+        applyBooleanValue(ModuleKillAura, "simulateInventoryClosing", analysis.simulateInventoryClosing)
+        chat("§a  ✓ SimulateInventoryClosing: §f${analysis.simulateInventoryClosing}")
+
+        // === Apply Movement Correction ===
+        chat("§e▸ Movement Correction:")
+        applyEnumValue(KillAuraRotationsConfigurable, "movementCorrection", analysis.movementCorrectionMode)
+        chat("§a  ✓ MovementCorrection: §f${analysis.movementCorrectionMode}")
+
+        // === Apply Rotation Reset Settings ===
+        chat("§e▸ Rotation Reset:")
+        applyFloatValue(KillAuraRotationsConfigurable, "resetThreshold", analysis.resetThreshold)
+        chat("§a  ✓ ResetThreshold: §f${analysis.resetThreshold.format()}°")
+
+        applyIntValue(KillAuraRotationsConfigurable, "ticksUntilReset", analysis.ticksUntilReset)
+        chat("§a  ✓ TicksUntilReset: §f${analysis.ticksUntilReset}")
+
+        // === Apply ItemCooldown Settings ===
+        chat("§e▸ Item Cooldown:")
+        val itemCooldown = KillAuraClicker.containedValues.find { it.name.equals("itemCooldown", true) }
+        if (itemCooldown != null) {
+            applyBooleanValue(itemCooldown as Configurable, "ignoreWhenExitingRange", analysis.ignoreWhenExitingRange)
+            chat("§a  ✓ IgnoreWhenExitingRange: §f${analysis.ignoreWhenExitingRange}")
+
+            applyBooleanValue(itemCooldown, "ignoreOnShieldBreak", analysis.ignoreOnShieldBreak)
+            chat("§a  ✓ IgnoreOnShieldBreak: §f${analysis.ignoreOnShieldBreak}")
+
+            applyBooleanValue(itemCooldown, "ignoreOnMaceSmash", analysis.ignoreOnMaceSmash)
+            chat("§a  ✓ IgnoreOnMaceSmash: §f${analysis.ignoreOnMaceSmash}")
+        }
+
         // === Report Accuracy ===
         chat("§e▸ Accuracy Stats:")
         chat("§7  Raycast Success: §f${(analysis.raycastSuccessRate * 100).toInt()}%")
@@ -266,6 +537,7 @@ object KillAuraConfigApplier {
         if (analysis.missRate > 0) {
             chat("§7  Avg Miss Distance: §f${analysis.avgMissDistance.format()}")
         }
+        chat("§7  Avg Rotation Speed: §f${analysis.avgRotationSpeed.format()}°/tick")
 
         chat("§6━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
         chat("§a✓ All settings applied successfully!")
@@ -281,13 +553,26 @@ object KillAuraConfigApplier {
             append("§6║   Range: §f${analysis.recommendedRange.format()}\n")
             append("§6║   WallRange: §f${analysis.recommendedWallRange.format()} §8(${(analysis.wallHitRate * 100).toInt()}% walls)\n")
             append("§6║   ScanExtraRange: §f${analysis.recommendedScanExtraRange.start.format()}..${analysis.recommendedScanExtraRange.endInclusive.format()}\n")
+            append("§6║   Raycast: §f${analysis.raycastMode}\n")
             append("§6║\n")
             append("§6║ §eClick Timing: §8(will apply)\n")
             append("§6║   CPS: §f${analysis.cpsRange.first}-${analysis.cpsRange.last} §8(avg: ${analysis.avgCPS.toInt()})\n")
+            append("§6║   Technique: §f${analysis.clickPattern}\n")
+            append("§6║   AttackCooldown: §f${analysis.attackCooldownEnabled}\n")
             append("§6║\n")
             append("§6║ §eCombat Style: §8(will apply)\n")
             append("§6║   Criticals: §f${analysis.critMode} §8(${(analysis.critRate * 100).toInt()}% rate)\n")
             append("§6║   KeepSprint: §f${analysis.keepsSprint} §8(${(analysis.sprintRate * 100).toInt()}% sprint)\n")
+            append("§6║\n")
+            append("§6║ §eRotations: §8(will apply)\n")
+            append("§6║   Timing: §f${analysis.rotationTiming}\n")
+            append("§6║   ThroughWalls: §f${analysis.aimThroughWalls}\n")
+            append("§6║   Avg Speed: §f${analysis.avgRotationSpeed.format()}°/tick\n")
+            append("§6║\n")
+            append("§6║ §eTarget: §8(will apply)\n")
+            append("§6║   FOV: §f${analysis.recommendedFOV.toInt()}°\n")
+            append("§6║   HurtTime: §f${analysis.recommendedHurtTime}\n")
+            append("§6║   Priority: §f${analysis.targetPriority}\n")
             append("§6║\n")
             append("§6║ §eFailSwing: §8(will apply)\n")
             append("§6║   Enabled: §f${analysis.failSwingEnabled}\n")
@@ -301,10 +586,12 @@ object KillAuraConfigApplier {
                 append("§6║   OnScanRange: §f${analysis.autoBlockOnScanRange}\n")
                 append("§6║   TickOff: §f${analysis.tickOffRange.first}..${analysis.tickOffRange.last}\n")
                 append("§6║   TickOn: §f${analysis.tickOnRange.first}..${analysis.tickOnRange.last}\n")
+                append("§6║   Chance: §f${analysis.autoBlockChance.toInt()}%\n")
             }
             append("§6║\n")
             append("§6║ §eInventory: §8(will apply)\n")
             append("§6║   IgnoreOpenInventory: §f${analysis.ignoreOpenInventory}\n")
+            append("§6║   SimulateInventoryClosing: §f${analysis.simulateInventoryClosing}\n")
             append("§6║\n")
             append("§6║ §eAccuracy:\n")
             append("§6║   Raycast Success: §f${(analysis.raycastSuccessRate * 100).toInt()}%\n")
@@ -330,6 +617,26 @@ object KillAuraConfigApplier {
                 true
             } else {
                 logger.warn("Float value $name not found in ${configurable.name}")
+                false
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to set $name to $value", e)
+            false
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun applyIntValue(configurable: Configurable, name: String, value: Int): Boolean {
+        return try {
+            val valueObj = configurable.containedValues.find {
+                it.name.equals(name, ignoreCase = true)
+            } as? Value<Int>
+
+            if (valueObj != null) {
+                valueObj.set(value)
+                true
+            } else {
+                logger.warn("Int value $name not found in ${configurable.name}")
                 false
             }
         } catch (e: Exception) {
@@ -394,6 +701,40 @@ object KillAuraConfigApplier {
             }
         } catch (e: Exception) {
             logger.error("Failed to set $name to $range", e)
+            false
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun applyEnumValue(configurable: Configurable, name: String, value: String): Boolean {
+        return try {
+            val valueObj = configurable.containedValues.find {
+                it.name.equals(name, ignoreCase = true)
+            } as? Value<NamedChoice>
+
+            if (valueObj != null) {
+                // Find the enum value that matches the string
+                val currentValue = valueObj.get()
+                val enumClass = currentValue::class.java
+                val enumConstants = enumClass.enumConstants as? Array<out NamedChoice>
+
+                val matchingConstant = enumConstants?.find {
+                    it.choiceName.equals(value, ignoreCase = true)
+                }
+
+                if (matchingConstant != null) {
+                    (valueObj as Value<Any>).set(matchingConstant)
+                    true
+                } else {
+                    logger.warn("Enum value $value not found for $name in ${configurable.name}")
+                    false
+                }
+            } else {
+                logger.warn("Enum value $name not found in ${configurable.name}")
+                false
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to set $name to $value", e)
             false
         }
     }

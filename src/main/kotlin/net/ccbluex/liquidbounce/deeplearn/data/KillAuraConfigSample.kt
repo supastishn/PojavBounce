@@ -143,7 +143,55 @@ data class KillAuraConfigSample(
     @SerializedName("inventory_open")
     val inventoryOpen: Boolean = false,
     @SerializedName("attacked_while_inventory_open")
-    val attackedWhileInventoryOpen: Boolean = false
+    val attackedWhileInventoryOpen: Boolean = false,
+
+    // === MOVEMENT CORRECTION DATA ===
+    @SerializedName("movement_yaw")
+    val movementYaw: Float = 0f,
+    @SerializedName("strafe_angle")
+    val strafeAngle: Float = 0f,
+    @SerializedName("movement_aligned_with_rotation")
+    val movementAlignedWithRotation: Boolean = false,
+
+    // === ROTATION RESET DATA ===
+    @SerializedName("rotation_reset_occurred")
+    val rotationResetOccurred: Boolean = false,
+    @SerializedName("ticks_since_last_target")
+    val ticksSinceLastTarget: Int = 0,
+    @SerializedName("rotation_diff_from_player")
+    val rotationDiffFromPlayer: Float = 0f,
+
+    // === AIM POINT DATA ===
+    @SerializedName("aim_point_y_relative")
+    val aimPointYRelative: Float = 0f,
+    @SerializedName("aimed_at_head")
+    val aimedAtHead: Boolean = false,
+    @SerializedName("aimed_at_body")
+    val aimedAtBody: Boolean = false,
+    @SerializedName("aimed_at_feet")
+    val aimedAtFeet: Boolean = false,
+    @SerializedName("aim_point_jitter")
+    val aimPointJitter: Float = 0f,
+    @SerializedName("aim_point_sticky")
+    val aimPointSticky: Boolean = false,
+
+    // === RANGE EXIT PREDICTION (for ignoreWhenExitingRange) ===
+    @SerializedName("exiting_range")
+    val exitingRange: Boolean = false,
+    @SerializedName("attacked_while_exiting")
+    val attackedWhileExiting: Boolean = false,
+
+    // === SHIELD DATA (for ignoreOnShieldBreak) ===
+    @SerializedName("target_blocking_with_shield")
+    val targetBlockingWithShield: Boolean = false,
+    @SerializedName("attacked_shielding_target")
+    val attackedShieldingTarget: Boolean = false,
+
+    // === MACE DATA (for ignoreOnMaceSmash) ===
+    @SerializedName("using_mace")
+    val usingMace: Boolean = false,
+    @SerializedName("mace_smash_possible")
+    val maceSmashPossible: Boolean = false
 ) {
     companion object {
         /**

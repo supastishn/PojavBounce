@@ -321,17 +321,17 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         } else if (KillAuraFightBot.enabled) {
             KillAuraFightBot.updateTarget()
 
-            // Skip rotation when manual aim is enabled
-            if (!rotations.manualAim) {
-                RotationManager.setRotationTarget(
-                    rotations.toRotationTarget(
-                        KillAuraFightBot.getMovementRotation(),
-                        considerInventory = !ignoreOpenInventory
-                    ),
-                    priority = Priority.IMPORTANT_FOR_USAGE_2,
-                    provider = ModuleKillAura
-                )
-            }
+            // When manual aim is enabled, use lower priority so player can override
+            val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
+
+            RotationManager.setRotationTarget(
+                rotations.toRotationTarget(
+                    KillAuraFightBot.getMovementRotation(),
+                    considerInventory = !ignoreOpenInventory
+                ),
+                priority = priority,
+                provider = ModuleKillAura
+            )
         } else {
             targetTracker.reset()
         }
@@ -366,18 +366,18 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             }
         }
 
-        // Skip rotation when manual aim is enabled
-        if (!rotations.manualAim) {
-            RotationManager.setRotationTarget(
-                rotations.toRotationTarget(
-                    rotation,
-                    entity,
-                    considerInventory = !ignoreOpenInventory
-                ),
-                priority = Priority.IMPORTANT_FOR_USAGE_2,
-                provider = this@ModuleKillAura
-            )
-        }
+        // When manual aim is enabled, use lower priority so player can override
+        val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
+
+        RotationManager.setRotationTarget(
+            rotations.toRotationTarget(
+                rotation,
+                entity,
+                considerInventory = !ignoreOpenInventory
+            ),
+            priority = priority,
+            provider = this@ModuleKillAura
+        )
 
         return true
     }

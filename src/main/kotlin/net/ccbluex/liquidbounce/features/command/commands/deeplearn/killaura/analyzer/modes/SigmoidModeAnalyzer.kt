@@ -61,19 +61,20 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
         val yawSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.x.toDouble()) }
         val pitchSpeeds = samples.map { kotlin.math.abs(it.velocityDelta.y.toDouble()) }
 
-        // Use P40 and P80 for ranges
+        // Use P60 and P90 for more aggressive ranges
         val sortedYaw = yawSpeeds.sorted()
         val sortedPitch = pitchSpeeds.sorted()
 
-        val yawP40 = sortedYaw[(sortedYaw.size * 0.40).toInt().coerceIn(0, sortedYaw.size - 1)]
-        val yawP80 = sortedYaw[(sortedYaw.size * 0.80).toInt().coerceIn(0, sortedYaw.size - 1)]
-        val pitchP40 = sortedPitch[(sortedPitch.size * 0.40).toInt().coerceIn(0, sortedPitch.size - 1)]
-        val pitchP80 = sortedPitch[(sortedPitch.size * 0.80).toInt().coerceIn(0, sortedPitch.size - 1)]
+        val yawP60 = sortedYaw[(sortedYaw.size * 0.60).toInt().coerceIn(0, sortedYaw.size - 1)]
+        val yawP90 = sortedYaw[(sortedYaw.size * 0.90).toInt().coerceIn(0, sortedYaw.size - 1)]
+        val pitchP60 = sortedPitch[(sortedPitch.size * 0.60).toInt().coerceIn(0, sortedPitch.size - 1)]
+        val pitchP90 = sortedPitch[(sortedPitch.size * 0.90).toInt().coerceIn(0, sortedPitch.size - 1)]
 
-        val horizontalSpeedStart = yawP40.coerceIn(1.0, 180.0).toFloat()
-        val horizontalSpeed = yawP80.coerceIn(horizontalSpeedStart.toDouble() + 5.0, 180.0).toFloat()
-        val verticalSpeedStart = pitchP40.coerceIn(1.0, 180.0).toFloat()
-        val verticalSpeed = pitchP80.coerceIn(verticalSpeedStart.toDouble() + 5.0, 180.0).toFloat()
+        // Scale up for viable speeds (1.6x-2.0x multiplier with 20° minimum)
+        val horizontalSpeedStart = (yawP60 * 1.6).coerceIn(20.0, 180.0).toFloat()
+        val horizontalSpeed = (yawP90 * 2.0).coerceIn(horizontalSpeedStart.toDouble() + 15.0, 180.0).toFloat()
+        val verticalSpeedStart = (pitchP60 * 1.6).coerceIn(15.0, 180.0).toFloat()
+        val verticalSpeed = (pitchP90 * 2.0).coerceIn(verticalSpeedStart.toDouble() + 12.0, 180.0).toFloat()
 
         val changes = mutableMapOf<String, SettingChange>()
 
@@ -95,14 +96,14 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "HorizontalTurnSpeed",
             "Current",
             "${"%.1f".format(horizontalSpeedStart)}..${"%.1f".format(horizontalSpeed)}",
-            "From P40-P80 yaw speeds: ${"%.2f".format(yawP40)}-${"%.2f".format(yawP80)}°/tick"
+            "From P60-P90 yaw speeds: ${"%.2f".format(yawP60)}-${"%.2f".format(yawP90)}°/tick (1.6x-2.0x scaled)"
         )
 
         changes["verticalTurnSpeed"] = SettingChange(
             "VerticalTurnSpeed",
             "Current",
             "${"%.1f".format(verticalSpeedStart)}..${"%.1f".format(verticalSpeed)}",
-            "From P40-P80 pitch speeds: ${"%.2f".format(pitchP40)}-${"%.2f".format(pitchP80)}°/tick"
+            "From P60-P90 pitch speeds: ${"%.2f".format(pitchP60)}-${"%.2f".format(pitchP90)}°/tick (1.6x-2.0x scaled)"
         )
 
         val stats = mapOf(
@@ -113,10 +114,10 @@ object SigmoidModeAnalyzer : KillAuraAnalyzer {
             "horizontalSpeed" to horizontalSpeed.toDouble(),
             "verticalSpeedStart" to verticalSpeedStart.toDouble(),
             "verticalSpeed" to verticalSpeed.toDouble(),
-            "yawP40" to yawP40,
-            "yawP80" to yawP80,
-            "pitchP40" to pitchP40,
-            "pitchP80" to pitchP80,
+            "yawP60" to yawP60,
+            "yawP90" to yawP90,
+            "pitchP60" to pitchP60,
+            "pitchP90" to pitchP90,
             "avgMagnitude" to avgMagnitude
         )
 

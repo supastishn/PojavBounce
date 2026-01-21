@@ -156,24 +156,24 @@ object CommandKillAuraAutoConfig : Command.Factory {
             chat("§6━━━━━ Advanced Analysis ━━━━━")
             chat("")
 
-            // Click timing analysis
-            val clickResult = ClickTimingAnalyzer.analyze(advancedSamples)
-            chat(ClickTimingAnalyzer.report(clickResult))
+            // Comprehensive analysis and apply
+            val comprehensiveResult = KillAuraConfigApplier.analyze(advancedSamples)
+            chat(KillAuraConfigApplier.report(comprehensiveResult))
             chat("")
 
-            // Advanced range analysis with wall detection
-            val rangeResult = AdvancedRangeAnalyzer.analyze(advancedSamples)
-            chat(AdvancedRangeAnalyzer.report(rangeResult))
-            chat("")
+            // Apply comprehensive settings
+            if (comprehensiveResult != null) {
+                KillAuraConfigApplier.apply(comprehensiveResult)
+                chat("")
+            }
         }
 
         chat("§6Mode-Specific Tuning for §b$mode§6:")
         chat("  §a✓ Rotation mode and settings have been applied automatically!")
-        chat("  §7• Fine-tune in ClickGUI → KillAura → Rotations if needed")
         if (advancedSamples.isNotEmpty()) {
-            chat("  §7• Advanced range/click data analyzed from KillAuraConfig training")
+            chat("  §a✓ Range, WallRange, and combat style settings applied from training!")
         } else {
-            chat("  §8• Tip: Use DebugRecorder → KillAuraConfig mode for more detailed analysis")
+            chat("  §8• Tip: Use DebugRecorder → KillAuraConfig mode for comprehensive config")
         }
         chat("")
         chat("§a✓ AutoConfig finished! Settings applied.")

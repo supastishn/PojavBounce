@@ -58,16 +58,20 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         // CRITICAL FIX: Calculate what % of remaining distance was covered each tick
         // InterpolationAngleSmooth expects percentage (1-100%) of remaining distance per tick
         // NOT degrees/tick divided by 180!
+        //
+        // IMPORTANT: Filter out samples where:
+        // 1. remaining < 1° (avoid division by small numbers)
+        // 2. moved < 0.1° (no significant movement, would add 0% and skew percentiles down)
         val yawPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
             val moved = kotlin.math.abs(sample.velocityDelta.x)
-            // Filter out samples where remaining distance is too small to avoid division issues
-            if (remaining > 1f) (moved / remaining * 100.0) else null
+            // Filter out samples with no significant movement or small remaining distance
+            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
         }
         val pitchPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
             val moved = kotlin.math.abs(sample.velocityDelta.y)
-            if (remaining > 1f) (moved / remaining * 100.0) else null
+            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
         }
 
         // Use percentiles from the calculated percentages
@@ -152,7 +156,11 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "yawP75" to yawP75,
             "pitchP25" to pitchP25,
             "pitchP75" to pitchP75,
-            "avgRotationMag" to avgRotationMag
+            "avgRotationMag" to avgRotationMag,
+            // Debug stats to diagnose calculation issues
+            "totalSamples" to samples.size.toDouble(),
+            "validYawSamples" to yawPercentages.size.toDouble(),
+            "validPitchSamples" to pitchPercentages.size.toDouble()
         )
 
         return AnalysisResult("InterpolationMode", changes, stats, 0.75f)
@@ -206,14 +214,19 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val midpoint = result.changes["midpoint"]
         val avgVel = result.stats["avgVelocity"]?.let { "%.2f".format(it) } ?: "?"
         val maxVel = result.stats["maxVelocity"]?.let { "%.2f".format(it) } ?: "?"
+        val totalSamples = result.stats["totalSamples"]?.toInt() ?: 0
+        val validYaw = result.stats["validYawSamples"]?.toInt() ?: 0
+        val validPitch = result.stats["validPitchSamples"]?.toInt() ?: 0
 
         return buildString {
             append("§d╔ Interpolation Mode Configuration\n")
             if (hSpeed != null) {
                 append("§d║ HorizontalSpeed: §7${hSpeed.newValue}\n")
+                append("§d║   §8(${hSpeed.reasoning})\n")
             }
             if (vSpeed != null) {
                 append("§d║ VerticalSpeed: §7${vSpeed.newValue}\n")
+                append("§d║   §8(${vSpeed.reasoning})\n")
             }
             if (dcFactor != null) {
                 append("§d║ DirectionChangeFactor: §7${dcFactor.newValue}\n")
@@ -222,6 +235,7 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
                 append("§d║ Midpoint: §7${midpoint.newValue}\n")
             }
             append("§d║ Velocity: Avg=${avgVel}, Max=${maxVel}\n")
+            append("§d║ Samples: ${totalSamples} total, ${validYaw} valid yaw, ${validPitch} valid pitch\n")
             append("§d╚ Bezier/Sigmoid interpolation - smooth curved paths")
         }
     }

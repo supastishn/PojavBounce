@@ -60,18 +60,27 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         // NOT degrees/tick divided by 180!
         //
         // IMPORTANT: Filter out samples where:
-        // 1. remaining < 1° (avoid division by small numbers)
-        // 2. moved < 0.1° (no significant movement, would add 0% and skew percentiles down)
+        // 1. remaining < 5° (cursor already on target - would skew toward slow values)
+        // 2. moved < 0.1° (no significant movement)
+        // 3. remaining > 90° (extreme flicks - likely target switching, not normal aiming)
+        val minRemaining = 5f   // Skip "already on target" samples
+        val maxRemaining = 90f  // Skip extreme flicks
+        val minMoved = 0.1f     // Skip no-movement samples
+
         val yawPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
             val moved = kotlin.math.abs(sample.velocityDelta.x)
-            // Filter out samples with no significant movement or small remaining distance
-            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
+            // Only include active targeting samples (not already on target, not extreme flicks)
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
         }
         val pitchPercentages = samples.mapNotNull { sample ->
             val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
             val moved = kotlin.math.abs(sample.velocityDelta.y)
-            if (remaining > 1f && moved > 0.1f) (moved / remaining * 100.0) else null
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
         }
 
         // Use percentiles from the calculated percentages

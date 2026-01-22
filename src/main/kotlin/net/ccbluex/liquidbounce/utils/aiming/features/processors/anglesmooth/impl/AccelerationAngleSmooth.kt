@@ -191,7 +191,10 @@ class AccelerationAngleSmooth(parent: ChoiceConfigurable<*>) : AngleSmooth("Acce
             .takeIf { sigmoidDeceleration.enabled } ?: 1.0F
 
         val crosshairCheck = dynamicAcceleration.enabled && crosshair
-        val distanceFactor = (dynamicAcceleration.coefDistance * distance).toFloat()
+
+        // Clamp distance to prevent erratic behavior when hitboxes intersect
+        val clampedDistance = distance.coerceIn(0.5, 6.0)
+        val distanceFactor = (dynamicAcceleration.coefDistance * clampedDistance).toFloat()
 
         val (yawErrorProvider, pitchErrorProvider) = this.errorProviders
 
@@ -209,9 +212,21 @@ class AccelerationAngleSmooth(parent: ChoiceConfigurable<*>) : AngleSmooth("Acce
         val yawAccel = calculateAcceleration(diff.deltaYaw, prevDiff.deltaYaw, accRangeYaw, decelerationFactor)
         val pitchAccel = calculateAcceleration(diff.deltaPitch, prevDiff.deltaPitch, accRangePitch, decelerationFactor)
 
+        // Velocity dampening when near target to prevent oscillation
+        val targetDistance = diff.length()
+        val velocityDampening = when {
+            targetDistance < 1f -> 0.4f   // Very close: 60% dampening
+            targetDistance < 3f -> 0.7f   // Close: 30% dampening
+            else -> 1.0f                   // Normal: no dampening
+        }
+
+        // Apply dampening to current velocity before adding acceleration
+        val dampedYawVelocity = prevDiff.deltaYaw * velocityDampening
+        val dampedPitchVelocity = prevDiff.deltaPitch * velocityDampening
+
         return FloatFloatPair.of(
-            prevDiff.deltaYaw + yawAccel + yawErrorProvider.getError(yawAccel),
-            prevDiff.deltaPitch + pitchAccel + pitchErrorProvider.getError(pitchAccel)
+            dampedYawVelocity + yawAccel + yawErrorProvider.getError(yawAccel),
+            dampedPitchVelocity + pitchAccel + pitchErrorProvider.getError(pitchAccel)
         )
     }
 
@@ -220,7 +235,22 @@ class AccelerationAngleSmooth(parent: ChoiceConfigurable<*>) : AngleSmooth("Acce
         prevYawDiff: Float,
         dynamicYawAccel: ClosedFloatingPointRange<Float>,
         yawDecelerationFactor: Float
-    ) = RotationUtil.angleDifference(yawDiff, prevYawDiff)
-        .coerceIn(dynamicYawAccel) *
-        yawDecelerationFactor
+    ): Float {
+        // Dead zone: if rotation needed is tiny, stop accelerating to prevent jitter
+        if (abs(yawDiff) < 0.5f && abs(prevYawDiff) < 0.5f) {
+            return 0f
+        }
+
+        val rawAcceleration = RotationUtil.angleDifference(yawDiff, prevYawDiff)
+            .coerceIn(dynamicYawAccel)
+
+        // Proportional scaling: reduce acceleration when close to target to prevent overshooting
+        val proximityFactor = when {
+            abs(yawDiff) < 2f -> 0.3f  // Very close: 30% acceleration
+            abs(yawDiff) < 5f -> 0.6f  // Close: 60% acceleration
+            else -> 1.0f                // Normal: full acceleration
+        }
+
+        return rawAcceleration * yawDecelerationFactor * proximityFactor
+    }
 }

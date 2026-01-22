@@ -20,6 +20,7 @@ package net.ccbluex.liquidbounce.features.module.modules.combat.killaura
 
 import com.google.gson.JsonObject
 import net.ccbluex.liquidbounce.config.types.NamedChoice
+import net.ccbluex.liquidbounce.event.events.MouseRotationEvent
 import net.ccbluex.liquidbounce.event.events.RotationUpdateEvent
 import net.ccbluex.liquidbounce.event.events.SprintEvent
 import net.ccbluex.liquidbounce.event.events.WorldRenderEvent
@@ -82,6 +83,11 @@ import net.minecraft.world.entity.LivingEntity
 @Suppress("MagicNumber")
 object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
+    // Manual aim offset - tracks player mouse adjustments when ManualAim is enabled
+    private var manualAimYawOffset = 0f
+    private var manualAimPitchOffset = 0f
+    private var lastManualAimTarget: Entity? = null
+
     // Attack speed
     val clickScheduler = tree(KillAuraClicker)
 
@@ -134,6 +140,10 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         KillAuraAutoBlock.stopBlocking()
         KillAuraNotifyWhenFail.failedHitsIncrement = 0
         KillAuraHumanTargeting.reset()
+        // Reset manual aim offset
+        manualAimYawOffset = 0f
+        manualAimPitchOffset = 0f
+        lastManualAimTarget = null
     }
 
     @Suppress("unused")
@@ -142,6 +152,25 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         renderEnvironmentForWorld(event.matrixStack) {
             KillAuraRangeIndicator.render(this, event.partialTicks)
         }
+    }
+
+    /**
+     * Handle mouse input for ManualAim mode.
+     * When enabled, player mouse movements are added to the target rotation offset.
+     */
+    @Suppress("unused", "MagicNumber")
+    private val mouseRotationHandler = handler<MouseRotationEvent> { event ->
+        // Only process when ManualAim is enabled and we have a target
+        if (!rotations.manualAim || targetTracker.target == null) {
+            return@handler
+        }
+
+        // Add mouse delta to offset (same sensitivity as Aimbot)
+        val pitchDelta = event.cursorDeltaY.toFloat() * 0.15f
+        val yawDelta = event.cursorDeltaX.toFloat() * 0.15f
+
+        manualAimYawOffset += yawDelta
+        manualAimPitchOffset = (manualAimPitchOffset + pitchDelta).coerceIn(-90f, 90f)
     }
 
     @Suppress("unused")
@@ -329,6 +358,12 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             .firstOrNull { entity -> processTarget(entity, maximumRange) }
 
         if (target != null) {
+            // Reset manual aim offset when target changes
+            if (rotations.manualAim && target != lastManualAimTarget) {
+                manualAimYawOffset = 0f
+                manualAimPitchOffset = 0f
+                lastManualAimTarget = target
+            }
             targetTracker.target = target
         } else if (KillAuraFightBot.enabled) {
             KillAuraFightBot.updateTarget()
@@ -345,6 +380,12 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
                 provider = ModuleKillAura
             )
         } else {
+            // Reset manual aim when no target
+            if (rotations.manualAim) {
+                manualAimYawOffset = 0f
+                manualAimPitchOffset = 0f
+                lastManualAimTarget = null
+            }
             targetTracker.reset()
         }
     }
@@ -355,7 +396,18 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         range: Float
     ): Boolean {
         val (rotation, _) = findRotation(entity, range.toDouble()) ?: return false
-        val ticks = rotations.calculateTicks(rotation)
+
+        // Apply manual aim offset if enabled
+        val finalRotation = if (rotations.manualAim) {
+            Rotation(
+                rotation.yaw + manualAimYawOffset,
+                (rotation.pitch + manualAimPitchOffset).coerceIn(-90f, 90f)
+            )
+        } else {
+            rotation
+        }
+
+        val ticks = rotations.calculateTicks(finalRotation)
         debugParameter("Rotation Ticks") { ticks }
 
         when (rotations.rotationTiming) {
@@ -383,7 +435,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
         RotationManager.setRotationTarget(
             rotations.toRotationTarget(
-                rotation,
+                finalRotation,
                 entity,
                 considerInventory = !ignoreOpenInventory
             ),

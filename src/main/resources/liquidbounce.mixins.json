@@ -83,7 +83,6 @@
     "minecraft.gui.MixinScreen",
     "minecraft.gui.MixinScreenRectangle",
     "minecraft.gui.MixinStringUtil",
-    "minecraft.client.gui.screens.MixinTitleScreen",
     "minecraft.gui.custom.MixinConnectScreen",
     "minecraft.gui.custom.MixinDisconnectedScreen",
     "minecraft.gui.custom.MixinLevelLoadingScreen",

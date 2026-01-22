@@ -95,43 +95,8 @@ jobs:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew build -x test -x detekt
-
-      - name: Prepare artifact
-        id: artifact
+      - name: Upload artifact
         env:
-          LB_VERSION: ${{ needs.extract-versions.outputs.lb_version }}
-          MINECRAFT_VERSION: ${{ needs.extract-versions.outputs.minecraft_version }}
-        run: |
-          set -euo pipefail
-
-          cd build/libs
-          JAR=$(find . -regex '.*liquidbounce-[0-9.]*\.jar')
-          if [ -z "$JAR" ]; then
-            echo "[ERROR] built jar not found in build/libs" >&2
-            exit 1
-          fi
-
-          cp $JAR zip/liquidbounce.jar
-          cd zip
-          zip -r liquidbounce.zip *
-          md5sum liquidbounce.zip
-
-          # Set output for artifact name
-          ARTIFACT_NAME="liquidbounce-${LB_VERSION}-mc${MINECRAFT_VERSION}"
-          echo "artifact_name=${ARTIFACT_NAME}" >> "$GITHUB_OUTPUT"
-          echo "Artifact: ${ARTIFACT_NAME}"
-
-      - name: Upload artifact to GitHub
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.artifact.outputs.artifact_name }}
-          path: build/libs/zip/liquidbounce.zip
-          retention-days: 30
-
-      - name: Upload to LiquidBounce API (optional)
-        continue-on-error: true
-        env:
-          NIGHTLY_PASS: ${{ secrets.NIGHTLY_PASS }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           JDK_VERSION: ${{ needs.extract-versions.outputs.jdk_version }}
           LB_VERSION: ${{ needs.extract-versions.outputs.lb_version }}
@@ -141,13 +106,22 @@ jobs:
           KOTLIN_VERSION: ${{ needs.extract-versions.outputs.kotlin_version }}
           FABRIC_KOTLIN_VERSION: ${{ needs.extract-versions.outputs.fabric_kotlin_version }}
         run: |
-          if [ -z "$NIGHTLY_PASS" ]; then
-            echo "NIGHTLY_PASS not set, skipping LiquidBounce API upload"
-            exit 0
+          set -euo pipefail
+          
+          cd build/libs
+          JAR=$(find . -regex '.*liquidbounce-[0-9.]*\.jar')
+          if [ -z "$JAR" ]; then
+            echo "[ERROR] built jar not found in build/libs" >&2
+            exit 1
           fi
-          cd build/libs/zip
+          
+          cp $JAR zip/liquidbounce.jar
+          cd zip
+          zip -r liquidbounce.zip *
+          md5sum liquidbounce.zip
+          
           curl --connect-timeout 30 -m 300 -X POST -F "artifact=@liquidbounce.zip" \
-            -H "Authorization: $NIGHTLY_PASS" \
+            -H "Authorization: ${{ secrets.NIGHTLY_PASS }}" \
             -F "gh_id=${{ github.event.head_commit.id }}" \
             -F "gh_ref=${{ github.ref }}" \
             -F "gh_message=${COMMIT_MESSAGE}" \

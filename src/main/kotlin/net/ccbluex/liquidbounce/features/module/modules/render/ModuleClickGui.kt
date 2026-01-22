@@ -117,8 +117,13 @@ object ModuleClickGui :
             return
         }
 
-        // Use native Minecraft GUI instead of browser-based UI (Android/PojavBounce compatibility)
-        mc.setScreen(net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen())
+        mc.setScreen(
+            if (clickGuiBrowser == null) {
+                VirtualDisplayScreen(VirtualScreenType.CLICK_GUI)
+            } else {
+                ClickScreen()
+            }
+        )
         super.onEnabled()
     }
 

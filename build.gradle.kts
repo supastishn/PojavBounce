@@ -127,9 +127,9 @@ dependencies {
     // Minecraft Authlib
     jij(libs.mcAuthlib)
 
-    // JCEF Support - DISABLED for PojavBounce (Android compatibility)
-    // modApi(libs.mcef)
-    // include(libs.mcef)
+    // JCEF Support
+    modApi(libs.mcef)
+    include(libs.mcef)
     jij(libs.httpServer)
 
     // Discord RPC Support
@@ -144,14 +144,6 @@ dependencies {
     // Machine Learning
     jij(libs.djl.api)
     jij(libs.djl.pytorch)
-
-    // ExecuTorch / Android ML support (PojavBounce)
-    // fbjni - Facebook JNI library (required by ExecuTorch)
-    jij(libs.fbjni)
-    // soloader/nativeloader - Required by fbjni for native library loading
-    jij(libs.soloader)
-    // executorch-android classes (extracted from AAR)
-    jij(files("libs/executorch-android-1.0.1-classes.jar"))
 
     // HTTP library
     jij(libs.bundles.okhttp)

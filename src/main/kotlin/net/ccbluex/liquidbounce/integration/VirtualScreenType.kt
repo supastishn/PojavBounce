@@ -55,73 +55,9 @@ enum class VirtualScreenType(
 ) {
 
     HUD("hud", isInGame = true),
-    CLICK_GUI(
-        "clickgui",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen }
-    ),
-    ALT_MANAGER(
-        "altmanager",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    PROXY_MANAGER(
-        "proxymanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    SCRIPT_MANAGER(
-        "scriptmanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    THEME_MANAGER(
-        "thememanager",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
-    CUSTOMIZE(
-        "customize",
-        recognizer = {
-            it is net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen
-        },
-        open = {
-            mc.setScreen(
-                net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen(
-                    IntegrationListener.parent
-                )
-            )
-        }
-    ),
+    CLICK_GUI("clickgui"),
+    ALT_MANAGER("altmanager"),
+    PROXY_MANAGER("proxymanager"),
 
     TITLE(
         "title",
@@ -197,8 +133,7 @@ enum class VirtualScreenType(
     ),
 
     BROWSER("browser",
-        recognizer = { it is net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen },
-        open = { mc.setScreen(net.ccbluex.liquidbounce.integration.ui.IntegrationMenuScreen()) }
+        recognizer = { it is BrowserScreen }
     );
 
     fun open() = mc.execute(open)

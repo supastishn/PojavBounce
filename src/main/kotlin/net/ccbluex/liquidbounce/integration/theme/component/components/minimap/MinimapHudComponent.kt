@@ -58,9 +58,6 @@ object MinimapHudComponent : NativeHudComponent("Minimap", false, Alignment(
     verticalOffset = 180,
 )) {
 
-    // Minimap handles its own rendering via renderHandler event, so this is intentionally empty
-    override fun render(context: GuiGraphics) { }
-
     private val MINIMAP_ENTITY_ORDER = Comparator<Entity> { e1, e2 ->
         when {
             e1.y != e2.y -> e1.y.compareTo(e2.y)

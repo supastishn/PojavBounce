@@ -92,9 +92,9 @@ public abstract class MixinLoadingOverlay {
         int x = (screenWidth - displayWidth) / 2;
         int y = (screenHeight - displayHeight) / 2;
 
-        // Use GUI.TexturedQuads pipeline (compatible with mobile OpenGL ES)
+        // TODO: Draw as SVG instead of PNG
         context.blit(
-            ClientRenderPipelines.GUI.TexturedQuads,
+            ClientRenderPipelines.JCEF.SMOOTH_TEXTURE,
                 ClientLogoTexture.CLIENT_LOGO,
                 x,
                 y,

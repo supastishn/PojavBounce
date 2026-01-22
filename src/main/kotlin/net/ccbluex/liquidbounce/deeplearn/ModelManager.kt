@@ -22,7 +22,7 @@ package net.ccbluex.liquidbounce.deeplearn
 import net.ccbluex.fastutil.mapToArray
 import net.ccbluex.liquidbounce.config.types.nesting.Configurable
 import net.ccbluex.liquidbounce.deeplearn.DeepLearningEngine.modelsFolder
-import net.ccbluex.liquidbounce.deeplearn.models.MinaraiModel
+import net.ccbluex.liquidbounce.deeplearn.models.TwoDimensionalRegressionModel
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleClickGui
 import net.ccbluex.liquidbounce.utils.client.logger
@@ -39,8 +39,7 @@ object ModelManager : EventListener, Configurable("AI") {
      */
     val combatModels = arrayOf(
         "21KC11KP",
-        "19KC8KP",
-        "android-pte-final"
+        "19KC8KP"
     )
 
     /**
@@ -58,7 +57,7 @@ object ModelManager : EventListener, Configurable("AI") {
         // Empty models for start-up initialization.
         // These will be replaced later on at [load].
         allCombatModels.mapToArray { name ->
-            MinaraiModel(name, choiceConfigurable)
+            TwoDimensionalRegressionModel(name, choiceConfigurable)
         }
     }
 
@@ -70,7 +69,7 @@ object ModelManager : EventListener, Configurable("AI") {
     fun load() {
         logger.info("[AI] Loading models...")
         val choices = allCombatModels.mapToArray { name ->
-            MinaraiModel(name, models)
+            TwoDimensionalRegressionModel(name, models)
         }
 
         for (model in choices) {

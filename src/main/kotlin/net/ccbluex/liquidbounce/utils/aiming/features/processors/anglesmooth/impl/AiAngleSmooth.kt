@@ -96,9 +96,7 @@ class AiAngleSmooth(
         currentRotation: Rotation,
         targetRotation: Rotation
     ): Rotation {
-        // Check if any ML backend is available (DJL on PC or ExecuTorch on Android)
-        val mlAvailable = DeepLearningEngine.isInitialized || DeepLearningEngine.isExecuTorchAvailable
-        if (!mlAvailable) {
+        if (!DeepLearningEngine.isInitialized) {
             if (notificationChronometer.hasElapsed(UNSUPPORTED_NOTIFICATION_TIME)) {
                 chat(markAsError(translation("liquidbounce.unsupportedDeepLearning")))
                 chat(markAsError(translation(

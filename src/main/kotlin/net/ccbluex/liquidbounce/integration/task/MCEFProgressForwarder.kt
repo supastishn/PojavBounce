@@ -17,10 +17,6 @@
  * along with LiquidBounce. If not, see <https://www.gnu.org/licenses/>.
  */
 
-// MCEF Progress Forwarder - DISABLED for PojavBounce (Android compatibility)
-// MCEF/JCEF native libraries do not work on Android.
-
-/*
 package net.ccbluex.liquidbounce.integration.task
 
 import net.ccbluex.liquidbounce.integration.task.type.Task
@@ -71,4 +67,3 @@ class MCEFProgressForwarder(val task: Task) : MCEFProgressListener {
     }
 
 }
-*/

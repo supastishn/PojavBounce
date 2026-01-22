@@ -28,13 +28,13 @@ echo "Response saved to $RESP (size: $(wc -c < "$RESP") bytes)"
 echo "Response headers:"
 sed -n '1,20p' "$HDRS" || true
 
-# Parse artifact URL - filter for Build workflow artifacts (named "liquidbounce-*")
+# Parse artifact URL - filter for Build workflow artifacts (named "LiquidBounce-*")
 URL=$(python3 -c '
 import sys, json
 j = json.load(open(sys.argv[1]))
 artifacts = j.get("artifacts", [])
-# Filter for Build workflow artifacts (liquidbounce-*), not Convert Models artifacts
-build_artifacts = [a for a in artifacts if a.get("name", "").startswith("liquidbounce")]
+# Filter for Build workflow artifacts (LiquidBounce-* with capital L), not Convert Models artifacts
+build_artifacts = [a for a in artifacts if a.get("name", "").startswith("LiquidBounce-")]
 if build_artifacts:
     print(build_artifacts[0].get("archive_download_url", ""))
 else:
@@ -73,56 +73,26 @@ else
   exit 1
 fi
 
-# GitHub Actions wraps the artifact in an outer zip
-# The actual mod is inside liquidbounce.zip which contains the .jar files
-INNER_ZIP=$(find "$TMPDIR/unpack" -name "liquidbounce*.zip" -type f | head -n1)
-if [ -n "$INNER_ZIP" ] && [ -f "$INNER_ZIP" ]; then
-  echo "Found inner zip: $INNER_ZIP"
-  echo "Extracting inner zip to get the .jar..."
-  mkdir -p "$TMPDIR/inner"
-  unzip -oq "$INNER_ZIP" -d "$TMPDIR/inner"
+# New artifact format: JAR is directly in the zip (no inner liquidbounce.zip)
+JAR_FILE=$(find "$TMPDIR/unpack" -name "liquidbounce*.jar" -type f | head -n1)
+if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
+  echo "Found jar: $JAR_FILE"
+  JAR_NAME=$(basename "$JAR_FILE")
 
-  # Find the liquidbounce jar
-  JAR_FILE=$(find "$TMPDIR/inner" -name "liquidbounce*.jar" -type f | head -n1)
-  if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
-    echo "Found jar: $JAR_FILE"
-    JAR_NAME=$(basename "$JAR_FILE")
+  # Remove any old liquidbounce jars from mods folder
+  echo "Removing old liquidbounce jars and zips from $DEST..."
+  mkdir -p "$DEST"
+  find "$DEST" -maxdepth 1 -name "liquidbounce*" -delete 2>/dev/null || true
 
-    # Remove any old liquidbounce jars from mods folder
-    echo "Removing old liquidbounce jars and zips from $DEST..."
-    mkdir -p "$DEST"
-    find "$DEST" -maxdepth 1 -name "liquidbounce*" -delete 2>/dev/null || true
-
-    echo "Copying $JAR_NAME to $DEST..."
-    cp "$JAR_FILE" "$DEST/"
-    echo "Installed: $DEST/$JAR_NAME"
-  else
-    echo "ERROR: Could not find liquidbounce*.jar inside $INNER_ZIP"
-    ls -la "$TMPDIR/inner"
-    rm -rf "$TMPDIR"
-    exit 1
-  fi
+  echo "Copying $JAR_NAME to $DEST..."
+  cp "$JAR_FILE" "$DEST/"
+  echo "Installed: $DEST/$JAR_NAME"
 else
-  # Fallback: maybe the jar is directly in the artifact
-  JAR_FILE=$(find "$TMPDIR/unpack" -name "liquidbounce*.jar" -type f | head -n1)
-  if [ -n "$JAR_FILE" ] && [ -f "$JAR_FILE" ]; then
-    echo "Found jar directly in artifact: $JAR_FILE"
-    JAR_NAME=$(basename "$JAR_FILE")
-
-    echo "Removing old liquidbounce jars and zips from $DEST..."
-    mkdir -p "$DEST"
-    find "$DEST" -maxdepth 1 -name "liquidbounce*" -delete 2>/dev/null || true
-
-    echo "Copying $JAR_NAME to $DEST..."
-    cp "$JAR_FILE" "$DEST/"
-    echo "Installed: $DEST/$JAR_NAME"
-  else
-    echo "ERROR: Could not find liquidbounce*.jar or liquidbounce*.zip in artifact"
-    echo "Contents of artifact:"
-    find "$TMPDIR/unpack" -type f
-    rm -rf "$TMPDIR"
-    exit 1
-  fi
+  echo "ERROR: Could not find liquidbounce*.jar in artifact"
+  echo "Contents of artifact:"
+  find "$TMPDIR/unpack" -type f
+  rm -rf "$TMPDIR"
+  exit 1
 fi
 
 echo "Cleaning up..."

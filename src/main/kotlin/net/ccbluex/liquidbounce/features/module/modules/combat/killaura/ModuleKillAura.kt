@@ -85,10 +85,6 @@ import net.minecraft.world.entity.LivingEntity
 @Suppress("MagicNumber")
 object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
-    // ManualAim - same pattern as Aimbot
-    private var manualAimTargetRotation: Rotation? = null
-    private var manualAimPlayerRotation: Rotation? = null
-
     // Attack speed
     val clickScheduler = tree(KillAuraClicker)
 
@@ -141,9 +137,6 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         KillAuraAutoBlock.stopBlocking()
         KillAuraNotifyWhenFail.failedHitsIncrement = 0
         KillAuraHumanTargeting.reset()
-        // Reset manual aim rotations
-        manualAimPlayerRotation = null
-        manualAimTargetRotation = null
     }
 
     @Suppress("unused")
@@ -152,57 +145,10 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         renderEnvironmentForWorld(event.matrixStack) {
             KillAuraRangeIndicator.render(this, event.partialTicks)
         }
-
-        // ManualAim: exactly like Aimbot
-        if (rotations.manualAim && targetTracker.target != null) {
-            val currentRotation = manualAimPlayerRotation ?: return@handler
-            val targetRot = manualAimTargetRotation ?: return@handler
-
-            val timerSpeed = Timer.timerSpeed
-            val interpolatedRotation = Rotation(
-                currentRotation.yaw + (targetRot.yaw - currentRotation.yaw) * (timerSpeed * event.partialTicks),
-                currentRotation.pitch + (targetRot.pitch - currentRotation.pitch) * (timerSpeed * event.partialTicks)
-            )
-
-            player.setRotation(interpolatedRotation)
-        }
-    }
-
-    /**
-     * ManualAim mouse handler - exactly like Aimbot
-     */
-    @Suppress("unused", "MagicNumber")
-    private val mouseRotationHandler = handler<MouseRotationEvent> { event ->
-        if (!rotations.manualAim || targetTracker.target == null) {
-            return@handler
-        }
-
-        val f = event.cursorDeltaY.toFloat() * 0.15f
-        val g = event.cursorDeltaX.toFloat() * 0.15f
-
-        fun updateRotation(rotation: Rotation): Rotation =
-            Rotation(yaw = rotation.yaw + g, pitch = (rotation.pitch + f).coerceIn(-90f, 90f))
-
-        manualAimPlayerRotation?.let { rotation ->
-            manualAimPlayerRotation = updateRotation(rotation)
-        }
-
-        manualAimTargetRotation?.let { rotation ->
-            manualAimTargetRotation = updateRotation(rotation)
-        }
     }
 
     @Suppress("unused")
     private val rotationUpdateHandler = handler<RotationUpdateEvent> {
-        // ManualAim tick handler - exactly like Aimbot
-        if (rotations.manualAim) {
-            manualAimPlayerRotation = player.rotation
-
-            if (!requirementsMet || targetTracker.target == null) {
-                manualAimTargetRotation = null
-            }
-        }
-
         // Make sure killaura-logic is not running while inventory is open
         val isInInventoryScreen = isInventoryOpen || mc.screen is ContainerScreen
         val shouldResetTarget = player.isSpectator || player.isDeadOrDying || !requirementsMet
@@ -390,22 +336,15 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         } else if (KillAuraFightBot.enabled) {
             KillAuraFightBot.updateTarget()
 
-            // When manual aim is enabled, use lower priority so player can override
-            val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
-
             RotationManager.setRotationTarget(
                 rotations.toRotationTarget(
                     KillAuraFightBot.getMovementRotation(),
                     considerInventory = !ignoreOpenInventory
                 ),
-                priority = priority,
+                priority = Priority.IMPORTANT_FOR_USAGE_2,
                 provider = ModuleKillAura
             )
         } else {
-            // Reset manual aim when no target
-            if (rotations.manualAim) {
-                manualAimTargetRotation = null
-            }
             targetTracker.reset()
         }
     }
@@ -416,11 +355,6 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         range: Float
     ): Boolean {
         val (rotation, _) = findRotation(entity, range.toDouble()) ?: return false
-
-        // ManualAim: set target rotation (like Aimbot)
-        if (rotations.manualAim) {
-            manualAimTargetRotation = rotation
-        }
 
         val ticks = rotations.calculateTicks(rotation)
         debugParameter("Rotation Ticks") { ticks }
@@ -445,16 +379,13 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             }
         }
 
-        // When manual aim is enabled, use lower priority so player can override
-        val priority = if (rotations.manualAim) Priority.NORMAL else Priority.IMPORTANT_FOR_USAGE_2
-
         RotationManager.setRotationTarget(
             rotations.toRotationTarget(
                 rotation,
                 entity,
                 considerInventory = !ignoreOpenInventory
             ),
-            priority = priority,
+            priority = Priority.IMPORTANT_FOR_USAGE_2,
             provider = this@ModuleKillAura
         )
 

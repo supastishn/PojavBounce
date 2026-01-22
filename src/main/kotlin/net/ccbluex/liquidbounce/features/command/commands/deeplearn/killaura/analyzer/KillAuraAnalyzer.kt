@@ -20,10 +20,24 @@
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer
 
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
+import net.ccbluex.liquidbounce.deeplearn.data.KillAuraConfigSample
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.ModuleKillAura
 
 interface KillAuraAnalyzer {
+    /**
+     * Analyze combat samples. Basic analyzers use CombatSample,
+     * mode analyzers can override analyzeAdvanced for raycastHit filtering.
+     */
     fun analyze(samples: List<CombatSample>): AnalysisResult
+
+    /**
+     * Analyze with full KillAuraConfigSample data (includes raycastHit, etc.)
+     * Default implementation extracts combatData and calls analyze().
+     */
+    fun analyzeAdvanced(samples: List<KillAuraConfigSample>): AnalysisResult {
+        return analyze(samples.map { it.combatData })
+    }
+
     fun apply(result: AnalysisResult)
     fun report(result: AnalysisResult): String
 }

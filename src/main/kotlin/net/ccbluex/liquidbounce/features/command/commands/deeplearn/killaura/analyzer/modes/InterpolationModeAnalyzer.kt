@@ -20,6 +20,7 @@
 package net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.modes
 
 import net.ccbluex.liquidbounce.deeplearn.data.CombatSample
+import net.ccbluex.liquidbounce.deeplearn.data.KillAuraConfigSample
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.AnalysisResult
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.AutoConfigApplier
 import net.ccbluex.liquidbounce.features.command.commands.deeplearn.killaura.analyzer.KillAuraAnalyzer
@@ -28,11 +29,86 @@ import net.ccbluex.liquidbounce.utils.client.chat
 
 object InterpolationModeAnalyzer : KillAuraAnalyzer {
 
+    /**
+     * Analyze with full KillAuraConfigSample - uses raycastHit to filter out
+     * samples where cursor is already on enemy.
+     */
+    override fun analyzeAdvanced(samples: List<KillAuraConfigSample>): AnalysisResult {
+        if (samples.isEmpty()) {
+            return AnalysisResult("InterpolationMode", emptyMap(), emptyMap(), 0f)
+        }
+
+        // Filter parameters
+        val minRemaining = 5f   // Skip small adjustments
+        val maxRemaining = 90f  // Skip extreme flicks
+        val minMoved = 0.1f     // Skip no-movement samples
+
+        // Calculate percentages only from samples where cursor is NOT on enemy (raycastHit = false)
+        // This gives us "target acquisition" speed, not "maintenance" speed
+        val yawPercentages = samples.mapNotNull { sample ->
+            // Skip if cursor is already on enemy
+            if (sample.raycastHit) return@mapNotNull null
+
+            val remaining = kotlin.math.abs(sample.combatData.totalDelta.deltaYaw)
+            val moved = kotlin.math.abs(sample.combatData.velocityDelta.x)
+
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
+        }
+
+        val pitchPercentages = samples.mapNotNull { sample ->
+            if (sample.raycastHit) return@mapNotNull null
+
+            val remaining = kotlin.math.abs(sample.combatData.totalDelta.deltaPitch)
+            val moved = kotlin.math.abs(sample.combatData.velocityDelta.y)
+
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
+        }
+
+        // Extract combat samples for variance calculation
+        val combatSamples = samples.map { it.combatData }
+        return analyzeWithPercentages(combatSamples, yawPercentages, pitchPercentages, samples.size)
+    }
+
     override fun analyze(samples: List<CombatSample>): AnalysisResult {
         if (samples.isEmpty()) {
             return AnalysisResult("InterpolationMode", emptyMap(), emptyMap(), 0f)
         }
 
+        // Filter parameters
+        val minRemaining = 5f
+        val maxRemaining = 90f
+        val minMoved = 0.1f
+
+        // Without raycastHit info, filter by distance only
+        val yawPercentages = samples.mapNotNull { sample ->
+            val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
+            val moved = kotlin.math.abs(sample.velocityDelta.x)
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
+        }
+
+        val pitchPercentages = samples.mapNotNull { sample ->
+            val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
+            val moved = kotlin.math.abs(sample.velocityDelta.y)
+            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
+                (moved / remaining * 100.0)
+            } else null
+        }
+
+        return analyzeWithPercentages(samples, yawPercentages, pitchPercentages, samples.size)
+    }
+
+    private fun analyzeWithPercentages(
+        samples: List<CombatSample>,
+        yawPercentages: List<Double>,
+        pitchPercentages: List<Double>,
+        totalSampleCount: Int
+    ): AnalysisResult {
         // Interpolation: spline-based smoothing with Bezier/Sigmoid combination
         val yawDeltas = samples.map { it.totalDelta.deltaYaw.toDouble() }
         val pitchDeltas = samples.map { it.totalDelta.deltaPitch.toDouble() }
@@ -55,35 +131,7 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val pitchVar = pitchDeltas.map { (it - avgPitch) * (it - avgPitch) }.average()
         val variance = kotlin.math.sqrt(yawVar + pitchVar)
 
-        // CRITICAL FIX: Calculate what % of remaining distance was covered each tick
-        // InterpolationAngleSmooth expects percentage (1-100%) of remaining distance per tick
-        // NOT degrees/tick divided by 180!
-        //
-        // IMPORTANT: Filter out samples where:
-        // 1. remaining < 5° (cursor already on target - would skew toward slow values)
-        // 2. moved < 0.1° (no significant movement)
-        // 3. remaining > 90° (extreme flicks - likely target switching, not normal aiming)
-        val minRemaining = 5f   // Skip "already on target" samples
-        val maxRemaining = 90f  // Skip extreme flicks
-        val minMoved = 0.1f     // Skip no-movement samples
-
-        val yawPercentages = samples.mapNotNull { sample ->
-            val remaining = kotlin.math.abs(sample.totalDelta.deltaYaw)
-            val moved = kotlin.math.abs(sample.velocityDelta.x)
-            // Only include active targeting samples (not already on target, not extreme flicks)
-            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
-                (moved / remaining * 100.0)
-            } else null
-        }
-        val pitchPercentages = samples.mapNotNull { sample ->
-            val remaining = kotlin.math.abs(sample.totalDelta.deltaPitch)
-            val moved = kotlin.math.abs(sample.velocityDelta.y)
-            if (remaining in minRemaining..maxRemaining && moved > minMoved) {
-                (moved / remaining * 100.0)
-            } else null
-        }
-
-        // Use percentiles from the calculated percentages
+        // Use percentiles from the pre-calculated percentages (filtered by caller)
         val sortedYawPct = yawPercentages.sorted()
         val sortedPitchPct = pitchPercentages.sorted()
 
@@ -186,7 +234,7 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "yawVariation" to yawVariation,
             "pitchVariation" to pitchVariation,
             // Debug stats
-            "totalSamples" to samples.size.toDouble(),
+            "totalSamples" to totalSampleCount.toDouble(),
             "validYawSamples" to yawPercentages.size.toDouble(),
             "validPitchSamples" to pitchPercentages.size.toDouble()
         )

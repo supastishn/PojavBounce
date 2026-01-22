@@ -108,12 +108,7 @@ class AccelerationAngleSmooth(parent: ChoiceConfigurable<*>) : AngleSmooth("Acce
         private val accelerationErrorRange: ClosedFloatingPointRange<Float>,
         private val constantErrorRange: ClosedFloatingPointRange<Float>,
     ) {
-        fun getError(acceleration: Float, targetDistance: Float): Float {
-            // Don't add random error when already on target to allow convergence
-            if (targetDistance < 0.5f) {
-                return 0f
-            }
-
+        fun getError(acceleration: Float): Float {
             val currentAccelerationError = this.accelerationErrorRange.random()
             val currentConstantError = this.constantErrorRange.random()
 
@@ -230,8 +225,8 @@ class AccelerationAngleSmooth(parent: ChoiceConfigurable<*>) : AngleSmooth("Acce
         val dampedPitchVelocity = prevDiff.deltaPitch * velocityDampening
 
         return FloatFloatPair.of(
-            dampedYawVelocity + yawAccel + yawErrorProvider.getError(yawAccel, targetDistance),
-            dampedPitchVelocity + pitchAccel + pitchErrorProvider.getError(pitchAccel, targetDistance)
+            dampedYawVelocity + yawAccel + yawErrorProvider.getError(yawAccel),
+            dampedPitchVelocity + pitchAccel + pitchErrorProvider.getError(pitchAccel)
         )
     }
 

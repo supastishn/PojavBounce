@@ -101,8 +101,9 @@ jobs:
           name: LiquidBounce-${{ needs.extract-versions.outputs.lb_version }}-mc${{ needs.extract-versions.outputs.minecraft_version }}
           path: build/libs/*[0-9].jar
       - name: Upload artifact to LiquidBounce API
-        if: ${{ secrets.NIGHTLY_PASS != '' }}
+        if: ${{ env.NIGHTLY_PASS != '' }}
         env:
+          NIGHTLY_PASS: ${{ secrets.NIGHTLY_PASS }}
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           JDK_VERSION: ${{ needs.extract-versions.outputs.jdk_version }}
           LB_VERSION: ${{ needs.extract-versions.outputs.lb_version }}

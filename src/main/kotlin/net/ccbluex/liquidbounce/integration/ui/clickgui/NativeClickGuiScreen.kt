@@ -19,6 +19,7 @@
 package net.ccbluex.liquidbounce.integration.ui.clickgui
 
 import net.ccbluex.liquidbounce.config.types.ChooseListValue
+import net.ccbluex.liquidbounce.config.types.MultiChooseListValue
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.config.types.RangedValue
 import net.ccbluex.liquidbounce.config.types.Value
@@ -74,6 +75,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val SETTING_HEIGHT = 12
         private const val SLIDER_HEIGHT = 18  // Taller for slider track
         private const val CONFIGURABLE_HEADER_HEIGHT = 11
+        private const val MULTI_CHOICE_ITEM_HEIGHT = 11
         private const val PANEL_SPACING = 10
         private const val PANEL_MARGIN = 10
         private const val SEARCH_BAR_HEIGHT = 20
@@ -386,7 +388,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         }
 
         private fun getValueHeight(value: Value<*>): Int {
-            return if (isSliderValue(value)) SLIDER_HEIGHT else SETTING_HEIGHT
+            return when {
+                value is MultiChooseListValue<*> -> CONFIGURABLE_HEADER_HEIGHT + value.choices.size * MULTI_CHOICE_ITEM_HEIGHT
+                isSliderValue(value) -> SLIDER_HEIGHT
+                else -> SETTING_HEIGHT
+            }
         }
 
         fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, fr: FontRenderer, scale: Float, searchQuery: String) {
@@ -558,6 +564,9 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                     is Configurable -> {
                         currentY = renderNestedConfigurable(context, value, currentY, mouseX, mouseY, fr, scale, depth, indent)
                     }
+                    is MultiChooseListValue<*> -> {
+                        currentY = renderMultiChooseValue(context, value, currentY, mouseX, mouseY, fr, scale, indent)
+                    }
                     else -> {
                         if (isSliderValue(value)) {
                             renderSliderValue(context, value, currentY, mouseX, mouseY, fr, scale, indent)
@@ -677,6 +686,61 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
             if (isExpanded) {
                 currentY = renderConfigurableSettings(context, configurable, currentY, mouseX, mouseY, fr, scale, depth + 1)
+            }
+
+            return currentY
+        }
+
+        private fun renderMultiChooseValue(
+            context: GuiGraphics, value: MultiChooseListValue<*>, startY: Int,
+            mouseX: Int, mouseY: Int, fr: FontRenderer, scale: Float, indent: Int
+        ): Int {
+            var currentY = startY
+
+            // Draw header with name
+            val isHeaderHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
+                mouseY >= currentY && mouseY < currentY + CONFIGURABLE_HEADER_HEIGHT
+
+            val headerBgColor = if (isHeaderHovered) 0x50405060.toInt() else 0x40303050.toInt()
+            context.fill(x + 4 + indent, currentY, x + panelWidth - 4, currentY + CONFIGURABLE_HEADER_HEIGHT, headerBgColor)
+
+            drawPanelText(context, fr, scale, value.name, x + 6f + indent, currentY + 1f, COLOR_LIGHT_PURPLE, false)
+
+            // Show count of selected items
+            val selectedCount = value.get().size
+            val totalCount = value.choices.size
+            val countText = "[$selectedCount/$totalCount]"
+            val countWidth = getTextWidth(fr, scale, countText)
+            drawPanelText(context, fr, scale, countText, x + panelWidth - countWidth - 8f, currentY + 1f, COLOR_GRAY, false)
+
+            currentY += CONFIGURABLE_HEADER_HEIGHT
+
+            // Draw each choice as a toggleable item
+            val selected = value.get()
+            for (choice in value.choices) {
+                val isSelected = choice in selected
+                val isChoiceHovered = mouseX >= x + indent + INDENT_PER_LEVEL && mouseX < x + panelWidth - 4 &&
+                    mouseY >= currentY && mouseY < currentY + MULTI_CHOICE_ITEM_HEIGHT
+
+                val choiceBgColor = when {
+                    isSelected && isChoiceHovered -> 0x60508060.toInt()
+                    isSelected -> 0x50406050.toInt()
+                    isChoiceHovered -> 0x40404050.toInt()
+                    else -> 0x30303040.toInt()
+                }
+                context.fill(x + 4 + indent + INDENT_PER_LEVEL, currentY, x + panelWidth - 4, currentY + MULTI_CHOICE_ITEM_HEIGHT, choiceBgColor)
+
+                // Checkbox indicator
+                val checkboxText = if (isSelected) "[x]" else "[ ]"
+                val checkboxColor = if (isSelected) COLOR_GREEN else COLOR_GRAY
+                drawPanelText(context, fr, scale, checkboxText, x + 6f + indent + INDENT_PER_LEVEL, currentY + 1f, checkboxColor, false)
+
+                // Choice name
+                val choiceName = choice.choiceName
+                val nameColor = if (isSelected) COLOR_LIGHT_GREEN else COLOR_LIGHT_GRAY
+                drawPanelText(context, fr, scale, choiceName, x + 24f + indent + INDENT_PER_LEVEL, currentY + 1f, nameColor, false)
+
+                currentY += MULTI_CHOICE_ITEM_HEIGHT
             }
 
             return currentY
@@ -986,6 +1050,23 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                             val result = handleConfigurableClick(value, mouseX, mouseY, button, currentY, depth + 1)
                             if (result.first) return result
                             currentY = result.second
+                        }
+                    }
+                    is MultiChooseListValue<*> -> {
+                        // Skip the header row
+                        currentY += CONFIGURABLE_HEADER_HEIGHT
+
+                        // Check each choice item
+                        for (choice in value.choices) {
+                            if (mouseX >= x + indent + INDENT_PER_LEVEL && mouseX < x + panelWidth - 4 &&
+                                mouseY >= currentY && mouseY < currentY + MULTI_CHOICE_ITEM_HEIGHT) {
+                                if (button == 0) {
+                                    @Suppress("UNCHECKED_CAST")
+                                    (value as MultiChooseListValue<NamedChoice>).toggle(choice as NamedChoice)
+                                }
+                                return true to currentY
+                            }
+                            currentY += MULTI_CHOICE_ITEM_HEIGHT
                         }
                     }
                     else -> {

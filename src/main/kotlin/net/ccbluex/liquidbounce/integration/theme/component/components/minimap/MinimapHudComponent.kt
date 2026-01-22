@@ -131,6 +131,10 @@ object MinimapHudComponent : NativeHudComponent("Minimap", false, Alignment(
         registerComponentListen(this)
     }
 
+    override fun render(context: GuiGraphics) {
+        // Rendering is handled by renderHandler event
+    }
+
     override fun onEnabled() {
         RenderedEntities.subscribe(this)
         ChunkScanner.subscribe(ChunkRenderer.MinimapChunkUpdateSubscriber)

@@ -137,12 +137,19 @@ object KillAuraConfigApplier {
             (p90Range * 0.85f).coerceIn(0f, avgRange)
         }
 
-        // Scan range
-        val scanRanges = samples.map { it.scanRange }.filter { it > 0 }
-        val avgScanRange = if (scanRanges.isNotEmpty()) scanRanges.average().toFloat() else maxRange + 2f
-        val maxScanRange = scanRanges.maxOrNull() ?: (maxRange + 3f)
-        val scanExtraStart = (avgScanRange - avgRange).coerceIn(0f, 7f)
-        val scanExtraEnd = ((maxScanRange - avgRange).coerceAtLeast(scanExtraStart + 0.5f)).coerceIn(0f, 7f)
+        // Scan range - calculate based on max observed range beyond recommended attack range
+        // The recommended attack range is clamped to 6, so scanExtra should cover distances beyond that
+        val recommendedAttackRange = avgRange.coerceIn(1f, 6f)
+        val maxObservedRange = maxRange.coerceIn(1f, 10f)
+
+        // Calculate scan extra as the difference between max observed and recommended attack range
+        // with a reasonable default range for tracking enemies before they're in attack range
+        val scanExtraDiff = (maxObservedRange - recommendedAttackRange).coerceIn(0f, 5f)
+
+        // Use variation around the calculated difference (±5% like other configs)
+        val variation = (scanExtraDiff * 0.05f).coerceAtLeast(0.1f)
+        val scanExtraStart = (scanExtraDiff - variation).coerceIn(0f, 7f)
+        val scanExtraEnd = (scanExtraDiff + variation).coerceIn(scanExtraStart + 0.1f, 7f)
 
         // === CPS Analysis ===
         val cpsList = samples.mapNotNull { if (it.currentCPS > 0) it.currentCPS else null }

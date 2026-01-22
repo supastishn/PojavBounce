@@ -20,18 +20,11 @@ package net.ccbluex.liquidbounce.features.module.modules.combat.killaura
 
 import net.ccbluex.liquidbounce.config.types.NamedChoice
 import net.ccbluex.liquidbounce.utils.aiming.RotationsConfigurable
-import net.ccbluex.liquidbounce.utils.aiming.features.MovementCorrection
 
 object KillAuraRotationsConfigurable : RotationsConfigurable(ModuleKillAura, combatSpecific = true) {
 
     val rotationTiming by enumChoice("RotationTiming", KillAuraRotationTiming.NORMAL)
     val aimThroughWalls by boolean("ThroughWalls", false)
-
-    // Only show this option when MovementCorrection is ChangeLook
-    val manualAim by boolean("ManualAim", false).onChanged {
-        // Only enable this setting when movement correction is ChangeLook
-        movementCorrectionValue == MovementCorrection.CHANGE_LOOK
-    }
 
     enum class KillAuraRotationTiming(override val choiceName: String) : NamedChoice {
         NORMAL("Normal"),

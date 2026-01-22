@@ -78,27 +78,29 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val sortedYawPct = yawPercentages.sorted()
         val sortedPitchPct = pitchPercentages.sorted()
 
-        // P25 and P75 for ranges - these are now actual percentages of remaining distance
-        val yawP25 = if (sortedYawPct.isNotEmpty())
-            sortedYawPct[(sortedYawPct.size * 0.25).toInt().coerceIn(0, sortedYawPct.size - 1)]
+        // Use P40-P85 instead of P25-P75 for better active targeting representation
+        // P25 often includes "already locked on" samples with very slow adjustments
+        // P40-P85 better represents actual target acquisition speed
+        val yawP40 = if (sortedYawPct.isNotEmpty())
+            sortedYawPct[(sortedYawPct.size * 0.40).toInt().coerceIn(0, sortedYawPct.size - 1)]
         else 30.0
-        val yawP75 = if (sortedYawPct.isNotEmpty())
-            sortedYawPct[(sortedYawPct.size * 0.75).toInt().coerceIn(0, sortedYawPct.size - 1)]
+        val yawP85 = if (sortedYawPct.isNotEmpty())
+            sortedYawPct[(sortedYawPct.size * 0.85).toInt().coerceIn(0, sortedYawPct.size - 1)]
         else 60.0
-        val pitchP25 = if (sortedPitchPct.isNotEmpty())
-            sortedPitchPct[(sortedPitchPct.size * 0.25).toInt().coerceIn(0, sortedPitchPct.size - 1)]
+        val pitchP40 = if (sortedPitchPct.isNotEmpty())
+            sortedPitchPct[(sortedPitchPct.size * 0.40).toInt().coerceIn(0, sortedPitchPct.size - 1)]
         else 20.0
-        val pitchP75 = if (sortedPitchPct.isNotEmpty())
-            sortedPitchPct[(sortedPitchPct.size * 0.75).toInt().coerceIn(0, sortedPitchPct.size - 1)]
+        val pitchP85 = if (sortedPitchPct.isNotEmpty())
+            sortedPitchPct[(sortedPitchPct.size * 0.85).toInt().coerceIn(0, sortedPitchPct.size - 1)]
         else 40.0
 
         // These are now correctly scaled percentages (1-100%)
-        val horizontalSpeedStart = yawP25.coerceIn(1.0, 100.0).toInt()
-        val horizontalSpeedEnd = yawP75.coerceIn(1.0, 100.0).toInt()
+        val horizontalSpeedStart = yawP40.coerceIn(1.0, 100.0).toInt()
+        val horizontalSpeedEnd = yawP85.coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(horizontalSpeedStart + 5) // Ensure range
 
-        val verticalSpeedStart = pitchP25.coerceIn(1.0, 100.0).toInt()
-        val verticalSpeedEnd = pitchP75.coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedStart = pitchP40.coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedEnd = pitchP85.coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(verticalSpeedStart + 5)
 
         // Direction change factor based on variance - continuous calculation
@@ -117,14 +119,14 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "HorizontalSpeed",
             "Current",
             "${horizontalSpeedStart}..${horizontalSpeedEnd}%",
-            "From P25-P75 yaw %/tick: ${"%.1f".format(yawP25)}-${"%.1f".format(yawP75)}%"
+            "From P40-P85 yaw %/tick: ${"%.1f".format(yawP40)}-${"%.1f".format(yawP85)}%"
         )
 
         changes["verticalSpeed"] = SettingChange(
             "VerticalSpeed",
             "Current",
             "${verticalSpeedStart}..${verticalSpeedEnd}%",
-            "From P25-P75 pitch %/tick: ${"%.1f".format(pitchP25)}-${"%.1f".format(pitchP75)}%"
+            "From P40-P85 pitch %/tick: ${"%.1f".format(pitchP40)}-${"%.1f".format(pitchP85)}%"
         )
 
         changes["directionChangeFactor"] = SettingChange(
@@ -152,10 +154,10 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "directionChangeStart" to dcFactorBase.toDouble(),
             "directionChangeEnd" to dcFactorEnd.toDouble(),
             "recommendedMidpoint" to recommendedMidpoint.toDouble(),
-            "yawP25" to yawP25,
-            "yawP75" to yawP75,
-            "pitchP25" to pitchP25,
-            "pitchP75" to pitchP75,
+            "yawP40" to yawP40,
+            "yawP85" to yawP85,
+            "pitchP40" to pitchP40,
+            "pitchP85" to pitchP85,
             "avgRotationMag" to avgRotationMag,
             // Debug stats to diagnose calculation issues
             "totalSamples" to samples.size.toDouble(),

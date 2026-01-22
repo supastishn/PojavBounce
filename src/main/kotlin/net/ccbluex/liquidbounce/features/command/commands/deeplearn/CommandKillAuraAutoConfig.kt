@@ -123,7 +123,13 @@ object CommandKillAuraAutoConfig : Command.Factory {
         // Run analysis and apply synchronously on main thread
         val analysisTime = measureTime {
             for (analyzer in allAnalyzers) {
-                val result = analyzer.analyze(samples)
+                // Use analyzeAdvanced for mode analyzers if advanced samples available
+                // This allows filtering by raycastHit (cursor on enemy)
+                val result = if (advancedSamples.isNotEmpty() && analyzer == modeAnalyzer) {
+                    analyzer.analyzeAdvanced(advancedSamples)
+                } else {
+                    analyzer.analyze(samples)
+                }
                 results.add(result)
                 analyzer.apply(result)
             }

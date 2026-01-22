@@ -57,7 +57,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private val logIntervalSeconds by int("LogIntervalSeconds", 10, 1..60)
     private val recordOnlyWhenAttacking by boolean("OnlyWhenAttacking", false)
     private val filterByFOV by boolean("FilterByFOV", false)
-    private val fovAngle by float("FOVAngle", 120f, 30f..180f).showIf { filterByFOV }
+    private val fovAngle by float("FOVAngle", 120f, 30f..180f)
 
     // Current target tracking
     private var currentTarget: LivingEntity? = null

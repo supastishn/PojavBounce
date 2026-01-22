@@ -95,7 +95,13 @@ jobs:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./gradlew build -x test -x detekt
-      - name: Upload artifact
+      - name: Upload artifact to GitHub
+        uses: actions/upload-artifact@v4
+        with:
+          name: LiquidBounce-${{ needs.extract-versions.outputs.lb_version }}-mc${{ needs.extract-versions.outputs.minecraft_version }}
+          path: build/libs/*[0-9].jar
+      - name: Upload artifact to LiquidBounce API
+        if: ${{ secrets.NIGHTLY_PASS != '' }}
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           JDK_VERSION: ${{ needs.extract-versions.outputs.jdk_version }}

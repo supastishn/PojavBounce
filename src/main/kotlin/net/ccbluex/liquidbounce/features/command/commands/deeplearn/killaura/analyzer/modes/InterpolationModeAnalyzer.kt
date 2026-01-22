@@ -154,10 +154,10 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             kotlin.math.sqrt(pitchPercentages.map { (it - mean) * (it - mean) }.average())
         } else 5.0
 
-        // Clamp variation to max 10% (or 10 percentage points) for consistency
-        val maxVariation = 10.0
-        val yawVariation = kotlin.math.min(yawStdDev * 0.5, maxVariation)  // Half stddev, max 10
-        val pitchVariation = kotlin.math.min(pitchStdDev * 0.5, maxVariation)
+        // Clamp variation to max 5% for tight, consistent ranges
+        val maxVariation = 5.0
+        val yawVariation = kotlin.math.min(yawStdDev * 0.25, maxVariation)  // Quarter stddev, max 5
+        val pitchVariation = kotlin.math.min(pitchStdDev * 0.25, maxVariation)
 
         // Create narrow range centered on P80
         val horizontalSpeedStart = (yawP80 - yawVariation).coerceIn(1.0, 100.0).toInt()

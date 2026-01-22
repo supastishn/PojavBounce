@@ -85,10 +85,9 @@ import net.minecraft.world.entity.LivingEntity
 @Suppress("MagicNumber")
 object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
-    // ManualAim - tracks absolute rotations like Aimbot
-    // Mouse input fights the auto-aim and gets corrected by smoothing each tick
-    private var manualAimPlayerRotation: Rotation? = null
+    // ManualAim - same pattern as Aimbot
     private var manualAimTargetRotation: Rotation? = null
+    private var manualAimPlayerRotation: Rotation? = null
 
     // Attack speed
     val clickScheduler = tree(KillAuraClicker)
@@ -154,16 +153,15 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             KillAuraRangeIndicator.render(this, event.partialTicks)
         }
 
-        // Apply ManualAim rotation directly to player view (like Aimbot)
-        // Interpolates between player rotation and target rotation
+        // ManualAim: exactly like Aimbot
         if (rotations.manualAim && targetTracker.target != null) {
             val currentRotation = manualAimPlayerRotation ?: return@handler
-            val targetRotation = manualAimTargetRotation ?: return@handler
+            val targetRot = manualAimTargetRotation ?: return@handler
 
             val timerSpeed = Timer.timerSpeed
             val interpolatedRotation = Rotation(
-                currentRotation.yaw + (targetRotation.yaw - currentRotation.yaw) * (timerSpeed * event.partialTicks),
-                currentRotation.pitch + (targetRotation.pitch - currentRotation.pitch) * (timerSpeed * event.partialTicks)
+                currentRotation.yaw + (targetRot.yaw - currentRotation.yaw) * (timerSpeed * event.partialTicks),
+                currentRotation.pitch + (targetRot.pitch - currentRotation.pitch) * (timerSpeed * event.partialTicks)
             )
 
             player.setRotation(interpolatedRotation)
@@ -171,25 +169,20 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
     }
 
     /**
-     * Handle mouse input for ManualAim mode.
-     * Mouse input modifies both player and target rotations directly (like Aimbot).
-     * This makes mouse input "fight" the auto-aim instead of persisting as an offset.
+     * ManualAim mouse handler - exactly like Aimbot
      */
     @Suppress("unused", "MagicNumber")
     private val mouseRotationHandler = handler<MouseRotationEvent> { event ->
-        // Only process when ManualAim is enabled and we have a target
         if (!rotations.manualAim || targetTracker.target == null) {
             return@handler
         }
 
-        // Same sensitivity calculation as Aimbot (0.15f multiplier)
-        val pitchDelta = event.cursorDeltaY.toFloat() * 0.15f
-        val yawDelta = event.cursorDeltaX.toFloat() * 0.15f
+        val f = event.cursorDeltaY.toFloat() * 0.15f
+        val g = event.cursorDeltaX.toFloat() * 0.15f
 
         fun updateRotation(rotation: Rotation): Rotation =
-            Rotation(yaw = rotation.yaw + yawDelta, pitch = (rotation.pitch + pitchDelta).coerceIn(-90f, 90f))
+            Rotation(yaw = rotation.yaw + g, pitch = (rotation.pitch + f).coerceIn(-90f, 90f))
 
-        // Update both rotations like Aimbot does
         manualAimPlayerRotation?.let { rotation ->
             manualAimPlayerRotation = updateRotation(rotation)
         }
@@ -201,9 +194,13 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
     @Suppress("unused")
     private val rotationUpdateHandler = handler<RotationUpdateEvent> {
-        // Update ManualAim player rotation from current player rotation (like Aimbot)
+        // ManualAim tick handler - exactly like Aimbot
         if (rotations.manualAim) {
             manualAimPlayerRotation = player.rotation
+
+            if (!requirementsMet || targetTracker.target == null) {
+                manualAimTargetRotation = null
+            }
         }
 
         // Make sure killaura-logic is not running while inventory is open
@@ -405,9 +402,8 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
                 provider = ModuleKillAura
             )
         } else {
-            // Reset manual aim rotations when no target
+            // Reset manual aim when no target
             if (rotations.manualAim) {
-                manualAimPlayerRotation = null
                 manualAimTargetRotation = null
             }
             targetTracker.reset()
@@ -421,7 +417,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
     ): Boolean {
         val (rotation, _) = findRotation(entity, range.toDouble()) ?: return false
 
-        // For ManualAim, set the target rotation (recalculated each tick, so auto-aim "pulls back")
+        // ManualAim: set target rotation (like Aimbot)
         if (rotations.manualAim) {
             manualAimTargetRotation = rotation
         }

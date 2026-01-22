@@ -41,7 +41,7 @@ class InterpolationAngleSmooth(
     private val verticalSpeed by intRange("VerticalSpeed", verticalSpeed, 1..100, "%")
     private val directionChangeFactor by intRange("DirectionChangeFactor", directionChangeFactor, 0..100, "%")
 
-    private val midpoint by float("Midpoint", 0.35f, 0.0f..1.0f)
+    private val midpoint by float("Midpoint", 0.75f, 0.0f..1.0f)
 
     private class Sigmoid {
         fun transform(t: Float): Float {

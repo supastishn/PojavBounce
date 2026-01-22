@@ -78,13 +78,13 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val sortedYawPct = yawPercentages.sorted()
         val sortedPitchPct = pitchPercentages.sorted()
 
-        // Use MEDIAN (P50) as the center, with narrow ±5% variation for consistency
-        // This gives more predictable rotation behavior than wide P40-P85 ranges
-        val yawMedian = if (sortedYawPct.isNotEmpty())
-            sortedYawPct[(sortedYawPct.size * 0.50).toInt().coerceIn(0, sortedYawPct.size - 1)]
+        // Use P65 as center (not P50) to skip slow "already locked on" samples
+        // P50 gets skewed by intentionally slow movements when tracking
+        val yawP65 = if (sortedYawPct.isNotEmpty())
+            sortedYawPct[(sortedYawPct.size * 0.65).toInt().coerceIn(0, sortedYawPct.size - 1)]
         else 35.0
-        val pitchMedian = if (sortedPitchPct.isNotEmpty())
-            sortedPitchPct[(sortedPitchPct.size * 0.50).toInt().coerceIn(0, sortedPitchPct.size - 1)]
+        val pitchP65 = if (sortedPitchPct.isNotEmpty())
+            sortedPitchPct[(sortedPitchPct.size * 0.65).toInt().coerceIn(0, sortedPitchPct.size - 1)]
         else 25.0
 
         // Calculate standard deviation to understand the actual variance in the data
@@ -102,13 +102,13 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
         val yawVariation = kotlin.math.min(yawStdDev * 0.5, maxVariation)  // Half stddev, max 10
         val pitchVariation = kotlin.math.min(pitchStdDev * 0.5, maxVariation)
 
-        // Create narrow range centered on median
-        val horizontalSpeedStart = (yawMedian - yawVariation).coerceIn(1.0, 100.0).toInt()
-        val horizontalSpeedEnd = (yawMedian + yawVariation).coerceIn(1.0, 100.0).toInt()
+        // Create narrow range centered on P65
+        val horizontalSpeedStart = (yawP65 - yawVariation).coerceIn(1.0, 100.0).toInt()
+        val horizontalSpeedEnd = (yawP65 + yawVariation).coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(horizontalSpeedStart + 3) // Ensure minimum 3% range
 
-        val verticalSpeedStart = (pitchMedian - pitchVariation).coerceIn(1.0, 100.0).toInt()
-        val verticalSpeedEnd = (pitchMedian + pitchVariation).coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedStart = (pitchP65 - pitchVariation).coerceIn(1.0, 100.0).toInt()
+        val verticalSpeedEnd = (pitchP65 + pitchVariation).coerceIn(1.0, 100.0).toInt()
             .coerceAtLeast(verticalSpeedStart + 3)
 
         // Direction change factor - use actual variance from data
@@ -120,13 +120,13 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
 
         // Midpoint: controls Bezier vs Sigmoid transition
         // Based on how quickly the player typically acquires targets
-        // Higher median % = faster acquisition = higher midpoint (more Bezier, less Sigmoid slowdown)
-        val avgMedian = (yawMedian + pitchMedian) / 2.0
+        // Higher P65 % = faster acquisition = higher midpoint (more Bezier, less Sigmoid slowdown)
+        val avgP65 = (yawP65 + pitchP65) / 2.0
         val recommendedMidpoint = when {
-            avgMedian > 50 -> 0.45f  // Fast aimer - use Bezier longer
-            avgMedian > 30 -> 0.35f  // Medium aimer - balanced
-            avgMedian > 15 -> 0.28f  // Slow aimer - more Sigmoid precision
-            else -> 0.22f            // Very slow - mostly Sigmoid
+            avgP65 > 50 -> 0.45f  // Fast aimer - use Bezier longer
+            avgP65 > 30 -> 0.35f  // Medium aimer - balanced
+            avgP65 > 15 -> 0.28f  // Slow aimer - more Sigmoid precision
+            else -> 0.22f         // Very slow - mostly Sigmoid
         }
 
         val changes = mutableMapOf<String, SettingChange>()
@@ -135,14 +135,14 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "HorizontalSpeed",
             "Current",
             "${horizontalSpeedStart}..${horizontalSpeedEnd}%",
-            "Median: ${"%.1f".format(yawMedian)}% ± ${"%.1f".format(yawVariation)}%"
+            "P65: ${"%.1f".format(yawP65)}% ± ${"%.1f".format(yawVariation)}%"
         )
 
         changes["verticalSpeed"] = SettingChange(
             "VerticalSpeed",
             "Current",
             "${verticalSpeedStart}..${verticalSpeedEnd}%",
-            "Median: ${"%.1f".format(pitchMedian)}% ± ${"%.1f".format(pitchVariation)}%"
+            "P65: ${"%.1f".format(pitchP65)}% ± ${"%.1f".format(pitchVariation)}%"
         )
 
         changes["directionChangeFactor"] = SettingChange(
@@ -156,7 +156,7 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "Midpoint",
             "Current",
             "%.2f".format(recommendedMidpoint),
-            "Avg median: ${"%.1f".format(avgMedian)}% → ${if (avgMedian > 30) "faster" else "slower"} transition"
+            "Avg P65: ${"%.1f".format(avgP65)}% → ${if (avgP65 > 30) "faster" else "slower"} transition"
         )
 
         val stats = mapOf(
@@ -170,13 +170,13 @@ object InterpolationModeAnalyzer : KillAuraAnalyzer {
             "directionChangeStart" to dcFactorBase.toDouble(),
             "directionChangeEnd" to dcFactorEnd.toDouble(),
             "recommendedMidpoint" to recommendedMidpoint.toDouble(),
-            "yawMedian" to yawMedian,
-            "pitchMedian" to pitchMedian,
+            "yawP65" to yawP65,
+            "pitchP65" to pitchP65,
             "yawStdDev" to yawStdDev,
             "pitchStdDev" to pitchStdDev,
             "yawVariation" to yawVariation,
             "pitchVariation" to pitchVariation,
-            // Debug stats to diagnose calculation issues
+            // Debug stats
             "totalSamples" to samples.size.toDouble(),
             "validYawSamples" to yawPercentages.size.toDouble(),
             "validPitchSamples" to pitchPercentages.size.toDouble()

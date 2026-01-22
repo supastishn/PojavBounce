@@ -22,10 +22,18 @@ package net.ccbluex.liquidbounce.integration.theme.component.components
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponent
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentTweak
 import net.ccbluex.liquidbounce.utils.render.Alignment
+import net.minecraft.client.gui.GuiGraphics
 
 abstract class NativeHudComponent(
     name: String,
     enabled: Boolean,
     alignment: Alignment,
     tweaks: Array<HudComponentTweak> = emptyArray()
-) : HudComponent(name, enabled, alignment, tweaks)
+) : HudComponent(name, enabled, alignment, tweaks) {
+
+    /**
+     * Render this HUD component.
+     * @param context The GuiGraphics context for rendering
+     */
+    abstract fun render(context: GuiGraphics)
+}

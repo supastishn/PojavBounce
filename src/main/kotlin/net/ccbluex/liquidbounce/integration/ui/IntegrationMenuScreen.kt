@@ -47,10 +47,7 @@ class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
         val nativeScreenTypes = listOf(
             VirtualScreenType.CLICK_GUI,
             VirtualScreenType.ALT_MANAGER,
-            VirtualScreenType.PROXY_MANAGER,
-            VirtualScreenType.SCRIPT_MANAGER,
-            VirtualScreenType.THEME_MANAGER,
-            VirtualScreenType.CUSTOMIZE
+            VirtualScreenType.PROXY_MANAGER
         )
 
         var y = 50
@@ -73,12 +70,6 @@ class IntegrationMenuScreen : Screen(Component.literal("Integration Menu")) {
                 mc.setScreen(net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen(this))
             VirtualScreenType.PROXY_MANAGER ->
                 mc.setScreen(net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(this))
-            VirtualScreenType.SCRIPT_MANAGER ->
-                mc.setScreen(net.ccbluex.liquidbounce.integration.ui.scriptmanager.NativeScriptManagerScreen(this))
-            VirtualScreenType.THEME_MANAGER ->
-                mc.setScreen(net.ccbluex.liquidbounce.integration.ui.thememanager.NativeThemeManagerScreen(this))
-            VirtualScreenType.CUSTOMIZE ->
-                mc.setScreen(net.ccbluex.liquidbounce.integration.ui.customize.NativeCustomizeScreen(this))
             else ->
                 mc.setScreen(net.ccbluex.liquidbounce.integration.VirtualDisplayScreen(type))
         }

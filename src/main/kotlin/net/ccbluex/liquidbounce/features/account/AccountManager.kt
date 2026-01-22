@@ -316,6 +316,14 @@ object AccountManager : Configurable("Accounts"), EventListener {
         EventManager.callEvent(AccountManagerLoginResultEvent(username = mc.user.name))
     }
 
+    /**
+     * Login with a random cracked account using a generated username.
+     */
+    fun loginRandomCrackedAccount() {
+        val randomUsername = "Player${(1000..9999).random()}"
+        loginCrackedAccount(randomUsername)
+    }
+
     fun favoriteAccount(id: Int) {
         val account = accounts.getOrNull(id) ?: error("Account not found!")
         account.favorite()

@@ -31,6 +31,26 @@ object DeepLearningEngine {
     var isInitialized = false
         private set
 
+    /**
+     * Detects if running in an Android environment (e.g., PojavLauncher, Termux).
+     */
+    val isAndroid: Boolean by lazy {
+        System.getProperty("java.vendor")?.contains("Android", ignoreCase = true) == true ||
+        System.getProperty("java.vm.name")?.contains("Dalvik", ignoreCase = true) == true ||
+        System.getProperty("java.runtime.name")?.contains("Android", ignoreCase = true) == true ||
+        java.io.File("/system/build.prop").exists()
+    }
+
+    /**
+     * Checks if ExecuTorch is available and initialized.
+     */
+    val isExecuTorchAvailable: Boolean
+        get() = try {
+            net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine.isInitialized
+        } catch (e: Throwable) {
+            false
+        }
+
     private val deepLearningFolder = rootFolder.resolve("deeplearning").apply {
         mkdirs()
     }

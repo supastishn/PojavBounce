@@ -51,9 +51,13 @@ import kotlin.math.sqrt
  */
 object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillAuraConfigSample>("KillAuraConfig") {
 
-    // Scan settings
-    private const val SCAN_RANGE = 8.0
-    private const val MAX_TARGETS = 10
+    // Configurable scan settings
+    private val scanRange by float("ScanRange", 8f, 4f..16f)
+    private val maxTargets by int("MaxTargets", 10, 1..20)
+    private val logIntervalSeconds by int("LogIntervalSeconds", 10, 1..60)
+    private val recordOnlyWhenAttacking by boolean("OnlyWhenAttacking", false)
+    private val filterByFOV by boolean("FilterByFOV", false)
+    private val fovAngle by float("FOVAngle", 120f, 30f..180f).showIf { filterByFOV }
 
     // Current target tracking
     private var currentTarget: LivingEntity? = null
@@ -111,7 +115,8 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private var totalSamplesRecorded = 0
     private var totalAttacksRecorded = 0
     private var lastLogTime = 0L
-    private const val LOG_INTERVAL_MS = 10000L // Log every 10 seconds
+    private val logIntervalMs: Long
+        get() = logIntervalSeconds * 1000L
 
     /**
      * Check if KillAuraConfig recorder is currently active
@@ -347,6 +352,25 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                     player.offhandItem.item is net.minecraft.world.item.MaceItem
         maceSmashPossible = usingMace && player.fallDistance > 1.5f
 
+        // Skip recording if OnlyWhenAttacking is enabled and no attack this tick
+        if (recordOnlyWhenAttacking && !attackAttempted) {
+            // Still reset flags but don't record
+            attackAttempted = false
+            attackSucceeded = false
+            wasCrit = false
+            sprintingAfterHit = false
+            wasBlockingBeforeHit = false
+            blockingAfterHit = false
+            blockedOnScanRange = false
+            lastSwingWasMiss = false
+            attackedWhileInventoryOpen = false
+            exitingRange = false
+            attackedWhileExiting = false
+            targetHadShield = false
+            attackedShieldingTarget = false
+            return@tickHandler
+        }
+
         // Record sample
         recordPacket(
             KillAuraConfigSample(
@@ -443,7 +467,7 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
         // Periodic logging
         val logTime = System.currentTimeMillis()
-        if (logTime - lastLogTime >= LOG_INTERVAL_MS) {
+        if (logTime - lastLogTime >= logIntervalMs) {
             chat("§7[Training] §f$totalSamplesRecorded§7 samples, §f$totalAttacksRecorded§7 attacks recorded")
             lastLogTime = logTime
         }
@@ -528,6 +552,8 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
      * Scan for valid enemy entities within range
      */
     private fun scanForEnemies(): List<LivingEntity> {
+        val scanRangeSq = scanRange.toDouble() * scanRange.toDouble()
+
         return world.entitiesForRendering()
             .filterIsInstance<LivingEntity>()
             .filter { entity ->
@@ -535,10 +561,23 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
                 !entity.isRemoved &&
                 entity.isAlive &&
                 entity.shouldBeAttacked() &&
-                player.squaredBoxedDistanceTo(entity) <= SCAN_RANGE * SCAN_RANGE
+                player.squaredBoxedDistanceTo(entity) <= scanRangeSq &&
+                (!filterByFOV || isInFOV(entity))
             }
             .sortedBy { player.squaredBoxedDistanceTo(it) }
-            .take(MAX_TARGETS)
+            .take(maxTargets)
+    }
+
+    /**
+     * Check if entity is within the configured FOV
+     */
+    private fun isInFOV(entity: LivingEntity): Boolean {
+        val lookVec = player.rotation.directionVector
+        val toTarget = entity.position().subtract(player.eyePosition).normalize()
+        val dot = lookVec.dot(toTarget)
+        val halfAngle = fovAngle / 2f
+        val minDot = kotlin.math.cos(Math.toRadians(halfAngle.toDouble())).toFloat()
+        return dot >= minDot
     }
 
     /**

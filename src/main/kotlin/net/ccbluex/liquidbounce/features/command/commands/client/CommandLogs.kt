@@ -33,6 +33,7 @@ object CommandLogs : Command.Factory {
     override fun createCommand(): Command {
         return CommandBuilder
             .begin("logs")
+            .hub()
             .subcommand(
                 CommandBuilder
                     .begin("delete")

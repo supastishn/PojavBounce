@@ -70,6 +70,8 @@ import net.ccbluex.liquidbounce.utils.inventory.isInContainerScreen
 import net.ccbluex.liquidbounce.utils.kotlin.Priority
 import net.ccbluex.liquidbounce.utils.kotlin.random
 import net.ccbluex.liquidbounce.utils.math.sq
+import net.ccbluex.liquidbounce.utils.aiming.utils.setRotation
+import net.ccbluex.liquidbounce.utils.client.Timer
 import net.ccbluex.liquidbounce.utils.render.TargetRenderer
 import net.minecraft.client.gui.screens.inventory.ContainerScreen
 import net.minecraft.world.entity.Entity
@@ -83,9 +85,9 @@ import net.minecraft.world.entity.LivingEntity
 @Suppress("MagicNumber")
 object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
 
-    // Manual aim offset - tracks player mouse adjustments when ManualAim is enabled
-    private var manualAimYawOffset = 0f
-    private var manualAimPitchOffset = 0f
+    // ManualAim - tracks actual rotation like Aimbot does (not just offsets)
+    private var manualAimTargetRotation: Rotation? = null
+    private var manualAimPlayerRotation: Rotation? = null
     private var lastManualAimTarget: Entity? = null
 
     // Attack speed
@@ -140,9 +142,9 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         KillAuraAutoBlock.stopBlocking()
         KillAuraNotifyWhenFail.failedHitsIncrement = 0
         KillAuraHumanTargeting.reset()
-        // Reset manual aim offset
-        manualAimYawOffset = 0f
-        manualAimPitchOffset = 0f
+        // Reset manual aim state
+        manualAimTargetRotation = null
+        manualAimPlayerRotation = null
         lastManualAimTarget = null
     }
 
@@ -152,11 +154,27 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         renderEnvironmentForWorld(event.matrixStack) {
             KillAuraRangeIndicator.render(this, event.partialTicks)
         }
+
+        // Apply ManualAim rotation directly like Aimbot does
+        if (rotations.manualAim && targetTracker.target != null) {
+            val currentRotation = manualAimPlayerRotation ?: return@handler
+            val targetRotation = manualAimTargetRotation ?: return@handler
+
+            val timerSpeed = Timer.timerSpeed
+            val partialTicks = event.partialTicks
+
+            val interpolatedRotation = Rotation(
+                currentRotation.yaw + (targetRotation.yaw - currentRotation.yaw) * (timerSpeed * partialTicks),
+                currentRotation.pitch + (targetRotation.pitch - currentRotation.pitch) * (timerSpeed * partialTicks)
+            )
+
+            player.setRotation(interpolatedRotation)
+        }
     }
 
     /**
      * Handle mouse input for ManualAim mode.
-     * When enabled, player mouse movements are added to the target rotation offset.
+     * Works exactly like Aimbot - mouse movements directly modify both player and target rotations.
      */
     @Suppress("unused", "MagicNumber")
     private val mouseRotationHandler = handler<MouseRotationEvent> { event ->
@@ -165,16 +183,30 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             return@handler
         }
 
-        // Add mouse delta to offset (same sensitivity as Aimbot)
+        // Same sensitivity calculation as Aimbot
         val pitchDelta = event.cursorDeltaY.toFloat() * 0.15f
         val yawDelta = event.cursorDeltaX.toFloat() * 0.15f
 
-        manualAimYawOffset += yawDelta
-        manualAimPitchOffset = (manualAimPitchOffset + pitchDelta).coerceIn(-90f, 90f)
+        fun updateRotation(rotation: Rotation): Rotation =
+            Rotation(yaw = rotation.yaw + yawDelta, pitch = (rotation.pitch + pitchDelta).coerceIn(-90f, 90f))
+
+        // Update both rotations like Aimbot does
+        manualAimPlayerRotation?.let { rotation ->
+            manualAimPlayerRotation = updateRotation(rotation)
+        }
+
+        manualAimTargetRotation?.let { rotation ->
+            manualAimTargetRotation = updateRotation(rotation)
+        }
     }
 
     @Suppress("unused")
     private val rotationUpdateHandler = handler<RotationUpdateEvent> {
+        // Update player rotation for ManualAim (like Aimbot does)
+        if (rotations.manualAim) {
+            manualAimPlayerRotation = player.rotation
+        }
+
         // Make sure killaura-logic is not running while inventory is open
         val isInInventoryScreen = isInventoryOpen || mc.screen is ContainerScreen
         val shouldResetTarget = player.isSpectator || player.isDeadOrDying || !requirementsMet
@@ -358,10 +390,11 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
             .firstOrNull { entity -> processTarget(entity, maximumRange) }
 
         if (target != null) {
-            // Reset manual aim offset when target changes
+            // Reset manual aim rotation when target changes (initialize to calculated rotation)
             if (rotations.manualAim && target != lastManualAimTarget) {
-                manualAimYawOffset = 0f
-                manualAimPitchOffset = 0f
+                // Initialize target rotation to the calculated rotation toward the new target
+                val initialRotation = findRotation(target, maximumRange.toDouble())?.rotation
+                manualAimTargetRotation = initialRotation
                 lastManualAimTarget = target
             }
             targetTracker.target = target
@@ -382,8 +415,7 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
         } else {
             // Reset manual aim when no target
             if (rotations.manualAim) {
-                manualAimYawOffset = 0f
-                manualAimPitchOffset = 0f
+                manualAimTargetRotation = null
                 lastManualAimTarget = null
             }
             targetTracker.reset()
@@ -397,12 +429,19 @@ object ModuleKillAura : ClientModule("KillAura", ModuleCategories.COMBAT) {
     ): Boolean {
         val (rotation, _) = findRotation(entity, range.toDouble()) ?: return false
 
-        // Apply manual aim offset if enabled
+        // For ManualAim, use the tracked rotation (which includes mouse adjustments)
+        // Otherwise use the calculated rotation
         val finalRotation = if (rotations.manualAim) {
-            Rotation(
-                rotation.yaw + manualAimYawOffset,
-                (rotation.pitch + manualAimPitchOffset).coerceIn(-90f, 90f)
-            )
+            // Update the target rotation to track toward enemy, but keep mouse offset applied
+            val currentTarget = manualAimTargetRotation
+            if (currentTarget != null) {
+                // Smoothly blend toward the target while preserving mouse offset
+                currentTarget
+            } else {
+                // Initialize if not set
+                manualAimTargetRotation = rotation
+                rotation
+            }
         } else {
             rotation
         }

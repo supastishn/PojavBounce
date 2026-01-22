@@ -36,6 +36,7 @@ import net.ccbluex.liquidbounce.features.command.commands.client.CommandFriend
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandHelp
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandHide
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandLocalConfig
+import net.ccbluex.liquidbounce.features.command.commands.client.CommandLogs
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandPanic
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandScript
 import net.ccbluex.liquidbounce.features.command.commands.client.CommandTargets
@@ -146,6 +147,7 @@ object CommandManager : Collection<Command> by commandSet {
             CommandTargets,
             CommandConfig,
             CommandLocalConfig,
+            CommandLogs,
             CommandAutoDisable,
             CommandScript,
             CommandContainers,

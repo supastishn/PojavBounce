@@ -59,6 +59,16 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
     private val filterByFOV by boolean("FilterByFOV", false)
     private val fovAngle by float("FOVAngle", 120f, 30f..180f)
 
+    // Combat lock system - only record during active combat
+    private val useCombatLock by boolean("CombatLock", true)
+    private val combatLockTimeoutSeconds by int("CombatLockTimeout", 5, 1..30)
+
+    // Combat lock state
+    private var inCombatLock = false
+    private var lastSuccessfulHitTime = 0L
+    private val combatLockTimeoutMs: Long
+        get() = combatLockTimeoutSeconds * 1000L
+
     // Current target tracking
     private var currentTarget: LivingEntity? = null
     private var lastTargetId: Int? = null
@@ -160,9 +170,15 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
         totalSamplesRecorded = 0
         totalAttacksRecorded = 0
         lastLogTime = System.currentTimeMillis()
+        inCombatLock = false
+        lastSuccessfulHitTime = 0L
 
         chat("§a✧ KillAura training started - scanning for enemies...")
-        chat("§7  Fight normally, data will be recorded passively.")
+        if (useCombatLock) {
+            chat("§7  Combat Lock: Recording starts on first hit, stops ${combatLockTimeoutSeconds}s after last hit")
+        } else {
+            chat("§7  Fight normally, data will be recorded passively.")
+        }
         super.enable()
     }
 
@@ -175,6 +191,15 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
     @Suppress("unused")
     private val tickHandler = tickHandler {
+        // Check combat lock timeout
+        if (useCombatLock && inCombatLock) {
+            val timeSinceLastHit = System.currentTimeMillis() - lastSuccessfulHitTime
+            if (timeSinceLastHit > combatLockTimeoutMs) {
+                inCombatLock = false
+                chat("§7[Combat Lock] §cEnded - ${combatLockTimeoutSeconds}s timeout reached")
+            }
+        }
+
         var previous = RotationManager.currentRotation ?: player.rotation
 
         // Track blocking state
@@ -371,6 +396,25 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
             return@tickHandler
         }
 
+        // Skip recording if CombatLock is enabled and not in combat
+        if (useCombatLock && !inCombatLock) {
+            // Still reset flags but don't record
+            attackAttempted = false
+            attackSucceeded = false
+            wasCrit = false
+            sprintingAfterHit = false
+            wasBlockingBeforeHit = false
+            blockingAfterHit = false
+            blockedOnScanRange = false
+            lastSwingWasMiss = false
+            attackedWhileInventoryOpen = false
+            exitingRange = false
+            attackedWhileExiting = false
+            targetHadShield = false
+            attackedShieldingTarget = false
+            return@tickHandler
+        }
+
         // Record sample
         recordPacket(
             KillAuraConfigSample(
@@ -512,6 +556,17 @@ object DebugKillAuraConfigRecorder : ModuleDebugRecorder.DebugRecorderMode<KillA
 
             attackAttempted = true
             attackSucceeded = attackedEntity.hurtTime == 0 || attackedEntity.hurtTime > 8
+
+            // Activate combat lock on successful hit (damage dealt)
+            if (useCombatLock && attackSucceeded) {
+                val wasAlreadyInCombat = inCombatLock
+                inCombatLock = true
+                lastSuccessfulHitTime = now
+
+                if (!wasAlreadyInCombat) {
+                    chat("§7[Combat Lock] §aStarted - recording active combat")
+                }
+            }
 
             // Track if this was a critical hit
             wasCrit = player.fallDistance > 0 && !player.onGround()

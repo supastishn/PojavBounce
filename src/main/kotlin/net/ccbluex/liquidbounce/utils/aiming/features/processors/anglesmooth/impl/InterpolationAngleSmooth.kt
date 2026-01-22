@@ -26,6 +26,9 @@ import net.ccbluex.liquidbounce.utils.aiming.data.Rotation
 import net.ccbluex.liquidbounce.utils.aiming.features.processors.anglesmooth.FactorAngleSmooth
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.sqrt
+import kotlin.math.ln
+import kotlin.random.Random
 
 class InterpolationAngleSmooth(
     parent: ChoiceConfigurable<*>,
@@ -56,6 +59,24 @@ class InterpolationAngleSmooth(
     private val bezier = Bezier()
 
     /**
+     * Generate a random value from a normal (Gaussian) distribution
+     * centered on the middle of the range, with values clamped to the range.
+     * Uses Box-Muller transform.
+     */
+    private fun IntRange.gaussianRandom(): Int {
+        val mean = (first + last) / 2.0
+        val stdDev = (last - first) / 4.0  // ~95% of values within range
+
+        // Box-Muller transform for Gaussian random
+        val u1 = Random.nextDouble()
+        val u2 = Random.nextDouble()
+        val z = sqrt(-2.0 * ln(u1)) * kotlin.math.cos(2.0 * Math.PI * u2)
+
+        val value = mean + z * stdDev
+        return value.toInt().coerceIn(first, last)
+    }
+
+    /**
      * Calculate the factors for the rotation towards the target rotation.
      *
      * @param currentRotation The current rotation
@@ -71,18 +92,19 @@ class InterpolationAngleSmooth(
         ModuleDebug.debugParameter(this, "Pitch Diff", pitchDiff)
 
         val directionChange = RotationManager.previousRotationTarget.takeIf { rotationTarget != null }?.run {
-            rotation.angleTo(targetRotation).coerceIn(0f, 1f) * (directionChangeFactor.random().toFloat() / 100.0f)
+            rotation.angleTo(targetRotation).coerceIn(0f, 1f) * (directionChangeFactor.gaussianRandom().toFloat() / 100.0f)
         } ?: 0f
         ModuleDebug.debugParameter(this, "Direction Change", directionChange)
 
+        // Use Gaussian distribution instead of uniform random for more natural movement
         val horizontalSpeed = if (rotationTarget != null) {
-            horizontalSpeed.random()
+            horizontalSpeed.gaussianRandom()
         } else {
             horizontalSpeed.first
         }.toFloat() / 100.0f
 
         val verticalSpeed = if (rotationTarget != null) {
-            verticalSpeed.random()
+            verticalSpeed.gaussianRandom()
         } else {
             verticalSpeed.first
         }.toFloat() / 100.0f

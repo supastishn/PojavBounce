@@ -113,6 +113,16 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         val sliderWidth: Int
     )
 
+    // Represents active text editing
+    private data class TextEditState(
+        val value: Value<String>,
+        var text: String,
+        var cursorPos: Int
+    )
+
+    // Active text being edited
+    private var activeTextEdit: TextEditState? = null
+
     override fun init() {
         super.init()
         panels.clear()
@@ -209,6 +219,18 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
     override fun charTyped(event: CharacterEvent): Boolean {
         val chr = event.codepoint().toChar()
+
+        // Handle text editing first
+        activeTextEdit?.let { edit ->
+            if (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-' || chr == '.' || chr == '@' || chr == '!' || chr == '#' || chr == '$' || chr == '%' || chr == '^' || chr == '&' || chr == '*' || chr == '(' || chr == ')') {
+                edit.text = edit.text.substring(0, edit.cursorPos) + chr + edit.text.substring(edit.cursorPos)
+                edit.cursorPos++
+                edit.value.set(edit.text)
+                return true
+            }
+            return true
+        }
+
         if (chr.isLetterOrDigit() || chr == ' ' || chr == '_' || chr == '-') {
             searchQuery += chr
             return true
@@ -217,6 +239,48 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun keyPressed(event: KeyEvent): Boolean {
+        // Handle text editing first
+        activeTextEdit?.let { edit ->
+            when (event.key) {
+                259 -> { // Backspace
+                    if (edit.cursorPos > 0) {
+                        edit.text = edit.text.substring(0, edit.cursorPos - 1) + edit.text.substring(edit.cursorPos)
+                        edit.cursorPos--
+                        edit.value.set(edit.text)
+                    }
+                    return true
+                }
+                261 -> { // Delete
+                    if (edit.cursorPos < edit.text.length) {
+                        edit.text = edit.text.substring(0, edit.cursorPos) + edit.text.substring(edit.cursorPos + 1)
+                        edit.value.set(edit.text)
+                    }
+                    return true
+                }
+                263 -> { // Left arrow
+                    if (edit.cursorPos > 0) edit.cursorPos--
+                    return true
+                }
+                262 -> { // Right arrow
+                    if (edit.cursorPos < edit.text.length) edit.cursorPos++
+                    return true
+                }
+                256, 257 -> { // Escape or Enter - finish editing
+                    activeTextEdit = null
+                    return true
+                }
+                268 -> { // Home
+                    edit.cursorPos = 0
+                    return true
+                }
+                269 -> { // End
+                    edit.cursorPos = edit.text.length
+                    return true
+                }
+            }
+            return true
+        }
+
         if (event.key == 259 && searchQuery.isNotEmpty()) {
             searchQuery = searchQuery.dropLast(1)
             return true
@@ -229,11 +293,20 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun mouseClicked(click: MouseButtonEvent, doubled: Boolean): Boolean {
+        // Clear text edit if clicking elsewhere (unless clicking on the same text field)
+        val wasTextEditing = activeTextEdit != null
+
         for (panel in panels) {
             if (panel.mouseClicked(click.x, click.y, click.button())) {
                 return true
             }
         }
+
+        // If we were editing and didn't click a new setting, clear the edit
+        if (wasTextEditing && activeTextEdit != null) {
+            activeTextEdit = null
+        }
+
         return super.mouseClicked(click, doubled)
     }
 
@@ -867,17 +940,34 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val isHovered = mouseX >= x + indent && mouseX < x + panelWidth - 4 &&
                 mouseY >= settingY && mouseY < settingY + SETTING_HEIGHT
 
-            val backgroundColor = if (isHovered) 0x50404060.toInt() else 0x40202030.toInt()
+            // Check if this value is currently being edited
+            val isEditing = activeTextEdit?.value === value
+
+            val backgroundColor = when {
+                isEditing -> 0x60606080.toInt()
+                isHovered -> 0x50404060.toInt()
+                else -> 0x40202030.toInt()
+            }
             context.fill(x + 4 + indent, settingY, x + panelWidth - 4, settingY + SETTING_HEIGHT, backgroundColor)
 
-            val displayText = getSettingDisplayText(value)
             val displayName = value.name.take(12) + if (value.name.length > 12) ".." else ""
-
             drawPanelText(context, fr, scale, displayName, x + 6f + indent, settingY + 1f, COLOR_LIGHT_GRAY, false)
 
-            val valueColor = getValueColorC4b(value)
-            val valueWidth = getTextWidth(fr, scale, displayText)
-            drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, valueColor, false)
+            // For text being edited, show with cursor
+            if (isEditing) {
+                val edit = activeTextEdit!!
+                val beforeCursor = edit.text.substring(0, edit.cursorPos)
+                val afterCursor = edit.text.substring(edit.cursorPos)
+                val cursorVisible = (System.currentTimeMillis() / 500) % 2 == 0L
+                val displayText = beforeCursor + (if (cursorVisible) "|" else "") + afterCursor
+                val valueWidth = getTextWidth(fr, scale, displayText)
+                drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, COLOR_WHITE, false)
+            } else {
+                val displayText = getSettingDisplayText(value)
+                val valueColor = getValueColorC4b(value)
+                val valueWidth = getTextWidth(fr, scale, displayText)
+                drawPanelText(context, fr, scale, displayText, x + panelWidth - valueWidth - 8f, settingY + 1f, valueColor, false)
+            }
         }
 
         private fun getSettingDisplayText(value: Value<*>): String {
@@ -1140,6 +1230,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 is Boolean -> {
                     @Suppress("UNCHECKED_CAST")
                     (value as Value<Boolean>).set(!inner)
+                }
+                is String -> {
+                    // Start text editing
+                    @Suppress("UNCHECKED_CAST")
+                    activeTextEdit = TextEditState(value as Value<String>, inner, inner.length)
                 }
                 is NamedChoice -> {
                     if (value is ChooseListValue<*>) {

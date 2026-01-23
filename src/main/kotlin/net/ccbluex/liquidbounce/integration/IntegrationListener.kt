@@ -301,19 +301,29 @@ object IntegrationListener : EventListener {
             return false
         }
 
-        // For MinecraftGuiBrowserBackend, only virtualize screens that need browser rendering
-        // (ClickGUI, AltManager, etc.) but NOT standard Minecraft screens (Title, Multiplayer, etc.)
+        // For MinecraftGuiBrowserBackend, use native Minecraft GUI screens instead of browser rendering
+        // Browser virtualization doesn't work without CEF - open native implementations instead
         if (BrowserBackendManager.browserBackend is net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend) {
-            val shouldVirtualize = when (virtualScreenType) {
-                VirtualScreenType.CLICK_GUI,
-                VirtualScreenType.ALT_MANAGER,
-                VirtualScreenType.PROXY_MANAGER -> true
-                else -> false
-            }
+            virtualClose()
 
-            if (!shouldVirtualize) {
-                virtualClose()
-                return false
+            // Open native screens for supported types
+            when (virtualScreenType) {
+                VirtualScreenType.CLICK_GUI -> {
+                    mc.setScreen(net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen())
+                    return true
+                }
+                VirtualScreenType.ALT_MANAGER -> {
+                    mc.setScreen(net.ccbluex.liquidbounce.integration.ui.altmanager.NativeAltManagerScreen(virtScreen))
+                    return true
+                }
+                VirtualScreenType.PROXY_MANAGER -> {
+                    mc.setScreen(net.ccbluex.liquidbounce.integration.ui.proxymanager.NativeProxyManagerScreen(virtScreen))
+                    return true
+                }
+                else -> {
+                    // For other screens (Title, Multiplayer, etc.), just show the native Minecraft screen
+                    return false
+                }
             }
         }
 

@@ -117,6 +117,13 @@ object ModuleClickGui :
             return
         }
 
+        // For MinecraftGuiBrowserBackend (Android/PojavBounce), use native ClickGUI directly
+        if (net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager.browserBackend is net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend) {
+            mc.setScreen(net.ccbluex.liquidbounce.integration.ui.clickgui.NativeClickGuiScreen())
+            super.onEnabled()
+            return
+        }
+
         mc.setScreen(
             if (clickGuiBrowser == null) {
                 VirtualDisplayScreen(VirtualScreenType.CLICK_GUI)

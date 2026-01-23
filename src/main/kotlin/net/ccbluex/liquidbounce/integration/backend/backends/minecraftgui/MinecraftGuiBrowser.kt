@@ -66,9 +66,17 @@ class MinecraftGuiBrowser(
 
     override val texture: BrowserTexture?
         get() {
-            // Pure Minecraft GUI doesn't use browser textures
-            // The GUI is rendered directly using Minecraft's rendering system
-            return null
+            // Pure Minecraft GUI renders directly - create a dummy texture to prevent null issues
+            // The actual rendering happens in Minecraft's GUI system, not through browser texture
+            return object : BrowserTexture {
+                override val width = viewport.width
+                override val height = viewport.height
+                override val textureId = -1  // No GL texture needed
+
+                override fun cleanup() {
+                    // No-op
+                }
+            }
         }
 
     override fun forceReload() {

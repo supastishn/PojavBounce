@@ -55,7 +55,7 @@ import net.minecraft.world.item.ItemUseAnimation
 @Suppress("MagicNumber")
 object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.COMBAT, aliases = listOf("WTap")) {
 
-    val modes = choices("Mode", Packet, arrayOf(Packet, SprintTap, WTap)).apply(::tagBy)
+    val modes = choices("Mode", Packet, arrayOf(Packet, SprintTap, WTap, BlockHit)).apply(::tagBy)
     val hurtTime by int("HurtTime", 10, 0..10)
     val chance by int("Chance", 100, 0..100, "%")
     private val conditions by multiEnumChoice("Conditions", Conditions.NOT_IN_WATER)
@@ -80,76 +80,8 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
         val onlyForward by boolean("OnlyForward", true)
     }
 
-    /**
-     * BlockHit feature - blocks after hitting to increase knockback
-     * Blocking briefly after an attack can add extra knockback to the target.
-     */
-    private object BlockHitFeature : ToggleableConfigurable(ModuleSuperKnockback, "BlockHit", false) {
-        val blockDuration by intRange("BlockDuration", 1..2, 1..10, "ticks")
-        val delay by intRange("Delay", 0..1, 0..5, "ticks")
-
-        private var blockTicks = 0
-        private var delayTicks = 0
-        private var shouldBlock = false
-
-        @Suppress("unused")
-        private val attackHandler = sequenceHandler<AttackEntityEvent> { event ->
-            val enemy = event.entity
-
-            if (!enabled || !shouldOperate(enemy)) {
-                return@sequenceHandler
-            }
-
-            if (enemy is LivingEntity && enemy.hurtTime <= hurtTime) {
-                val blockHand = getBlockableHand() ?: return@sequenceHandler
-
-                // Wait for delay
-                val delayAmount = delay.random()
-                if (delayAmount > 0) {
-                    waitTicks(delayAmount)
-                }
-
-                // Start blocking
-                startBlocking(blockHand)
-
-                // Wait for block duration
-                waitTicks(blockDuration.random())
-
-                // Stop blocking
-                stopBlocking()
-            }
-        }
-
-        private fun getBlockableHand(): InteractionHand? {
-            return when {
-                canBlock(player.mainHandItem) -> InteractionHand.MAIN_HAND
-                canBlock(player.offhandItem) -> InteractionHand.OFF_HAND
-                else -> null
-            }
-        }
-
-        private fun canBlock(itemStack: ItemStack): Boolean {
-            return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
-        }
-
-        private fun startBlocking(hand: InteractionHand) {
-            val itemStack = player.getItemInHand(hand)
-            if (itemStack.isEmpty || !itemStack.isItemEnabled(world.enabledFeatures())) {
-                return
-            }
-            interaction.useItem(player, hand)
-        }
-
-        private fun stopBlocking() {
-            if (player.isUsingItem) {
-                interaction.releaseUsingItem(player)
-            }
-        }
-    }
-
     init {
         tree(OnlyOnMove)
-        tree(BlockHitFeature)
     }
 
     object Packet : Choice("Packet") {
@@ -277,6 +209,71 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
             super.disable()
         }
 
+    }
+
+    /**
+     * BlockHit mode - blocks briefly after hitting to increase knockback
+     */
+    object BlockHit : Choice("BlockHit") {
+        override val parent: ChoiceConfigurable<Choice>
+            get() = modes
+
+        private val blockDuration by intRange("BlockDuration", 1..2, 1..10, "ticks")
+        private val delay by intRange("Delay", 0..1, 0..5, "ticks")
+
+        @Suppress("unused")
+        private val attackHandler = sequenceHandler<AttackEntityEvent> { event ->
+            val enemy = event.entity
+
+            if (!shouldOperate(enemy)) {
+                return@sequenceHandler
+            }
+
+            if (enemy is LivingEntity && enemy.hurtTime <= hurtTime && chance >= (0..100).random()) {
+                val blockHand = getBlockableHand() ?: return@sequenceHandler
+
+                // Wait for delay
+                val delayAmount = delay.random()
+                if (delayAmount > 0) {
+                    waitTicks(delayAmount)
+                }
+
+                // Start blocking
+                startBlocking(blockHand)
+
+                // Wait for block duration
+                waitTicks(blockDuration.random())
+
+                // Stop blocking
+                stopBlocking()
+            }
+        }
+
+        private fun getBlockableHand(): InteractionHand? {
+            return when {
+                canBlock(player.mainHandItem) -> InteractionHand.MAIN_HAND
+                canBlock(player.offhandItem) -> InteractionHand.OFF_HAND
+                else -> null
+            }
+        }
+
+        private fun canBlock(itemStack: ItemStack): Boolean {
+            return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
+        }
+
+        private fun startBlocking(hand: InteractionHand) {
+            val itemStack = player.getItemInHand(hand)
+            if (itemStack.isEmpty || !itemStack.isItemEnabled(world.enabledFeatures())) {
+                return
+            }
+            interaction.useItem(player, hand)
+        }
+
+        private fun stopBlocking() {
+            if (player.isUsingItem) {
+                interaction.releaseUsingItem(player)
+            }
+        }
     }
 
     private fun shouldStopSprinting(event: AttackEntityEvent): Boolean {

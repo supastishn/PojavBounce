@@ -398,7 +398,16 @@ object LiquidBounce : EventListener {
             // resources from the internet.
             launch("Deep Learning") { task ->
                 runCatching {
-                    DeepLearningEngine.init(task)
+                    // On Android, initialize ExecuTorch instead of DJL (lightweight, mobile-optimized)
+                    if (DeepLearningEngine.isAndroid) {
+                        logger.info("Android detected - initializing ExecuTorch runtime")
+                        net.ccbluex.liquidbounce.deeplearn.executorch.ExecuTorchEngine.init(task)
+                        logger.info("ExecuTorch initialized, loading models")
+                    } else {
+                        // On PC, use DJL (full-featured PyTorch)
+                        logger.info("PC detected - initializing DJL runtime")
+                        DeepLearningEngine.init(task)
+                    }
                     ModelManager.load()
                 }.onFailure { exception ->
                     task.subTasks.clear()

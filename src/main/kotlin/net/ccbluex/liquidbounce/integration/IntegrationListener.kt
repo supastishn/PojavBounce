@@ -301,13 +301,6 @@ object IntegrationListener : EventListener {
             return false
         }
 
-        // For MinecraftGuiBrowserBackend, don't replace screens with VirtualDisplayScreen
-        // Just show the standard Minecraft GUI
-        if (BrowserBackendManager.browserBackend is net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend) {
-            virtualClose()
-            return false
-        }
-
         val name = virtualScreenType.routeName
         val route = runCatching {
             ThemeManager.getScreenLocation(virtualScreenType, false)

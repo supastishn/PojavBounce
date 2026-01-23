@@ -69,7 +69,7 @@ object ModelManager : EventListener, Configurable("AI") {
     fun load() {
         logger.info("[AI] Loading models...")
         val choices = allCombatModels.mapToArray { name ->
-            TwoDimensionalRegressionModel(name, models)
+            MinaraiModel(name, models)
         }
 
         for (model in choices) {

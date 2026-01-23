@@ -37,8 +37,8 @@ object BrowserBackendManager : EventListener {
     // Use MinecraftGuiBrowserBackend instead of CEF for PojavBounce (no JCEF dependencies)
     val browserBackend: BrowserBackend = MinecraftGuiBrowserBackend()
 
-    val isSkippingBrowser = System.getenv("LB_SKIP_BROWSER") == "true"
-        || System.getProperty("net.ccbluex.liquidbounce.skip.browser") == "true"
+    // Skip browser by default for PojavBounce/Android (no web rendering, use native screens)
+    val isSkippingBrowser = true
 
     fun init() {
         PersistentLocalStorage

@@ -301,6 +301,22 @@ object IntegrationListener : EventListener {
             return false
         }
 
+        // For MinecraftGuiBrowserBackend, only virtualize screens that need browser rendering
+        // (ClickGUI, AltManager, etc.) but NOT standard Minecraft screens (Title, Multiplayer, etc.)
+        if (BrowserBackendManager.browserBackend is net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend) {
+            val shouldVirtualize = when (virtualScreenType) {
+                VirtualScreenType.CLICK_GUI,
+                VirtualScreenType.ALT_MANAGER,
+                VirtualScreenType.PROXY_MANAGER -> true
+                else -> false
+            }
+
+            if (!shouldVirtualize) {
+                virtualClose()
+                return false
+            }
+        }
+
         val name = virtualScreenType.routeName
         val route = runCatching {
             ThemeManager.getScreenLocation(virtualScreenType, false)

@@ -37,6 +37,7 @@ import net.ccbluex.liquidbounce.features.module.modules.client.ModuleRichPresenc
 import net.ccbluex.liquidbounce.features.module.modules.client.ModuleTargets
 import net.ccbluex.liquidbounce.features.module.modules.client.ModuleTranslation
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAimbot
+import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAttributeSwap
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAutoClicker
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAutoLeave
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleAutoRod
@@ -372,6 +373,7 @@ object ModuleManager : EventListener, Collection<ClientModule> by modules {
         val builtin = arrayOf(
             // Combat
             ModuleAimbot,
+            ModuleAttributeSwap,
             ModuleAutoArmor,
             ModuleAutoBow,
             ModuleAutoClicker,

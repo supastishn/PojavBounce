@@ -58,7 +58,7 @@ object ModelManager : EventListener, Configurable("AI") {
         // Empty models for start-up initialization.
         // These will be replaced later on at [load].
         allCombatModels.mapToArray { name ->
-            TwoDimensionalRegressionModel(name, choiceConfigurable)
+            MinaraiModel(name, choiceConfigurable)
         }
     }
 

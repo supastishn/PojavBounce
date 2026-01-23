@@ -32,7 +32,6 @@ import net.ccbluex.liquidbounce.utils.item.getEnchantment
 import net.ccbluex.liquidbounce.utils.item.isAxe
 import net.ccbluex.liquidbounce.utils.item.isSword
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.FIRST_PRIORITY
-import net.minecraft.world.item.DiggerItem
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.MaceItem
 import net.minecraft.world.item.TridentItem
@@ -53,9 +52,8 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
     private val attributeTarget by enumChoice("Target", AttributeTarget.DAMAGE)
 
     // Manual mode - multi-select slots
-    private val manualSlots by intRange("ManualSlots", 0..8, 0..8).onlyIf {
-        swapMode == SwapMode.MANUAL
-    }
+    private val manualSlots by intRange("ManualSlots", 0..8, 0..8)
+        .doNotIncludeWhen { swapMode != SwapMode.MANUAL }
 
     // Priority queue for PRIORITY_QUEUE mode
     private val priorityList by multiEnumChoice(
@@ -69,17 +67,13 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
             EnchantmentPriority.SPEED,
             EnchantmentPriority.REACH
         )
-    ).onlyIf {
-        attributeTarget == AttributeTarget.PRIORITY_QUEUE
-    }
+    ).doNotIncludeWhen { attributeTarget != AttributeTarget.PRIORITY_QUEUE }
 
     // Durability save mode settings
-    private val saveSlot by int("DurabilitySaveSlot", 0, 0..8, "slot").onlyIf {
-        attributeTarget == AttributeTarget.DURABILITY_SAVE
-    }
-    private val saveUseEmpty by boolean("SaveUseEmpty", true).onlyIf {
-        attributeTarget == AttributeTarget.DURABILITY_SAVE
-    }
+    private val saveSlot by int("DurabilitySaveSlot", 0, 0..8, "slot")
+        .doNotIncludeWhen { attributeTarget != AttributeTarget.DURABILITY_SAVE }
+    private val saveUseEmpty by boolean("SaveUseEmpty", true)
+        .doNotIncludeWhen { attributeTarget != AttributeTarget.DURABILITY_SAVE }
 
     // Timing
     private val switchBackDelay by int("SwitchBackDelay", 0, 0..5, "ticks")
@@ -117,7 +111,7 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
         if (!enabled) return@handler
 
         val targetSlot = determineSwapSlot() ?: return@handler
-        val currentSlot = player.inventory.selected
+        val currentSlot = player.inventory.selectedSlot
 
         if (targetSlot == currentSlot) return@handler
 
@@ -141,9 +135,12 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
 
     private fun determineManualSlot(): Int? {
         // Find first non-empty slot in manual slot range
-        return (manualSlots.first..manualSlots.last).firstOrNull { slot ->
-            !Slots.Hotbar[slot].itemStack.isEmpty
+        for (slot in manualSlots.first..manualSlots.last) {
+            if (!Slots.Hotbar[slot].itemStack.isEmpty) {
+                return slot
+            }
         }
+        return null
     }
 
     private fun determineAutomaticSlot(): Int? {
@@ -244,9 +241,7 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
     }
 
     private fun isToolOrWeapon(stack: ItemStack): Boolean {
-        return stack.isSword || stack.isAxe ||
-               stack.item is DiggerItem ||
-               stack.item is TridentItem
+        return stack.isSword || stack.isAxe || stack.item is TridentItem
     }
 
     private fun getPriorityQueueSlot(): Int? {
@@ -274,7 +269,9 @@ object ModuleAttributeSwap : ClientModule("AttributeSwap", ModuleCategories.COMB
                     }
                 }?.first
 
-            if (slot != null) return slot
+            if (slot != null) {
+                return slot
+            }
         }
         return null
     }

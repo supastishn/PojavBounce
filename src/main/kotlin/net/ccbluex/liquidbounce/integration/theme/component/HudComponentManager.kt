@@ -23,12 +23,33 @@ import net.ccbluex.liquidbounce.event.EventManager
 import net.ccbluex.liquidbounce.event.events.ComponentsUpdateEvent
 import net.ccbluex.liquidbounce.features.misc.HideAppearance
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
+import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
+import net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
+import net.ccbluex.liquidbounce.integration.theme.component.components.ArrayListComponent
+import net.ccbluex.liquidbounce.integration.theme.component.components.WatermarkComponent
 import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.MinimapHudComponent
+import net.ccbluex.liquidbounce.utils.render.Alignment
 
 object HudComponentManager {
 
-    val nativeComponents = listOf(MinimapHudComponent)
+    // Default native components always available
+    private val defaultNativeComponents = listOf(MinimapHudComponent)
+
+    // Additional components for when browser isn't available (Android)
+    private val fallbackNativeComponents: List<HudComponent> by lazy {
+        if (BrowserBackendManager.browserBackend is MinecraftGuiBrowserBackend) {
+            listOf(
+                ArrayListComponent("ArrayList", true, Alignment.TOP_RIGHT, emptyArray()),
+                WatermarkComponent("Watermark", true, Alignment.TOP_LEFT, emptyArray())
+            )
+        } else {
+            emptyList()
+        }
+    }
+
+    val nativeComponents: List<HudComponent>
+        get() = defaultNativeComponents + fallbackNativeComponents
 
     val components: List<HudComponent>
         get() = nativeComponents + ThemeManager.theme.components

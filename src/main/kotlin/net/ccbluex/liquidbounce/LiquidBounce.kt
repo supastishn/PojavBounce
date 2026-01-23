@@ -62,6 +62,7 @@ import net.ccbluex.liquidbounce.integration.IntegrationListener
 import net.ccbluex.liquidbounce.integration.backend.BrowserBackendManager
 import net.ccbluex.liquidbounce.integration.interop.ClientInteropServer
 import net.ccbluex.liquidbounce.integration.interop.protocol.rest.v1.game.ActiveServerList
+import net.ccbluex.liquidbounce.integration.ui.hud.NativeHudRenderer
 import net.ccbluex.liquidbounce.integration.task.TaskManager
 import net.ccbluex.liquidbounce.integration.task.TaskProgressScreen
 import net.ccbluex.liquidbounce.integration.theme.ThemeManager
@@ -388,6 +389,13 @@ object LiquidBounce : EventListener {
 
         BlurEffectRenderer
         IntegrationListener
+
+        // Register native HUD components and renderer when using MinecraftGuiBrowserBackend (Android)
+        // Browser-based HUD doesn't work without CEF, so we use native rendering
+        if (BrowserBackendManager.browserBackend is net.ccbluex.liquidbounce.integration.backend.backends.minecraftgui.MinecraftGuiBrowserBackend) {
+            net.ccbluex.liquidbounce.integration.theme.component.registerNativeComponents()
+            NativeHudRenderer
+        }
 
         taskManager = TaskManager(ioScope).apply {
             // Either immediately starts browser or spawns a task to request browser dependencies,

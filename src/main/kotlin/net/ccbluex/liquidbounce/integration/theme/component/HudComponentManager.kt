@@ -30,6 +30,8 @@ import net.ccbluex.liquidbounce.integration.theme.component.components.ArrayList
 import net.ccbluex.liquidbounce.integration.theme.component.components.WatermarkComponent
 import net.ccbluex.liquidbounce.integration.theme.component.components.minimap.MinimapHudComponent
 import net.ccbluex.liquidbounce.utils.render.Alignment
+import net.ccbluex.liquidbounce.utils.render.Alignment.ScreenAxisX
+import net.ccbluex.liquidbounce.utils.render.Alignment.ScreenAxisY
 
 object HudComponentManager {
 
@@ -40,8 +42,8 @@ object HudComponentManager {
     private val fallbackNativeComponents: List<HudComponent> by lazy {
         if (BrowserBackendManager.browserBackend is MinecraftGuiBrowserBackend) {
             listOf(
-                ArrayListComponent("ArrayList", true, Alignment.TOP_RIGHT, emptyArray()),
-                WatermarkComponent("Watermark", true, Alignment.TOP_LEFT, emptyArray())
+                ArrayListComponent("ArrayList", true, Alignment(ScreenAxisX.RIGHT, 4, ScreenAxisY.TOP, 4), emptyArray()),
+                WatermarkComponent("Watermark", true, Alignment(ScreenAxisX.LEFT, 4, ScreenAxisY.TOP, 4), emptyArray())
             )
         } else {
             emptyList()

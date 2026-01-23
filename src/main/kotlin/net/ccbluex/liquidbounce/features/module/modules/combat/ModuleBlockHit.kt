@@ -25,6 +25,7 @@ import net.ccbluex.liquidbounce.utils.aiming.utils.facingEnemy
 import net.ccbluex.liquidbounce.utils.combat.getEntitiesBoxInRange
 import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.rotation
+import net.ccbluex.liquidbounce.utils.input.InputTracker.isPressedOnAny
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.item.ItemStack
 import net.minecraft.world.item.ItemUseAnimation
@@ -48,6 +49,12 @@ object ModuleBlockHit : ClientModule("BlockHit", ModuleCategories.COMBAT) {
 
     @Suppress("unused")
     private val tickHandler = tickHandler {
+        // Don't block while attacking
+        if (mc.options.keyAttack.isPressedOnAny) {
+            stopBlocking()
+            return@tickHandler
+        }
+
         if (cooldownTicks > 0) {
             cooldownTicks--
             return@tickHandler

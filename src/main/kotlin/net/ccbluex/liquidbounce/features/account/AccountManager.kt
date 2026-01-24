@@ -325,58 +325,67 @@ object AccountManager : Configurable("Accounts"), EventListener {
     }
 
     /**
-     * Generates a fully random Minecraft-style username (3-16 characters).
-     * Uses a mix of adjectives, nouns, and random suffixes for variety.
+     * Generates a fully random username (3-16 characters).
+     * Creates pronounceable random words by alternating consonants and vowels.
      */
     private fun generateRandomUsername(): String {
-        val adjectives = listOf(
-            "Cool", "Fast", "Swift", "Dark", "Light", "Fire", "Ice", "Storm", "Shadow", "Bright",
-            "Wild", "Brave", "Silent", "Loud", "Crazy", "Lucky", "Happy", "Angry", "Sneaky", "Epic",
-            "Ultra", "Mega", "Super", "Hyper", "Toxic", "Neon", "Cyber", "Pixel", "Astro", "Turbo",
-            "Blazing", "Frozen", "Golden", "Silver", "Crystal", "Phantom", "Stealth", "Mystic", "Chaos", "Zen"
-        )
+        val vowels = "aeiou"
+        val consonants = "bcdfghjklmnpqrstvwxyz"
+        val numbers = "0123456789"
 
-        val nouns = listOf(
-            "Wolf", "Fox", "Bear", "Lion", "Tiger", "Eagle", "Hawk", "Dragon", "Phoenix", "Ninja",
-            "Knight", "Mage", "Wizard", "Hunter", "Slayer", "King", "Queen", "Lord", "Ace", "Pro",
-            "Gamer", "Sniper", "Tank", "Healer", "Rogue", "Archer", "Blade", "Sword", "Arrow", "Shield",
-            "Storm", "Thunder", "Flame", "Frost", "Star", "Moon", "Sun", "Nova", "Comet", "Vortex"
-        )
+        val length = (6..14).random()
+        val sb = StringBuilder()
 
-        val styles = listOf(
-            // Style 1: Adjective + Noun (e.g., "CoolWolf")
-            { "${adjectives.random()}${nouns.random()}" },
-            // Style 2: Noun + Numbers (e.g., "Dragon847")
-            { "${nouns.random()}${(10..999).random()}" },
-            // Style 3: Adjective + Noun + Numbers (e.g., "FastFox42")
-            { "${adjectives.random()}${nouns.random()}${(1..99).random()}" },
-            // Style 4: x + Noun + x (e.g., "xDragonx")
-            { "x${nouns.random()}x" },
-            // Style 5: Noun + Underscore + Noun (e.g., "Wolf_King")
-            { "${nouns.random()}_${nouns.random()}" },
-            // Style 6: Double letters prefix (e.g., "xxNinjax")
-            { "xx${nouns.random()}x" },
-            // Style 7: The + Noun + Numbers (e.g., "TheWolf99")
-            { "The${nouns.random()}${(1..99).random()}" },
-            // Style 8: iNoun or iiNoun (e.g., "iWizard", "iiMage")
-            { "${"i".repeat((1..2).random())}${nouns.random()}" },
-            // Style 9: Random alphanumeric (e.g., "Kx7mP2nQ")
-            { (1..(8..12).random()).map { "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789".random() }.joinToString("") },
-            // Style 10: Noun + OG/YT/TTV suffix (e.g., "DragonOG")
-            { "${nouns.random()}${listOf("OG", "YT", "TTV", "HD", "HQ", "PvP").random()}" }
-        )
-
-        var username = styles.random()()
-
-        // Ensure username is within valid length (3-16 characters)
-        if (username.length > 16) {
-            username = username.take(16)
+        // Randomly decide the style
+        when ((0..3).random()) {
+            0 -> {
+                // Pronounceable word (alternating consonants/vowels)
+                val startWithConsonant = (0..1).random() == 0
+                for (i in 0 until length) {
+                    val useConsonant = if (startWithConsonant) i % 2 == 0 else i % 2 == 1
+                    val char = if (useConsonant) consonants.random() else vowels.random()
+                    sb.append(if (i == 0) char.uppercaseChar() else char)
+                }
+            }
+            1 -> {
+                // Random alphanumeric
+                val chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
+                repeat(length) { sb.append(chars.random()) }
+            }
+            2 -> {
+                // Pronounceable + numbers at end
+                val wordLen = (4..10).random()
+                val startWithConsonant = (0..1).random() == 0
+                for (i in 0 until wordLen) {
+                    val useConsonant = if (startWithConsonant) i % 2 == 0 else i % 2 == 1
+                    val char = if (useConsonant) consonants.random() else vowels.random()
+                    sb.append(if (i == 0) char.uppercaseChar() else char)
+                }
+                repeat((1..4).random()) { sb.append(numbers.random()) }
+            }
+            3 -> {
+                // Two pronounceable syllables combined
+                repeat(2) {
+                    val syllableLen = (2..5).random()
+                    val startWithConsonant = (0..1).random() == 0
+                    for (i in 0 until syllableLen) {
+                        val useConsonant = if (startWithConsonant) i % 2 == 0 else i % 2 == 1
+                        val char = if (useConsonant) consonants.random() else vowels.random()
+                        sb.append(if (sb.isEmpty()) char.uppercaseChar() else char)
+                    }
+                }
+                if ((0..1).random() == 0) {
+                    repeat((1..3).random()) { sb.append(numbers.random()) }
+                }
+            }
         }
-        if (username.length < 3) {
-            username = username + (100..999).random()
-        }
 
-        return username
+        // Ensure valid length
+        var result = sb.toString()
+        if (result.length > 16) result = result.take(16)
+        if (result.length < 3) result = result + (100..999).random()
+
+        return result
     }
 
     fun favoriteAccount(id: Int) {

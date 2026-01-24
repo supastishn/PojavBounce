@@ -131,11 +131,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         super.init()
         panels.clear()
 
+        // Reserve space for scrollbar on the right (always visible)
+        val scrollbarWidth = 10
+        val availableWidth = width - PANEL_MARGIN * 2 - scrollbarWidth
+
         var xPos = PANEL_MARGIN
         var yPos = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5
-        val maxPanelsPerRow = max(1, (width - PANEL_MARGIN * 2) / (PANEL_WIDTH + PANEL_SPACING))
+        val maxPanelsPerRow = max(1, availableWidth / (PANEL_WIDTH + PANEL_SPACING))
         var panelCount = 0
-        var maxYPos = yPos
+        var rowCount = 1
 
         for (category in ModuleCategories.entries) {
             val modules = ModuleManager.filter { it.category == category }
@@ -145,31 +149,25 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 xPos = PANEL_MARGIN
                 yPos += MAX_PANEL_HEIGHT + 20
                 panelCount = 0
+                rowCount++
             }
 
-            // Use saved position only if it's within current screen bounds
-            val saved = savedPanelPositions[category]
-            val (finalX, finalY) = if (saved != null &&
-                saved.first >= 0 && saved.first + PANEL_WIDTH <= width &&
-                saved.second >= 0 && saved.second + PANEL_HEADER_HEIGHT <= height) {
-                saved
-            } else {
-                xPos to yPos
-            }
-
+            // Always use calculated position (ignore saved positions that cause off-screen issues)
             val savedExpanded = savedPanelExpanded[category] ?: true
             val savedScroll = savedPanelScrollOffsets[category] ?: 0
 
-            panels.add(CategoryPanel(category, modules, finalX, finalY, PANEL_WIDTH, savedExpanded, savedScroll))
+            panels.add(CategoryPanel(category, modules, xPos, yPos, PANEL_WIDTH, savedExpanded, savedScroll))
 
-            maxYPos = max(maxYPos, yPos + MAX_PANEL_HEIGHT)
             xPos += PANEL_WIDTH + PANEL_SPACING
             panelCount++
         }
 
-        // Calculate max scroll needed to see all panels
-        maxGlobalScroll = max(0, maxYPos - height + PANEL_MARGIN)
-        globalScrollOffset = globalScrollOffset.coerceIn(0, maxGlobalScroll)
+        // Calculate total content height based on all rows
+        val totalContentHeight = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5 + (rowCount * (MAX_PANEL_HEIGHT + 20)) - 20 + PANEL_MARGIN
+
+        // Always allow scrolling if content exceeds viewport
+        maxGlobalScroll = max(0, totalContentHeight - height)
+        globalScrollOffset = globalScrollOffset.coerceIn(0, max(0, maxGlobalScroll))
     }
 
     override fun removed() {
@@ -199,11 +197,22 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         context.pose().popPose()
 
-        // Render scroll indicator if needed
+        // Always render scrollbar (visible indicator that scrolling is possible)
+        val scrollbarX = width - 8
+        val scrollbarTop = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5
+        val scrollbarHeight = height - scrollbarTop - PANEL_MARGIN
+
+        // Scrollbar track background (always visible)
+        context.fill(scrollbarX - 1, scrollbarTop, scrollbarX + 7, scrollbarTop + scrollbarHeight, 0x60000000.toInt())
+
+        // Scrollbar thumb
         if (maxGlobalScroll > 0) {
-            val scrollBarHeight = ((height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2).toFloat() / (height + maxGlobalScroll) * (height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2)).toInt().coerceAtLeast(20)
-            val scrollBarY = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5 + (globalScrollOffset.toFloat() / maxGlobalScroll * (height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2 - scrollBarHeight)).toInt()
-            context.fill(width - 6, scrollBarY, width - 2, scrollBarY + scrollBarHeight, 0x80FFFFFF.toInt())
+            val thumbHeight = max(20, (scrollbarHeight.toFloat() * scrollbarHeight / (scrollbarHeight + maxGlobalScroll)).toInt())
+            val thumbY = scrollbarTop + ((scrollbarHeight - thumbHeight).toFloat() * globalScrollOffset / maxGlobalScroll).toInt()
+            context.fill(scrollbarX, thumbY, scrollbarX + 6, thumbY + thumbHeight, 0xFFAAAAAA.toInt())
+        } else {
+            // Even when no scroll needed, show full-size thumb to indicate position
+            context.fill(scrollbarX, scrollbarTop, scrollbarX + 6, scrollbarTop + scrollbarHeight, 0x80888888.toInt())
         }
 
         super.render(context, mouseX, mouseY, delta)
@@ -442,15 +451,16 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         // Adjust mouse Y for global scroll
         val adjustedMouseY = mouseY + globalScrollOffset
 
+        // First try panel-specific scrolling (only if panel needs internal scroll)
         for (panel in panels) {
             if (panel.mouseScrolled(mouseX, adjustedMouseY, vertical)) {
                 return true
             }
         }
 
-        // Global scroll if no panel handled it and we have overflow
-        if (maxGlobalScroll > 0) {
-            globalScrollOffset = (globalScrollOffset - (vertical * 20).toInt()).coerceIn(0, maxGlobalScroll)
+        // Global scroll - always handle if there's overflow content OR if we're scrolled
+        if (maxGlobalScroll > 0 || globalScrollOffset > 0) {
+            globalScrollOffset = (globalScrollOffset - (vertical * 30).toInt()).coerceIn(0, max(0, maxGlobalScroll))
             return true
         }
 
@@ -1314,14 +1324,20 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 mouseY >= y && mouseY < y + PANEL_HEADER_HEIGHT + contentHeight) {
 
                 val totalContentHeight = calculateTotalContentHeight()
+                // Only consume scroll if this panel actually needs internal scrolling
                 if (totalContentHeight > MAX_PANEL_HEIGHT) {
                     val scrollAmount = (amount * 20).toInt()
                     val maxScroll = totalContentHeight - MAX_PANEL_HEIGHT
+                    val oldOffset = scrollOffset
                     scrollOffset = (scrollOffset - scrollAmount).coerceIn(0, maxScroll)
-                    return true
+                    // Only consume the event if we actually scrolled
+                    if (scrollOffset != oldOffset) {
+                        return true
+                    }
                 }
             }
 
+            // Don't consume scroll event - let global scroll handle it
             return false
         }
 

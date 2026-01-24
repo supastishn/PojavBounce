@@ -32,6 +32,7 @@ import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.SimulatedArrow
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.input.InputTracker.isPressedOnAny
+import net.ccbluex.liquidbounce.utils.client.isOlderThanOrEqual1_8
 import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.Entity
@@ -88,6 +89,14 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
     private var unblockCooldown = 0
     private var lastAttackTick = 0
     private val enemySwingStates = mutableMapOf<Int, Boolean>()
+
+    /**
+     * Visual blocking state for the sword block animation.
+     * Used by MixinItemInHandRenderer to show the blocking animation.
+     */
+    @JvmStatic
+    var blockVisual = false
+        get() = field && running && (isOlderThanOrEqual1_8 || ModuleSwordBlock.running)
 
     @Suppress("unused")
     private val tickHandler = tickHandler {
@@ -376,6 +385,9 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
         val item = player.getItemInHand(hand)
         if (item.isEmpty) return
 
+        // Set visual state for sword blocking animation
+        blockVisual = true
+
         // Use the item to start blocking
         val result = interaction.useItem(player, hand)
         if (result.consumesAction()) {
@@ -386,6 +398,8 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
     private fun stopBlocking() {
         if (!isBlocking) return
 
+        blockVisual = false
+
         if (player.isUsingItem) {
             interaction.releaseUsingItem(player)
         }
@@ -394,6 +408,7 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
 
     override fun onDisabled() {
         stopBlocking()
+        blockVisual = false
         blockCooldown = 0
         unblockCooldown = 0
         enemySwingStates.clear()

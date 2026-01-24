@@ -26,9 +26,8 @@ import net.ccbluex.liquidbounce.utils.combat.getEntitiesBoxInRange
 import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.input.InputTracker.isPressedOnAny
+import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.ItemUseAnimation
 
 /**
  * BlockHit module
@@ -102,25 +101,19 @@ object ModuleBlockHit : ClientModule("BlockHit", ModuleCategories.COMBAT) {
     }
 
     private fun getBlockableHand(): InteractionHand? {
-        return when {
-            canBlock(player.mainHandItem) -> InteractionHand.MAIN_HAND
-            canBlock(player.offhandItem) -> InteractionHand.OFF_HAND
-            else -> null
-        }
-    }
-
-    private fun canBlock(itemStack: ItemStack): Boolean {
-        return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
+        // Only support sword blocking (1.8 style)
+        return if (player.mainHandItem.isSword) InteractionHand.MAIN_HAND else null
     }
 
     private fun startBlocking(hand: InteractionHand) {
-        val itemStack = player.getItemInHand(hand)
-        if (itemStack.isEmpty || !itemStack.isItemEnabled(world.enabledFeatures())) {
+        if (!player.mainHandItem.isSword) {
             return
         }
 
+        // Use the item to start blocking (requires SwordBlock module for 1.9+ servers)
         val result = interaction.useItem(player, hand)
         if (result.consumesAction()) {
+            player.swing(hand)
             isBlocking = true
         }
     }

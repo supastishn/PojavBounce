@@ -41,6 +41,7 @@ import net.ccbluex.liquidbounce.utils.entity.movementSideways
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.CRITICAL_MODIFICATION
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
+import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.isOlderThanOrEqual1_8
 import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
@@ -220,6 +221,7 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
         private val blockDuration by intRange("BlockDuration", 1..2, 1..10, "ticks")
         private val delay by intRange("Delay", 0..1, 0..5, "ticks")
+        private val debug by boolean("Debug", false)
 
         private var isBlocking = false
 
@@ -252,6 +254,9 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
                 val blockStarted = startBlocking(enemy, blockHand)
                 if (blockStarted) {
                     blockVisual = true
+                    if (debug) {
+                        chat("§a[BlockHit] Started blocking", ModuleSuperKnockback)
+                    }
                 }
 
                 // Wait for block duration
@@ -259,6 +264,9 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
                 // Stop blocking
                 stopBlocking()
+                if (debug) {
+                    chat("§c[BlockHit] Stopped blocking", ModuleSuperKnockback)
+                }
                 blockVisual = false
                 isBlocking = false
             }

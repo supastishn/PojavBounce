@@ -61,6 +61,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     private val panels = mutableListOf<CategoryPanel>()
     private var searchQuery = ""
 
+    // Global scroll offset for viewing panels below the screen
+    private var globalScrollOffset = 0
+    private var maxGlobalScroll = 0
+
     // Active slider drag state
     private var activeSliderDrag: SliderDragState? = null
 
@@ -131,6 +135,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         var yPos = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5
         val maxPanelsPerRow = max(1, (width - PANEL_MARGIN * 2) / (PANEL_WIDTH + PANEL_SPACING))
         var panelCount = 0
+        var maxYPos = yPos
 
         for (category in ModuleCategories.entries) {
             val modules = ModuleManager.filter { it.category == category }
@@ -142,15 +147,29 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 panelCount = 0
             }
 
-            val (savedX, savedY) = savedPanelPositions[category] ?: (xPos to yPos)
+            // Use saved position only if it's within current screen bounds
+            val saved = savedPanelPositions[category]
+            val (finalX, finalY) = if (saved != null &&
+                saved.first >= 0 && saved.first + PANEL_WIDTH <= width &&
+                saved.second >= 0 && saved.second + PANEL_HEADER_HEIGHT <= height) {
+                saved
+            } else {
+                xPos to yPos
+            }
+
             val savedExpanded = savedPanelExpanded[category] ?: true
             val savedScroll = savedPanelScrollOffsets[category] ?: 0
 
-            panels.add(CategoryPanel(category, modules, savedX, savedY, PANEL_WIDTH, savedExpanded, savedScroll))
+            panels.add(CategoryPanel(category, modules, finalX, finalY, PANEL_WIDTH, savedExpanded, savedScroll))
 
+            maxYPos = max(maxYPos, yPos + MAX_PANEL_HEIGHT)
             xPos += PANEL_WIDTH + PANEL_SPACING
             panelCount++
         }
+
+        // Calculate max scroll needed to see all panels
+        maxGlobalScroll = max(0, maxYPos - height + PANEL_MARGIN)
+        globalScrollOffset = globalScrollOffset.coerceIn(0, maxGlobalScroll)
     }
 
     override fun removed() {
@@ -167,8 +186,24 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         renderSearchBar(context, mouseX, mouseY)
 
+        // Apply global scroll offset using matrix translation
+        context.pose().pushPose()
+        context.pose().translate(0f, -globalScrollOffset.toFloat(), 0f)
+
+        // Adjust mouse Y for scroll offset when passing to panels
+        val adjustedMouseY = mouseY + globalScrollOffset
+
         for (panel in panels) {
-            panel.render(context, mouseX, mouseY, delta, fontRenderer, fontScale, searchQuery)
+            panel.render(context, mouseX, adjustedMouseY, delta, fontRenderer, fontScale, searchQuery)
+        }
+
+        context.pose().popPose()
+
+        // Render scroll indicator if needed
+        if (maxGlobalScroll > 0) {
+            val scrollBarHeight = ((height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2).toFloat() / (height + maxGlobalScroll) * (height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2)).toInt().coerceAtLeast(20)
+            val scrollBarY = PANEL_MARGIN + SEARCH_BAR_HEIGHT + 5 + (globalScrollOffset.toFloat() / maxGlobalScroll * (height - SEARCH_BAR_HEIGHT - PANEL_MARGIN * 2 - scrollBarHeight)).toInt()
+            context.fill(width - 6, scrollBarY, width - 2, scrollBarY + scrollBarHeight, 0x80FFFFFF.toInt())
         }
 
         super.render(context, mouseX, mouseY, delta)
@@ -296,8 +331,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         // Clear text edit if clicking elsewhere (unless clicking on the same text field)
         val wasTextEditing = activeTextEdit != null
 
+        // Adjust mouse Y for global scroll
+        val adjustedY = click.y + globalScrollOffset
+
         for (panel in panels) {
-            if (panel.mouseClicked(click.x, click.y, click.button())) {
+            if (panel.mouseClicked(click.x, adjustedY, click.button())) {
                 return true
             }
         }
@@ -317,8 +355,11 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             return true
         }
 
+        // Adjust mouse Y for global scroll
+        val adjustedY = click.y + globalScrollOffset
+
         for (panel in panels) {
-            if (panel.mouseDragged(click.x, click.y, click.button(), offsetX, offsetY)) {
+            if (panel.mouseDragged(click.x, adjustedY, click.button(), offsetX, offsetY)) {
                 return true
             }
         }
@@ -398,11 +439,21 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
     }
 
     override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontal: Double, vertical: Double): Boolean {
+        // Adjust mouse Y for global scroll
+        val adjustedMouseY = mouseY + globalScrollOffset
+
         for (panel in panels) {
-            if (panel.mouseScrolled(mouseX, mouseY, vertical)) {
+            if (panel.mouseScrolled(mouseX, adjustedMouseY, vertical)) {
                 return true
             }
         }
+
+        // Global scroll if no panel handled it and we have overflow
+        if (maxGlobalScroll > 0) {
+            globalScrollOffset = (globalScrollOffset - (vertical * 20).toInt()).coerceIn(0, maxGlobalScroll)
+            return true
+        }
+
         return super.mouseScrolled(mouseX, mouseY, horizontal, vertical)
     }
 

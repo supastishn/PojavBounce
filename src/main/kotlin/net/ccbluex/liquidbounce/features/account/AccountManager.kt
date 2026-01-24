@@ -317,11 +317,66 @@ object AccountManager : Configurable("Accounts"), EventListener {
     }
 
     /**
-     * Login with a random cracked account using a generated username.
+     * Login with a random cracked account using a fully randomized username.
      */
     fun loginRandomCrackedAccount() {
-        val randomUsername = "Player${(1000..9999).random()}"
+        val randomUsername = generateRandomUsername()
         loginCrackedAccount(randomUsername)
+    }
+
+    /**
+     * Generates a fully random Minecraft-style username (3-16 characters).
+     * Uses a mix of adjectives, nouns, and random suffixes for variety.
+     */
+    private fun generateRandomUsername(): String {
+        val adjectives = listOf(
+            "Cool", "Fast", "Swift", "Dark", "Light", "Fire", "Ice", "Storm", "Shadow", "Bright",
+            "Wild", "Brave", "Silent", "Loud", "Crazy", "Lucky", "Happy", "Angry", "Sneaky", "Epic",
+            "Ultra", "Mega", "Super", "Hyper", "Toxic", "Neon", "Cyber", "Pixel", "Astro", "Turbo",
+            "Blazing", "Frozen", "Golden", "Silver", "Crystal", "Phantom", "Stealth", "Mystic", "Chaos", "Zen"
+        )
+
+        val nouns = listOf(
+            "Wolf", "Fox", "Bear", "Lion", "Tiger", "Eagle", "Hawk", "Dragon", "Phoenix", "Ninja",
+            "Knight", "Mage", "Wizard", "Hunter", "Slayer", "King", "Queen", "Lord", "Ace", "Pro",
+            "Gamer", "Sniper", "Tank", "Healer", "Rogue", "Archer", "Blade", "Sword", "Arrow", "Shield",
+            "Storm", "Thunder", "Flame", "Frost", "Star", "Moon", "Sun", "Nova", "Comet", "Vortex"
+        )
+
+        val styles = listOf(
+            // Style 1: Adjective + Noun (e.g., "CoolWolf")
+            { "${adjectives.random()}${nouns.random()}" },
+            // Style 2: Noun + Numbers (e.g., "Dragon847")
+            { "${nouns.random()}${(10..999).random()}" },
+            // Style 3: Adjective + Noun + Numbers (e.g., "FastFox42")
+            { "${adjectives.random()}${nouns.random()}${(1..99).random()}" },
+            // Style 4: x + Noun + x (e.g., "xDragonx")
+            { "x${nouns.random()}x" },
+            // Style 5: Noun + Underscore + Noun (e.g., "Wolf_King")
+            { "${nouns.random()}_${nouns.random()}" },
+            // Style 6: Double letters prefix (e.g., "xxNinjax")
+            { "xx${nouns.random()}x" },
+            // Style 7: The + Noun + Numbers (e.g., "TheWolf99")
+            { "The${nouns.random()}${(1..99).random()}" },
+            // Style 8: iNoun or iiNoun (e.g., "iWizard", "iiMage")
+            { "${"i".repeat((1..2).random())}${nouns.random()}" },
+            // Style 9: Random alphanumeric (e.g., "Kx7mP2nQ")
+            { (1..(8..12).random()).map { "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789".random() }.joinToString("") },
+            // Style 10: Noun + OG/YT/TTV suffix (e.g., "DragonOG")
+            { "${nouns.random()}${listOf("OG", "YT", "TTV", "HD", "HQ", "PvP").random()}" }
+        )
+
+        var username = styles.random()()
+
+        // Ensure username is within valid length (3-16 characters)
+        if (username.length > 16) {
+            username = username.take(16)
+        }
+        if (username.length < 3) {
+            username = username + (100..999).random()
+        }
+
+        return username
     }
 
     fun favoriteAccount(id: Int) {

@@ -22,6 +22,8 @@ import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSmartBlock;
+import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSuperKnockback;
 import net.ccbluex.liquidbounce.features.module.modules.combat.ModuleSwordBlock;
 import net.ccbluex.liquidbounce.features.module.modules.combat.killaura.features.KillAuraAutoBlock;
 import net.ccbluex.liquidbounce.features.module.modules.render.ModuleAnimations;
@@ -187,7 +189,9 @@ public abstract class MixinItemInHandRenderer {
     @Unique
     private static boolean liquid_bounce$shouldAnimate(Player player) {
         return ModuleSwordBlock.INSTANCE.getRunning() && ModuleSwordBlock.isBlockingWithOffhandShield(player)
-            || KillAuraAutoBlock.INSTANCE.getBlockVisual();
+            || KillAuraAutoBlock.INSTANCE.getBlockVisual()
+            || ModuleSmartBlock.getBlockVisual()
+            || ModuleSuperKnockback.BlockHit.getBlockVisual();
     }
 
     @ModifyExpressionValue(method = "renderArmWithItem", at = @At(

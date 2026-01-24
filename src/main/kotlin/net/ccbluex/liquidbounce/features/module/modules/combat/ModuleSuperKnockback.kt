@@ -41,6 +41,7 @@ import net.ccbluex.liquidbounce.utils.entity.movementSideways
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.CRITICAL_MODIFICATION
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
+import net.ccbluex.liquidbounce.utils.client.isOlderThanOrEqual1_8
 import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.Entity
@@ -222,6 +223,13 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
         private var isBlocking = false
 
+        /**
+         * Visual blocking state for the sword block animation.
+         */
+        @JvmStatic
+        var blockVisual = false
+            get() = field && ModuleSuperKnockback.running && (isOlderThanOrEqual1_8 || ModuleSwordBlock.running)
+
         @Suppress("unused")
         private val attackHandler = sequenceHandler<AttackEntityEvent> { event ->
             val enemy = event.entity
@@ -241,6 +249,7 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
                 // Start blocking
                 isBlocking = true
+                blockVisual = true
                 startBlocking(enemy, blockHand)
 
                 // Wait for block duration
@@ -248,6 +257,7 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
                 // Stop blocking
                 stopBlocking()
+                blockVisual = false
                 isBlocking = false
             }
         }
@@ -282,6 +292,7 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
         override fun disable() {
             isBlocking = false
+            blockVisual = false
             super.disable()
         }
     }

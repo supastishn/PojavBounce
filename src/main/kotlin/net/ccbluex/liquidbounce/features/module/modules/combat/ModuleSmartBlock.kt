@@ -201,8 +201,8 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
                     return ThreatLevel.HIGH
                 }
                 BlockTiming.REACTIVE -> {
-                    // Block when enemy is swinging
-                    if (SwingDetection.enabled && isEnemySwinging(enemy)) {
+                    // Block only when enemy is actively swinging (already checked range + facing)
+                    if (isEnemySwinging(enemy)) {
                         return ThreatLevel.HIGH
                     }
                 }

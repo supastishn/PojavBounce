@@ -32,6 +32,7 @@ import net.ccbluex.liquidbounce.utils.combat.shouldBeAttacked
 import net.ccbluex.liquidbounce.utils.entity.SimulatedArrow
 import net.ccbluex.liquidbounce.utils.entity.rotation
 import net.ccbluex.liquidbounce.utils.input.InputTracker.isPressedOnAny
+import net.ccbluex.liquidbounce.utils.client.chat
 import net.ccbluex.liquidbounce.utils.client.isOlderThanOrEqual1_8
 import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
@@ -66,6 +67,9 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
 
     // What to block
     private val blockMode by enumChoice("BlockMode", BlockMode.BOTH)
+
+    // Debug mode
+    private val debug by boolean("Debug", false)
 
     // Projectile blocking
     private object ProjectileBlock : ToggleableConfigurable(this, "ProjectileBlock", true) {
@@ -391,6 +395,9 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
             isBlocking = true
             // Only set visual when blocking actually started
             blockVisual = true
+            if (debug) {
+                chat("§a[SmartBlock] Started blocking", this)
+            }
         }
     }
 
@@ -399,6 +406,10 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
         blockVisual = false
 
         if (!isBlocking) return
+
+        if (debug) {
+            chat("§c[SmartBlock] Stopped blocking", this)
+        }
 
         if (player.isUsingItem) {
             interaction.releaseUsingItem(player)

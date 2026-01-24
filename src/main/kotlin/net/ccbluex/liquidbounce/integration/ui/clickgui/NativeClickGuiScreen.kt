@@ -18,6 +18,9 @@
  */
 package net.ccbluex.liquidbounce.integration.ui.clickgui
 
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
+import net.ccbluex.liquidbounce.config.ConfigSystem
 import net.ccbluex.liquidbounce.config.types.ChooseListValue
 import net.ccbluex.liquidbounce.config.types.MultiChooseListValue
 import net.ccbluex.liquidbounce.config.types.NamedChoice
@@ -35,6 +38,7 @@ import net.ccbluex.liquidbounce.render.engine.font.FontRenderer
 import net.ccbluex.liquidbounce.render.engine.type.Color4b
 import net.ccbluex.liquidbounce.utils.client.asPlainText
 import net.ccbluex.liquidbounce.utils.client.asText
+import net.ccbluex.liquidbounce.utils.client.logger
 import net.ccbluex.liquidbounce.utils.client.mc
 import net.minecraft.client.gui.GuiGraphics
 import net.minecraft.client.gui.screens.Screen
@@ -42,6 +46,7 @@ import net.minecraft.client.input.MouseButtonEvent
 import net.minecraft.client.input.CharacterEvent
 import net.minecraft.client.input.KeyEvent
 import net.minecraft.util.ARGB
+import java.io.File
 import kotlin.math.max
 import kotlin.math.min
 
@@ -52,7 +57,7 @@ import kotlin.math.min
  * - Nested configurable support (accordions)
  * - Search bar for filtering modules
  * - Panel scrolling
- * - Persistent panel positions
+ * - Persistent panel positions (saved across sessions)
  * - Slider controls for ranged values
  * - Inter font support
  */
@@ -89,10 +94,71 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private const val SLIDER_TRACK_HEIGHT = 4
         private const val SLIDER_THUMB_WIDTH = 6
 
-        // Persistent panel positions (survives screen close/reopen)
-        private val savedPanelPositions = mutableMapOf<ModuleCategory, Pair<Int, Int>>()
-        private val savedPanelExpanded = mutableMapOf<ModuleCategory, Boolean>()
-        private val savedPanelScrollOffsets = mutableMapOf<ModuleCategory, Int>()
+        // Persistent state (survives screen close/reopen AND across sessions via file)
+        private val savedPanelPositions = mutableMapOf<String, Pair<Int, Int>>()
+        private val savedPanelExpanded = mutableMapOf<String, Boolean>()
+        private val savedPanelScrollOffsets = mutableMapOf<String, Int>()
+        private val savedModuleExpanded = mutableMapOf<String, Boolean>()
+        private var savedGlobalScroll = 0
+        private var stateLoaded = false
+
+        // Gson for serialization
+        private val gson = GsonBuilder().setPrettyPrinting().create()
+        private val stateFile: File
+            get() = File(ConfigSystem.rootFolder, "clickgui_state.json")
+
+        /**
+         * Load saved state from file
+         */
+        fun loadState() {
+            if (stateLoaded) return
+            stateLoaded = true
+
+            try {
+                if (!stateFile.exists()) return
+
+                val json = stateFile.readText()
+                val state = gson.fromJson(json, ClickGuiState::class.java) ?: return
+
+                savedPanelPositions.clear()
+                state.panelPositions.forEach { (k, v) -> savedPanelPositions[k] = v.first to v.second }
+
+                savedPanelExpanded.clear()
+                savedPanelExpanded.putAll(state.panelExpanded)
+
+                savedPanelScrollOffsets.clear()
+                savedPanelScrollOffsets.putAll(state.panelScrollOffsets)
+
+                savedModuleExpanded.clear()
+                savedModuleExpanded.putAll(state.moduleExpanded)
+
+                savedGlobalScroll = state.globalScroll
+
+                logger.info("Loaded ClickGUI state from file")
+            } catch (e: Exception) {
+                logger.error("Failed to load ClickGUI state", e)
+            }
+        }
+
+        /**
+         * Save state to file
+         */
+        fun saveState() {
+            try {
+                val state = ClickGuiState(
+                    panelPositions = savedPanelPositions.mapValues { listOf(it.value.first, it.value.second) },
+                    panelExpanded = savedPanelExpanded.toMap(),
+                    panelScrollOffsets = savedPanelScrollOffsets.toMap(),
+                    moduleExpanded = savedModuleExpanded.toMap(),
+                    globalScroll = savedGlobalScroll
+                )
+
+                stateFile.writeText(gson.toJson(state))
+                logger.debug("Saved ClickGUI state to file")
+            } catch (e: Exception) {
+                logger.error("Failed to save ClickGUI state", e)
+            }
+        }
 
         // Colors
         private val COLOR_WHITE = Color4b(255, 255, 255, 255)
@@ -108,6 +174,17 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         private val COLOR_LIGHT_GREEN = Color4b(136, 255, 136, 255)
         private val COLOR_YELLOW = Color4b(255, 204, 102, 255)
     }
+
+    /**
+     * Data class for serializing ClickGUI state
+     */
+    private data class ClickGuiState(
+        val panelPositions: Map<String, List<Int>> = emptyMap(),
+        val panelExpanded: Map<String, Boolean> = emptyMap(),
+        val panelScrollOffsets: Map<String, Int> = emptyMap(),
+        val moduleExpanded: Map<String, Boolean> = emptyMap(),
+        val globalScroll: Int = 0
+    )
 
     // Represents active slider being dragged
     private data class SliderDragState(
@@ -131,6 +208,9 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
         super.init()
         panels.clear()
 
+        // Load saved state from file on first open
+        loadState()
+
         // Reserve space for scrollbar on the right (always visible)
         val scrollbarWidth = 10
         val availableWidth = width - PANEL_MARGIN * 2 - scrollbarWidth
@@ -152,11 +232,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 rowCount++
             }
 
-            // Always use calculated position (ignore saved positions that cause off-screen issues)
-            val savedExpanded = savedPanelExpanded[category] ?: true
-            val savedScroll = savedPanelScrollOffsets[category] ?: 0
+            // Use saved position if available, otherwise use calculated position
+            val categoryKey = category.choiceName
+            val savedPos = savedPanelPositions[categoryKey]
+            val panelX = savedPos?.first ?: xPos
+            val panelY = savedPos?.second ?: yPos
+            val savedExpanded = savedPanelExpanded[categoryKey] ?: true
+            val savedScroll = savedPanelScrollOffsets[categoryKey] ?: 0
 
-            panels.add(CategoryPanel(category, modules, xPos, yPos, PANEL_WIDTH, savedExpanded, savedScroll))
+            panels.add(CategoryPanel(category, modules, panelX, panelY, PANEL_WIDTH, savedExpanded, savedScroll))
 
             xPos += PANEL_WIDTH + PANEL_SPACING
             panelCount++
@@ -167,15 +251,24 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         // Always allow scrolling if content exceeds viewport
         maxGlobalScroll = max(0, totalContentHeight - height)
-        globalScrollOffset = globalScrollOffset.coerceIn(0, max(0, maxGlobalScroll))
+        globalScrollOffset = savedGlobalScroll.coerceIn(0, max(0, maxGlobalScroll))
     }
 
     override fun removed() {
         for (panel in panels) {
-            savedPanelPositions[panel.category] = panel.x to panel.y
-            savedPanelExpanded[panel.category] = panel.expanded
-            savedPanelScrollOffsets[panel.category] = panel.scrollOffset
+            val categoryKey = panel.category.choiceName
+            savedPanelPositions[categoryKey] = panel.x to panel.y
+            savedPanelExpanded[categoryKey] = panel.expanded
+            savedPanelScrollOffsets[categoryKey] = panel.scrollOffset
+
+            // Save module expanded states
+            panel.saveModuleExpandedStates()
         }
+        savedGlobalScroll = globalScrollOffset
+
+        // Save state to file
+        saveState()
+
         super.removed()
     }
 
@@ -483,6 +576,23 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         private val moduleExpandStates = mutableMapOf<ClientModule, ExpandState>()
         private val configurableExpandStates = mutableMapOf<Any, ExpandState>()
+
+        init {
+            // Load saved module expanded states
+            for (module in allModules) {
+                val key = "${category.choiceName}:${module.name}"
+                savedModuleExpanded[key]?.let { expanded ->
+                    moduleExpandStates[module] = ExpandState().apply { this.expanded = expanded }
+                }
+            }
+        }
+
+        fun saveModuleExpandedStates() {
+            for ((module, state) in moduleExpandStates) {
+                val key = "${category.choiceName}:${module.name}"
+                savedModuleExpanded[key] = state.expanded
+            }
+        }
 
         private fun getModuleExpandState(module: ClientModule): ExpandState {
             return moduleExpandStates.getOrPut(module) { ExpandState() }

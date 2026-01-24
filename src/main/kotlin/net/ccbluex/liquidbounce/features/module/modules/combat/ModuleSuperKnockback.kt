@@ -221,11 +221,13 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
         private val blockDuration by intRange("BlockDuration", 1..2, 1..10, "ticks")
         private val delay by intRange("Delay", 0..1, 0..5, "ticks")
 
+        private var isBlocking = false
+
         @Suppress("unused")
         private val attackHandler = sequenceHandler<AttackEntityEvent> { event ->
             val enemy = event.entity
 
-            if (!shouldOperate(enemy)) {
+            if (!shouldOperate(enemy) || isBlocking) {
                 return@sequenceHandler
             }
 
@@ -238,14 +240,17 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
                     waitTicks(delayAmount)
                 }
 
-                // Start blocking
-                startBlocking(blockHand)
+                // Start blocking - interact with enemy first, then use item
+                isBlocking = true
+                interaction.interact(player, enemy, blockHand)
+                interaction.useItem(player, blockHand)
 
                 // Wait for block duration
                 waitTicks(blockDuration.random())
 
                 // Stop blocking
                 stopBlocking()
+                isBlocking = false
             }
         }
 
@@ -261,18 +266,15 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
             return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
         }
 
-        private fun startBlocking(hand: InteractionHand) {
-            val itemStack = player.getItemInHand(hand)
-            if (itemStack.isEmpty || !itemStack.isItemEnabled(world.enabledFeatures())) {
-                return
-            }
-            interaction.useItem(player, hand)
-        }
-
         private fun stopBlocking() {
             if (player.isUsingItem) {
                 interaction.releaseUsingItem(player)
             }
+        }
+
+        override fun disable() {
+            isBlocking = false
+            super.disable()
         }
     }
 

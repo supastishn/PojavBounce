@@ -240,10 +240,9 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
                     waitTicks(delayAmount)
                 }
 
-                // Start blocking - interact with enemy first, then use item
+                // Start blocking
                 isBlocking = true
-                interaction.interact(player, enemy, blockHand)
-                interaction.useItem(player, blockHand)
+                startBlocking(enemy, blockHand)
 
                 // Wait for block duration
                 waitTicks(blockDuration.random())
@@ -264,6 +263,19 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
         private fun canBlock(itemStack: ItemStack): Boolean {
             return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
+        }
+
+        private fun startBlocking(enemy: Entity, hand: InteractionHand) {
+            // Interact with the enemy first (like KillAura's INTERACT mode)
+            interaction.interact(player, enemy, hand)
+
+            // Use the item to start blocking
+            val result = interaction.useItem(player, hand)
+
+            // Swing hand if action was consumed (makes blocking visible)
+            if (result.consumesAction()) {
+                player.swing(hand)
+            }
         }
 
         private fun stopBlocking() {

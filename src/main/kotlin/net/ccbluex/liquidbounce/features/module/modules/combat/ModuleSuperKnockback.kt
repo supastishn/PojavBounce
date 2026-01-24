@@ -249,8 +249,10 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
 
                 // Start blocking
                 isBlocking = true
-                blockVisual = true
-                startBlocking(enemy, blockHand)
+                val blockStarted = startBlocking(enemy, blockHand)
+                if (blockStarted) {
+                    blockVisual = true
+                }
 
                 // Wait for block duration
                 waitTicks(blockDuration.random())
@@ -267,9 +269,9 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
             return if (player.mainHandItem.isSword) InteractionHand.MAIN_HAND else null
         }
 
-        private fun startBlocking(enemy: Entity, hand: InteractionHand) {
+        private fun startBlocking(enemy: Entity, hand: InteractionHand): Boolean {
             if (!player.mainHandItem.isSword) {
-                return
+                return false
             }
 
             // Interact with the enemy first (like KillAura's INTERACT mode)
@@ -281,10 +283,13 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
             // Swing hand if action was consumed (makes blocking visible)
             if (result.consumesAction()) {
                 player.swing(hand)
+                return true
             }
+            return false
         }
 
         private fun stopBlocking() {
+            blockVisual = false
             if (player.isUsingItem) {
                 interaction.releaseUsingItem(player)
             }

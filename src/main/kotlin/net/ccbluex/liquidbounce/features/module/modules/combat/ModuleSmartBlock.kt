@@ -385,20 +385,20 @@ object ModuleSmartBlock : ClientModule("SmartBlock", ModuleCategories.COMBAT) {
         val item = player.getItemInHand(hand)
         if (item.isEmpty) return
 
-        // Set visual state for sword blocking animation
-        blockVisual = true
-
         // Use the item to start blocking
         val result = interaction.useItem(player, hand)
         if (result.consumesAction()) {
             isBlocking = true
+            // Only set visual when blocking actually started
+            blockVisual = true
         }
     }
 
     private fun stopBlocking() {
-        if (!isBlocking) return
-
+        // Always reset visual state
         blockVisual = false
+
+        if (!isBlocking) return
 
         if (player.isUsingItem) {
             interaction.releaseUsingItem(player)

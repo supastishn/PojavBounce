@@ -21,6 +21,8 @@ package net.ccbluex.liquidbounce.integration.ui.hud
 import net.ccbluex.liquidbounce.event.EventListener
 import net.ccbluex.liquidbounce.event.events.OverlayRenderEvent
 import net.ccbluex.liquidbounce.event.handler
+import net.ccbluex.liquidbounce.features.misc.HideAppearance
+import net.ccbluex.liquidbounce.features.module.modules.render.ModuleHud
 import net.ccbluex.liquidbounce.integration.theme.component.HudComponentManager
 import net.ccbluex.liquidbounce.integration.theme.component.components.NativeHudComponent
 import net.ccbluex.liquidbounce.utils.client.mc
@@ -39,6 +41,11 @@ object NativeHudRenderer : EventListener {
 
     @Suppress("unused")
     private val renderHandler = handler<OverlayRenderEvent> { event ->
+        // Don't render if HUD module is disabled or hiding appearance
+        if (!ModuleHud.running || HideAppearance.isHidingNow) {
+            return@handler
+        }
+
         // Only hide HUD when F1 is pressed (hideGui) AND no screen/menu is open.
         // This allows HUD to render when menus are open (e.g., pause menu via Esc).
         if (mc.options.hideGui && mc.screen == null) {

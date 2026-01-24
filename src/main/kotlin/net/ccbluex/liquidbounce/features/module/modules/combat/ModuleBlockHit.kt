@@ -119,8 +119,10 @@ object ModuleBlockHit : ClientModule("BlockHit", ModuleCategories.COMBAT) {
             return
         }
 
+        // Use the item to start blocking
         val result = interaction.useItem(player, hand)
         if (result.consumesAction()) {
+            player.swing(hand)
             isBlocking = true
         }
     }

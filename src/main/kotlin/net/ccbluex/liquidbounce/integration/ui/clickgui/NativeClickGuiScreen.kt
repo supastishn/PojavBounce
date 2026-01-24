@@ -184,18 +184,10 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
 
         renderSearchBar(context, mouseX, mouseY)
 
-        // Apply global scroll offset using matrix translation
-        context.pose().pushPose()
-        context.pose().translate(0f, -globalScrollOffset.toFloat(), 0f)
-
-        // Adjust mouse Y for scroll offset when passing to panels
-        val adjustedMouseY = mouseY + globalScrollOffset
-
+        // Render panels with global scroll offset applied
         for (panel in panels) {
-            panel.render(context, mouseX, adjustedMouseY, delta, fontRenderer, fontScale, searchQuery)
+            panel.render(context, mouseX, mouseY, delta, fontRenderer, fontScale, searchQuery, globalScrollOffset)
         }
-
-        context.pose().popPose()
 
         // Always render scrollbar (visible indicator that scrolling is possible)
         val scrollbarX = width - 8
@@ -529,11 +521,15 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             }
         }
 
-        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, fr: FontRenderer, scale: Float, searchQuery: String) {
+        fun render(context: GuiGraphics, mouseX: Int, mouseY: Int, delta: Float, fr: FontRenderer, scale: Float, searchQuery: String, globalScrollOffset: Int = 0) {
             val modules = getFilteredModules(searchQuery)
             if (modules.isEmpty() && searchQuery.isNotEmpty()) {
                 return
             }
+
+            // Apply global scroll offset to panel position
+            val renderY = y - globalScrollOffset
+            val adjustedMouseY = mouseY + globalScrollOffset
 
             val contentHeight = if (expanded) calculateTotalContentHeight(modules) else 0
             val visibleContentHeight = min(contentHeight, MAX_PANEL_HEIGHT)
@@ -542,28 +538,28 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
             val maxScroll = max(0, contentHeight - MAX_PANEL_HEIGHT)
             scrollOffset = scrollOffset.coerceIn(0, maxScroll)
 
-            context.fill(x, y, x + panelWidth, y + totalPanelHeight, 0xB41E1E1E.toInt())
+            context.fill(x, renderY, x + panelWidth, renderY + totalPanelHeight, 0xB41E1E1E.toInt())
 
             val headerColor = 0xC8323232.toInt()
-            context.fill(x, y, x + panelWidth, y + PANEL_HEADER_HEIGHT, headerColor)
+            context.fill(x, renderY, x + panelWidth, renderY + PANEL_HEADER_HEIGHT, headerColor)
 
             val displayName = if (modules.size != allModules.size) {
                 "${category.choiceName} (${modules.size})"
             } else {
                 category.choiceName
             }
-            drawPanelText(context, fr, scale, displayName, x + 4f, y + 3f, COLOR_WHITE)
+            drawPanelText(context, fr, scale, displayName, x + 4f, renderY + 3f, COLOR_WHITE)
 
             val indicator = if (expanded) "v" else ">"
-            drawPanelText(context, fr, scale, indicator, x + panelWidth - 12f, y + 3f, COLOR_WHITE)
+            drawPanelText(context, fr, scale, indicator, x + panelWidth - 12f, renderY + 3f, COLOR_WHITE)
 
             if (expanded && modules.isNotEmpty()) {
-                val contentY = y + PANEL_HEADER_HEIGHT
+                val contentY = renderY + PANEL_HEADER_HEIGHT
                 context.enableScissor(x, contentY, x + panelWidth, contentY + visibleContentHeight)
 
                 var currentY = contentY - scrollOffset
                 for (module in modules) {
-                    currentY = renderModuleWithSettings(context, module, currentY, mouseX, mouseY, fr, scale, 0)
+                    currentY = renderModuleWithSettings(context, module, currentY, mouseX, adjustedMouseY, fr, scale, 0)
                 }
 
                 context.disableScissor()

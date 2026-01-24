@@ -41,11 +41,10 @@ import net.ccbluex.liquidbounce.utils.entity.movementSideways
 import net.ccbluex.liquidbounce.utils.kotlin.EventPriorityConvention.CRITICAL_MODIFICATION
 import net.ccbluex.liquidbounce.utils.math.minus
 import net.ccbluex.liquidbounce.utils.movement.DirectionalInput
+import net.ccbluex.liquidbounce.utils.item.isSword
 import net.minecraft.world.InteractionHand
 import net.minecraft.world.entity.Entity
 import net.minecraft.world.entity.LivingEntity
-import net.minecraft.world.item.ItemStack
-import net.minecraft.world.item.ItemUseAnimation
 
 /**
  * SuperKnockback module
@@ -254,22 +253,19 @@ object ModuleSuperKnockback : ClientModule("SuperKnockback", ModuleCategories.CO
         }
 
         private fun getBlockableHand(): InteractionHand? {
-            return when {
-                canBlock(player.mainHandItem) -> InteractionHand.MAIN_HAND
-                canBlock(player.offhandItem) -> InteractionHand.OFF_HAND
-                else -> null
-            }
-        }
-
-        private fun canBlock(itemStack: ItemStack): Boolean {
-            return itemStack.item?.getUseAnimation(itemStack) == ItemUseAnimation.BLOCK
+            // Only support sword blocking (1.8 style)
+            return if (player.mainHandItem.isSword) InteractionHand.MAIN_HAND else null
         }
 
         private fun startBlocking(enemy: Entity, hand: InteractionHand) {
+            if (!player.mainHandItem.isSword) {
+                return
+            }
+
             // Interact with the enemy first (like KillAura's INTERACT mode)
             interaction.interact(player, enemy, hand)
 
-            // Use the item to start blocking
+            // Use the item to start blocking (requires SwordBlock module for 1.9+ servers)
             val result = interaction.useItem(player, hand)
 
             // Swing hand if action was consumed (makes blocking visible)

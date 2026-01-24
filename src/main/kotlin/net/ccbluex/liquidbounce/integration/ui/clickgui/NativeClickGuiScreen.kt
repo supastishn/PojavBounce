@@ -121,7 +121,7 @@ class NativeClickGuiScreen : Screen("ClickGUI".asPlainText()) {
                 val state = gson.fromJson(json, ClickGuiState::class.java) ?: return
 
                 savedPanelPositions.clear()
-                state.panelPositions.forEach { (k, v) -> savedPanelPositions[k] = v.first to v.second }
+                state.panelPositions.forEach { (k, v) -> savedPanelPositions[k] = v[0] to v[1] }
 
                 savedPanelExpanded.clear()
                 savedPanelExpanded.putAll(state.panelExpanded)
